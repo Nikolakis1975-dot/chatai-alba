@@ -58,8 +58,3 @@ setTimeout(() => {
 
 // Nëse ke module.exports në fund, vendose para asaj
 // module.exports = app; (nëse e ke)
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Serveri online në portin ${PORT}`);
-});
