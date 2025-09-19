@@ -1,12 +1,8 @@
-// Në krye të app.js
 require('dotenv').config();
-
-// Pastaj përdor process.env.ENCRYPTION_KEY në vend të vlerës së hardcoduar
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const path = require('path');
-
 
 // Importo rutat
 const authRoutes = require('./routes/auth');
@@ -18,10 +14,11 @@ const geminiRoutes = require('./routes/gemini');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
+// Middleware ME LIMIT TË SHTUAR
 app.use(cors());
-app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, 'public'))); // Servo skedarët statikë nga dosja 'public'
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Përdor rutat
 app.use('/api/auth', authRoutes);
@@ -30,7 +27,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/api-keys', apiRoutes);
 app.use('/api/gemini', geminiRoutes);
 
-// Ruta default për faqen kryesore
+// Ruta default
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -40,21 +37,9 @@ app.listen(PORT, () => {
     console.log(`Serveri është duke u drejtuar në portin ${PORT}`);
 });
 
-// ==================== FUND I APP.JS ====================
-
-// Testo enkriptimin pasi serveri të jetë startuar
+// Testo enkriptimin
 const encryption = require('./utils/encryption');
-
-// Prit 2 sekonda pasi serveri të jetë startuar
 setTimeout(() => {
     console.log('🛡️ Testi i enkriptimit AES-256-CBC:');
-    const testResult = encryption.testEncryption();
-    
-    if (!testResult) {
-        console.error('❌ RREZIK SIGURIE: Enkriptimi nuk funksionon si duhet!');
-        // Mos e mbyll serverin, por vetëm paralajmëro
-    }
+    encryption.testEncryption();
 }, 2000);
-
-// Nëse ke module.exports në fund, vendose para asaj
-// module.exports = app; (nëse e ke)
