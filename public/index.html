@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChatAI ALBA - Version i Ri me Server</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <style>
+    /* Stili për modalin e API Key */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+    }
+    
+    .modal-content {
+      background-color: #fefefe;
+      margin: 15% auto;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      width: 80%;
+      max-width: 500px;
+    }
+    
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    
+    .close:hover {
+      color: black;
+    }
+    
+    .api-key-form {
+      margin-top: 20px;
+    }
+    
+    .api-key-form input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    
+    .api-key-form .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    
+    .api-key-form button {
+      flex: 1;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    
+    .api-key-form button.save-btn {
+      background-color: #4285f4;
+    }
+    
+    .api-key-form button.save-btn:hover {
+      background-color: #3367d6;
+    }
+    
+    .api-key-form button.delete-btn {
+      background-color: #ea4335;
+    }
+    
+    .api-key-form button.delete-btn:hover {
+      background-color: #d33426;
+    }
+    
+    .api-status {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+    
+    .api-status.valid {
+      background-color: #e6f4ea;
+      color: #137333;
+    }
+    
+    .api-status.invalid {
+      background-color: #fce8e6;
+      color: #c5221f;
+    }
+  </style>
+</head>
+<body>
+  <!-- Login & Register - DESIGN I RI -->
+  <div id="login-screen">
+    <div class="login-container">
+      <div class="login-header">
+        <h1>Hygie</h1>
+        <p>Identifikohu për të hyrë në sistem</p>
+      </div>
+
+      <div class="login-form">
+        <div class="form-group">
+          <label for="username">Përdoruesi</label>
+          <input type="text" id="username" placeholder="Shkruaj emrin tënd" value="">
+        </div>
+
+        <div class="form-group">
+          <label for="password">Fjalëkalimi</label>
+          <input type="password" id="password" placeholder="Shkruaj fjalëkalimin">
+        </div>
+
+        <button class="login-btn" onclick="login()">Hyr</button>
+      </div>
+
+      <div class="divider">
+        <span>OSE</span>
+      </div>
+
+      <div class="register-section">
+        <h2>Regjistrim</h2>
+        
+        <div class="register-form">
+          <div class="form-group">
+            <label for="new-username">Përdoruesi i ri</label>
+            <input type="text" id="new-username" placeholder="Zgjidh një emër përdoruesi" value="">
+          </div>
+
+          <div class="form-group">
+            <label for="new-password">Fjalëkalimi i ri</label>
+            <input type="password" id="new-password" placeholder="Krijoni një fjalëkalim">
+          </div>
+
+          <div class="file-upload">
+            <label for="new-photo">Foto profili (opsionale)</label>
+            <label class="file-input">
+              <input type="file" id="new-photo" accept="image/*">
+              <span>Kliko për të ngarkuar foto</span>
+            </label>
+          </div>
+
+          <button class="login-btn" onclick="register()">Regjistrohu</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="debug-info"></div>
+  </div>
+
+  <!-- CHAT -->
+  <div id="chat-screen" style="display: none;">
+    <header>
+      <div id="user-profile">
+        <img id="profile-pic" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%234285f4'%3E%3Cpath d='M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E" alt="Foto profili">
+        <span id="profile-name"></span>
+      </div>
+      <button id="change-photo">🖼️ Ndrysho Foto</button>
+      <button id="api-key-btn">🔑 API Key</button>
+      <button id="download-history">📥 Shkarko</button>
+      <button id="upload-history">📤 Ngarko</button>
+      <button id="clear-history">🗑️ Fshi</button>
+      <button onclick="logout()">🚪 Dil</button>
+    </header>
+
+    <main id="chat"></main>
+
+    <footer id="input-area">
+      <button id="emoji-btn">😊</button>
+      <div id="emoji-panel" class="hidden">
+        <span>😀</span><span>😂</span><span>😍</span><span>🔥</span><span>😎</span>
+        <span>🤔</span><span>😢</span><span>❤️</span><span>👍</span><span>👎</span>
+      </div>
+      <input type="text" id="user-input" placeholder="Shkruaj mesazhin...">
+      <button id="send-btn">➤</button>
+    </footer>
+  </div>
+
+  <!-- Modal për API Key -->
+<div id="api-key-modal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Konfigurimi i API Key</h2>
+        <p>Vendos API Key për Gemini për të aktivizuar funksionalitetin e plotë të chatbotit.</p>
+        
+        <div class="api-key-form">
+            <input type="password" id="api-key-input" placeholder="Vendos API Key tënde këtu">
+            
+            <div class="button-group">
+                <button class="save-btn" onclick="saveApiKeyToServer()">💾 Ruaj në Server</button>
+                <button class="delete-btn" onclick="deleteApiKeyFromServer()">🗑️ Fshi nga Serveri</button>
+            </div>
+        </div>
+        
+        <div id="api-key-status" class="api-status"></div>
+        
+        <p><small>Nuk ke API Key? Vizito <a href="https://aistudio.google.com/" target="_blank">Google AI Studio</a> për të krijuar një.</small></p>
+        <p><small><strong>API Key ruhet i sigurt në server dhe enkriptuar!</strong></small></p>
+    </div>
+</div>
+
+  <script src="script.js"></script>
+  <script>
+    // Shtojmë funksionalitetin për modalin e API Key
+    document.addEventListener('DOMContentLoaded', function() {
+      const modal = document.getElementById('api-key-modal');
+      const btn = document.getElementById('api-key-btn');
+      const span = document.getElementsByClassName('close')[0];
+      
+      // Hap modalin kur klikohet butoni
+      btn.onclick = function() {
+        modal.style.display = 'block';
+        // Vendos vlerën aktuale nëse ekziston
+        const currentApiKey = localStorage.getItem('geminiApiKey') || '';
+        document.getElementById('api-key-input').value = currentApiKey;
+        updateApiKeyStatus(currentApiKey);
+      }
+      
+      // Mbyll modalin kur klikohet x
+      span.onclick = function() {
+        modal.style.display = 'none';
+      }
+      
+      // Mbyll modalin kur klikohet jashtë
+      window.onclick = function(event) {
+        if (event.target == modal) {
+          modal.style.display = 'none';
+        }
+      }
+    });
+    
+    // Funksioni për ruajtjen e API Key
+    function saveApiKey() {
+      const apiKey = document.getElementById('api-key-input').value.trim();
+      
+      if (apiKey) {
+        localStorage.setItem('geminiApiKey', apiKey);
+        // Përditëso variablin global në script.js
+        if (typeof geminiApiKey !== 'undefined') {
+          geminiApiKey = apiKey;
+        }
+        
+        updateApiKeyStatus(apiKey);
+        document.getElementById('api-key-modal').style.display = 'none';
+        
+        // Informo përdoruesin
+        if (typeof addMessage !== 'undefined') {
+          addMessage("✅ API Key u ruajt me sukses!", "bot");
+        }
+      } else {
+        document.getElementById('api-key-status').textContent = "Ju lutem vendosni një API Key valid.";
+        document.getElementById('api-key-status').className = "api-status invalid";
+      }
+    }
+    
+    // Funksioni për fshirjen e API Key
+    function deleteApiKey() {
+      localStorage.removeItem('geminiApiKey');
+      // Përditëso variablin global në script.js
+      if (typeof geminiApiKey !== 'undefined') {
+        geminiApiKey = "";
+      }
+      
+      document.getElementById('api-key-input').value = "";
+      updateApiKeyStatus("");
+      
+      // Informo përdoruesin
+      if (typeof addMessage !== 'undefined') {
+        addMessage("🗑️ API Key u fshi!", "bot");
+      }
+    }
+    
+    // Funksioni për të përditësuar statusin e API Key
+    function updateApiKeyStatus(apiKey) {
+      const statusElement = document.getElementById('api-key-status');
+      
+      if (apiKey) {
+        statusElement.textContent = "✅ API Key është i konfiguruar (të parat 10 karaktere: " + apiKey.substring(0, 10) + "...)";
+        statusElement.className = "api-status valid";
+      } else {
+        statusElement.textContent = "❌ Nuk ka API Key të konfiguruar. Chatboti nuk do të funksionojë plotësisht.";
+        statusElement.className = "api-status invalid";
+      }
+    }
+  </script>
+</body>
+</html>

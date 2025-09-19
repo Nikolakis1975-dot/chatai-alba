@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ChatAI Alba</string>
+    <string name="title_activity_main">ChatAI Alba</string>
+    <string name="package_name">com.alba.chatai</string>
+    <string name="custom_url_scheme">com.alba.chatai</string>
+</resources>
