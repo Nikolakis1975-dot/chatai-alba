@@ -1,8 +1,10 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
-// Vendos path-in e bazës së të dhënave
-const dbPath = path.join(__dirname, 'data', 'chat.db');
+// Përdor /tmp/ për Render.com, data/ për development
+const dbPath = process.env.NODE_ENV === 'production' 
+    ? '/tmp/chat.db'
+    : path.join(__dirname, 'data', 'chat.db');
 
 // Krijazo një instance të re të bazës së të dhënave
 const db = new sqlite3.Database(dbPath, (err) => {
@@ -13,6 +15,8 @@ const db = new sqlite3.Database(dbPath, (err) => {
         initializeDatabase();
     }
 });
+
+// ... pjesa tjetër e kodit mbetet e njëjtë ...
 
 // Funksioni për të inicializuar tabelat nëse nuk ekzistojnë
 function initializeDatabase() {
