@@ -10,6 +10,7 @@ const chatRoutes = require('./routes/chat');
 const userRoutes = require('./routes/users');
 const apiRoutes = require('./routes/api');
 const geminiRoutes = require('./routes/gemini');
+const adminRoutes = require('./routes/admin'); // ✅ Shto këtë
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -26,6 +27,7 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/api-keys', apiRoutes);
 app.use('/api/gemini', geminiRoutes);
+app.use('/admin', adminRoutes); // ✅ Shto këtë
 
 // Ruta default
 app.get('/', (req, res) => {
