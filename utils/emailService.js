@@ -14,6 +14,7 @@ class EmailService {
         
         return true;
     }
+}
 
     class EmailService {
     static async sendVerificationEmail(userEmail, verificationToken) {
