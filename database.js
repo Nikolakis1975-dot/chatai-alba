@@ -26,10 +26,10 @@ function initializeDatabase() {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE NOT NULL,
             password TEXT NOT NULL,
-            email TEXT,                          ✅ // KOLONA E RE
-            verification_token TEXT,             ✅ // KOLONA E RE  
-            verification_token_expires DATETIME, ✅ // KOLONA E RE
-            is_verified BOOLEAN DEFAULT FALSE,   ✅ // KOLONA E RE
+            email TEXT,                          
+            verification_token TEXT,             
+            verification_token_expires DATETIME, 
+            is_verified BOOLEAN DEFAULT FALSE,   
             profile_picture TEXT,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
@@ -83,94 +83,7 @@ function initializeDatabase() {
         )
     `);
 
-    console.log('✅ Tabelat e databazës janë inicializuar me sukses me të gjitha kolonat e reja!');
-    
-    // ✅ Shto kolonat nëse tabela ekziston por nuk i ka kolonat e reja
-    addNewColumnsIfMissing();
+    console.log('✅ Tabelat e databazës janë inicializuar me sukses!');
 }
-
-// ✅ FUNKSION I RI: Shto kolonat e reja nëse mungojnë
-// ✅ FUNKSION I RREGULLUAR: Shto kolonat e reja nëse mungojnë
-function addNewColumnsIfMissing() {
-    const newColumns = [
-        { name: 'email', sql: 'ADD COLUMN email TEXT' },
-        { name: 'verification_token', sql: 'ADD COLUMN verification_token TEXT' },
-        { name: 'verification_token_expires', sql: 'ADD COLUMN verification_token_expires DATETIME' },
-        { name: 'is_verified', sql: 'ADD COLUMN is_verified BOOLEAN DEFAULT FALSE' }
-    ];
-
-    newColumns.forEach(column => {
-        db.run(
-            `ALTER TABLE users ${column.sql}`,
-            function(err) {
-                if (err) {
-                    if (err.message.includes('duplicate column name')) {
-                        console.log(`✅ Kolona '${column.name}' ekziston tashmë`);
-                    } else {
-                        console.log(`ℹ️  Gabim me kolonën '${column.name}': ${err.message}`);
-                    }
-                } else {
-                    console.log(`✅ Kolona '${column.name}' u shtua me sukses`);
-                }
-            }
-        );
-    });
-}
-
-// Funksion për të kontrolluar nëse një tabelë ekziston
-function tableExists(tableName, callback) {
-    db.get(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
-        [tableName],
-        (err, row) => {
-            if (err) {
-                callback(err, false);
-            } else {
-                callback(null, !!row);
-            }
-        }
-    );
-}
-
-// Funksion për të shtuar kolonën user_id nëse knowledge_base ekziston pa të
-function addUserIdToKnowledgeBase() {
-    db.all(
-        "PRAGMA table_info(knowledge_base)",
-        (err, rows) => {
-            if (err) {
-                console.error('Gabim gjatë kontrollimit të strukturës së tabelës:', err);
-                return;
-            }
-
-            const hasUserId = rows.some(row => row.name === 'user_id');
-            
-            if (!hasUserId) {
-                console.log('Shtohet kolona user_id në tabelën knowledge_base...');
-                db.run(
-                    "ALTER TABLE knowledge_base ADD COLUMN user_id INTEGER NOT NULL DEFAULT 1",
-                    (err) => {
-                        if (err) {
-                            console.error('Gabim gjatë shtimit të kolonës user_id:', err);
-                        } else {
-                            console.log('Kolona user_id u shtua me sukses në knowledge_base.');
-                        }
-                    }
-                );
-            }
-        }
-    );
-}
-
-// Kontrollo dhe përditëso tabelat nëse është e nevojshme
-tableExists('knowledge_base', (err, exists) => {
-    if (err) {
-        console.error('Gabim gjatë kontrollimit të tabelës knowledge_base:', err);
-        return;
-    }
-    
-    if (exists) {
-        addUserIdToKnowledgeBase();
-    }
-});
 
 module.exports = db;
