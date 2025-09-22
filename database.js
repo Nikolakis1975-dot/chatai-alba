@@ -18,12 +18,18 @@ const db = new sqlite3.Database(dbPath, (err) => {
 
 // Funksioni për të inicializuar tabelat nëse nuk ekzistojnë
 function initializeDatabase() {
-    // Tabela e përdoruesve
+    console.log('🔄 Duke inicializuar databazën...');
+    
+    // ✅ TABELA E PËRDORUESVE ME KOLONAT E REJA PËR VERIFIKIM EMAIL-I
     db.run(`
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE NOT NULL,
             password TEXT NOT NULL,
+            email TEXT,                          ✅ // KOLONA E RE
+            verification_token TEXT,             ✅ // KOLONA E RE  
+            verification_token_expires DATETIME, ✅ // KOLONA E RE
+            is_verified BOOLEAN DEFAULT FALSE,   ✅ // KOLONA E RE
             profile_picture TEXT,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
@@ -41,7 +47,7 @@ function initializeDatabase() {
         )
     `);
 
-    // Tabela e njohurive (ME user_id të shtuar)
+    // Tabela e njohurive
     db.run(`
         CREATE TABLE IF NOT EXISTS knowledge_base (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -77,7 +83,37 @@ function initializeDatabase() {
         )
     `);
 
-    console.log('Tabelat e databazës janë inicializuar me sukses.');
+    console.log('✅ Tabelat e databazës janë inicializuar me sukses me të gjitha kolonat e reja!');
+    
+    // ✅ Shto kolonat nëse tabela ekziston por nuk i ka kolonat e reja
+    addNewColumnsIfMissing();
+}
+
+// ✅ FUNKSION I RI: Shto kolonat e reja nëse mungojnë
+function addNewColumnsIfMissing() {
+    const newColumns = [
+        { name: 'email', type: 'TEXT' },
+        { name: 'verification_token', type: 'TEXT' },
+        { name: 'verification_token_expires', type: 'DATETIME' },
+        { name: 'is_verified', type: 'BOOLEAN DEFAULT FALSE' }
+    ];
+
+    newColumns.forEach(column => {
+        db.run(
+            `ALTER TABLE users ADD COLUMN ${column.name} ${column.type}`,
+            function(err) {
+                if (err) {
+                    if (err.message.includes('duplicate column name')) {
+                        console.log(`✅ Kolona '${column.name}' ekziston tashmë`);
+                    } else {
+                        console.log(`ℹ️  Gabim me kolonën '${column.name}': ${err.message}`);
+                    }
+                } else {
+                    console.log(`✅ Kolona '${column.name}' u shtua me sukses`);
+                }
+            }
+        );
+    });
 }
 
 // Funksion për të kontrolluar nëse një tabelë ekziston
