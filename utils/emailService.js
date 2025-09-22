@@ -15,16 +15,17 @@ class EmailService {
         return true;
     }
 
-    static async sendPasswordResetEmail(userEmail, resetToken) {
-        // ✅ RREGULLUAR EDHE KËTU:
-        const resetLink = `https://chatai-alba.onrender.com/reset-password?token=${resetToken}`;
+    class EmailService {
+    static async sendVerificationEmail(userEmail, verificationToken) {
+        // ✅ PERDOR URL-NË E PRODUKTIONIT
+        const verificationLink = `https://chatai-alba.onrender.com/api/auth/verify-email?token=${verificationToken}`;
         
-        console.log('\n📧 ===== RESET PASSWORD (PRODUCTION MODE) =====');
+        console.log('\n📧 ===== EMAIL VERIFIKIMI (PRODUCTION) =====');
         console.log(`📨 Për: ${userEmail}`);
-        console.log(`🔗 Linku i resetimit: ${resetLink}`);
-        console.log(`🔐 Token: ${resetToken}`);
-        console.log('⏰ Skadon pas: 1 ore');
-        console.log('📧 ===========================================\n');
+        console.log(`🔗 Linku i verifikimit: ${verificationLink}`);
+        console.log(`🔐 Token: ${verificationToken}`);
+        console.log('💡 KOPJOJE KËTË LINK NË SHFRETUES!');
+        console.log('📧 ========================================\n');
         
         return true;
     }
