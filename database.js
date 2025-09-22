@@ -90,17 +90,18 @@ function initializeDatabase() {
 }
 
 // ✅ FUNKSION I RI: Shto kolonat e reja nëse mungojnë
+// ✅ FUNKSION I RREGULLUAR: Shto kolonat e reja nëse mungojnë
 function addNewColumnsIfMissing() {
     const newColumns = [
-        { name: 'email', type: 'TEXT' },
-        { name: 'verification_token', type: 'TEXT' },
-        { name: 'verification_token_expires', type: 'DATETIME' },
-        { name: 'is_verified', type: 'BOOLEAN DEFAULT FALSE' }
+        { name: 'email', sql: 'ADD COLUMN email TEXT' },
+        { name: 'verification_token', sql: 'ADD COLUMN verification_token TEXT' },
+        { name: 'verification_token_expires', sql: 'ADD COLUMN verification_token_expires DATETIME' },
+        { name: 'is_verified', sql: 'ADD COLUMN is_verified BOOLEAN DEFAULT FALSE' }
     ];
 
     newColumns.forEach(column => {
         db.run(
-            `ALTER TABLE users ADD COLUMN ${column.name} ${column.type}`,
+            `ALTER TABLE users ${column.sql}`,
             function(err) {
                 if (err) {
                     if (err.message.includes('duplicate column name')) {
