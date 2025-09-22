@@ -6,6 +6,7 @@ const path = require('path');
 
 // Importo rutat
 const authRoutes = require('./routes/auth');
+const authEnhanced = require('./routes/auth-enhanced');
 const chatRoutes = require('./routes/chat');
 const userRoutes = require('./routes/users');
 const apiRoutes = require('./routes/api');
@@ -23,6 +24,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Përdor rutat
 app.use('/api/auth', authRoutes);
+app.use('/api/auth', authEnhanced);
 app.use('/api/chat', chatRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/api-keys', apiRoutes);
