@@ -1,43 +1,43 @@
-// verification.js - VERSIONI I PLOTË I VERIFIKIMIT
+// verification.js - VERSION I RREGULLUAR PËR SISTEMIN E VJETËR
 console.log('✅ verification.js u ngarkua!');
 
-// Funksioni kryesor i verifikimit
 async function verifyEmail() {
     console.log('🎯 BUTONI I VERIFIKIMIT U KLIKUA!');
     
     try {
-        // Merr token-in nga localStorage
-        const token = localStorage.getItem('token');
-        console.log('🔐 Token-i:', token ? 'EKZISTON' : 'NUK EKZISTON');
+        // DEBUG: Kontrollo nëse jemi në session
+        console.log('🔍 DEBUG: Duke kontrolluar session-in...');
         
-        if (!token) {
-            alert('❌ Ju nuk jeni i loguar!');
-            return;
-        }
-
-        // Merr të dhënat e përdoruesit
-        const userResponse = await fetch('/api/auth/me', {
-            headers: {
-                'Authorization': 'Bearer ' + token
-            }
-        });
-
+        // Përdor fetch pa token - serveri do të përdorë session cookie
+        const userResponse = await fetch('/api/auth/me');
+        
+        console.log('📡 Statusi i përgjigjes së përdoruesit:', userResponse.status);
+        
         if (!userResponse.ok) {
-            alert('❌ Gabim në marrjen e të dhënave të përdoruesit');
+            if (userResponse.status === 401) {
+                alert('❌ Ju nuk jeni i loguar! Hyni përsëri në sistem.');
+            } else {
+                alert('❌ Problem me serverin. Status: ' + userResponse.status);
+            }
             return;
         }
 
         const userData = await userResponse.json();
-        console.log('👤 Përdoruesi:', userData);
+        console.log('👤 Të dhënat e përdoruesit:', userData);
 
-        // Dërgo kërkesën për verifikim
+        if (!userData.email) {
+            alert('❌ Nuk u gjet email për përdoruesin!');
+            return;
+        }
+
+        // Dërgo kërkesën për verifikim PA token
         console.log('📧 Duke dërguar email verifikimi për:', userData.email);
         
         const response = await fetch('/api/auth/resend-verification', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + token
+                'Content-Type': 'application/json'
+                // NUK ka header Authorization - përdor session cookie
             },
             body: JSON.stringify({
                 email: userData.email
@@ -45,10 +45,10 @@ async function verifyEmail() {
         });
 
         const result = await response.json();
-        console.log('📨 Përgjigja nga serveri:', result);
+        console.log('📨 Përgjigja e plotë nga serveri:', result);
 
         if (result.success) {
-            alert('✅ ' + result.message + '\n\nShiko konsolën e serverit për linkun e verifikimit!');
+            alert('✅ ' + result.message + '\n\nShiko konsolën e serverit (Render.com logs) për linkun e verifikimit!');
         } else {
             alert('❌ ' + result.message);
         }
@@ -59,49 +59,28 @@ async function verifyEmail() {
     }
 }
 
-// Funksion për të kontrolluar statusin e verifikimit
-async function checkVerificationStatus() {
+// Kontrollo nëse përdoruesi është i loguar
+async function checkLoginStatus() {
     try {
-        const token = localStorage.getItem('token');
-        if (!token) return;
-
-        const response = await fetch('/api/auth/me', {
-            headers: {
-                'Authorization': 'Bearer ' + token
-            }
-        });
-
+        const response = await fetch('/api/auth/me');
         if (response.ok) {
             const userData = await response.json();
-            const verifyBtn = document.getElementById('verify-email-btn');
-            
-            if (userData.is_verified && verifyBtn) {
-                verifyBtn.style.display = 'none';
-                console.log('✅ Përdoruesi është i verifikuar - butoni u fshi');
-            }
+            console.log('🔐 Përdoruesi i loguar:', userData.username);
+            return true;
         }
+        return false;
     } catch (error) {
-        console.error('Gabim në kontrollimin e statusit:', error);
+        console.log('🔐 Përdoruesi nuk është i loguar');
+        return false;
     }
 }
 
-// Inicializimi automatik
+// Inicializimi
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🔧 verification.js u inicializua!');
     
-    // Kontrollo statusin e verifikimit çdo 5 sekonda
-    setInterval(checkVerificationStatus, 5000);
-    
-    // Kontrollo menjëherë
-    setTimeout(checkVerificationStatus, 1000);
+    // Kontrollo statusin e login-it
+    checkLoginStatus().then(isLoggedIn => {
+        console.log('🔐 Gjendja e login-it në inicializim:', isLoggedIn ? 'I LOGUAR' : 'I PALOGUAR');
+    });
 });
-
-// Event listener i sigurt për butonin
-setInterval(() => {
-    const btn = document.getElementById('verify-email-btn');
-    if (btn && !btn.hasAttribute('data-verification-listener')) {
-        btn.onclick = verifyEmail;
-        btn.setAttribute('data-verification-listener', 'true');
-        console.log('✅ Event listener u shtua në butonin e verifikimit!');
-    }
-}, 1000);
