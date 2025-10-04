@@ -358,7 +358,7 @@ router.get('/status-old/:userId/:serviceName?', (req, res) => {
     );
 });
 
-// ✅ 7. FUNKSIONI I CHAT PËR GEMINI (I RI - KY MUNGOJTE!)
+// ✅ 7. FUNKSIONI I CHAT PËR GEMINI 2.5 FLASH (VERSION I RI)
 router.post('/chat', authenticateToken, async (req, res) => {
     try {
         const { message } = req.body;
@@ -399,10 +399,10 @@ router.post('/chat', authenticateToken, async (req, res) => {
                     const apiKey = encryption.decrypt(row.api_key);
                     console.log('🔑 API Key u dekriptua');
                     
-                    // ✅ Përdor MODEL STABLE - Gemini 1.5 Flash
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+                    // ✅ Përdor GEMINI 2.5 FLASH - MODEL I RI
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
                     
-                    console.log('🚀 Duke dërguar request në Gemini API...');
+                    console.log('🚀 Duke dërguar request në Gemini 2.5 Flash...');
 
                     const response = await fetch(apiUrl, {
                         method: "POST",
@@ -432,10 +432,9 @@ router.post('/chat', authenticateToken, async (req, res) => {
                                 response: '❌ API Key i pavlefshëm. Kontrollo API Key.'
                             });
                         } else if (response.status === 404) {
-                            return res.json({
-                                success: false,
-                                response: '❌ Modeli nuk u gjet. Provo përsëri.'
-                            });
+                            // ✅ Fallback nëse Gemini 2.5 nuk funksionon
+                            console.log('🔄 Gemini 2.5 nuk u gjet, duke provuar Gemini 1.5 Flash...');
+                            return await tryGeminiFallback(apiKey, message, userId, res);
                         } else if (response.status === 429) {
                             return res.json({
                                 success: false,
@@ -450,7 +449,7 @@ router.post('/chat', authenticateToken, async (req, res) => {
                     }
 
                     const data = await response.json();
-                    console.log('✅ Përgjigja nga Gemini u mor me sukses!');
+                    console.log('✅ Përgjigja nga Gemini 2.5 Flash u mor me sukses!');
                     
                     if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
                         const geminiResponse = data.candidates[0].content.parts[0].text;
@@ -475,7 +474,7 @@ router.post('/chat', authenticateToken, async (req, res) => {
                         console.error('❌ Struktura e papritur e përgjigjes:', data);
                         res.json({
                             success: false,
-                            response: "❌ Nuk u mor përgjigje e pritshme nga Gemini"
+                            response: "❌ Nuk u mor përgjigje e pritshme nga Gemini 2.5 Flash"
                         });
                     }
 
@@ -497,5 +496,62 @@ router.post('/chat', authenticateToken, async (req, res) => {
         });
     }
 });
+
+// ✅ 8. FUNKSION FALLBACK PËR GEMINI 1.5 FLASH
+async function tryGeminiFallback(apiKey, message, userId, res) {
+    try {
+        console.log('🔄 Duke provuar Gemini 1.5 Flash si fallback...');
+        
+        const fallbackUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        
+        const response = await fetch(fallbackUrl, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                contents: [{
+                    parts: [{ text: message }]
+                }],
+                generationConfig: {
+                    temperature: 0.7,
+                    maxOutputTokens: 1000,
+                }
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Fallback failed: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
+            const geminiResponse = data.candidates[0].content.parts[0].text;
+            
+            // ✅ Ruaj në historinë e bisedave
+            db.run(
+                'INSERT INTO messages (user_id, message, response, timestamp) VALUES (?, ?, ?, datetime("now"))',
+                [userId, message, geminiResponse],
+                (err) => {
+                    if (err) console.error('❌ Gabim në ruajtjen e mesazhit:', err);
+                }
+            );
+
+            return res.json({
+                success: true,
+                response: geminiResponse
+            });
+        } else {
+            throw new Error('No response from fallback model');
+        }
+    } catch (fallbackError) {
+        console.error('❌ Gabim në fallback:', fallbackError);
+        return res.json({
+            success: false,
+            response: '❌ Asnjë model Gemini nuk funksionon. Kontrollo API Key.'
+        });
+    }
+}
 
 module.exports = router;
