@@ -18,11 +18,9 @@ const adminRoutes = require('./routes/admin');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ✅ 1. CORS CONFIGURATION - DUHET TË JETË E PARË
+// ✅ 1. CORS CONFIGURATION - VETËM DIGITALOCEAN
 app.use(cors({
-    origin: process.env.NODE_ENV === 'production' 
-        ? ['https://chatai-alba-gr9dw.ondigitalocean.app', 'https://chatai-alba.onrender.com'] 
-        : ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:3001'],
+    origin: 'https://chatai-alba-gr9dw.ondigitalocean.app',
     credentials: true, // ✅ Kjo lejon cookies
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
