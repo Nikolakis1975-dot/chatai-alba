@@ -45,6 +45,9 @@ app.use('/api/email', emailVerification);
 app.use('/api/api-keys', apiRoutes);
 app.use('/api/gemini', geminiRoutes);
 app.use('/admin', adminRoutes);
+// ✅ Rrugët e API Keys (për frontend-in e ri)
+app.use('/api', require('./routes/api')); // ✅ Kjo ekziston
+app.use('/api/api-keys', require('./routes/api')); // ✅ Shto edhe këtë për kompatibilitet
 
 // ✅ 6. RUTA DEFAULT
 app.get('/', (req, res) => {
