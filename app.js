@@ -21,9 +21,11 @@ const PORT = process.env.PORT || 3000;
 // ✅ 1. CORS CONFIGURATION - DUHET TË JETË E PARË
 app.use(cors({
     origin: process.env.NODE_ENV === 'production' 
-        ? 'https://chatai-alba.onrender.com' 
-        : ['http://localhost:3000', 'http://127.0.0.1:3000'],
-    credentials: true // ✅ Kjo lejon cookies
+        ? ['https://chatai-alba-gr9dw.ondigitalocean.app', 'https://chatai-alba.onrender.com'] 
+        : ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:3001'],
+    credentials: true, // ✅ Kjo lejon cookies
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
 }));
 
 // ✅ 2. COOKIE PARSER - DUHET TË JETË PARA BODY PARSER
