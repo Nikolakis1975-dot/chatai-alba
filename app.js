@@ -18,10 +18,10 @@ const adminRoutes = require('./routes/admin');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ✅ 1. CORS CONFIGURATION - VETËM DIGITALOCEAN
+// ✅ 1. CORS CONFIGURATION - FIXED!
 app.use(cors({
     origin: 'https://chatai-alba-gr9dw.ondigitalocean.app',
-    credentials: true, // ✅ Kjo lejon cookies
+    credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
 }));
