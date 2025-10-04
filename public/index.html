@@ -500,7 +500,6 @@ apiBtn.onclick = async function() {
     });
 
  // ✅ FUNKSION I KORRIGJUAR PËR RUAJTJE API KEY
-// ✅ FUNKSION I KORRIGJUAR PËR RUAJTJE API KEY
 async function saveApiKeyToServer() {
     try {
         const apiKey = document.getElementById('api-key-input').value.trim();
@@ -515,29 +514,18 @@ async function saveApiKeyToServer() {
         document.getElementById('api-key-status').textContent = "🔄 Po ruhet në server...";
         document.getElementById('api-key-status').className = "api-status";
 
-        // ✅ URL I KORRIGJUAR: /api/save
-        // ✅ PËRDOR VETËM RUGËT E VJETRA QË FUNKSIONOJNË:
-
-// Në saveApiKeyToServer():
-const response = await fetch('/api/save-old', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({
-        userId: currentUser.userId, // ✅ Shto userId
-        apiKey: apiKey,
-        serviceName: 'gemini'
-    })
-});
-
-// Në deleteApiKeyFromServer():
-const response = await fetch('/api/delete', { // ✅ Kjo mund të mos ekzistojë
-    // Ose përdor rrugë alternative
-});
-
-// Në updateApiKeyStatus():
-const response = await fetch('/api/status-old/' + currentUser.userId + '/gemini', {
-    // ✅ Përdor rrugën e vjetër që funksionon
-});
+        // ✅ URL I KORRIGJUAR: /api/api-keys/save (JO /api/api-keys/api-keys/save)
+        const response = await fetch('/api/api-keys/save', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+                apiKey: apiKey,
+                serviceName: 'gemini'
+            })
+        });
 
         const data = await response.json();
         console.log('📥 Përgjigja nga serveri:', data);
@@ -569,8 +557,8 @@ async function deleteApiKeyFromServer() {
         document.getElementById('api-key-status').textContent = "🔄 Po fshihet nga serveri...";
         document.getElementById('api-key-status').className = "api-status";
 
-        // ✅ URL I KORRIGJUAR: /api/delete
-        const response = await fetch('/api/delete', {
+        // ✅ URL I KORRIGJUAR: /api/api-keys/delete
+        const response = await fetch('/api/api-keys/delete', {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json'
@@ -606,8 +594,8 @@ async function updateApiKeyStatus() {
     const statusElement = document.getElementById('api-key-status');
     
     try {
-        // ✅ URL I KORRIGJUAR: /api/status/gemini
-        const response = await fetch('/api/status/gemini', {
+        // ✅ URL I KORRIGJUAR: /api/api-keys/status/gemini
+        const response = await fetch('/api/api-keys/status/gemini', {
             credentials: 'include'
         });
 
@@ -641,8 +629,8 @@ async function updateApiKeyStatus() {
 // ✅ FUNKSION I KORRIGJUAR PËR MARRJE API KEY PËR CHATBOT
 async function getApiKeyFromServer() {
     try {
-        // ✅ URL I KORRIGJUAR: /api/get/gemini
-        const response = await fetch('/api/get/gemini', {
+        // ✅ URL I KORRIGJUAR: /api/api-keys/get/gemini
+        const response = await fetch('/api/api-keys/get/gemini', {
             credentials: 'include'
         });
 
