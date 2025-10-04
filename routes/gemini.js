@@ -1,23 +1,55 @@
 const express = require('express');
 const db = require('../database');
 const encryption = require('../utils/encryption');
+const jwt = require('jsonwebtoken');
 const router = express.Router();
 
-// ✅ API për Gemini me fetch direkt
-router.post('/ask', async (req, res) => {
-    const { userId, message } = req.body;
+// ✅ MIDDLEWARE PËR AUTHENTICATION ME HTTP-ONLY COOKIE
+const authenticateToken = (req, res, next) => {
+    try {
+        const token = req.cookies.auth_token;
+        
+        if (!token) {
+            return res.status(401).json({ 
+                success: false, 
+                error: '❌ Nuk jeni i loguar' 
+            });
+        }
+        
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_2024');
+        req.user = decoded;
+        next();
+    } catch (error) {
+        return res.status(401).json({ 
+            success: false, 
+            error: '❌ Session i pavlefshëm' 
+        });
+    }
+};
 
-    console.log('💬 Duke përpunuar kërkesë për Gemini:', { userId, message });
+// ✅ API PËR TË KOMUNIKUAR ME GEMINI 2.0 FLASH - MODELI I VJETËR QË PUNON
+router.post('/ask', authenticateToken, async (req, res) => {
+    const { message } = req.body;
+    
+    console.log('🔐 User objekti nga token:', req.user);
+    console.log('📝 Mesazhi:', message);
+    
+    const userId = req.user.userId;
 
-    if (!userId || !message) {
+    console.log('💬 Duke përpunuar kërkesë për Gemini:', { 
+        userId, 
+        message: message ? message.substring(0, 50) + '...' : 'No message' 
+    });
+
+    if (!message) {
         return res.status(400).json({ 
             success: false, 
-            error: '❌ Të dhëna të pamjaftueshme' 
+            error: '❌ Mesazhi është i zbrazët' 
         });
     }
 
     try {
-        // Merr API Key nga databaza
+        // Merr API Key nga databaza për këtë user
         db.get(
             'SELECT api_key FROM api_keys WHERE user_id = ? AND service_name = ?',
             [userId, 'gemini'],
@@ -30,82 +62,91 @@ router.post('/ask', async (req, res) => {
                     });
                 }
 
+                console.log('📊 Rezultati nga databaza:', row);
+                
                 if (!row || !row.api_key) {
+                    console.log('❌ API Key nuk u gjet për user:', userId);
                     return res.status(400).json({ 
                         success: false, 
-                        error: '❌ API Key nuk u gjet. Përdor /apikey [key_jote]' 
+                        error: '❌ Nuk është konfiguruar API Key për Gemini. Përdor /apikey [key_jote]' 
                     });
                 }
 
                 try {
-                    // Dekripto API Key
+                    // Dekripto API Key me AES-256
+                    console.log('🔓 Duke dekriptuar API Key...');
                     const apiKey = encryption.decrypt(row.api_key);
-                    console.log('🔑 API Key u dekriptua');
+                    console.log('✅ API Key u dekriptua me sukses');
+
+                    // ✅ PËRDOR MODELIN E VJETËR QË PUNON: gemini-2.0-flash
+                    const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
                     
-                    // ✅ Përdor Gemini API direkt me fetch
-                    const response = await fetch(
-                        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
-                        {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/json",
-                            },
-                            body: JSON.stringify({
-                                contents: [{
-                                    parts: [{ text: message }]
-                                }],
-                                generationConfig: {
-                                    temperature: 0.7,
-                                    maxOutputTokens: 1000,
-                                }
-                            })
-                        }
-                    );
+                    console.log("🌐 Duke bërë thirrje në Gemini API...");
+
+                    const response = await fetch(apiUrl, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-goog-api-key": apiKey
+                        },
+                        body: JSON.stringify({
+                            contents: [{
+                                parts: [{
+                                    text: message
+                                }]
+                            }],
+                            generationConfig: {
+                                temperature: 0.7,
+                                topK: 40,
+                                topP: 0.95,
+                                maxOutputTokens: 1024,
+                            }
+                        })
+                    });
+
+                    console.log('📨 Përgjigja nga Gemini - Status:', response.status);
 
                     if (!response.ok) {
                         const errorText = await response.text();
-                        console.error('❌ Gabim nga Gemini API:', response.status, errorText);
+                        console.error('❌ Gabim nga Gemini API:', errorText);
                         
                         if (response.status === 401 || response.status === 403) {
-                            return res.json({
-                                success: false,
-                                error: '❌ API Key i pavlefshëm. Kontrollo API Key.'
+                            return res.status(400).json({ 
+                                success: false, 
+                                error: '❌ API Key i pasaktë' 
                             });
                         }
                         
-                        throw new Error(`HTTP ${response.status}: ${errorText}`);
+                        throw new Error(`❌ Gabim Gemini API: ${response.status}`);
                     }
 
                     const data = await response.json();
-                    console.log('✅ Përgjigja nga Gemini u mor');
-                    
-                    if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
-                        // ✅ Ruaj në historinë e bisedave
-                        db.run(
-                            'INSERT INTO messages (user_id, message, response, timestamp) VALUES (?, ?, ?, datetime("now"))',
-                            [userId, message, data.candidates[0].content.parts[0].text],
-                            (err) => {
-                                if (err) console.error('❌ Gabim në ruajtjen e mesazhit:', err);
-                            }
-                        );
 
+                    if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
                         res.json({
                             success: true,
                             response: data.candidates[0].content.parts[0].text
                         });
-                    } else {
+                    } 
+                    else if (data.error) {
+                        res.json({
+                            success: false,
+                            error: "❌ Gabim nga Gemini: " + data.error.message
+                        });
+                    }
+                    else {
                         console.error('❌ Struktura e papritur e përgjigjes:', data);
                         res.json({
                             success: false,
-                            error: "❌ Nuk u mor përgjigje e pritshme nga Gemini"
+                            error: "❌ Nuk u mor përgjigje e pritshme"
                         });
                     }
 
                 } catch (geminiError) {
                     console.error('❌ Gabim gjatë thirrjes së Gemini API:', geminiError);
-                    res.json({ 
+                    res.status(500).json({ 
                         success: false, 
-                        error: '❌ Gabim në Gemini: ' + geminiError.message 
+                        error: '❌ Gabim gjatë thirrjes: ' + geminiError.message 
                     });
                 }
             }
@@ -114,12 +155,12 @@ router.post('/ask', async (req, res) => {
         console.error('❌ Gabim i përgjithshëm:', error);
         res.status(500).json({ 
             success: false, 
-            error: '❌ Gabim në server' 
+            error: '❌ Gabim në server: ' + error.message 
         });
     }
 });
 
-// ✅ Ruta testuese
+// ✅ RUTA TESTUESE
 router.get('/test', (req, res) => {
     res.json({ 
         success: true, 
@@ -128,54 +169,49 @@ router.get('/test', (req, res) => {
     });
 });
 
-// ✅ Ruta për testimin e API Key
-router.post('/test-key', async (req, res) => {
-    const { apiKey } = req.body;
+// ✅ ENDPOINT PËR TESTIM TË DEKRIPTIMIT
+router.get('/test-decrypt', authenticateToken, (req, res) => {
+    const userId = req.user.userId;
 
-    if (!apiKey) {
-        return res.json({ 
-            success: false, 
-            message: '❌ Ju lutem jepni një API Key' 
-        });
-    }
-
-    try {
-        const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [{ text: "Test: Pershendetje! A funksionon kjo?" }]
-                    }],
-                    generationConfig: {
-                        temperature: 0.7,
-                        maxOutputTokens: 100,
-                    }
-                })
+    db.get(
+        'SELECT api_key FROM api_keys WHERE user_id = ? AND service_name = ?',
+        [userId, 'gemini'],
+        (err, row) => {
+            if (err) {
+                console.error('❌ Gabim në database:', err);
+                return res.status(500).json({ 
+                    success: false, 
+                    error: '❌ Gabim në server' 
+                });
             }
-        );
 
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: API Key i pavlefshëm`);
+            if (!row || !row.api_key) {
+                return res.json({ 
+                    success: false, 
+                    message: '❌ Nuk u gjet API Key' 
+                });
+            }
+
+            try {
+                console.log('🔐 API Key i enkriptuar:', row.api_key);
+                const decryptedKey = encryption.decrypt(row.api_key);
+                console.log('🔓 API Key i dekriptuar:', decryptedKey);
+                
+                res.json({
+                    success: true,
+                    encrypted: row.api_key,
+                    decrypted: decryptedKey,
+                    length: decryptedKey ? decryptedKey.length : 0
+                });
+            } catch (decryptError) {
+                console.error('❌ Gabim në dekriptim:', decryptError);
+                res.json({
+                    success: false,
+                    error: '❌ Gabim në dekriptim: ' + decryptError.message
+                });
+            }
         }
-
-        const data = await response.json();
-        
-        res.json({ 
-            success: true, 
-            message: '✅ API Key është VALID! Gemini 2.0 Flash funksionon.',
-            response: data.candidates[0].content.parts[0].text
-        });
-    } catch (error) {
-        res.json({ 
-            success: false, 
-            message: `❌ API Key është I PAVLEFSHËM: ${error.message}` 
-        });
-    }
+    );
 });
 
 module.exports = router;
