@@ -358,4 +358,127 @@ router.get('/status-old/:userId/:serviceName?', (req, res) => {
     );
 });
 
+// ✅ 7. FUNKSIONI I CHAT PËR GEMINI (I MUNGUAR!)
+router.post('/chat', authenticateToken, async (req, res) => {
+    try {
+        const { message } = req.body;
+        const userId = req.user.userId;
+        
+        if (!message) {
+            return res.json({ 
+                success: false, 
+                response: '❌ Ju lutem shkruani një mesazh.' 
+            });
+        }
+
+        console.log(`🤖 Duke përpunuar kërkesë chat për user ${userId}: ${message}`);
+
+        // ✅ Merr API Key direkt nga databaza
+        db.get(
+            'SELECT api_key FROM api_keys WHERE user_id = ? AND service_name = ?',
+            [userId, 'gemini'],
+            async (err, row) => {
+                if (err) {
+                    console.error('❌ Gabim në database:', err);
+                    return res.json({ 
+                        success: false, 
+                        response: '❌ Gabim në server' 
+                    });
+                }
+
+                if (!row || !row.api_key) {
+                    console.log('❌ API Key nuk u gjet për user:', userId);
+                    return res.json({ 
+                        success: false, 
+                        response: '❌ API Key nuk u gjet. Përdor /apikey [key_jote]' 
+                    });
+                }
+
+                try {
+                    // ✅ Dekripto API Key
+                    const apiKey = encryption.decrypt(row.api_key);
+                    console.log('🔑 API Key u dekriptua');
+                    
+                    // ✅ Bëj thirrjen direkt në Gemini API
+                    const response = await fetch(
+                        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
+                        {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({
+                                contents: [{
+                                    parts: [{ text: message }]
+                                }],
+                                generationConfig: {
+                                    temperature: 0.7,
+                                    maxOutputTokens: 1000,
+                                }
+                            })
+                        }
+                    );
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error('❌ Gabim nga Gemini API:', response.status, errorText);
+                        
+                        if (response.status === 401 || response.status === 403) {
+                            return res.json({
+                                success: false,
+                                response: '❌ API Key i pavlefshëm. Kontrollo API Key.'
+                            });
+                        }
+                        
+                        return res.json({
+                            success: false,
+                            response: '❌ Gabim në Gemini API. Provo përsëri.'
+                        });
+                    }
+
+                    const data = await response.json();
+                    console.log('✅ Përgjigja nga Gemini u mor');
+                    
+                    if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
+                        const geminiResponse = data.candidates[0].content.parts[0].text;
+                        
+                        // ✅ Ruaj në historinë e bisedave
+                        db.run(
+                            'INSERT INTO messages (user_id, message, response, timestamp) VALUES (?, ?, ?, datetime("now"))',
+                            [userId, message, geminiResponse],
+                            (err) => {
+                                if (err) console.error('❌ Gabim në ruajtjen e mesazhit:', err);
+                            }
+                        );
+
+                        res.json({
+                            success: true,
+                            response: geminiResponse
+                        });
+                    } else {
+                        console.error('❌ Struktura e papritur e përgjigjes:', data);
+                        res.json({
+                            success: false,
+                            response: "❌ Nuk u mor përgjigje e pritshme nga Gemini"
+                        });
+                    }
+
+                } catch (geminiError) {
+                    console.error('❌ Gabim gjatë thirrjes së Gemini API:', geminiError);
+                    res.json({ 
+                        success: false, 
+                        response: '❌ Gabim në Gemini: ' + geminiError.message 
+                    });
+                }
+            }
+        );
+
+    } catch (error) {
+        console.error('❌ Gabim i përgjithshëm në /chat:', error);
+        res.json({ 
+            success: false, 
+            response: '❌ Gabim në server. Provo përsëri.' 
+        });
+    }
+});
 module.exports = router;
