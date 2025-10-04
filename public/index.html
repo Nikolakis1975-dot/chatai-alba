@@ -647,28 +647,66 @@ async function getApiKeyFromServer() {
         return null;
     }
 }
-// ✅ FUNKSION I RI PËR STATUSIN E API KEY (PA LOCALSTORAGE)
+// ✅ FUNKSION I RI PËR API KEY (PA LOCALSTORAGE)
+async function saveApiKey() {
+    const apiKey = document.getElementById('api-key-input').value.trim();
+    
+    if (!apiKey) {
+        alert('❌ Ju lutem vendosni një API Key valid.');
+        return;
+    }
+
+    try {
+        // ✅ Përdor cookies - nuk dërgoj userId
+        const response = await fetch('/api/save', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            credentials: 'include', // ✅ Dërgon cookies
+            body: JSON.stringify({
+                apiKey: apiKey,
+                serviceName: 'gemini'
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            document.getElementById('api-key-status').textContent = "✅ " + data.message;
+            document.getElementById('api-key-status').className = "api-status valid";
+            
+            setTimeout(() => {
+                document.getElementById('api-key-modal').style.display = 'none';
+            }, 2000);
+        } else {
+            document.getElementById('api-key-status').textContent = "❌ " + data.message;
+            document.getElementById('api-key-status').className = "api-status invalid";
+        }
+    } catch (error) {
+        console.error('Gabim në ruajtjen e API Key:', error);
+        document.getElementById('api-key-status').textContent = "❌ Problem me serverin.";
+        document.getElementById('api-key-status').className = "api-status invalid";
+    }
+}
+
+// ✅ FUNKSION I RI PËR STATUS (PA LOCALSTORAGE)
 async function updateApiKeyStatus() {
     const statusElement = document.getElementById('api-key-status');
     
     try {
-        const response = await fetch('/api/api-keys/status/gemini', {
-            credentials: 'include'
+        // ✅ Përdor cookies - nuk dërgoj userId
+        const response = await fetch('/api/status/gemini', {
+            credentials: 'include' // ✅ Dërgon cookies
         });
 
         if (response.ok) {
             const data = await response.json();
             
             if (data.success && data.hasApiKey) {
-                // Nëse kemi API Key në server, trego status pozitiv
                 statusElement.textContent = "✅ API Key është i konfiguruar në server";
                 statusElement.className = "api-status valid";
-                
-                // Mund të vendosim vetëm placeholder në input
                 document.getElementById('api-key-input').value = "••••••••••••••••";
-                
             } else {
-                statusElement.textContent = "❌ Nuk ka API Key të konfiguruar. Chatboti nuk do të funksionojë plotësisht.";
+                statusElement.textContent = "❌ Nuk ka API Key të konfiguruar";
                 statusElement.className = "api-status invalid";
                 document.getElementById('api-key-input').value = "";
             }
@@ -681,6 +719,7 @@ async function updateApiKeyStatus() {
         statusElement.textContent = "❌ Problem me serverin";
         statusElement.className = "api-status invalid";
     }
-} </script>
+}
+  </script>
 </body>
 </html>
