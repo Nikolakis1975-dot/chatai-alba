@@ -28,91 +28,134 @@ const authenticateToken = async (req, res, next) => {
 };
 
 // ✅ 1. RUAJ API KEY (ENDPOINT I RI)
-router.post('/save', authenticateToken, async (req, res) => {
+// ✅ 7. FUNKSIONI I CHAT PËR GEMINI (ME MODELE STABLE)
+router.post('/chat', authenticateToken, async (req, res) => {
     try {
-        const { apiKey, serviceName = 'gemini' } = req.body;
+        const { message } = req.body;
         const userId = req.user.userId;
-
-        if (!apiKey) {
-            return res.status(400).json({ 
+        
+        if (!message) {
+            return res.json({ 
                 success: false, 
-                message: 'API Key është i zbrazët' 
+                response: '❌ Ju lutem shkruani një mesazh.' 
             });
         }
 
-        console.log(`📥 Ruajtje API Key për user ${userId}, shërbim: ${serviceName}`);
+        console.log(`🤖 Duke përpunuar kërkesë chat për user ${userId}: ${message}`);
 
-        // Enkripto API Key
-        const encryptedApiKey = encryption.encrypt(apiKey);
-
-        // Kontrollo nëse ekziston duke përdorur Promise
-        new Promise((resolve, reject) => {
-            db.get(
-                'SELECT id FROM api_keys WHERE user_id = ? AND service_name = ?',
-                [userId, serviceName],
-                (err, row) => {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        resolve(row);
-                    }
+        // ✅ Merr API Key direkt nga databaza
+        db.get(
+            'SELECT api_key FROM api_keys WHERE user_id = ? AND service_name = ?',
+            [userId, 'gemini'],
+            async (err, row) => {
+                if (err) {
+                    console.error('❌ Gabim në database:', err);
+                    return res.json({ 
+                        success: false, 
+                        response: '❌ Gabim në server' 
+                    });
                 }
-            );
-        })
-        .then(row => {
-            if (row) {
-                // UPDATE ekzistues
-                db.run(
-                    'UPDATE api_keys SET api_key = ? WHERE user_id = ? AND service_name = ?',
-                    [encryptedApiKey, userId, serviceName],
-                    function(err) {
-                        if (err) {
-                            console.error('❌ Gabim gjatë update:', err);
-                            return res.status(500).json({ 
-                                success: false, 
-                                message: 'Gabim gjatë përditësimit të API Key' 
+
+                if (!row || !row.api_key) {
+                    console.log('❌ API Key nuk u gjet për user:', userId);
+                    return res.json({ 
+                        success: false, 
+                        response: '❌ API Key nuk u gjet. Përdor /apikey [key_jote]' 
+                    });
+                }
+
+                try {
+                    // ✅ Dekripto API Key
+                    const apiKey = encryption.decrypt(row.api_key);
+                    console.log('🔑 API Key u dekriptua');
+                    
+                    // ✅ Përdor MODEL STABLE (jo eksperimental)
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+                    
+                    console.log('🚀 Duke dërguar request në Gemini 1.5 Flash...');
+
+                    const response = await fetch(apiUrl, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            contents: [{
+                                parts: [{ text: message }]
+                            }],
+                            generationConfig: {
+                                temperature: 0.7,
+                                maxOutputTokens: 1000,
+                            }
+                        })
+                    });
+
+                    console.log('📨 Statusi i përgjigjes:', response.status);
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error('❌ Gabim nga Gemini API:', response.status, errorText);
+                        
+                        if (response.status === 401 || response.status === 403) {
+                            return res.json({
+                                success: false,
+                                response: '❌ API Key i pavlefshëm. Kontrollo API Key.'
+                            });
+                        } else if (response.status === 404) {
+                            return res.json({
+                                success: false,
+                                response: '❌ Modeli nuk u gjet. Provo përsëri.'
                             });
                         }
-                        res.json({ 
-                            success: true,
-                            message: '✅ API Key u përditësua me sukses!' 
+                        
+                        return res.json({
+                            success: false,
+                            response: '❌ Gabim në Gemini API. Provo përsëri.'
                         });
                     }
-                );
-            } else {
-                // INSERT i ri
-                db.run(
-                    'INSERT INTO api_keys (user_id, api_key, service_name) VALUES (?, ?, ?)',
-                    [userId, encryptedApiKey, serviceName],
-                    function(err) {
-                        if (err) {
-                            console.error('❌ Gabim gjatë insert:', err);
-                            return res.status(500).json({ 
-                                success: false, 
-                                message: 'Gabim gjatë ruajtjes së API Key' 
-                            });
-                        }
-                        res.json({ 
+
+                    const data = await response.json();
+                    console.log('✅ Përgjigja nga Gemini u mor');
+                    
+                    if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
+                        const geminiResponse = data.candidates[0].content.parts[0].text;
+                        
+                        // ✅ Ruaj në historinë e bisedave
+                        db.run(
+                            'INSERT INTO messages (user_id, message, response, timestamp) VALUES (?, ?, ?, datetime("now"))',
+                            [userId, message, geminiResponse],
+                            (err) => {
+                                if (err) console.error('❌ Gabim në ruajtjen e mesazhit:', err);
+                            }
+                        );
+
+                        res.json({
                             success: true,
-                            message: '✅ API Key u ruajt me sukses!' 
+                            response: geminiResponse
+                        });
+                    } else {
+                        console.error('❌ Struktura e papritur e përgjigjes:', data);
+                        res.json({
+                            success: false,
+                            response: "❌ Nuk u mor përgjigje e pritshme nga Gemini"
                         });
                     }
-                );
+
+                } catch (geminiError) {
+                    console.error('❌ Gabim gjatë thirrjes së Gemini API:', geminiError);
+                    res.json({ 
+                        success: false, 
+                        response: '❌ Gabim në Gemini: ' + geminiError.message 
+                    });
+                }
             }
-        })
-        .catch(err => {
-            console.error('❌ Gabim në database:', err);
-            return res.status(500).json({ 
-                success: false, 
-                message: 'Gabim në server' 
-            });
-        });
+        );
 
     } catch (error) {
-        console.error('❌ Gabim gjatë enkriptimit:', error);
-        res.status(500).json({ 
+        console.error('❌ Gabim i përgjithshëm në /chat:', error);
+        res.json({ 
             success: false, 
-            message: 'Gabim në server gjatë enkriptimit' 
+            response: '❌ Gabim në server. Provo përsëri.' 
         });
     }
 });
