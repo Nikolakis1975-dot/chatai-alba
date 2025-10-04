@@ -358,7 +358,7 @@ router.get('/status-old/:userId/:serviceName?', (req, res) => {
     );
 });
 
-// ✅ 7. FUNKSIONI I CHAT PËR GEMINI (I MUNGUAR!)
+// ✅ 7. FUNKSIONI I CHAT PËR GEMINI (I RI - KY MUNGOJTE!)
 router.post('/chat', authenticateToken, async (req, res) => {
     try {
         const { message } = req.body;
@@ -481,4 +481,5 @@ router.post('/chat', authenticateToken, async (req, res) => {
         });
     }
 });
+
 module.exports = router;
