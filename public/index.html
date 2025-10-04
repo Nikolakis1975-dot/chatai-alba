@@ -516,17 +516,28 @@ async function saveApiKeyToServer() {
         document.getElementById('api-key-status').className = "api-status";
 
         // ✅ URL I KORRIGJUAR: /api/save
-        const response = await fetch('/api/save', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include',
-            body: JSON.stringify({
-                apiKey: apiKey,
-                serviceName: 'gemini'
-            })
-        });
+        // ✅ PËRDOR VETËM RUGËT E VJETRA QË FUNKSIONOJNË:
+
+// Në saveApiKeyToServer():
+const response = await fetch('/api/save-old', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+        userId: currentUser.userId, // ✅ Shto userId
+        apiKey: apiKey,
+        serviceName: 'gemini'
+    })
+});
+
+// Në deleteApiKeyFromServer():
+const response = await fetch('/api/delete', { // ✅ Kjo mund të mos ekzistojë
+    // Ose përdor rrugë alternative
+});
+
+// Në updateApiKeyStatus():
+const response = await fetch('/api/status-old/' + currentUser.userId + '/gemini', {
+    // ✅ Përdor rrugën e vjetër që funksionon
+});
 
         const data = await response.json();
         console.log('📥 Përgjigja nga serveri:', data);
