@@ -57,7 +57,7 @@ async function checkAuthStatus() {
     return false;
 }
 
-// ✅ LOGIN ME HTTP-ONLY COOKIES
+// ✅ LOGIN ME HTTP-ONLY COOKIES - VERSION I RI PËR ADMIN
 async function login() {
     try {
         const username = document.getElementById("username").value.trim().toLowerCase();
@@ -99,68 +99,68 @@ async function login() {
     }
 }
 
-// ✅ REGJISTRIM ME HTTP-ONLY COOKIES
-async function register() {
+// ✅ REGJISTRIM ME HTTP-ONLY COOKIES - VERSION I RI
+async function registerWithEmail() {
     try {
-        const newUser = document.getElementById("new-username").value.trim().toLowerCase();
-        const newPass = document.getElementById("new-password").value.trim();
-        const photoFile = document.getElementById("new-photo").files[0];
+        const username = document.getElementById("reg-username").value.trim();
+        const email = document.getElementById("reg-email").value.trim();
+        const password = document.getElementById("reg-password").value;
+        const confirmPassword = document.getElementById("reg-confirm-password").value;
 
-        if (!newUser || !newPass) {
-            alert("⚠️ Plotëso të gjitha fushat e detyrueshme!");
+        // Validimi
+        if (!username || !email || !password || !confirmPassword) {
+            alert('❌ Ju lutem plotësoni të gjitha fushat!');
             return;
         }
 
-        if (newUser.length < 3) {
-            alert("⚠️ Emri i përdoruesit duhet të ketë të paktën 3 karaktere!");
+        if (password !== confirmPassword) {
+            alert('❌ Fjalëkalimet nuk përputhen!');
             return;
         }
 
-        if (newPass.length < 6) {
-            alert("⚠️ Fjalëkalimi duhet të ketë të paktën 6 karaktere!");
+        if (password.length < 6) {
+            alert('❌ Fjalëkalimi duhet të jetë së paku 6 karaktere!');
             return;
         }
 
-        let profilePicture = null;
-        if (photoFile) {
-            profilePicture = await readFileAsDataURL(photoFile);
-        }
+        // Shfaq loading
+        const registerBtn = document.querySelector('.login-btn');
+        registerBtn.textContent = '🔄 Po regjistrohet...';
+        registerBtn.disabled = true;
 
-        const response = await fetch('/api/auth/register-with-verification', {
+        const response = await fetch('/api/auth/register-with-email', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            credentials: 'include', // ✅ Dërgon cookies automatikisht
+            credentials: 'include',
             body: JSON.stringify({ 
-                username: newUser, 
-                password: newPass,
-                profile_picture: profilePicture
+                username: username, 
+                email: email, 
+                password: password 
             })
         });
 
         const data = await response.json();
 
         if (data.success) {
-            alert("✅ " + data.message);
-            
-            // Reset form
-            document.getElementById("new-username").value = "";
-            document.getElementById("new-password").value = "";
-            document.getElementById("new-photo").value = "";
-            const fileSpan = document.querySelector(".file-input span");
-            fileSpan.textContent = "Kliko për të ngarkuar foto";
-            fileSpan.style.color = "#70757a";
-
-            // Auto-fill login form
-            document.getElementById("username").value = newUser;
-            document.getElementById("password").focus();
+            alert('✅ ' + data.message + '\n\nKontrollo email-in për linkun e verifikimit!');
+            // Pastro formularin
+            document.getElementById('reg-username').value = '';
+            document.getElementById('reg-email').value = '';
+            document.getElementById('reg-password').value = '';
+            document.getElementById('reg-confirm-password').value = '';
         } else {
-            alert("❌ " + data.message);
+            alert('❌ ' + data.message);
         }
     } catch (error) {
-        console.error("Gabim gjatë regjistrimit:", error);
-        alert("❌ Problem me serverin. Provo përsëri.");
+        console.error('Gabim në regjistrim:', error);
+        alert('❌ Problem me serverin. Provo përsëri më vonë.');
+    } finally {
+        // Rikthe butonin
+        const registerBtn = document.querySelector('.login-btn');
+        registerBtn.textContent = '📧 Regjistrohu me Email';
+        registerBtn.disabled = false;
     }
 }
 
@@ -616,71 +616,40 @@ async function clearHistory() {
 
         if (response.ok) {
             document.getElementById("chat").innerHTML = "";
-            addMessage("Historia u fshi. Si mund të ndihmoj?", "bot");
+            addMessage("Historia u fshi me sukses!", "bot");
         } else {
-            const data = await response.json();
-            console.error("Gabim gjatë fshirjes së historisë:", data.error);
+            console.error("Gabim gjatë fshirjes së historisë");
         }
     } catch (error) {
         console.error("Gabim gjatë fshirjes së historisë:", error);
     }
 }
 
-function addFeedback(wrapper, msgId) {
-    const feedbackDiv = document.createElement("div");
-    feedbackDiv.className = "feedback";
-    
-    const likeBtn = document.createElement("button");
-    likeBtn.innerHTML = "👍";
-    likeBtn.title = "Pëlqej";
-    likeBtn.onclick = () => saveFeedback(msgId, "like", wrapper);
-    
-    const dislikeBtn = document.createElement("button");
-    dislikeBtn.innerHTML = "👎";
-    dislikeBtn.title = "Nuk pëlqej";
-    dislikeBtn.onclick = () => saveFeedback(msgId, "dislike", wrapper);
+// ==================== FUNKSIONET E TJERA ====================
 
-    feedbackDiv.appendChild(likeBtn);
-    feedbackDiv.appendChild(dislikeBtn);
-    wrapper.appendChild(feedbackDiv);
+function toggleEmojiPanel() {
+    const panel = document.getElementById("emoji-panel");
+    panel.classList.toggle("hidden");
 }
 
-async function saveFeedback(msgId, type, wrapper) {
-    try {
-        const response = await fetch('/api/chat/feedback', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include',
-            body: JSON.stringify({
-                userId: currentUser.id,
-                messageId: msgId,
-                feedbackType: type
-            })
-        });
+function changePhoto() {
+    document.getElementById("new-photo").click();
+}
 
-        if (response.ok) {
-            const note = document.createElement("div");
-            note.textContent = "Faleminderit për feedback!";
-            note.style.fontSize = "12px";
-            note.style.color = "#555";
-            note.style.marginTop = "5px";
-            note.style.padding = "0 8px";
-            wrapper.appendChild(note);
-            
-            // Fshi butonat e feedback pasi të jetë dhënë feedback
-            const feedbackDiv = wrapper.querySelector(".feedback");
-            if (feedbackDiv) {
-                feedbackDiv.remove();
+function handlePhotoUpload(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById("profile-pic").src = e.target.result;
+            // Ruaj në localStorage për sesionin aktual
+            if (currentUser) {
+                currentUser.profile_picture = e.target.result;
             }
-        }
-    } catch (error) {
-        console.error("Gabim gjatë ruajtjes së feedback:", error);
+        };
+        reader.readAsDataURL(file);
     }
 }
-
-// ==================== FUNKSIONET E TJERA ====================
 
 function readFileAsDataURL(file) {
     return new Promise((resolve, reject) => {
@@ -691,821 +660,252 @@ function readFileAsDataURL(file) {
     });
 }
 
-function changePhoto() {
-    document.getElementById('new-photo').click();
-}
-
-function handlePhotoUpload(event) {
-    const file = event.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            document.getElementById('profile-pic').src = e.target.result;
-            // Këtu mund të shtosh kod për të përditësuar foton në server
-        };
-        reader.readAsDataURL(file);
-    }
-}
-
-function toggleEmojiPanel() {
-    const panel = document.getElementById("emoji-panel");
-    panel.classList.toggle("hidden");
-}
-
-// Funksionet për download/upload history (mbetet e njëjta)
-async function downloadHistory() {
-    if (!currentUser) return;
-    
-    try {
-        const response = await fetch(`/api/chat/export/${currentUser.id}`, {
-            credentials: 'include'
-        });
-        const data = await response.json();
-        
-        if (response.ok) {
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = "chat_history.json";
-            link.click();
-            addMessage("💾 Eksportova historinë.", "bot");
-        } else {
-            addMessage("❌ Gabim gjatë eksportimit: " + data.error, "bot");
-        }
-    } catch (error) {
-        addMessage("❌ Gabim gjatë eksportimit.", "bot");
-    }
-}
-
-async function uploadHistory() {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "application/json";
-    input.onchange = async (e) => {
-        const file = e.target.files[0];
-        const reader = new FileReader();
-        reader.onload = async () => {
-            try {
-                const historyData = JSON.parse(reader.result);
-                // Implemento importimin e historisë në server
-                addMessage("📤 Funksionaliteti i importimit do të implementohet së shpejti.", "bot");
-            } catch (error) {
-                addMessage("❌ Gabim gjatë importimit.", "bot");
-            }
-        };
-        reader.readAsText(file);
-    };
-    input.click();
-}
-
-// ==================== GEMINI FUKSION ========================================
-// ✅ FUNKSION I KORRIGJUAR - NUK DËRGON USERID, VETËM MESAZHIN
-async function askGemini(question) {
-    try {
-        console.log('🚀 Duke dërguar pyetje në /api/gemini/ask...');
-
-        const response = await fetch('/api/gemini/ask', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            credentials: 'include', // ✅ Dërgon HTTP-Only cookie automatikisht
-            body: JSON.stringify({
-                message: question // ✅ VETËM MESAZHI
-            })
-        });
-
-        const data = await response.json();
-        console.log('📥 Përgjigja nga serveri:', data);
-
-        if (data.success) {
-            return data.response;
-        } else {
-            return "❌ " + (data.error || 'Gabim në server');
-        }
-
-    } catch (error) {
-        console.error('❌ Gabim në komunikim me serverin:', error);
-        return "❌ Problem me serverin. Provo përsëri më vonë.";
-    }
-}
-
-// ==================== KOMANDAT ====================
-
-async function processCommand(text) {
-    const parts = text.trim().split(" ");
-    const cmd = parts[0];
-
-    switch (cmd) {
-        case "/dil":
-            addMessage("Dalje nga sistemi...", "bot");
-            setTimeout(() => logout(), 1000);
-            break;
-
-        case "/ndihmo":
-            addMessage("📌 Komandat: /ndihmo, /wiki <fjale>, /perkthim <gjuha> <tekst>, /meso <pyetje>|<përgjigje>, /moti <qyteti>, /eksporto, /importo, /dil, /apikey", "bot");
-            break;
-
-        case "/meso":
-            const split = text.replace("/meso", "").split("|");
-            if (split.length === 2) {
-                const q = split[0].trim().toLowerCase();
-                const a = split[1].trim();
-                
-                try {
-                    const response = await fetch('/api/chat/knowledge', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        credentials: 'include',
-                        body: JSON.stringify({
-                            userId: currentUser.id,
-                            question: q,
-                            answer: a
-                        })
-                    });
-
-                    const data = await response.json();
-                    if (response.ok) {
-                        knowledgeBase[q] = a;
-                        addMessage("✅ Mësova diçka të re!", "bot");
-                    } else {
-                        addMessage("⚠️ Gabim gjatë ruajtjes së njohurive: " + data.error, "bot");
-                    }
-                } catch (error) {
-                    addMessage("⚠️ Gabim gjatë ruajtjes së njohurive.", "bot");
-                }
-            } else {
-                addMessage("⚠️ Përdorimi: /meso pyetje | përgjigje", "bot");
-            }
-            break;
-
-              case "/wiki":
-            const query = parts.slice(1).join(" ");
-            if (!query) { addMessage("⚠️ Shkruaj diçka për të kërkuar.", "bot"); break; }
-            try {
-                showTypingIndicator();
-                const res = await fetch(`https://sq.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`);
-                const data = await res.json();
-                removeTypingIndicator();
-                if (data.extract) addMessage(`🌐 ${data.extract}`, "bot");
-                else addMessage("❌ Nuk u gjet informacion.", "bot");
-            } catch { 
-                removeTypingIndicator();
-                addMessage("⚠️ Gabim gjatë kërkimit në Wikipedia.", "bot"); 
-            }
-            break;
-
-        case "/perkthim":
-            if (parts.length < 3) return addMessage("⚠️ Përdorimi: /perkthim [gjuha] [tekst]", "bot");
-            const targetLang = parts[1].toLowerCase();
-            const tekst = parts.slice(2).join(" ");
-            const sourceLang = (targetLang === "sq") ? "en" : "sq";
-            
-            showTypingIndicator();
-            
-            fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(tekst)}&langpair=${sourceLang}|${targetLang}`)
-                .then(r => r.json())
-                .then(d => {
-                    removeTypingIndicator();
-                    const translatedText = d?.responseData?.translatedText || "❌ Gabim përkthimi.";
-                    addMessage(translatedText, "bot");
-                })
-                .catch(() => {
-                    removeTypingIndicator();
-                    addMessage("⚠️ Gabim përkthimi.", "bot");
-                });
-            break;
-
-        case "/eksporto":
-            try {
-                const response = await fetch(`/api/chat/export/${currentUser.id}`);
-                const data = await response.json();
-                
-                if (response.ok) {
-                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-                    const link = document.createElement("a");
-                    link.href = URL.createObjectURL(blob);
-                    link.download = "knowledge.json";
-                    link.click();
-                    addMessage("💾 Eksportova njohuritë.", "bot");
-                } else {
-                    addMessage("❌ Gabim gjatë eksportimit: " + data.error, "bot");
-                }
-            } catch (error) {
-                addMessage("❌ Gabim gjatë eksportimit.", "bot");
-            }
-            break;
-
-        case "/importo":
-            const inp = document.createElement("input");
-            inp.type = "file"; inp.accept = "application/json";
-            inp.onchange = async e => {
-                const file = e.target.files[0];
-                const reader = new FileReader();
-                reader.onload = async () => {
-                    try {
-                        const knowledgeData = JSON.parse(reader.result);
-                        
-                        const response = await fetch('/api/chat/import', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                userId: currentUser.id,
-                                knowledge: knowledgeData
-                            })
-                        });
-
-                        const data = await response.json();
-                        if (response.ok) {
-                            addMessage("✅ Importova njohuritë.", "bot");
-                        } else {
-                            addMessage("❌ Gabim gjatë importimit: " + data.error, "bot");
-                        }
-                    } catch (error) {
-                        addMessage("❌ Gabim gjatë importimit.", "bot");
-                    }
-                };
-                reader.readAsText(file);
-            };
-            inp.click();
-            break;
-
-        case "/moti":
-            if (parts.length < 2) {
-                addMessage("⚠️ Përdorimi: /moti [qyteti]", "bot");
-            } else {
-                const qyteti = parts.slice(1).join(" ");
-                showTypingIndicator();
-                fetch(`https://wttr.in/${encodeURIComponent(qyteti)}?format=%c+%t+%w+%h`)
-                    .then(res => res.text())
-                    .then(data => {
-                        removeTypingIndicator();
-                        addMessage("🌍 Moti në " + qyteti + ": " + data, "bot");
-                    })
-                    .catch(() => {
-                        removeTypingIndicator();
-                        addMessage("⚠️ Gabim gjatë marrjes së motit.", "bot");
-                    });
-            }
-            break;
-
-        case "/apikey":
-            if (parts.length < 2) {
-                // Shfaq statusin e API Key
-                try {
-                    // ✅ KORREKT - përdor endpoint-in e ri me authentication
-const response = await fetch('/api/api-keys/status/gemini', {
-    credentials: 'include'
-});
-                    const data = await response.json();
-                    
-                    if (data.hasApiKey) {
-                        addMessage("🔑 API Key është konfiguruar në server (e ruajtur: " + new Date(data.createdAt).toLocaleDateString("sq-AL") + ")", "bot");
-                    } else {
-                        addMessage("❌ Nuk ka API Key të konfiguruar. Përdor: /apikey [key_jote]", "bot");
-                    }
-                } catch (error) {
-                    addMessage("❌ Gabim gjatë kontrollimit të statusit të API Key.", "bot");
-                }
-            } else {
-                // Vendos API Key të ri
-                const newApiKey = parts.slice(1).join(" ");
-                
-                try {
-                    const response = await fetch('/api/api-keys/save', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            userId: currentUser.id,
-                            apiKey: newApiKey,
-                            serviceName: 'gemini'
-                        })
-                    });
-
-                    const data = await response.json();
-                    if (response.ok) {
-                        addMessage("✅ API Key u ruajt me sukses në server!", "bot");
-                    } else {
-                        addMessage("❌ Gabim gjatë ruajtjes së API Key: " + data.error, "bot");
-                    }
-                } catch (error) {
-                    addMessage("❌ Gabim gjatë ruajtjes së API Key.", "bot");
-                }
-            }
-            break;
-
-        default:
-            const key = text.toLowerCase();
-            
-            try {
-                const response = await fetch(`/api/chat/knowledge/${currentUser.id}/${encodeURIComponent(key)}`);
-                const data = await response.json();
-                
-                if (data.answer) {
-                    addMessage(data.answer, "bot");
-                    return;
-                }
-            } catch (error) {
-                console.error("Gabim gjatë kërkimit të njohurive:", error);
-            }
-
-            const calc = tryCalculate(text);
-            if (calc !== null) { 
-                addMessage("🧮 Rezultati: " + calc, "bot"); 
-                return; 
-            }
-
-            // Kontrollo nëse ka API Key në server
-            try {
-                // ✅ KORREKT - përdor endpoint-in e ri me authentication
-const response = await fetch('/api/api-keys/status/gemini', {
-    credentials: 'include'
-});
-                const data = await response.json();
-                
-                if (!data.hasApiKey) {
-                    addMessage("❌ Nuk është konfiguruar API Key për Gemini. Përdor komandën /apikey [key_jote] për të vendosur një API Key.", "bot");
-                    return;
-                }
-                
-                // Nëse ka API Key, bëj thirrjen për Gemini përmes serverit
-                showTypingIndicator();
-                
-                // ✅ KORREKT - dërgon vetëm mesazhin
-const geminiResponse = await fetch('/api/gemini/ask', {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: 'include', // ✅ Shto këtë
-    body: JSON.stringify({ 
-        message: text  // ✅ VETËM MESAZHI
-    })
-});
-                const geminiData = await geminiResponse.json();
-                removeTypingIndicator();
-                
-                if (geminiData.success && geminiData.response) {
-                    addMessage(geminiData.response, "bot");
-                } else {
-                    addMessage("❌ Nuk mora përgjigje nga Gemini. Kontrollo API Key.", "bot");
-                }
-            } catch {
-                removeTypingIndicator();
-                addMessage("⚠️ Gabim gjatë lidhjes me serverin.", "bot");
-            }
-    }
-}
-
-function tryCalculate(text) {
-    const ops = {
-        "+": ["plus", "shto", "mbledh", "mbledhje"],
-        "-": ["minus", "hiq", "zbritje", "zbresim", "zbres"],
-        "*": ["herë", "shumëzim", "shumëzo"],
-        "/": ["pjesëto", "ndarje"]
-    };
-    let expr = text.toLowerCase();
-    if (!/\d/.test(expr)) return null;
-    for (const [sym, words] of Object.entries(ops)) {
-        words.forEach(w => expr = expr.replace(new RegExp("\\b" + w + "\\b", "g"), sym));
-    }
-    expr = expr.replace(/sa\s+b[eë]jn[eë]?/g, "");
-    try {
-        const result = Function('"use strict";return (' + expr + ")")();
-        if (typeof result === "number" && !isNaN(result)) return result;
-    } catch {}
-    return null;
-}
-
-// ==================== FUNKSIONET NDIHMËSE ====================
-
-function readFileAsDataURL(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = (event) => resolve(event.target.result);
-        reader.onerror = (error) => reject(error);
-        reader.readAsDataURL(file);
-    });
-}
-
-function showTypingIndicator() {
+function downloadHistory() {
     const chat = document.getElementById("chat");
-    const typingIndicator = document.createElement("div");
-    typingIndicator.id = "typing-indicator";
-    typingIndicator.className = "message-wrapper bot";
-    typingIndicator.innerHTML = `
-        <div class="bot-message message">
-            <div class="typing-dots">
-                <span></span>
-                <span></span>
-                <span></span>
-            </div>
-        </div>
-        <div class="timestamp">${new Date().toLocaleTimeString("sq-AL", { 
-            hour: "2-digit", 
-            minute: "2-digit",
-            hour12: false
-        }).replace(":", "").replace(/(\d{2})(\d{2})/, "$1:$2")}</div>
-    `;
-    chat.appendChild(typingIndicator);
-    chat.scrollTop = chat.scrollHeight;
-}
-
-function removeTypingIndicator() {
-    const typingIndicator = document.getElementById("typing-indicator");
-    if (typingIndicator) {
-        typingIndicator.remove();
-    }
-}
-
-function addAnimatedMessage(content, sender, customTimestamp = null) {
-    return new Promise((resolve) => {
-        const chat = document.getElementById("chat");
-        const wrapper = document.createElement("div");
-        wrapper.className = `message-wrapper ${sender}`;
-        const msg = document.createElement("div");
-        msg.className = `${sender}-message message`;
-        
-        const timestamp = customTimestamp || new Date().toLocaleTimeString("sq-AL", { 
-            hour: "2-digit", 
-            minute: "2-digit",
-            hour12: false
-        }).replace(":", "").replace(/(\d{2})(\d{2})/, "$1:$2");
-        
-        // Zëvendëso karakteret e prishura
-        content = content.replace(/¡/g, "ë").replace(/ì/g, "i");
-        
-        // Ruaj përmbajtjen origjinale për animim
-        msg.dataset.fullContent = content;
-        msg.innerHTML = ""; // Fillimisht bosh
-        
-        wrapper.appendChild(msg);
-
-        const time = document.createElement("div");
-        time.className = "timestamp";
-        time.textContent = timestamp;
-        wrapper.appendChild(time);
-
-        chat.appendChild(wrapper);
-        chat.scrollTop = chat.scrollHeight;
-
-        document.querySelectorAll(".message-wrapper").forEach(el => el.classList.remove("last"));
-        wrapper.classList.add("last");
-        
-        if(sender === 'bot') {
-            const msgId = 'msg' + Date.now();
-            addFeedback(wrapper, msgId);
-        }
-        
-        // Animo shkrimin e mesazhit
-        animateMessageText(msg, content, () => {
-            // Pas përfundimit të animacionit, kontrollo për kod dhe thelloje nëse është e nevojshme
-            if (typeof hljs !== 'undefined' && msg.innerHTML.includes('```')) {
-                setTimeout(() => {
-                    const codeElements = msg.querySelectorAll('pre code');
-                    codeElements.forEach(code => hljs.highlightElement(code));
-                }, 100);
-            }
-            resolve();
-        });
-        
-        // Ruaj në histori vetëm nëse nuk është ngargim nga historia
-        if (!customTimestamp) {
-            saveToHistory(content, sender, timestamp);
-        }
-    });
-}
-
-function animateMessageText(element, fullText, onComplete) {
-    let index = 0;
-    const speed = 15; // Shpejtësia e shkrimit (ms për karakter)
-    
-    function typeWriter() {
-        if (index < fullText.length) {
-            // Kontrollo nëse ka kode për t'u trajtuar ndryshe
-            if (fullText.substring(index).startsWith("```")) {
-                // Gjej fundin e bllokut të kodit
-                const endIndex = fullText.indexOf("```", index + 3);
-                if (endIndex !== -1) {
-                    // Shto të gjithë bllokun e kodit menjëherë
-                    const codeBlock = fullText.substring(index, endIndex + 3);
-                    
-                    // Përpunoni kodin për theksim sintakse
-                    const codeContent = codeBlock.replace(/```[a-z]*\n/, '').replace(/```$/, '');
-                    const languageMatch = codeBlock.match(/```([a-z]*)\n/);
-                    const language = languageMatch ? languageMatch[1] : 'plaintext';
-                    
-                    // Krijo HTML për kodin e theksuar
-                    let highlightedCode = codeContent;
-                    if (typeof hljs !== 'undefined') {
-                        highlightedCode = hljs.highlightAuto(codeContent).value;
-                    }
-                    
-                    // Krijo butonat e kopjimit dhe shkarkimit
-                    const codeActions = `
-                        <div class="code-actions">
-                            <button onclick="copyCode(this)">📋 Kopjo</button>
-                            <button onclick="downloadCode(this, '${language}')">⬇ Shkarko</button>
-                        </div>
-                    `;
-                    
-                    element.innerHTML += `<div class="code-block">${codeActions}<div class="code-header">${language.toUpperCase()}</div><pre><code class="language-${language}">${highlightedCode}</code></pre></div>`;
-                    index = endIndex + 3;
-                    
-                    setTimeout(typeWriter, speed);
-                    return;
-                }
-            }
-            
-            // Shto karakterin e radhës
-            element.innerHTML += fullText.charAt(index);
-            index++;
-            setTimeout(typeWriter, speed);
-        } else {
-            // Përfundo animacionin
-            if (onComplete) onComplete();
-        }
-    }
-    
-    // Nis animacionin
-    typeWriter();
-}
-
-// Funksionet për menaxhimin e fotove
-async function changePhoto() {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/*";
-    
-    input.onchange = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        
-        try {
-            const profilePicture = await readFileAsDataURL(file);
-            
-            const response = await fetch('/api/users/profile-picture', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    userId: currentUser.id,
-                    profile_picture: profilePicture
-                })
-            });
-
-            const data = await response.json();
-            if (response.ok) {
-                currentUser.profile_picture = profilePicture;
-                document.getElementById("profile-pic").src = profilePicture;
-                addMessage("✅ Fotoja e profilit u përditësua me sukses!", "bot");
-            } else {
-                addMessage("⚠️ Gabim gjatë përditësimit të fotos: " + data.error, "bot");
-            }
-        } catch (error) {
-            console.error("Gabim gjatë ndryshimit të fotos:", error);
-            addMessage("⚠️ Gabim gjatë ndryshimit të fotos.", "bot");
-        }
-    };
-    
-    input.click();
-}
-
-function handlePhotoUpload(e) {
-    const fileInput = e.target;
-    const fileName = fileInput.files[0]?.name;
-    const span = fileInput.parentElement.querySelector("span");
-    
-    if (fileName) {
-        span.textContent = fileName;
-        span.style.color = "#4285f4";
-        span.style.fontWeight = "500";
-    } else {
-        span.textContent = "Kliko për të ngarkuar foto";
-        span.style.color = "#70757a";
-        span.style.fontWeight = "normal";
-    }
-}
-
-function toggleEmojiPanel() {
-    document.getElementById("emoji-panel").classList.toggle("hidden");
-}
-
-// Funksionet për eksport/import të historisë
-async function downloadHistory() {
-    if (!currentUser) return;
-    
-    try {
-        const response = await fetch(`/api/chat/export-history/${currentUser.id}`);
-        const data = await response.json();
-        
-        if (response.ok) {
-            const historyData = {
-                version: "1.0",
-                exportedAt: new Date().toISOString(),
-                username: currentUser.username,
-                chatHistory: data.history
-            };
-            
-            const jsonData = JSON.stringify(historyData, null, 2);
-            const blob = new Blob([jsonData], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `chat_history_${currentUser.username}_${new Date().toISOString().slice(0, 10)}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            
-            addMessage("✅ Historia u eksportua në formatin JSON!", "bot");
-        } else {
-            addMessage("❌ Gabim gjatë eksportimit të historisë: " + data.error, "bot");
-        }
-    } catch (error) {
-        console.error("Gabim gjatë eksportimit të historisë:", error);
-        addMessage("❌ Gabim gjatë eksportimit të historisë.", "bot");
-    }
+    const messages = chat.innerHTML;
+    const blob = new Blob([messages], { type: "text/html" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "chat-history.html";
+    link.click();
 }
 
 function uploadHistory() {
     const input = document.createElement("input");
     input.type = "file";
-    input.accept = ".json,application/json";
-
-    input.onchange = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = async () => {
-            try {
-                const importedData = JSON.parse(reader.result);
-                
-                if (!importedData.chatHistory || !Array.isArray(importedData.chatHistory)) {
-                    alert("❌ Formati i skedarit nuk është i vlefshëm!");
-                    return;
-                }
-                
-                // Ruaj çdo mesazh në server
-                for (const msg of importedData.chatHistory) {
-                    await saveToHistory(msg.content, msg.sender, msg.timestamp);
-                }
-
-                // Rifresko vizualisht chat-in
-                document.getElementById("chat").innerHTML = "";
-                importedData.chatHistory.forEach(msg => {
-                    addMessage(msg.content, msg.sender, true);
-                });
-
-                addMessage("✅ Historia u importua me sukses nga skedari JSON!", "bot");
-            } catch (error) {
-                console.error("Gabim gjatë importimit:", error);
-                alert("⚠️ Gabim gjatë leximit të skedarit!");
-            }
-        };
-        reader.readAsText(file);
+    input.accept = ".html,.txt";
+    input.onchange = function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById("chat").innerHTML = e.target.result;
+            };
+            reader.readAsText(file);
+        }
     };
-
     input.click();
 }
 
-// ==================== API KEY MANAGEMENT ====================
+function addFeedback(wrapper, msgId) {
+    const feedbackDiv = document.createElement("div");
+    feedbackDiv.className = "feedback";
+    feedbackDiv.innerHTML = `
+        <button onclick="sendFeedback('${msgId}', 'like')">👍</button>
+        <button onclick="sendFeedback('${msgId}', 'dislike')">👎</button>
+    `;
+    wrapper.appendChild(feedbackDiv);
+}
 
-// Funksioni për të ruajtur API Key në server (të enkriptuar)
-async function saveApiKeyToServer() {
-    const apiKey = document.getElementById('api-key-input').value.trim();
-    
-    if (!apiKey) {
-        document.getElementById('api-key-status').textContent = "Ju lutem vendosni një API Key valid.";
-        document.getElementById('api-key-status').className = "api-status invalid";
-        return;
-    }
-    
-    if (!currentUser) {
-        document.getElementById('api-key-status').textContent = "Duhet të jeni i loguar për të ruajtur API Key.";
-        document.getElementById('api-key-status').className = "api-status invalid";
-        return;
-    }
-    
+async function sendFeedback(msgId, type) {
     try {
+        const response = await fetch('/api/feedback', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+                messageId: msgId,
+                type: type,
+                userId: currentUser.id
+            })
+        });
+        
+        if (response.ok) {
+            console.log(`Feedback ${type} u dërgua me sukses`);
+        }
+    } catch (error) {
+        console.error("Gabim gjatë dërgimit të feedback:", error);
+    }
+}
+
+// ==================== PROCESS COMMANDS ====================
+
+async function processCommand(text) {
+    // Komanda /apikey
+    if (text.startsWith('/apikey ')) {
+        const apiKey = text.replace('/apikey ', '').trim();
+        await saveApiKeyToServer(apiKey);
+        return;
+    }
+    
+    // Komanda /clear
+    if (text === '/clear') {
+        clearHistory();
+        return;
+    }
+    
+    // Komanda /help
+    if (text === '/help') {
+        showHelp();
+        return;
+    }
+    
+    // Nëse nuk është komandë, përpunoj si mesazh normal
+    await processNormalMessage(text);
+}
+
+async function processNormalMessage(text) {
+    try {
+        // Shfaq animacionin e "mendimit"
+        showTypingIndicator();
+        
+        const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({ message: text })
+        });
+
+        const data = await response.json();
+        
+        // Hiq animacionin
+        removeTypingIndicator();
+        
+        if (data.success) {
+            addMessage(data.response, "bot");
+        } else {
+            addMessage("❌ " + data.response, "bot");
+        }
+    } catch (error) {
+        removeTypingIndicator();
+        console.error("Gabim gjatë përpunimit të mesazhit:", error);
+        addMessage("❌ Nuk mora përgjigje nga Gemini. Kontrollo API Key.", "bot");
+    }
+}
+
+function showHelp() {
+    const helpText = `
+🤖 **Komandat e disponueshme:**
+
+🔑 **/apikey [key_jote]** - Vendos API Key për Gemini
+🗑️ **/clear** - Fshi historinë e bisedës
+📖 **/help** - Shfaq këtë ndihmë
+
+💡 **Shembuj:**
+/apikey AIzaSyBxLJZ9tXOyVNxgtLn7CAT61mC84bT1dWk
+/clear
+/help
+    `;
+    addMessage(helpText, "bot");
+}
+
+// ==================== API KEY FUNCTIONS ====================
+
+// ✅ FUNKSION I KORRIGJUAR PËR RUAJTJE API KEY
+async function saveApiKeyToServer(apiKey) {
+    try {
+        if (!apiKey) {
+            addMessage("❌ Ju lutem vendosni një API Key valid.", "bot");
+            return;
+        }
+
         const response = await fetch('/api/api-keys/save', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
+            credentials: 'include',
             body: JSON.stringify({
-                userId: currentUser.id,
                 apiKey: apiKey,
                 serviceName: 'gemini'
             })
         });
-        
+
         const data = await response.json();
-        
-        if (response.ok) {
-            document.getElementById('api-key-status').textContent = "✅ API Key u ruajt me sukses në server!";
-            document.getElementById('api-key-status').className = "api-status valid";
-            document.getElementById('api-key-input').value = "";
-            
-            // Mbyll modalin pas 2 sekondash
-            setTimeout(() => {
-                document.getElementById('api-key-modal').style.display = 'none';
-            }, 2000);
-            
-            // Informo përdoruesin në chat
-            addMessage("✅ API Key u ruajt me sukses në server!", "bot");
+
+        if (data.success) {
+            addMessage("✅ " + data.message, "bot");
         } else {
-            document.getElementById('api-key-status').textContent = "❌ " + data.error;
-            document.getElementById('api-key-status').className = "api-status invalid";
+            addMessage("❌ " + data.message, "bot");
         }
     } catch (error) {
-        console.error("Gabim gjatë ruajtjes së API Key:", error);
-        document.getElementById('api-key-status').textContent = "❌ Gabim gjatë lidhjes me serverin.";
-        document.getElementById('api-key-status').className = "api-status invalid";
+        console.error('❌ Gabim në ruajtjen e API Key:', error);
+        addMessage("❌ Problem me serverin. Provo përsëri.", "bot");
     }
 }
 
-// Funksioni për të fshirë API Key nga serveri
-async function deleteApiKeyFromServer() {
-    if (!currentUser) {
-        document.getElementById('api-key-status').textContent = "Duhet të jeni i loguar për të fshirë API Key.";
-        document.getElementById('api-key-status').className = "api-status invalid";
-        return;
-    }
+// ✅ FUNKSION PËR MODALIN E API KEY
+async function openApiKeyModal() {
+    const modal = document.getElementById('api-key-modal');
+    modal.style.display = 'block';
     
-    try {
-        const response = await fetch('/api/api-keys/delete', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                userId: currentUser.id,
-                serviceName: 'gemini'
-            })
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok) {
-            document.getElementById('api-key-status').textContent = "✅ API Key u fshi me sukses nga serveri!";
-            document.getElementById('api-key-status').className = "api-status valid";
-            document.getElementById('api-key-input').value = "";
-            
-            // Informo përdoruesin në chat
-            addMessage("🗑️ API Key u fshi nga serveri!", "bot");
-        } else {
-            document.getElementById('api-key-status').textContent = "❌ " + data.error;
-            document.getElementById('api-key-status').className = "api-status invalid";
-        }
-    } catch (error) {
-        console.error("Gabim gjatë fshirjes së API Key:", error);
-        document.getElementById('api-key-status').textContent = "❌ Gabim gjatë lidhjes me serverin.";
-        document.getElementById('api-key-status').className = "api-status invalid";
-    }
-}
-
-// Funksioni për të kontrolluar statusin e API Key
-async function checkApiKeyStatus() {
-    if (!currentUser) return false;
+    // Pastro input-in dhe shfaq loading
+    document.getElementById('api-key-input').value = "";
+    document.getElementById('api-key-status').textContent = "🔄 Po kontrollohet statusi...";
+    document.getElementById('api-key-status').className = "api-status";
     
-    try {
-        const response = await fetch(`/api/api-keys/status/${currentUser.id}/gemini`);
-        const data = await response.json();
-        return data.hasApiKey;
-    } catch (error) {
-        console.error("Gabim gjatë kontrollimit të statusit të API Key:", error);
-        return false;
-    }
+    // Kontrollo statusin e API Key DIREKT NGA SERVERI
+    await updateApiKeyStatus();
 }
 
-// Funksioni për të përditësuar statusin në modal
+// ✅ FUNKSION PËR STATUSIN E API KEY
 async function updateApiKeyStatus() {
     const statusElement = document.getElementById('api-key-status');
-    const hasApiKey = await checkApiKeyStatus();
     
-    if (hasApiKey) {
-        statusElement.textContent = "✅ API Key është i konfiguruar në server.";
-        statusElement.className = "api-status valid";
-    } else {
-        statusElement.textContent = "❌ Nuk ka API Key të konfiguruar.";
+    try {
+        const response = await fetch('/api/api-keys/status/gemini', {
+            credentials: 'include'
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            
+            if (data.success && data.hasApiKey) {
+                statusElement.textContent = "✅ API Key është i konfiguruar në server";
+                statusElement.className = "api-status valid";
+                document.getElementById('api-key-input').value = "••••••••••••••••";
+            } else {
+                statusElement.textContent = "❌ Nuk ka API Key të konfiguruar. Chatboti nuk do të funksionojë plotësisht.";
+                statusElement.className = "api-status invalid";
+                document.getElementById('api-key-input').value = "";
+            }
+        } else {
+            statusElement.textContent = "❌ Gabim në kontrollimin e statusit";
+            statusElement.className = "api-status invalid";
+        }
+    } catch (error) {
+        console.error('Gabim në kontrollimin e statusit:', error);
+        statusElement.textContent = "❌ Problem me serverin";
         statusElement.className = "api-status invalid";
     }
 }
 
-// Funksioni për të hapur modalin
-function openApiKeyModal() {
-    document.getElementById('api-key-modal').style.display = 'block';
-    updateApiKeyStatus();
-}
-
-// Funksioni për të mbyllur modalin
+// ✅ FUNKSION PËR MBYLLJEN E MODALIT
 function closeApiKeyModal() {
     document.getElementById('api-key-modal').style.display = 'none';
 }
+
+// ✅ INICIALIZIMI I MODALEVE
+document.addEventListener('DOMContentLoaded', function() {
+    // Modal për API Key
+    const apiModal = document.getElementById('api-key-modal');
+    const apiBtn = document.getElementById('api-key-btn');
+    const apiClose = apiModal.querySelector('.close');
+    
+    apiBtn.onclick = openApiKeyModal;
+    
+    apiClose.onclick = function() {
+        apiModal.style.display = 'none';
+    }
+    
+    // Modal për verifikim email
+    const verificationModal = document.getElementById('email-verification-modal');
+    const verificationClose = verificationModal.querySelector('.close');
+    
+    verificationClose.onclick = function() {
+        verificationModal.style.display = 'none';
+    }
+    
+    window.onclick = function(event) {
+        if (event.target == apiModal) {
+            apiModal.style.display = 'none';
+        }
+        if (event.target == verificationModal) {
+            verificationModal.style.display = 'none';
+        }
+    }
+});
