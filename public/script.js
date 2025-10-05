@@ -99,11 +99,16 @@ async function login() {
     }
 }
 
-// ✅ ADMIN LOGIN - VERSION I RI ME HTTP-ONLY COOKIES
-async function adminLogin() {
+// ✅ LOGIN ME HTTP-ONLY COOKIES - VERSION I SIGURT
+async function login() {
     try {
-        const username = "admin";
-        const password = "admin123";
+        const username = document.getElementById("username").value.trim().toLowerCase();
+        const password = document.getElementById("password").value.trim();
+
+        if (!username || !password) {
+            alert("Ju lutem plotësoni të dyja fushat!");
+            return;
+        }
 
         // Fshi çdo token të vjetër
         localStorage.removeItem('token');
@@ -121,20 +126,20 @@ async function adminLogin() {
         const data = await response.json();
 
         if (data.success) {
-            // ✅ NUK ruajmë token në localStorage!
+             // ✅ NUK ruajmë token në localStorage!
             currentUser = data.user;
             showChatScreen();
             loadHistory();
             updateUserInterface(data.user);
-            addMessage("👑 Mirë se erdhe Admin! Sistemi është në dispozicion të plotë.", "bot");
+            addMessage("👑 Mirë se erdhe " + currentUser.username + "! Si mund të ndihmoj sot?", "bot");
         } else {
             alert("❌ " + data.message);
         }
     } catch (error) {
-        console.error("Gabim gjatë admin login:", error);
+        console.error("Gabim gjatë login:", error);
         alert("❌ Problem me serverin. Provo përsëri.");
     }
-}
+}       
 
 // ✅ REGJISTRIM ME HTTP-ONLY COOKIES
 async function register() {
