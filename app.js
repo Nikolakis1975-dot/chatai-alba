@@ -1,6 +1,5 @@
 require('dotenv').config();
 const express = require('express');
-const bodyParser = require('body-parser');
 const cors = require('cors');
 const path = require('path');
 const cookieParser = require('cookie-parser');
@@ -14,11 +13,12 @@ const emailVerification = require('./routes/email-verification');
 const apiRoutes = require('./routes/api');
 const geminiRoutes = require('./routes/gemini');
 const adminRoutes = require('./routes/admin');
+const geminiSimpleRoutes = require('./routes/gemini-simple');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ✅ 1. CORS CONFIGURATION - FIXED!
+// ✅ 1. CORS CONFIGURATION - VETËM NJË HERË
 app.use(cors({
     origin: 'https://chatai-alba-gr9dw.ondigitalocean.app',
     credentials: true,
@@ -26,17 +26,17 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
 }));
 
-// ✅ 2. COOKIE PARSER - DUHET TË JETË PARA BODY PARSER
+// ✅ 2. COOKIE PARSER
 app.use(cookieParser());
 
-// ✅ 3. BODY PARSER ME LIMIT TË SHTUAR (10mb)
+// ✅ 3. BODY PARSER
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // ✅ 4. STATIC FILES
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ✅ 5. ROUTES - TË GJITHA PAS CORS DHE COOKIE PARSER
+// ✅ 5. ROUTES
 app.use('/api/auth', authRoutes);
 app.use('/api/auth', authEnhanced);
 app.use('/api/chat', chatRoutes);
@@ -45,18 +45,14 @@ app.use('/api/email', emailVerification);
 app.use('/api/api-keys', apiRoutes);
 app.use('/api/gemini', geminiRoutes);
 app.use('/admin', adminRoutes);
-// ✅ Shto këtë në seksionin e routes:
-app.use('/api/gemini-simple', require('./routes/gemini-simple'));
-// ✅ Rrugët e API Keys (për frontend-in e ri)
-app.use('/api', require('./routes/api')); // ✅ Kjo ekziston
-app.use('/api/api-keys', require('./routes/api')); // ✅ Shto edhe këtë për kompatibilitet
+app.use('/api/gemini-simple', geminiSimpleRoutes);
 
 // ✅ 6. RUTA DEFAULT
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// ✅ 7. ERROR HANDLING MIDDLEWARE
+// ✅ 7. ERROR HANDLING
 app.use((err, req, res, next) => {
     console.error('❌ Gabim në server:', err);
     res.status(500).json({ 
@@ -73,17 +69,16 @@ app.use((req, res) => {
     });
 });
 
-// ✅ CORS CONFIGURATION - FIXED!
-app.use(cors({
-    origin: 'https://chatai-alba-gr9dw.ondigitalocean.app',
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
-}));
-
-// ✅ 10. TESTO ENKRIPTIMIN
+// ✅ 9. TESTO ENKRIPTIMIN
 const encryption = require('./utils/encryption');
 setTimeout(() => {
     console.log('🛡️ Testi i enkriptimit AES-256-CBC:');
     encryption.testEncryption();
 }, 2000);
+
+// ✅ 10. START SERVER
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Serveri është duke u drejtuar në portin ${PORT}`);
+    console.log(`🌐 URL: http://localhost:${PORT}`);
+    console.log(`🔐 NODE_ENV: ${process.env.NODE_ENV}`);
+});
