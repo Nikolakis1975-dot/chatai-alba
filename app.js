@@ -73,13 +73,13 @@ app.use((req, res) => {
     });
 });
 
-// ✅ 9. NIS SERVERIN
-app.listen(PORT, () => {
-    console.log(`🚀 Serveri është duke u drejtuar në portin ${PORT}`);
-    console.log(`🌐 URL: http://localhost:${PORT}`);
-    console.log(`🔐 NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`🍪 CORS Origin: ${process.env.NODE_ENV === 'production' ? 'https://chatai-alba.onrender.com' : 'http://localhost:3000'}`);
-});
+// ✅ CORS CONFIGURATION - FIXED!
+app.use(cors({
+    origin: 'https://chatai-alba-gr9dw.ondigitalocean.app',
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
+}));
 
 // ✅ 10. TESTO ENKRIPTIMIN
 const encryption = require('./utils/encryption');
