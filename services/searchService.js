@@ -15,14 +15,14 @@ class SearchService {
         try {
             console.log(`🔍 Duke kërkuar për: "${query}"`);
             
-            // ✅ KËRKIM PARALEL NË TË GJITHA BURIMET
+            // =================================✅ KËRKIM PARALEL NË TË GJITHA BURIMET ==========================================
             const [wikiResults, newsResults, academicResults] = await Promise.all([
                 this.searchWikipedia(query),
                 this.searchNews(query),
                 this.searchAcademic(query)
             ]);
             
-            // ✅ GJENERIM I PËRMBLEDHJES INTELIGJENTE
+            // ================================= ✅ GJENERIM I PËRMBLEDHJES INTELIGJENTE ======================================
             const summary = await this.generateIntelligentSummary({
                 wikipedia: wikiResults,
                 news: newsResults,
@@ -48,7 +48,7 @@ class SearchService {
         }
     }
 
-    // ✅ KËRKIM NË WIKIPEDIA
+    // ===================================== ✅ KËRKIM NË WIKIPEDIA =============================================================
     async searchWikipedia(query) {
         try {
             const response = await axios.get(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`, {
@@ -74,51 +74,78 @@ class SearchService {
         }
     }
 
-    // ✅ KËRKIM NË LAJME (duke përdorur NewsAPI ose alternativë)
-    async searchNews(query) {
-        try {
-            // PËRDORIM NEWSAPI OSE ALTERNATIVË
-            const newsApiKey = process.env.NEWS_API_KEY;
-            
-            if (newsApiKey) {
-                const response = await axios.get(`https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&sortBy=publishedAt&pageSize=3&apiKey=${newsApiKey}`, {
-                    timeout: 10000
-                });
-                
-                const articles = response.data.articles.slice(0, 3);
-                
-                return {
-                    articles: articles.map(article => ({
-                        title: article.title,
-                        description: article.description,
-                        source: article.source.name,
-                        url: article.url,
-                        publishedAt: article.publishedAt
-                    })),
-                    source: 'News API',
-                    hasData: articles.length > 0
-                };
-            } else {
-                // ALTERNATIVË PA API KEY - Kërkim i thjeshtë
-                return {
-                    articles: [],
-                    source: 'News (API Key Required)',
-                    hasData: false,
-                    message: 'Shto NEWS_API_KEY në .env për lajme aktuale'
-                };
-            }
-            
-        } catch (error) {
-            console.log('⚠️ News search failed:', error.message);
+    // ========================================= ✅ KËRKIM NË LAJME ========================================================= 
+    // 📁 services/searchService.js - VERSION I PËRITUR
+async searchNews(query) {
+    try {
+        const newsApiKey = process.env.NEWS_API_KEY;
+        
+        // ================================== ✅ KONTROLLO NËSE API KEY ËSHTË VALID ===========================================
+        if (!newsApiKey || newsApiKey === 'your_newsapi_key_here' || newsApiKey.includes('placeholder')) {
+            console.log('ℹ️ News API nuk është konfiguruar - duke kthyer rezultate simuluese');
+            return await this.getSimulatedNews(query);
+        }
+
+        // =============================================✅ KËRKIM REAL ME API ==================================================
+        console.log(`📰 Duke kërkuar lajme për: "${query}"`);
+        const response = await axios.get(
+            `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&sortBy=publishedAt&pageSize=3&apiKey=${newsApiKey}`,
+            { timeout: 15000 }
+        );
+        
+        const articles = response.data.articles.slice(0, 3);
+        
+        if (articles.length === 0) {
             return {
                 articles: [],
-                source: 'News',
-                hasData: false
+                source: 'News API',
+                hasData: false,
+                message: `📰 Nuk u gjetën lajme të freskëta për "${query}"`
             };
         }
+        
+        return {
+            articles: articles.map(article => ({
+                title: article.title || 'Pa titull',
+                description: article.description || 'Pa përshkrim',
+                source: article.source?.name || 'Burim i panjohur',
+                url: article.url,
+                publishedAt: article.publishedAt,
+                image: article.urlToImage
+            })),
+            source: 'News API',
+            hasData: true
+        };
+        
+    } catch (error) {
+        console.log('⚠️ News API search failed:', error.message);
+        
+        // ✅ FALLBACK NË SIMULIM NËSE API DËSHTO
+        return await this.getSimulatedNews(query);
     }
+}
 
-    // ✅ KËRKIM NË BURIME AKADEMIKE (Google Scholar alternative)
+// ========================================= ✅ METODË FALLBACK - SIMULIM LAJMESH ==============================================
+async getSimulatedNews(query) {
+    const simulatedArticles = [
+        {
+            title: `Lajme të fundit për "${query}"`,
+            description: `Informacioni i freskët për ${query} do të ishte i disponueshëm me News API.`,
+            source: 'Sistemi Informues',
+            url: 'https://newsapi.org',
+            publishedAt: new Date().toISOString()
+        }
+    ];
+    
+    return {
+        articles: simulatedArticles,
+        source: 'Sistem Informues',
+        hasData: true,
+        message: '💡 *Kërko News API key falas nga newsapi.org për lajme aktuale*'
+    };
+}
+
+    // ================================ ✅ KËRKIM NË BURIME AKADEMIKE (Google Scholar alternative) =================================
     async searchAcademic(query) {
         try {
             // PËRDORIM CrossRef API për burime akademike
@@ -151,11 +178,11 @@ class SearchService {
         }
     }
 
-    // ✅ GJENERIM I PËRMBLEDHJES INTELIGJENTE
+    // ================================ ✅ GJENERIM I PËRMBLEDHJES INTELIGJENTE ================================================
     async generateIntelligentSummary(sources, originalQuery) {
         let summary = `🔍 **REZULTATET E KËRKIMIT PËR:** "${originalQuery}"\n\n`;
         
-        // ✅ WIKIPEDIA SUMMARY
+        // ========================================✅ WIKIPEDIA SUMMARY ========================================================
         if (sources.wikipedia.hasData) {
             summary += `📚 **Wikipedia:**\n${sources.wikipedia.summary}\n\n`;
             summary += `🔗 *Burimi: ${sources.wikipedia.url}*\n\n`;
@@ -163,7 +190,7 @@ class SearchService {
             summary += `📚 **Wikipedia:** Nuk u gjet informacion specifik.\n\n`;
         }
         
-        // ✅ NEWS SUMMARY
+        // =========================================== ✅ NEWS SUMMARY =========================================================
         if (sources.news.hasData && sources.news.articles.length > 0) {
             summary += `📰 **Lajmet e Fundit:**\n`;
             sources.news.articles.forEach((article, index) => {
@@ -178,7 +205,7 @@ class SearchService {
             summary += `📰 **Lajme:** Nuk ka lajme të freskëta për këtë temë.\n\n`;
         }
         
-        // ✅ ACADEMIC SUMMARY
+        // ================================================== ✅ ACADEMIC SUMMARY ==============================================
         if (sources.academic.hasData && sources.academic.publications.length > 0) {
             summary += `🎓 **Burime Akademike:**\n`;
             sources.academic.publications.forEach((pub, index) => {
@@ -198,7 +225,7 @@ class SearchService {
             summary += `🎓 **Burime Akademike:** Nuk u gjetën publikime specifike.\n\n`;
         }
         
-        // ✅ REZULTATI PËRFUNDIMTAR
+        // ========================================== ✅ REZULTATI PËRFUNDIMTAR =================================================
         summary += `---\n`;
         summary += `💡 **Këshillë:** Përdor /wiki <fjale> për kërkim të fokusuar në Wikipedia.\n`;
         summary += `🌐 **Burime të përdorura:** ${this.getUsedSources(sources)}`;
@@ -206,7 +233,7 @@ class SearchService {
         return summary;
     }
 
-    // ✅ NUMRIMI I BURIMEVE TË PËRDORURA
+    // ========================================== ✅ NUMRIMI I BURIMEVE TË PËRDORURA ============================================
     countSources(wiki, news, academic) {
         let count = 0;
         if (wiki.hasData) count++;
@@ -215,7 +242,7 @@ class SearchService {
         return count;
     }
 
-    // ✅ LISTA E BURIMEVE TË PËRDORURA
+    // =========================================== ✅ LISTA E BURIMEVE TË PËRDORURA ==============================================
     getUsedSources(sources) {
         const used = [];
         if (sources.wikipedia.hasData) used.push('Wikipedia');
