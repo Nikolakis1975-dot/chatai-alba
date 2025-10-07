@@ -908,3 +908,42 @@ header button:last-child:hover {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+/* 📱 MOBILE RESPONSIVE FIXES */
+@media screen and (max-width: 768px) {
+  .login-container {
+    padding: 15px !important;
+    margin: 10px !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+  }
+  
+  .login-form, .register-section {
+    margin-bottom: 15px !important;
+    padding: 15px !important;
+  }
+  
+  .form-group {
+    margin-bottom: 12px !important;
+  }
+  
+  .form-group label {
+    font-size: 14px !important;
+  }
+  
+  .form-group input {
+    padding: 10px !important;
+    font-size: 16px !important; /* 📝 Important për mobile */
+  }
+  
+  .login-btn {
+    padding: 12px !important;
+    font-size: 16px !important;
+  }
+  
+  /* ✅ Sigurohu që të dyja fushat duken */
+  #username, #password {
+    width: 100% !important;
+    margin-bottom: 10px !important;
+  }
+}
