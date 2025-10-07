@@ -13,6 +13,7 @@ class CommandService {
         try {
             const args = message.split(' ');
             const mainCommand = args[0].toLowerCase();
+            const SearchService = require('../services/searchService');
             
             switch (mainCommand) {
                 case '/ndihmo':
@@ -41,6 +42,9 @@ class CommandService {
                 
                 case '/apikey':
                     return await this.apiKeyCommand(user, args.slice(1).join(' '));
+                
+                case '/gjej':
+                    return await SearchService.performSearch(args.slice(1).join(' '));
                 
                 default:
                     return await this.unknownCommand(mainCommand);
