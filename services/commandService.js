@@ -14,6 +14,7 @@ class CommandService {
             const args = message.split(' ');
             const mainCommand = args[0].toLowerCase();
             const SearchService = require('../services/searchService');
+            const GoogleSearchService = require('./googleSearchService');
             
             switch (mainCommand) {
                 case '/ndihmo':
@@ -45,6 +46,10 @@ class CommandService {
                 
                 case '/gjej':
                     return await SearchService.performSearch(args.slice(1).join(' '));
+                
+                case '/google':
+                case '/kërko':
+                    return await GoogleSearchService.performGoogleSearch(args.slice(1).join(' '));
                 
                 default:
                     return await this.unknownCommand(mainCommand);
