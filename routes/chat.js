@@ -1,3 +1,32 @@
+// ===================================== ✅ Shto në fillim (pa fshirë asgjë ekzistuese) ========================================
+const CommandBridge = require('../bridges/command-bridge');
+
+// ✅ Shto këtë rrugë të RE pa prekur asgjë ekzistuese
+router.post('/message-new', async (req, res) => {
+    try {
+        const { message } = req.body;
+        const user = req.user;
+        
+        if (!message) {
+            return res.json({ success: false, response: '❌ Ju lutem shkruani një mesazh' });
+        }
+
+        // ✅ Përdor Bridge-in e ri pa rrezik
+        const result = await CommandBridge.processCommandSafe(message, user);
+        return res.json(result);
+
+    } catch (error) {
+        console.error('❌ Gabim në bridge:', error);
+        // ✅ FALLBACK AUTOMATIK
+        return res.json({ 
+            success: false, 
+            response: '❌ Gabim në server. Provo përsëri.' 
+        });
+    }
+});
+
+// ============================================= FUKSIONI VECORIVE TE FILLIMIT TE VJETER =================================================
+
 const crypto = require('crypto');
 const express = require('express');
 const db = require('../database');
