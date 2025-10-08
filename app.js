@@ -80,6 +80,12 @@ setTimeout(() => {
     encryption.testEncryption();
 }, 2000);
 
+// 📄 app.js - Shto në FUND, para app.listen()
+const AppBridge = require('./bridges/app-bridge');
+
+// ✅ INICIALIZO URËN E SIGURT (NUK NDRYSHON FUNKSIONIMIN EKZISTUES)
+AppBridge.initializeSafeBridge(app);
+
 // ✅ 10. START SERVER
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Serveri është duke u drejtuar në portin ${PORT}`);
