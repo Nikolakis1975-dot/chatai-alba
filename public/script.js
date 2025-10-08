@@ -372,17 +372,44 @@ function showLoginScreen() {
     document.getElementById("chat").innerHTML = "";
 }
 
-// ==================== MENAXHIMI I MESAZHEVE ====================
+// ==================== ✅ FUNKSIONI I RI I PËRITUR - Përdor këtë ====================
+async function sendMessage() {
+    const messageInput = document.getElementById('messageInput');
+    const message = messageInput.value.trim();
+    
+    if (!message) return;
 
-function sendMessage() {
-    const input = document.getElementById("user-input");
-    const text = input.value.trim();
-    if (!text) return;
-    addMessage(text, "user");
-    processCommand(text);
-    input.value = "";
+    // ✅ SHFAQ MESAZHIN E PËRDORUESIT
+    addMessage(message, "user");
+
+    try {
+        // ✅ GJITHMONË DËRGO SI MESAZH NË /message
+        const response = await fetch('/api/chat/message', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({ message: message })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            addMessage(result.response, "bot");
+        } else {
+            addMessage(`❌ ${result.response || result.message}`, "bot");
+        }
+        
+    } catch (error) {
+        console.error('❌ Gabim në dërgim:', error);
+        addMessage('❌ Gabim në lidhje me serverin', "bot");
+    }
+    
+    messageInput.value = '';
 }
 
+// =======================  ADD MESAGE ========================================
 async function addMessage(content, sender, customTimestamp = null) {
     // Nëse është mesazh boti dhe nuk ka timestamp të veçantë, përdor animacionin
     if (sender === 'bot' && !customTimestamp) {
