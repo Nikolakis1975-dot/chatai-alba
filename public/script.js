@@ -846,6 +846,7 @@ async function askGemini(question) {
 
 // ============================== KOMANDAT ===============================================
 
+// ==================== ✅ FUNKSIONI I RI I PËRITUR ====================
 async function processCommand(text) {
     const parts = text.trim().split(" ");
     const cmd = parts[0];
@@ -860,9 +861,26 @@ async function processCommand(text) {
             await sendCommandToServer(text);
             break;
 
+        // ✅ KOMANDAT E VJETRA (mbaji si janë)
         case "/dil":
             addMessage("Dalje nga sistemi...", "bot");
             setTimeout(() => logout(), 1000);
+            break;
+
+        case "/wiki":
+            const query = parts.slice(1).join(" ");
+            if (!query) { addMessage("⚠️ Shkruaj diçka për të kërkuar.", "bot"); break; }
+            try {
+                showTypingIndicator();
+                const res = await fetch(`https://sq.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`);
+                const data = await res.json();
+                removeTypingIndicator();
+                if (data.extract) addMessage(`🌐 ${data.extract}`, "bot");
+                else addMessage("❌ Nuk u gjet informacion.", "bot");
+            } catch { 
+                removeTypingIndicator();
+                addMessage("⚠️ Gabim gjatë kërkimit në Wikipedia.", "bot"); 
+            }
             break;
 
         case "/meso":
@@ -897,22 +915,6 @@ async function processCommand(text) {
                 }
             } else {
                 addMessage("⚠️ Përdorimi: /meso pyetje | përgjigje", "bot");
-            }
-            break;
-
-        case "/wiki":
-            const query = parts.slice(1).join(" ");
-            if (!query) { addMessage("⚠️ Shkruaj diçka për të kërkuar.", "bot"); break; }
-            try {
-                showTypingIndicator();
-                const res = await fetch(`https://sq.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`);
-                const data = await res.json();
-                removeTypingIndicator();
-                if (data.extract) addMessage(`🌐 ${data.extract}`, "bot");
-                else addMessage("❌ Nuk u gjet informacion.", "bot");
-            } catch { 
-                removeTypingIndicator();
-                addMessage("⚠️ Gabim gjatë kërkimit në Wikipedia.", "bot"); 
             }
             break;
 
@@ -1014,7 +1016,6 @@ async function processCommand(text) {
 
         case "/apikey":
             if (parts.length < 2) {
-                // Shfaq statusin e API Key
                 try {
                     const response = await fetch('/api/api-keys/status/gemini', {
                         credentials: 'include'
@@ -1030,7 +1031,6 @@ async function processCommand(text) {
                     addMessage("❌ Gabim gjatë kontrollimit të statusit të API Key.", "bot");
                 }
             } else {
-                // Vendos API Key të ri
                 const newApiKey = parts.slice(1).join(" ");
                 
                 try {
