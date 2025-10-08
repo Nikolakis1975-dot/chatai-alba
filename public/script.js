@@ -851,14 +851,22 @@ async function processCommand(text) {
     const cmd = parts[0];
 
     switch (cmd) {
+        // ✅ KOMANDAT E REJA QË DËRGOJNË TE SERVERI
+        case "/gjej":
+        case "/google":
+        case "/kërko":
+        case "/ndihmo":  // ✅ Përditëso edhe /ndihmo për të përfshirë komandat e reja
+            // Dërgo këto komanda te serveri i ri
+            await sendCommandToServer(text);
+            break;
         case "/dil":
             addMessage("Dalje nga sistemi...", "bot");
             setTimeout(() => logout(), 1000);
             break;
 
-        case "/ndihmo":
-            addMessage("📌 Komandat: /ndihmo, /wiki <fjale>, /perkthim <gjuha> <tekst>, /meso <pyetje>|<përgjigje>, /moti <qyteti>, /eksporto, /importo, /dil, /apikey", "bot");
-            break;
+       // case "/ndihmo":
+          //  addMessage("📌 Komandat: /ndihmo, /wiki <fjale>, /perkthim <gjuha> <tekst>, /meso <pyetje>|<përgjigje>, /moti <qyteti>, /eksporto, /importo, /dil, /apikey", "bot");
+          //  break;
 
         case "/meso":
             const split = text.replace("/meso", "").split("|");
