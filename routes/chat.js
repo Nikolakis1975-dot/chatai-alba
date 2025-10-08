@@ -3,7 +3,48 @@ const express = require('express');
 const db = require('../database');
 const router = express.Router();
 
-// Merr historinë e bisedës për një përdorues
+// ✅ SHTIMI I RI - IMPORT I COMMAND SERVICE
+const CommandService = require('../services/commandService');
+
+// ✅ SHTIMI I RI - RUTA PËR PROCESIMIN E MESAZHEVE DHE KOMANDAVE
+router.post('/message', async (req, res) => {
+    try {
+        const { message } = req.body;
+        const user = req.user; // Marrë nga middleware ekzistues
+        
+        if (!message) {
+            return res.json({
+                success: false,
+                response: '❌ Ju lutem shkruani një mesazh'
+            });
+        }
+
+        // ✅ KONTROLLO NËSE ËSHTË KOMANDË
+        if (message.startsWith('/')) {
+            console.log(`🔧 Duke procesuar komandë: ${message}`);
+            const commandResult = await CommandService.processCommand('/', user, message);
+            return res.json(commandResult);
+        }
+
+        // ✅ NËSE NUK ËSHTË KOMANDË, PROCEO SI MESAZH NORMAL ME GEMINI
+        // Përdor kodin ekzistues të Gemini nga skedari gemini.js
+        const geminiResponse = await require('./gemini').processMessage(message, user.id);
+        
+        return res.json({
+            success: true,
+            response: geminiResponse
+        });
+
+    } catch (error) {
+        console.error('❌ Gabim në procesimin e mesazhit:', error);
+        return res.json({
+            success: false,
+            response: '❌ Gabim në server. Provo përsëri.'
+        });
+    }
+});
+
+// ✅ KODI EKZISTUES - MERR HISTORINË E BISEDËS
 router.get('/history/:userId', (req, res) => {
     const { userId } = req.params;
 
@@ -20,7 +61,7 @@ router.get('/history/:userId', (req, res) => {
     );
 });
 
-// Ruaj mesazhin në histori
+// ✅ KODI EKZISTUES - RUAJ MESAZHIN NË HISTORI
 router.post('/save', (req, res) => {
     const { userId, content, sender, timestamp } = req.body;
 
@@ -41,7 +82,7 @@ router.post('/save', (req, res) => {
     );
 });
 
-// Ruaj njohuri të reja
+// ✅ KODI EKZISTUES - RUAJ NJOHURI TË REJA
 router.post('/knowledge', (req, res) => {
     const { userId, question, answer } = req.body;
 
@@ -62,7 +103,7 @@ router.post('/knowledge', (req, res) => {
     );
 });
 
-// Kërko njohuri
+// ✅ KODI EKZISTUES - KËRKO NJOHURI
 router.get('/knowledge/:userId/:question', (req, res) => {
     const { userId, question } = req.params;
 
@@ -83,7 +124,7 @@ router.get('/knowledge/:userId/:question', (req, res) => {
     );
 });
 
-// Eksporto njohuritë
+// ✅ KODI EKZISTUES - EKSPORTO NJOHURITË
 router.get('/export/:userId', (req, res) => {
     const { userId } = req.params;
 
@@ -100,7 +141,7 @@ router.get('/export/:userId', (req, res) => {
     );
 });
 
-// Importo njohuritë
+// ✅ KODI EKZISTUES - IMPORTO NJOHURITË
 router.post('/import', (req, res) => {
     const { userId, knowledge } = req.body;
 
@@ -133,7 +174,7 @@ router.post('/import', (req, res) => {
     });
 });
 
-// Fshi historinë e përdoruesit
+// ✅ KODI EKZISTUES - FSHI HISTORINË E PËRDORUESIT
 router.delete('/clear/:userId', (req, res) => {
     const { userId } = req.params;
 
@@ -149,7 +190,7 @@ router.delete('/clear/:userId', (req, res) => {
     );
 });
 
-// Eksporto historinë
+// ✅ KODI EKZISTUES - EKSPORTO HISTORINË
 router.get('/export-history/:userId', (req, res) => {
     const { userId } = req.params;
 
@@ -165,7 +206,7 @@ router.get('/export-history/:userId', (req, res) => {
     );
 });
 
-// Ruaj feedback
+// ✅ KODI EKZISTUES - RUAJ FEEDBACK
 router.post('/feedback', (req, res) => {
     const { userId, messageId, feedbackType } = req.body;
 
