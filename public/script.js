@@ -372,17 +372,17 @@ function showLoginScreen() {
     document.getElementById("chat").innerHTML = "";
 }
 
-// ==================== ✅ FUNKSIONI AKTUAL MESAGE ====================
+// ==================== MENAXHIMI I MESAZHEVE ====================
+
 function sendMessage() {
     const input = document.getElementById("user-input");
     const text = input.value.trim();
     if (!text) return;
     addMessage(text, "user");
-    processCommand(text); // ✅ Ky duhet të jetë i përditësuar për komandat e reja
+    processCommand(text);
     input.value = "";
 }
 
-// =======================  ADD MESAGE ========================================
 async function addMessage(content, sender, customTimestamp = null) {
     // Nëse është mesazh boti dhe nuk ka timestamp të veçantë, përdor animacionin
     if (sender === 'bot' && !customTimestamp) {
