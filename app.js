@@ -15,6 +15,10 @@ const geminiRoutes = require('./routes/gemini');
 const adminRoutes = require('./routes/admin');
 const geminiSimpleRoutes = require('./routes/gemini-simple');
 
+// ✅ IMPORTO MIDDLEWARE TË RINJ
+const { authenticateToken } = require('./middleware/auth');
+const constants = require('./config/constants');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
