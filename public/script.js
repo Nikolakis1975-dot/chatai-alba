@@ -372,41 +372,14 @@ function showLoginScreen() {
     document.getElementById("chat").innerHTML = "";
 }
 
-// ==================== ✅ FUNKSIONI I RI I PËRITUR - Përdor këtë ====================
-async function sendMessage() {
-    const messageInput = document.getElementById('messageInput');
-    const message = messageInput.value.trim();
-    
-    if (!message) return;
-
-    // ✅ SHFAQ MESAZHIN E PËRDORUESIT
-    addMessage(message, "user");
-
-    try {
-        // ✅ GJITHMONË DËRGO SI MESAZH NË /message
-        const response = await fetch('/api/chat/message', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-            body: JSON.stringify({ message: message })
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            addMessage(result.response, "bot");
-        } else {
-            addMessage(`❌ ${result.response || result.message}`, "bot");
-        }
-        
-    } catch (error) {
-        console.error('❌ Gabim në dërgim:', error);
-        addMessage('❌ Gabim në lidhje me serverin', "bot");
-    }
-    
-    messageInput.value = '';
+// ==================== ✅ FUNKSIONI AKTUAL MESAGE ====================
+function sendMessage() {
+    const input = document.getElementById("user-input");
+    const text = input.value.trim();
+    if (!text) return;
+    addMessage(text, "user");
+    processCommand(text); // ✅ Ky duhet të jetë i përditësuar për komandat e reja
+    input.value = "";
 }
 
 // =======================  ADD MESAGE ========================================
