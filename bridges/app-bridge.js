@@ -7,12 +7,6 @@
 
 class AppBridge {
     static isInitialized = false;
-    static newRoutes = new Map();
-    static featureFlags = {
-        ENABLE_NEW_COMMANDS: false, // ❌ AKOMA JO - vetëm kur të testojmë
-        ENABLE_GOOGLE_SEARCH: false, // ❌ AKOMA JO
-        ENABLE_NEW_SERVICES: false // ❌ AKOMA JO
-    };
 
     // ✅ INICIALIZIM I SIGURT - NUK NDRYSHON APP.JS EKZISTUES
     static initializeSafeBridge(app) {
@@ -38,33 +32,19 @@ class AppBridge {
 
     // ✅ NGARKIM I SIGURT I SISTEMEVE TË REJA
     static loadNewSystemsSafely(app) {
+        console.log('🔍 Duke kontrolluar nëse ka sisteme të reja për të ngarkuar...');
+        
         // ✅ 1. PROVO TË NGARKOSH COMMAND SERVICE
         try {
             const CommandService = require('../services/commandService');
-            console.log('✅ CommandService u ngarkua me sukses (gati për teste)');
-            
-            // Regjistro ruta të reja të testuara
-            this.registerTestRoutes(app);
+            console.log('✅ CommandService u gjet dhe u ngarkua');
             
         } catch (error) {
             console.log('ℹ️ CommandService nuk mund të ngarkohet akoma:', error.message);
         }
 
-        // ✅ 2. PROVO TË NGARKOSH SERVICET E TJERA
-        this.attemptToLoadService('GoogleSearchService');
-        this.attemptToLoadService('SearchService');
-    }
-
-    // ✅ METODË PËR NGARKIM TË SIGURT TË SERVICAVE
-    static attemptToLoadService(serviceName) {
-        try {
-            const service = require(`../services/${serviceName.toLowerCase()}`);
-            console.log(`✅ ${serviceName} u ngarkua me sukses (gati për teste)`);
-            return service;
-        } catch (error) {
-            console.log(`ℹ️ ${serviceName} nuk mund të ngarkohet akoma:`, error.message);
-            return null;
-        }
+        // ✅ REGJISTRO RUTA TESTUESE
+        this.registerTestRoutes(app);
     }
 
     // ✅ REGJISTRIM I RUTAVE TË REJA TË TESTUARA
@@ -75,7 +55,8 @@ class AppBridge {
                 success: true, 
                 message: '🌉 Ura e AppBridge punon!',
                 timestamp: new Date().toISOString(),
-                features: this.featureFlags
+                status: 'Operational',
+                version: '1.0'
             });
         });
 
