@@ -844,43 +844,20 @@ async function askGemini(question) {
     }
 }
 
-// ============================== KOMANDAT ===============================================
+// ==================== KOMANDAT ====================
 
-// ==================== ✅ FUNKSIONI I RI I PËRITUR ====================
 async function processCommand(text) {
     const parts = text.trim().split(" ");
     const cmd = parts[0];
 
     switch (cmd) {
-        // ✅ KOMANDAT E REJA QË DËRGOJNË TE SERVERI
-        case "/gjej":
-        case "/google":
-        case "/kërko":
-        case "/ndihmo":
-            // Dërgo këto komanda te serveri i ri
-            await sendCommandToServer(text);
-            break;
-
-        // ✅ KOMANDAT E VJETRA (mbaji si janë)
         case "/dil":
             addMessage("Dalje nga sistemi...", "bot");
             setTimeout(() => logout(), 1000);
             break;
 
-        case "/wiki":
-            const query = parts.slice(1).join(" ");
-            if (!query) { addMessage("⚠️ Shkruaj diçka për të kërkuar.", "bot"); break; }
-            try {
-                showTypingIndicator();
-                const res = await fetch(`https://sq.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`);
-                const data = await res.json();
-                removeTypingIndicator();
-                if (data.extract) addMessage(`🌐 ${data.extract}`, "bot");
-                else addMessage("❌ Nuk u gjet informacion.", "bot");
-            } catch { 
-                removeTypingIndicator();
-                addMessage("⚠️ Gabim gjatë kërkimit në Wikipedia.", "bot"); 
-            }
+        case "/ndihmo":
+            addMessage("📌 Komandat: /ndihmo, /wiki <fjale>, /perkthim <gjuha> <tekst>, /meso <pyetje>|<përgjigje>, /moti <qyteti>, /eksporto, /importo, /dil, /apikey", "bot");
             break;
 
         case "/meso":
@@ -915,6 +892,22 @@ async function processCommand(text) {
                 }
             } else {
                 addMessage("⚠️ Përdorimi: /meso pyetje | përgjigje", "bot");
+            }
+            break;
+
+        case "/wiki":
+            const query = parts.slice(1).join(" ");
+            if (!query) { addMessage("⚠️ Shkruaj diçka për të kërkuar.", "bot"); break; }
+            try {
+                showTypingIndicator();
+                const res = await fetch(`https://sq.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`);
+                const data = await res.json();
+                removeTypingIndicator();
+                if (data.extract) addMessage(`🌐 ${data.extract}`, "bot");
+                else addMessage("❌ Nuk u gjet informacion.", "bot");
+            } catch { 
+                removeTypingIndicator();
+                addMessage("⚠️ Gabim gjatë kërkimit në Wikipedia.", "bot"); 
             }
             break;
 
@@ -1016,10 +1009,12 @@ async function processCommand(text) {
 
         case "/apikey":
             if (parts.length < 2) {
+                // Shfaq statusin e API Key
                 try {
-                    const response = await fetch('/api/api-keys/status/gemini', {
-                        credentials: 'include'
-                    });
+                    // ✅ KORREKT - përdor endpoint-in e ri me authentication
+const response = await fetch('/api/api-keys/status/gemini', {
+    credentials: 'include'
+});
                     const data = await response.json();
                     
                     if (data.hasApiKey) {
@@ -1031,6 +1026,7 @@ async function processCommand(text) {
                     addMessage("❌ Gabim gjatë kontrollimit të statusit të API Key.", "bot");
                 }
             } else {
+                // Vendos API Key të ri
                 const newApiKey = parts.slice(1).join(" ");
                 
                 try {
@@ -1058,77 +1054,106 @@ async function processCommand(text) {
             }
             break;
 
-        default:
-            // Nëse nuk është komandë e njohur, dërgo si mesazh normal
-            if (text.startsWith('/')) {
-                addMessage(`❌ Komandë e panjohur: ${cmd}. Përdor /ndihmo për listën.`, "bot");
+        // ✅ KOMANDAT E REJA PËR ADMIN
+        case "/admin":
+            if (currentUser && currentUser.username === 'admin') {
+                addMessage("👑 **PANELI I ADMINIT**\n\nKomandat:\n• /users - Shfaq të gjithë përdoruesit\n• /stats - Statistikat e sistemit\n• /clearall - Fshi të gjitha bisedat\n• /panel - Shfaq panelin e adminit", "bot");
             } else {
-                // Dërgo si mesazh normal tek Gemini
-                await sendMessageToGemini(text);
+                addMessage("❌ Kjo komandë është vetëm për administratorët.", "bot");
             }
             break;
-    }
-}
 
-// ==================== ✅ FUNKSIONET E REJA PËR SERVER ====================
+        case "/users":
+            if (currentUser && currentUser.username === 'admin') {
+                showAllUsers();
+            } else {
+                addMessage("❌ Kjo komandë është vetëm për administratorët.", "bot");
+            }
+            break;
 
-// ✅ DËRGON KOMANDAT TE SERVERI I RI
-async function sendCommandToServer(command) {
-    try {
-        showTypingIndicator();
-        
-        const response = await fetch('/api/chat/message', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-            body: JSON.stringify({ message: command })
-        });
-        
-        const result = await response.json();
-        removeTypingIndicator();
-        
-        if (result.success) {
-            addMessage(result.response, "bot");
-        } else {
-            addMessage(`❌ ${result.response || result.message}`, "bot");
-        }
-        
-    } catch (error) {
-        removeTypingIndicator();
-        console.error('❌ Gabim në dërgimin e komandës:', error);
-        addMessage('❌ Gabim në lidhje me serverin', "bot");
-    }
-}
+        case "/stats":
+            if (currentUser && currentUser.username === 'admin') {
+                showSystemStats();
+            } else {
+                addMessage("❌ Kjo komandë është vetëm për administratorët.", "bot");
+            }
+            break;
 
-// ✅ DËRGON MESAZHE TE GEMINI
-async function sendMessageToGemini(message) {
-    try {
-        showTypingIndicator();
-        
-        const response = await fetch('/api/chat/message', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-            body: JSON.stringify({ message: message })
-        });
-        
-        const result = await response.json();
-        removeTypingIndicator();
-        
-        if (result.success) {
-            addMessage(result.response, "bot");
-        } else {
-            addMessage(`❌ ${result.response || result.message}`, "bot");
-        }
-        
-    } catch (error) {
-        removeTypingIndicator();
-        console.error('❌ Gabim në dërgimin e mesazhit:', error);
-        addMessage('❌ Gabim në lidhje me serverin', "bot");
+        case "/clearall":
+            if (currentUser && currentUser.username === 'admin') {
+                clearAllChats();
+            } else {
+                addMessage("❌ Kjo komandë është vetëm për administratorët.", "bot");
+            }
+            break;
+
+        case "/panel":
+            if (currentUser && currentUser.username === 'admin') {
+                addAdminPanel();
+                addMessage("👑 Paneli i Adminit u shfaq!", "bot");
+            } else {
+                addMessage("❌ Kjo komandë është vetëm për administratorët.", "bot");
+            }
+            break;
+
+        default:
+            const key = text.toLowerCase();
+            
+            try {
+                const response = await fetch(`/api/chat/knowledge/${currentUser.id}/${encodeURIComponent(key)}`);
+                const data = await response.json();
+                
+                if (data.answer) {
+                    addMessage(data.answer, "bot");
+                    return;
+                }
+            } catch (error) {
+                console.error("Gabim gjatë kërkimit të njohurive:", error);
+            }
+
+            const calc = tryCalculate(text);
+            if (calc !== null) { 
+                addMessage("🧮 Rezultati: " + calc, "bot"); 
+                return; 
+            }
+
+            // Kontrollo nëse ka API Key në server
+            try {
+                // ✅ KORREKT - përdor endpoint-in e ri me authentication
+const response = await fetch('/api/api-keys/status/gemini', {
+    credentials: 'include'
+});
+                const data = await response.json();
+                
+                if (!data.hasApiKey) {
+                    addMessage("❌ Nuk është konfiguruar API Key për Gemini. Përdor komandën /apikey [key_jote] për të vendosur një API Key.", "bot");
+                    return;
+                }
+                
+                // Nëse ka API Key, bëj thirrjen për Gemini përmes serverit
+                showTypingIndicator();
+                
+                // ✅ KORREKT - dërgon vetëm mesazhin
+const geminiResponse = await fetch('/api/gemini/ask', {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: 'include', // ✅ Shto këtë
+    body: JSON.stringify({ 
+        message: text  // ✅ VETËM MESAZHI
+    })
+});
+                const geminiData = await geminiResponse.json();
+                removeTypingIndicator();
+                
+                if (geminiData.success && geminiData.response) {
+                    addMessage(geminiData.response, "bot");
+                } else {
+                    addMessage("❌ Nuk mora përgjigje nga Gemini. Kontrollo API Key.", "bot");
+                }
+            } catch {
+                removeTypingIndicator();
+                addMessage("⚠️ Gabim gjatë lidhjes me serverin.", "bot");
+            }
     }
 }
 
@@ -1520,6 +1545,381 @@ const ScriptBridge = require('../bridges/script-bridge');
 ScriptBridge.initialize();
 
 // ========================== Shfaq statistikat e sistemit =============================================
+
+// ==================== ✅ KOMANDAT E REJA PËR SERVER ====================
+
+// ✅ DËRGON KOMANDAT TE SERVERI I RI
+async function sendCommandToServer(command) {
+    try {
+        showTypingIndicator();
+        
+        const response = await fetch('/api/chat/message', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({ message: command })
+        });
+        
+        const result = await response.json();
+        removeTypingIndicator();
+        
+        if (result.success) {
+            addMessage(result.response, "bot");
+        } else {
+            addMessage(`❌ ${result.response || result.message}`, "bot");
+        }
+        
+    } catch (error) {
+        removeTypingIndicator();
+        console.error('❌ Gabim në dërgimin e komandës:', error);
+        addMessage('❌ Gabim në lidhje me serverin', "bot");
+    }
+}
+
+// ✅ DËRGON MESAZHE TE GEMINI
+async function sendMessageToGemini(message) {
+    try {
+        showTypingIndicator();
+        
+        const response = await fetch('/api/chat/message', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({ message: message })
+        });
+        
+        const result = await response.json();
+        removeTypingIndicator();
+        
+        if (result.success) {
+            addMessage(result.response, "bot");
+        } else {
+            addMessage(`❌ ${result.response || result.message}`, "bot");
+        }
+        
+    } catch (error) {
+        removeTypingIndicator();
+        console.error('❌ Gabim në dërgimin e mesazhit:', error);
+        addMessage('❌ Gabim në lidhje me serverin', "bot");
+    }
+}
+
+// ==================== ✅ MODIFIKIMI I processCommand() ====================
+
+// ✅ ZËVENDËSO VETËM KËTË PJESË NË processCommand():
+
+async function processCommand(text) {
+    const parts = text.trim().split(" ");
+    const cmd = parts[0];
+
+    // ✅ KOMANDAT E REJA QË DËRGOJNË TE SERVERI
+    if (cmd === "/gjej" || cmd === "/google" || cmd === "/kërko" || cmd === "/ndihmo") {
+        await sendCommandToServer(text);
+        return;
+    }
+
+    // ✅ MBAJI TË GJITHA KOMANDAT EKZISTUESE SI JANË
+    switch (cmd) {
+        case "/dil":
+            addMessage("Dalje nga sistemi...", "bot");
+            setTimeout(() => logout(), 1000);
+            break;
+
+        case "/wiki":
+            const query = parts.slice(1).join(" ");
+            if (!query) { addMessage("⚠️ Shkruaj diçka për të kërkuar.", "bot"); break; }
+            try {
+                showTypingIndicator();
+                const res = await fetch(`https://sq.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`);
+                const data = await res.json();
+                removeTypingIndicator();
+                if (data.extract) addMessage(`🌐 ${data.extract}`, "bot");
+                else addMessage("❌ Nuk u gjet informacion.", "bot");
+            } catch { 
+                removeTypingIndicator();
+                addMessage("⚠️ Gabim gjatë kërkimit në Wikipedia.", "bot"); 
+            }
+            break;
+
+        case "/meso":
+            const split = text.replace("/meso", "").split("|");
+            if (split.length === 2) {
+                const q = split[0].trim().toLowerCase();
+                const a = split[1].trim();
+                
+                try {
+                    const response = await fetch('/api/chat/knowledge', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify({
+                            userId: currentUser.id,
+                            question: q,
+                            answer: a
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (response.ok) {
+                        knowledgeBase[q] = a;
+                        addMessage("✅ Mësova diçka të re!", "bot");
+                    } else {
+                        addMessage("⚠️ Gabim gjatë ruajtjes së njohurive: " + data.error, "bot");
+                    }
+                } catch (error) {
+                    addMessage("⚠️ Gabim gjatë ruajtjes së njohurive.", "bot");
+                }
+            } else {
+                addMessage("⚠️ Përdorimi: /meso pyetje | përgjigje", "bot");
+            }
+            break;
+
+        case "/perkthim":
+            if (parts.length < 3) return addMessage("⚠️ Përdorimi: /perkthim [gjuha] [tekst]", "bot");
+            const targetLang = parts[1].toLowerCase();
+            const tekst = parts.slice(2).join(" ");
+            const sourceLang = (targetLang === "sq") ? "en" : "sq";
+            
+            showTypingIndicator();
+            
+            fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(tekst)}&langpair=${sourceLang}|${targetLang}`)
+                .then(r => r.json())
+                .then(d => {
+                    removeTypingIndicator();
+                    const translatedText = d?.responseData?.translatedText || "❌ Gabim përkthimi.";
+                    addMessage(translatedText, "bot");
+                })
+                .catch(() => {
+                    removeTypingIndicator();
+                    addMessage("⚠️ Gabim përkthimi.", "bot");
+                });
+            break;
+
+        case "/eksporto":
+            try {
+                const response = await fetch(`/api/chat/export/${currentUser.id}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+                    const link = document.createElement("a");
+                    link.href = URL.createObjectURL(blob);
+                    link.download = "knowledge.json";
+                    link.click();
+                    addMessage("💾 Eksportova njohuritë.", "bot");
+                } else {
+                    addMessage("❌ Gabim gjatë eksportimit: " + data.error, "bot");
+                }
+            } catch (error) {
+                addMessage("❌ Gabim gjatë eksportimit.", "bot");
+            }
+            break;
+
+        case "/importo":
+            const inp = document.createElement("input");
+            inp.type = "file"; inp.accept = "application/json";
+            inp.onchange = async e => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = async () => {
+                    try {
+                        const knowledgeData = JSON.parse(reader.result);
+                        
+                        const response = await fetch('/api/chat/import', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                userId: currentUser.id,
+                                knowledge: knowledgeData
+                            })
+                        });
+
+                        const data = await response.json();
+                        if (response.ok) {
+                            addMessage("✅ Importova njohuritë.", "bot");
+                        } else {
+                            addMessage("❌ Gabim gjatë importimit: " + data.error, "bot");
+                        }
+                    } catch (error) {
+                        addMessage("❌ Gabim gjatë importimit.", "bot");
+                    }
+                };
+                reader.readAsText(file);
+            };
+            inp.click();
+            break;
+
+        case "/moti":
+            if (parts.length < 2) {
+                addMessage("⚠️ Përdorimi: /moti [qyteti]", "bot");
+            } else {
+                const qyteti = parts.slice(1).join(" ");
+                showTypingIndicator();
+                fetch(`https://wttr.in/${encodeURIComponent(qyteti)}?format=%c+%t+%w+%h`)
+                    .then(res => res.text())
+                    .then(data => {
+                        removeTypingIndicator();
+                        addMessage("🌍 Moti në " + qyteti + ": " + data, "bot");
+                    })
+                    .catch(() => {
+                        removeTypingIndicator();
+                        addMessage("⚠️ Gabim gjatë marrjes së motit.", "bot");
+                    });
+            }
+            break;
+
+        case "/apikey":
+            if (parts.length < 2) {
+                try {
+                    const response = await fetch('/api/api-keys/status/gemini', {
+                        credentials: 'include'
+                    });
+                    const data = await response.json();
+                    
+                    if (data.hasApiKey) {
+                        addMessage("🔑 API Key është konfiguruar në server (e ruajtur: " + new Date(data.createdAt).toLocaleDateString("sq-AL") + ")", "bot");
+                    } else {
+                        addMessage("❌ Nuk ka API Key të konfiguruar. Përdor: /apikey [key_jote]", "bot");
+                    }
+                } catch (error) {
+                    addMessage("❌ Gabim gjatë kontrollimit të statusit të API Key.", "bot");
+                }
+            } else {
+                const newApiKey = parts.slice(1).join(" ");
+                
+                try {
+                    const response = await fetch('/api/api-keys/save', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            userId: currentUser.id,
+                            apiKey: newApiKey,
+                            serviceName: 'gemini'
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (response.ok) {
+                        addMessage("✅ API Key u ruajt me sukses në server!", "bot");
+                    } else {
+                        addMessage("❌ Gabim gjatë ruajtjes së API Key: " + data.error, "bot");
+                    }
+                } catch (error) {
+                    addMessage("❌ Gabim gjatë ruajtjes së API Key.", "bot");
+                }
+            }
+            break;
+
+        // ✅ KOMANDAT E REJA PËR ADMIN
+        case "/admin":
+            if (currentUser && currentUser.username === 'admin') {
+                addMessage("👑 **PANELI I ADMINIT**\n\nKomandat:\n• /users - Shfaq të gjithë përdoruesit\n• /stats - Statistikat e sistemit\n• /clearall - Fshi të gjitha bisedat\n• /panel - Shfaq panelin e adminit", "bot");
+            } else {
+                addMessage("❌ Kjo komandë është vetëm për administratorët.", "bot");
+            }
+            break;
+
+        case "/users":
+            if (currentUser && currentUser.username === 'admin') {
+                showAllUsers();
+            } else {
+                addMessage("❌ Kjo komandë është vetëm për administratorët.", "bot");
+            }
+            break;
+
+        case "/stats":
+            if (currentUser && currentUser.username === 'admin') {
+                showSystemStats();
+            } else {
+                addMessage("❌ Kjo komandë është vetëm për administratorët.", "bot");
+            }
+            break;
+
+        case "/clearall":
+            if (currentUser && currentUser.username === 'admin') {
+                clearAllChats();
+            } else {
+                addMessage("❌ Kjo komandë është vetëm për administratorët.", "bot");
+            }
+            break;
+
+        case "/panel":
+            if (currentUser && currentUser.username === 'admin') {
+                addAdminPanel();
+                addMessage("👑 Paneli i Adminit u shfaq!", "bot");
+            } else {
+                addMessage("❌ Kjo komandë është vetëm për administratorët.", "bot");
+            }
+            break;
+
+        default:
+            const key = text.toLowerCase();
+            
+            try {
+                const response = await fetch(`/api/chat/knowledge/${currentUser.id}/${encodeURIComponent(key)}`);
+                const data = await response.json();
+                
+                if (data.answer) {
+                    addMessage(data.answer, "bot");
+                    return;
+                }
+            } catch (error) {
+                console.error("Gabim gjatë kërkimit të njohurive:", error);
+            }
+
+            const calc = tryCalculate(text);
+            if (calc !== null) { 
+                addMessage("🧮 Rezultati: " + calc, "bot"); 
+                return; 
+            }
+
+            // Kontrollo nëse ka API Key në server
+            try {
+                const response = await fetch('/api/api-keys/status/gemini', {
+                    credentials: 'include'
+                });
+                const data = await response.json();
+                
+                if (!data.hasApiKey) {
+                    addMessage("❌ Nuk është konfiguruar API Key për Gemini. Përdor komandën /apikey [key_jote] për të vendosur një API Key.", "bot");
+                    return;
+                }
+                
+                // Nëse ka API Key, bëj thirrjen për Gemini përmes serverit
+                showTypingIndicator();
+                
+                const geminiResponse = await fetch('/api/gemini/ask', {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: 'include',
+                    body: JSON.stringify({ 
+                        message: text
+                    })
+                });
+                const geminiData = await geminiResponse.json();
+                removeTypingIndicator();
+                
+                if (geminiData.success && geminiData.response) {
+                    addMessage(geminiData.response, "bot");
+                } else {
+                    addMessage("❌ Nuk mora përgjigje nga Gemini. Kontrollo API Key.", "bot");
+                }
+            } catch {
+                removeTypingIndicator();
+                addMessage("⚠️ Gabim gjatë lidhjes me serverin.", "bot");
+            }
+    }
+}
 
 // Shfaq statistikat e sistemit
 async function showSystemStats() {
