@@ -8,7 +8,7 @@
 
 class CommandService {
     
-    // ✅ PROCESIMI I KOMANDËS KRYESORE
+    // =====================================✅ PROCESIMI I KOMANDËS KRYESORE =======================================================
     async processCommand(command, user, message) {
         try {
             const args = message.split(' ');
@@ -47,12 +47,18 @@ class CommandService {
                 case '/gjej':
                     return await SearchService.performSearch(args.slice(1).join(' '));
                 
+              // ============================== ✅ VAZHDON CASE-KOMANDA TË REJA PËR GOOGLE SEARCH ==============================================
                 case '/google':
                 case '/kërko':
-                    return await GoogleSearchService.performGoogleSearch(args.slice(1).join(' '));
-                
-                default:
-                    return await this.unknownCommand(mainCommand);
+                case '/search':
+                   const searchQuery = args.slice(1).join(' ');
+                   if (!searchQuery) {
+                     return {
+                        success: false,
+                        response: '❌ Ju lutem shkruani çfarë të kërkoj: /google <pyetje>'
+                     };
+                   }
+                   return await GoogleSearchService.performGoogleSearch(searchQuery);
             }
             
         } catch (error) {
@@ -64,7 +70,7 @@ class CommandService {
         }
     }
 
-    // ✅ KOMANDA /NDIHMO - LISTA E KOMANDAVE
+    // =================================== ✅ KOMANDA /NDIHMO - LISTA E KOMANDAVE ===========================================
     async helpCommand(user) {
         const commandsList = `
 👑 **SISTEMI I KOMANDAVE - CHATAI ALBA** 👑
@@ -93,7 +99,7 @@ class CommandService {
         };
     }
 
-    // ✅ KOMANDA /WIKI - KËRKIM WIKIPEDIA
+    // ========================================= ✅ KOMANDA /WIKI - KËRKIM WIKIPEDIA =========================================
     async wikiCommand(searchTerm) {
         if (!searchTerm) {
             return {
@@ -111,7 +117,7 @@ class CommandService {
         };
     }
 
-    // ✅ KOMANDA /PERKTHIM - PËRKTHIM I TEKSTIT
+    // ===========================================✅ KOMANDA /PERKTHIM - PËRKTHIM I TEKSTIT =======================================
     async translationCommand(args) {
         const [language, ...textParts] = args;
         const text = textParts.join(' ');
@@ -132,7 +138,7 @@ class CommandService {
         };
     }
 
-    // ✅ KOMANDA /MESO - MËSIM I RI PËR AI
+    // =============================================✅ KOMANDA /MESO - MËSIM I RI PËR AI ============================================
     async learnCommand(data) {
         const [question, answer] = data.split('|');
         
@@ -152,7 +158,7 @@ class CommandService {
         };
     }
 
-    // ✅ KOMANDA /MOTI - INFORMACION MOTI
+    // ===========================================✅ KOMANDA /MOTI - INFORMACION MOTI ==============================================
     async weatherCommand(city) {
         if (!city) {
             return {
@@ -170,7 +176,7 @@ class CommandService {
         };
     }
 
-    // ✅ KOMANDA /EKSPORTO - EKSPORT I HISTORISË
+    // =========================================✅ KOMANDA /EKSPORTO - EKSPORT I HISTORISË ===========================================
     async exportCommand(user) {
         const exportData = await this.generateExport(user.id);
         
@@ -181,7 +187,7 @@ class CommandService {
         };
     }
 
-    // ✅ KOMANDA /APIKEY - KONFIGURIM API KEY
+    // ========================================✅ KOMANDA /APIKEY - KONFIGURIM API KEY ==============================================
     async apiKeyCommand(user, apiKey) {
         if (!apiKey) {
             return {
@@ -199,7 +205,7 @@ class CommandService {
         };
     }
 
-    // ✅ METODA NDIHMËSE
+    // =============================================✅ METODA NDIHMËSE ===============================================================
     async fetchWikipedia(term) {
         // Implementimi i Wikipedia API
         return `📚 Wikipedia për "${term}": Informacioni do të shfaqet këtu...`;
@@ -225,7 +231,7 @@ class CommandService {
         console.log(`🔑 Ruajtur API Key për user ${userId}`);
     }
 
-    // ✅ KOMANDË E PANJOHUR
+    // ===================================================✅ KOMANDË E PANJOHUR ======================================================
     async unknownCommand(command) {
         return {
             success: false,
