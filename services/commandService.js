@@ -106,7 +106,7 @@ async helpCommand(user) {
 • /moti Tirana
 • /gjej Shqipëria
 • /google teknologjia 2024
-• /apikey AIzaSyBoPymDh6Ol2EQAnpzBHvsLau_opIBC2oY
+• /apikey API_KEY JOT KETU
     `.trim(); // ✅ .trim() për të larguar hapësirat e panevojshme
     
     return {
