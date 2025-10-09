@@ -71,33 +71,49 @@ class CommandService {
     }
 
     // =================================== ✅ KOMANDA /NDIHMO - LISTA E KOMANDAVE ===========================================
-    async helpCommand(user) {
-        const commandsList = `
+    // ✅ KOMANDA /NDIHMO - VERSION I PËRMIRËSUAR
+async helpCommand(user) {
+    const commandsList = `
 👑 **SISTEMI I KOMANDAVE - CHATAI ALBA** 👑
 
-🔹 **/ndihmo** - Shfaq këtë listë komandash
-🔹 **/wiki <fjale>** - Kërko në Wikipedia
-🔹 **/perkthim <gjuha> <tekst>** - Përktih tekst
-🔹 **/meso <pyetje>|<përgjigje>** - Mëso diçka të re
-🔹 **/moti <qyteti>** - Informacion moti
-🔹 **/eksporto** - Eksporto historinë tënde
-🔹 **/importo <file>** - Importo historinë
-🔹 **/dil** - Dil nga llogaria
-🔹 **/apikey <key>** - Vendos API Key për Gemini
+🔹 **KOMANDAT BAZË:**
+• /ndihmo - Shfaq këtë listë komandash
+• /wiki <fjale> - Kërko në Wikipedia
+• /perkthim <gjuha> <tekst> - Përktih tekst
+• /meso <pyetje>|<përgjigje> - Mëso diçka të re
+• /moti <qyteti> - Informacion moti
+• /eksporto - Eksporto historinë tënde
+• /importo <file> - Importo historinë
+• /dil - Dil nga llogaria
+• /apikey <key> - Vendos API Key për Gemini
 
-💡 **Shembuj:**
+🚀 **KOMANDA TË REJA TË KËRKIMIT:**
+• /gjej <pyetje> - Kërkim i thelluar në internet
+• /google <pyetje> - Kërkim Google
+• /kërko <pyetje> - Kërkim në shqip
+
+👑 **KOMANDA ADMIN:**
+• /admin - Shfaq komandat e adminit
+• /users - Shfaq të gjithë përdoruesit  
+• /stats - Statistikat e sistemit
+• /clearall - Fshi të gjitha bisedat
+• /panel - Shfaq panelin e adminit
+
+💡 **SHEMBUJ:**
 • /wiki Albania
-• /perkthim anglisht Mirëdita
-• /meso Kryeqyteti i Shqipërisë|Tirana
+• /perkthim anglisht "Mirëdita"
+• /meso "Kryeqyteti i Shqipërisë"|"Tirana"
 • /moti Tirana
-• /apikey API_KEY_JOT_KETU
-        `;
-        
-        return {
-            success: true,
-            response: commandsList
-        };
-    }
+• /gjej Shqipëria
+• /google teknologjia 2024
+• /apikey AIzaSyBoPymDh6Ol2EQAnpzBHvsLau_opIBC2oY
+    `.trim(); // ✅ .trim() për të larguar hapësirat e panevojshme
+    
+    return {
+        success: true,
+        response: commandsList
+    };
+}
 
     // ========================================= ✅ KOMANDA /WIKI - KËRKIM WIKIPEDIA =========================================
     async wikiCommand(searchTerm) {
