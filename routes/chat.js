@@ -45,20 +45,96 @@ router.post('/message', async (req, res) => {
 });
 
 // ✅ KODI EKZISTUES - MERR HISTORINË E BISEDËS
-router.get('/history/:userId', (req, res) => {
-    const { userId } = req.params;
+// ✅ RUTA E RE PËR PANELIN E NDIHMËS ME BUTONA - Shto në routes/chat.js ekzistues
+router.get('/help-panel', async (req, res) => {
+    try {
+        const helpPanel = `
+<div class="help-panel" style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+  <div class="panel-header" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px;">
+    <h2 style="margin: 0;">👑 CHATAI ALBA - PANELI I NDIHMËS 👑</h2>
+  </div>
 
-    db.all(
-        'SELECT content, sender, timestamp FROM messages WHERE user_id = ? ORDER BY timestamp ASC',
-        [userId],
-        (err, rows) => {
-            if (err) {
-                return res.status(500).json({ error: 'Gabim gjatë marrjes së historisë' });
-            }
+  <div class="panel-section" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
+    <h3 style="color: #2c3e50; margin-top: 0;">🔹 KOMANDAT BAZË</h3>
+    <div class="button-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+      <button onclick="useCommand('/ndihmo')" style="background: #4CAF50; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">📋 /ndihmo</button>
+      <button onclick="useCommand('/wiki ')" style="background: #2196F3; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">🌐 /wiki</button>
+      <button onclick="useCommand('/perkthim ')" style="background: #FF9800; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">🔄 /perkthim</button>
+      <button onclick="useCommand('/meso ')" style="background: #9C27B0; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">🎓 /meso</button>
+      <button onclick="useCommand('/moti ')" style="background: #607D8B; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">🌍 /moti</button>
+      <button onclick="useCommand('/apikey ')" style="background: #795548; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">🔑 /apikey</button>
+    </div>
+  </div>
 
-            res.json({ history: rows });
+  <div class="panel-section" style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 15px 0;">
+    <h3 style="color: #1565c0; margin-top: 0;">🚀 KËRKIM NË INTERNET</h3>
+    <div class="button-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+      <button onclick="useCommand('/gjej ')" style="background: #FF5722; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">🔍 /gjej</button>
+      <button onclick="useCommand('/google ')" style="background: #4285F4; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">🔎 /google</button>
+      <button onclick="useCommand('/kërko ')" style="background: #34A853; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">📰 /kërko</button>
+    </div>
+  </div>
+
+  <div class="panel-section" style="background: #fff3e0; padding: 15px; border-radius: 8px; margin: 15px 0;">
+    <h3 style="color: #e65100; margin-top: 0;">💾 MENAXHIM I DHËNAVE</h3>
+    <div class="button-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+      <button onclick="useCommand('/eksporto')" style="background: #009688; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">📥 /eksporto</button>
+      <button onclick="useCommand('/importo')" style="background: #FFC107; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">📤 /importo</button>
+    </div>
+  </div>
+
+  <div class="panel-section" style="background: #fce4ec; padding: 15px; border-radius: 8px; margin: 15px 0;">
+    <h3 style="color: #c2185b; margin-top: 0;">👑 ADMIN PANEL</h3>
+    <div class="button-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+      <button onclick="useCommand('/admin')" style="background: #7B1FA2; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">⚡ /admin</button>
+      <button onclick="useCommand('/users')" style="background: #512DA8; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">👥 /users</button>
+      <button onclick="useCommand('/stats')" style="background: #303F9F; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">📊 /stats</button>
+      <button onclick="useCommand('/panel')" style="background: #1976D2; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">🛠️ /panel</button>
+    </div>
+  </div>
+
+  <div class="quick-actions" style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin: 15px 0;">
+    <h3 style="color: #2e7d32; margin-top: 0;">⚡ VEPRIME TË SHPEJTA</h3>
+    <input type="text" id="quickCommand" placeholder="Shkruaj komandën këtu..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 10px;">
+    <button onclick="executeQuickCommand()" style="background: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%;">🚀 Ekzekuto Komandën</button>
+  </div>
+</div>
+
+<script>
+function useCommand(command) {
+    const input = document.getElementById('user-input');
+    if (input) {
+        input.value = command;
+        input.focus();
+    }
+}
+
+function executeQuickCommand() {
+    const quickInput = document.getElementById('quickCommand');
+    const command = quickInput.value.trim();
+    if (command) {
+        const input = document.getElementById('user-input');
+        if (input) {
+            input.value = command;
+            input.focus();
         }
-    );
+    }
+}
+</script>
+        `;
+        
+        res.json({
+            success: true,
+            response: helpPanel
+        });
+        
+    } catch (error) {
+        console.error('❌ Gabim në panelin e ndihmës:', error);
+        res.json({
+            success: false,
+            response: '❌ Gabim në server'
+        });
+    }
 });
 
 // ✅ KODI EKZISTUES - RUAJ MESAZHIN NË HISTORI
