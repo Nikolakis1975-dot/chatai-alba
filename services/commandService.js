@@ -175,65 +175,34 @@ class CommandService {
         }
     }
 
-  // ============================ ✅ TEST I SAKTËSISË SË PËRGJIGJEVE =============================
+  // ============================ ✅ TEST I SAKTËSISË SË PËRGJIGJEVE NLU =============================
+// ✅ MBAJ VETËM KËTË FUNKSION TË VËRTETË TË NLU:
 async handleNaturalLanguage(message, user) {
     try {
-        console.log('🔍 TEST: Duke analizuar mesazhin natyror...');
+        console.log('🔍 NLU Duke analizuar mesazhin natyror...');
         
-        // SHFAQ MESAZHIN ORIGJINAL PËR TEST
-        const testResponse = `🔬 **TEST MODE - Analizë e Mesazhit:**
+        // Analizo mesazhin me NLU Service
+        const nluAnalysis = await nluService.analyzeText(message, user.id);
         
-📝 **Mesazhi juaj:** "${message}"
-🎯 **Analiza ime:** Ky është një mesazh natyror që normalisht do të përpunobej nga Gemini AI
-💡 **Pa API Key:** Po përdor sistemin bazë të përgjigjeve
-🔧 **Status NLU:** ⚠️ NLU Service nuk po ngarkohet
+        console.log('📊 NLU Analysis Result:', {
+            intent: nluAnalysis.intent.type,
+            sentiment: nluAnalysis.sentiment.sentiment,
+            confidence: nluAnalysis.intent.confidence,
+            irony: nluAnalysis.sentiment.irony
+        });
 
-🤖 **Për përgjigje më inteligjente:** 
-• Vendosni API Key me /apikey
-• Ose rregulloni NLU Service`;
-
-        return {
-            success: true,
-            response: testResponse
-        };
+        // Përgjigju bazuar në analizën NLU
+        return await this.generateNLUResponse(message, nluAnalysis, user);
         
     } catch (error) {
-        console.error('❌ Gabim në test mode:', error);
+        console.error('❌ Gabim në NLU processing:', error);
+        // Kthe përgjigje bazë në rast të gabimit
         return {
             success: true,
-            response: "❌ Test mode failed. Gabim në procesim."
+            response: this.getDefaultResponse(message)
         };
     }
-} 
-
-    
-    // ============================ ✅ TRAJTIMI I GJUHËS NATYRORE ME NLU =============================
-    async handleNaturalLanguage(message, user) {
-        try {
-            console.log('🔍 NLU Duke analizuar mesazhin natyror...');
-            
-            // Analizo mesazhin me NLU Service
-            const nluAnalysis = await nluService.analyzeText(message, user.id);
-            
-            console.log('📊 NLU Analysis Result:', {
-                intent: nluAnalysis.intent.type,
-                sentiment: nluAnalysis.sentiment.sentiment,
-                confidence: nluAnalysis.intent.confidence,
-                irony: nluAnalysis.sentiment.irony
-            });
-
-            // Përgjigju bazuar në analizën NLU
-            return await this.generateNLUResponse(message, nluAnalysis, user);
-            
-        } catch (error) {
-            console.error('❌ Gabim në NLU processing:', error);
-            // Kthe përgjigje bazë në rast të gabimit
-            return {
-                success: true,
-                response: this.getDefaultResponse(message)
-            };
-        }
-    }
+}
 
     // ============================ ✅ GJENERIMI I PËRGJIGJEVE BAZË NË NLU =============================
     async generateNLUResponse(message, analysis, user) {
