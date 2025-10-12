@@ -4,11 +4,24 @@
 // 📥 INPUT: command string nga përdoruesi
 // 📤 OUTPUT: response ose action
 // 🔧 AUTORI: ChatAI ALBA Team
-// 🔄 UPDATE: Integrimi i NLU Service
 // ========================================================================
 
-// ============================ ✅ IMPORT I NLU SERVICE =============================
-const nluService = require('./services/nluService');
+// ============================ ✅ IMPORT I NLU SERVICE ME ERROR HANDLING =============================
+let nluService;
+try {
+    nluService = require('./services/nluService');
+    console.log('✅ NLU Service u ngarkua me sukses!');
+} catch (error) {
+    console.log('⚠️ NLU Service nuk u gjet, duke përdorur sistemin bazë...');
+    nluService = {
+        analyzeText: async (text, userId) => ({
+            intent: { type: 'unknown', confidence: 0.5 },
+            sentiment: { sentiment: 'neutral', irony: false },
+            entities: { persons: [], locations: [], organizations: [] },
+            nuances: { figurativeLanguage: [] }
+        })
+    };
+}
 
 class CommandService {
     
@@ -19,7 +32,6 @@ class CommandService {
             const mainCommand = args[0].toLowerCase();
 
             // ======================= ✅ ANALIZË NLU PËR MESAZHET JO-KOMANDË ======================
-            // Nëse nuk është komandë, përdor NLU për kuptim më të thellë
             if (!mainCommand.startsWith('/') && message.trim().length > 2) {
                 return await this.handleNaturalLanguage(message, user);
             }
