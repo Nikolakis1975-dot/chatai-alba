@@ -1610,11 +1610,37 @@ async function sendMessageToGemini(message) {
 
 // ==================== ✅ MODIFIKIMI I processCommand() ====================
 
-// ✅ ZËVENDËSO VETËM KËTË PJESË NË processCommand():
-
 async function processCommand(text) {
     const parts = text.trim().split(" ");
     const cmd = parts[0];
+
+    // ✅ MESAZHET NATYRORE (JO KOMANDË) - DËRGOJI DIREKT TE SERVERI
+    if (!cmd.startsWith('/')) {
+        console.log('🔍 Frontend: Mesazh natyror - duke dërguar te serveri...');
+        
+        try {
+            const response = await fetch('/api/chat/message', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: text,
+                    userId: currentUser?.id || 1
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                addMessage(result.response, 'bot');
+            } else {
+                addMessage('❌ ' + result.response, 'bot');
+            }
+        } catch (error) {
+            console.error('❌ Gabim në dërgimin e mesazhit natyror:', error);
+            addMessage('❌ Gabim në lidhje me serverin', 'bot');
+        }
+        return;
+    }
 
     // ✅ KOMANDAT E REJA QË DËRGOJNË TE SERVERI
     if (cmd === "/gjej" || cmd === "/google" || cmd === "/kërko" || cmd === "/ndihmo") {
@@ -1622,6 +1648,7 @@ async function processCommand(text) {
         return;
     }
 
+    
     // ✅ MBAJI TË GJITHA KOMANDAT EKZISTUESE SI JANË
     switch (cmd) {
         case "/dil":
