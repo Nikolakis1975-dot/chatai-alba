@@ -4,9 +4,6 @@ const cors = require('cors');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 
-// ✅ IMPORTO APP BRIDGE SË PARI
-const AppBridge = require('./bridges/app-bridge');
-
 // Importo rutat
 const authRoutes = require('./routes/auth');
 const authEnhanced = require('./routes/auth-enhanced');
@@ -24,9 +21,6 @@ const constants = require('./config/constants');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-// ✅ INICIALIZO APP BRIDGE SË PARI - PARA TË GJITHA RUTAVE
-AppBridge.initializeSafeBridge(app);
 
 // ✅ 1. CORS CONFIGURATION - VETËM NJË HERË
 app.use(cors({
@@ -46,10 +40,10 @@ app.use(express.urlencoded({ limit: '10mb', extended: true }));
 // ✅ 4. STATIC FILES
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ✅ 5. ROUTES (TANI APP BRIDGE ËSHTË SË PARI)
+// ✅ 5. ROUTES
 app.use('/api/auth', authRoutes);
 app.use('/api/auth', authEnhanced);
-app.use('/api/chat', chatRoutes); // ✅ TANI KJO DO TË JETË PAS APP BRIDGE
+app.use('/api/chat', chatRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/email', emailVerification);
 app.use('/api/api-keys', apiRoutes);
