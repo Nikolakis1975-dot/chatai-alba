@@ -6,13 +6,13 @@
 // 🔧 AUTORI: ChatAI ALBA Team
 // ========================================================================
 
-// ============================ ✅ IMPORT I NLU SERVICE ME ERROR HANDLING =============================
+// ============================ ✅ IMPORT I NLU SERVICE SILENT =============================
 let nluService;
 try {
     nluService = require('./services/nluService');
     console.log('✅ NLU Service u ngarkua me sukses!');
 } catch (error) {
-    console.log('⚠️ NLU Service nuk u gjet, duke përdorur sistemin bazë...');
+    // MOS SHFAQ MESAZH - VETËM KRIJO FALLBACK
     nluService = {
         analyzeText: async (text, userId) => ({
             intent: { type: 'unknown', confidence: 0.5 },
