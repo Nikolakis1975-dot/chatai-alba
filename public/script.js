@@ -1608,16 +1608,22 @@ async function sendMessageToGemini(message) {
     }
 }
 
-// ==================== ✅ MODIFIKIMI I processCommand() ====================
-
-// ✅ ZËVENDËSO VETËM KËTË PJESË NË processCommand():
+// ==================== ✅ FUNKSIONI processCommand() I PLOTË ====================
 
 async function processCommand(text) {
     const parts = text.trim().split(" ");
     const cmd = parts[0];
 
     // ✅ KOMANDAT E REJA QË DËRGOJNË TE SERVERI
-    if (cmd === "/gjej" || cmd === "/google" || cmd === "/kërko" || cmd === "/ndihmo") {
+    const serverCommands = [
+        '/ndihmo', '/student', '/studim', '/student-mode',
+        '/libër', '/liber', '/detyrë', '/detyre', 
+        '/matematikë', '/matematike', '/referencë', '/referenc',
+        '/projekt', '/fizikë', '/fizike', '/kimi',
+        '/histori', '/gjeografi', '/gjej', '/google', '/kërko'
+    ];
+
+    if (serverCommands.includes(cmd)) {
         await sendCommandToServer(text);
         return;
     }
@@ -1631,14 +1637,20 @@ async function processCommand(text) {
 
         case "/wiki":
             const query = parts.slice(1).join(" ");
-            if (!query) { addMessage("⚠️ Shkruaj diçka për të kërkuar.", "bot"); break; }
+            if (!query) { 
+                addMessage("⚠️ Shkruaj diçka për të kërkuar.", "bot"); 
+                break; 
+            }
             try {
                 showTypingIndicator();
                 const res = await fetch(`https://sq.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`);
                 const data = await res.json();
                 removeTypingIndicator();
-                if (data.extract) addMessage(`🌐 ${data.extract}`, "bot");
-                else addMessage("❌ Nuk u gjet informacion.", "bot");
+                if (data.extract) {
+                    addMessage(`🌐 ${data.extract}`, "bot");
+                } else {
+                    addMessage("❌ Nuk u gjet informacion.", "bot");
+                }
             } catch { 
                 removeTypingIndicator();
                 addMessage("⚠️ Gabim gjatë kërkimit në Wikipedia.", "bot"); 
@@ -1681,7 +1693,10 @@ async function processCommand(text) {
             break;
 
         case "/perkthim":
-            if (parts.length < 3) return addMessage("⚠️ Përdorimi: /perkthim [gjuha] [tekst]", "bot");
+            if (parts.length < 3) {
+                addMessage("⚠️ Përdorimi: /perkthim [gjuha] [tekst]", "bot");
+                break;
+            }
             const targetLang = parts[1].toLowerCase();
             const tekst = parts.slice(2).join(" ");
             const sourceLang = (targetLang === "sq") ? "en" : "sq";
@@ -1723,7 +1738,8 @@ async function processCommand(text) {
 
         case "/importo":
             const inp = document.createElement("input");
-            inp.type = "file"; inp.accept = "application/json";
+            inp.type = "file";
+            inp.accept = "application/json";
             inp.onchange = async e => {
                 const file = e.target.files[0];
                 const reader = new FileReader();
@@ -1921,6 +1937,45 @@ async function processCommand(text) {
     }
 }
 
+// ==================== ✅ FUNKSIONI I RI sendCommandToServer() ====================
+
+async function sendCommandToServer(command) {
+    try {
+        console.log('🚀 Frontend: Duke dërguar komandë te serveri:', command);
+        
+        showTypingIndicator();
+        
+        const response = await fetch('/api/chat/message', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                message: command,
+                userId: currentUser?.id || 1
+            })
+        });
+
+        const result = await response.json();
+        removeTypingIndicator();
+        
+        console.log('📊 Frontend: Përgjigja nga serveri:', result);
+
+        if (result.success) {
+            addMessage(result.response, 'bot');
+        } else {
+            addMessage('❌ ' + result.response, 'bot');
+        }
+        
+    } catch (error) {
+        removeTypingIndicator();
+        console.error('❌ Gabim në dërgimin e komandës:', error);
+        addMessage('❌ Gabim në lidhje me serverin', 'bot');
+    }
+}
+
+// ==================== ✅ FUNKSIONI showSystemStats() ====================
+
 // Shfaq statistikat e sistemit
 async function showSystemStats() {
     try {
@@ -1946,4 +2001,3 @@ async function showSystemStats() {
         addMessage("📊 **STATISTIKAT E SISTEMIT:**\n\n✅ Sistemi është online\n🔧 Funksionaliteti aktiv\n🛡️ Siguria e garantuar\n🚀 Performancë e qëndrueshme", "bot");
     }
 }
-
