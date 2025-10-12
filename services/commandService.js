@@ -1,10 +1,14 @@
-// ==================== ✅ COMMAND SERVICE - 08.10.2024 ====================
+// ==================== ✅ COMMAND SERVICE - 12.10.2024 ====================
 // 📝 DESKRIMI: Shërbim për procesimin e të gjitha komandave të sistemit
 // 🎯 QËLLIMI: Një vend i vetëm për të gjitha komandat
 // 📥 INPUT: command string nga përdoruesi
 // 📤 OUTPUT: response ose action
 // 🔧 AUTORI: ChatAI ALBA Team
+// 🔄 UPDATE: Integrimi i NLU Service
 // ========================================================================
+
+// ============================ ✅ IMPORT I NLU SERVICE =============================
+const nluService = require('./services/nluService');
 
 class CommandService {
     
@@ -13,6 +17,12 @@ class CommandService {
         try {
             const args = message.split(' ');
             const mainCommand = args[0].toLowerCase();
+
+            // ======================= ✅ ANALIZË NLU PËR MESAZHET JO-KOMANDË ======================
+            // Nëse nuk është komandë, përdor NLU për kuptim më të thellë
+            if (!mainCommand.startsWith('/') && message.trim().length > 2) {
+                return await this.handleNaturalLanguage(message, user);
+            }
             
             switch (mainCommand) {
                 case '/ndihmo':
@@ -151,6 +161,173 @@ class CommandService {
                 response: '❌ Gabim në procesimin e komandës'
             };
         }
+    }
+
+    // ============================ ✅ TRAJTIMI I GJUHËS NATYRORE ME NLU =============================
+    async handleNaturalLanguage(message, user) {
+        try {
+            console.log('🔍 NLU Duke analizuar mesazhin natyror...');
+            
+            // Analizo mesazhin me NLU Service
+            const nluAnalysis = await nluService.analyzeText(message, user.id);
+            
+            console.log('📊 NLU Analysis Result:', {
+                intent: nluAnalysis.intent.type,
+                sentiment: nluAnalysis.sentiment.sentiment,
+                confidence: nluAnalysis.intent.confidence,
+                irony: nluAnalysis.sentiment.irony
+            });
+
+            // Përgjigju bazuar në analizën NLU
+            return await this.generateNLUResponse(message, nluAnalysis, user);
+            
+        } catch (error) {
+            console.error('❌ Gabim në NLU processing:', error);
+            // Kthe përgjigje bazë në rast të gabimit
+            return {
+                success: true,
+                response: this.getDefaultResponse(message)
+            };
+        }
+    }
+
+    // ============================ ✅ GJENERIMI I PËRGJIGJEVE BAZË NË NLU =============================
+    async generateNLUResponse(message, analysis, user) {
+        const { intent, sentiment, entities } = analysis;
+
+        // Përgjigje bazuar në qëllimin
+        switch (intent.type) {
+            case 'greeting':
+                return {
+                    success: true,
+                    response: this.getGreetingResponse(sentiment, intent.parameters.timeOfDay)
+                };
+
+            case 'question':
+                return {
+                    success: true,
+                    response: this.getQuestionResponse(message, intent, entities)
+                };
+
+            case 'request':
+                return {
+                    success: true,
+                    response: this.getRequestResponse(message, intent, entities)
+                };
+
+            case 'statement':
+                return {
+                    success: true,
+                    response: this.getStatementResponse(message, sentiment, entities)
+                };
+
+            default:
+                return {
+                    success: true,
+                    response: this.getIntelligentResponse(message, analysis)
+                };
+        }
+    }
+
+    // ============================ ✅ METODA PËR PËRGJIGJE SPECIFIKE =============================
+    
+    getGreetingResponse(sentiment, timeOfDay) {
+        const greetings = {
+            morning: ['Mirëmëngjes!', 'Mëngjes i mbarë!', 'Fillim të mbarë të ditës!'],
+            afternoon: ['Mirëdita!', 'Dita e mbarë!', 'Përshëndetje!'],
+            evening: ['Mirëmbrëma!', 'Mbrëmje e mbarë!', 'Përshëndetje!']
+        };
+
+        const timeGreetings = greetings[timeOfDay] || greetings.afternoon;
+        const randomGreeting = timeGreetings[Math.floor(Math.random() * timeGreetings.length)];
+
+        if (sentiment.sentiment === 'positive') {
+            return `${randomGreeting} Jam i lumtur që ju shoh! Si mund t'ju ndihmoj sot?`;
+        } else if (sentiment.sentiment === 'negative') {
+            return `${randomGreeting} Duket se keni një ditë të vështirë. Si mund t'ju ndihmoj?`;
+        }
+
+        return `${randomGreeting} Si mund t'ju shërbej sot?`;
+    }
+
+    getQuestionResponse(message, intent, entities) {
+        const questionType = intent.parameters.questionType;
+        
+        if (message.toLowerCase().includes('si je') || message.toLowerCase().includes('si jeni')) {
+            return "Jam shumë mirë, faleminderit që pyetët! 😊 Jam këtu për t'ju ndihmuar. Çfarë mund të bëj për ju?";
+        }
+
+        if (message.toLowerCase().includes('sa është') || message.toLowerCase().includes('llogarit')) {
+            return "Duket se keni nevojë për ndihmë me llogaritje! Mund të përdorni komandën /matematikë <problem> për zgjidhje të detajuara.";
+        }
+
+        if (entities.locations.length > 0) {
+            return `Po kërkoj informacion për ${entities.locations.join(', ')}. Mund të përdorni /wiki për më shumë detaje.`;
+        }
+
+        return "Kjo është një pyetje interesante! Mund të më jepni më shumë detaje ose të përdorni një nga komandat e mia për ndihmë më specifike.";
+    }
+
+    getRequestResponse(message, intent, entities) {
+        const requestType = intent.parameters.requestType;
+
+        if (requestType === 'help') {
+            return "Sigurisht, jam këtu për t'ju ndihmuar! Çfarë saktësisht keni nevojë të dini? Ose mund të përdorni /ndihmo për të parë të gjitha mundësitë.";
+        }
+
+        if (requestType === 'information') {
+            return "Me kënaqësi! Çfarë lloj informacioni po kërkoni? Mund të përdorni /google për kërkim të gjerë në internet.";
+        }
+
+        return "Dëshironi të bëni diçka të veçantë? Mund të më tregoni më shumë ose të përdorni një komandë specifike nga menuja ime.";
+    }
+
+    getStatementResponse(message, sentiment, entities) {
+        if (sentiment.sentiment === 'positive') {
+            return "Kjo është e mrekullueshme! 😊 Faleminderit që e ndërtuat. A ka diçka tjetër me të cilën mund t'ju ndihmoj?";
+        }
+
+        if (sentiment.sentiment === 'negative') {
+            return "Duket se keni një situatë të vështirë. 😔 Jam këtu për t'ju ndihmuar nëse dëshironi të flisni për të ose të kërkoni ndihmë.";
+        }
+
+        if (sentiment.irony) {
+            return "Hehe, e kuptoj! 😄 Ironia shqiptare është unike. Si mund t'ju ndihmoj vërtet?";
+        }
+
+        return "E kuptoj. A dëshironi të vazhdoni bisedën ose të më kërkoni diçka specifike?";
+    }
+
+    getIntelligentResponse(message, analysis) {
+        // Përgjigje inteligjente bazuar në analizën e plotë
+        const { sentiment, entities, nuances } = analysis;
+
+        if (nuances.figurativeLanguage.length > 0) {
+            const figurative = nuances.figurativeLanguage[0];
+            return `Ah, po përdorni një shprehje figurativë! "${figurative.expression}" nënkupton "${figurative.meaning}". Shumë elegante!`;
+        }
+
+        if (entities.persons.length > 0) {
+            return `Po flisni për ${entities.persons.join(', ')}? Interesante! Çfarë dëshironi të dini për ta?`;
+        }
+
+        if (sentiment.sentiment === 'ironic') {
+            return "Haha, e kap ironinë! 😄 Shqiptarët jemi të njohur për humorin tonë të thatë. Si mund t'ju ndihmoj seriozisht?";
+        }
+
+        return "E kam dëgjuar! A mund të më jepni më shumë kontekst ose të përdorni një komandë specifike për të marrë ndihmë më të detajuar?";
+    }
+
+    getDefaultResponse(message) {
+        const defaultResponses = [
+            "E kuptoj! Si mund t'ju ndihmoj më tej?",
+            "Shumë mirë! A dëshironi të vazhdoni bisedën?",
+            "E kam dëgjuar. Çfarë mund të bëj për ju?",
+            "Faleminderit për mesazhin! Si mund t'ju shërbej?",
+            "E shkëlqyeshme! A keni nevojë për ndihmë me diçka specifike?"
+        ];
+
+        return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
     }
 
     // ========================= ✅ FUNKSIONET E REJA PËR STUDENTË ===========================
