@@ -7,9 +7,10 @@
 // ========================================================================
 
 // ============================ ✅ IMPORT I NLU SERVICE ME ERROR HANDLING =============================
+// ============================ ✅ IMPORT I NLU SERVICE =============================
 let nluService;
 try {
-    nluService = require('./services/nluService');
+    nluService = require('./nluService');
     console.log('✅ NLU Service u ngarkua me sukses!');
 } catch (error) {
     console.log('⚠️ NLU Service nuk u gjet, duke përdorur sistemin bazë...');
@@ -22,7 +23,6 @@ try {
         })
     };
 }
-
 class CommandService {
     
     // ============================ ✅ PROCESIMI I KOMANDËS KRYESORE =============================
@@ -177,32 +177,26 @@ class CommandService {
 
     // ============================ ✅ TRAJTIMI I GJUHËS NATYRORE ME NLU =============================
     async handleNaturalLanguage(message, user) {
-        try {
-            console.log('🔍 NLU Duke analizuar mesazhin natyror...');
-            
-            // Analizo mesazhin me NLU Service
-            const nluAnalysis = await nluService.analyzeText(message, user.id);
-            
-            console.log('📊 NLU Analysis Result:', {
-                intent: nluAnalysis.intent.type,
-                sentiment: nluAnalysis.sentiment.sentiment,
-                confidence: nluAnalysis.intent.confidence,
-                irony: nluAnalysis.sentiment.irony
-            });
+    try {
+        console.log('🔍 NLU Duke analizuar mesazhin natyror...');
+        console.log('📝 Mesazhi për analizë:', message);
+        
+        // Analizo mesazhin me NLU Service
+        const nluAnalysis = await nluService.analyzeText(message, user.id);
+        
+        console.log('📊 NLU Analysis Result:', JSON.stringify(nluAnalysis, null, 2));
 
-            // Përgjigju bazuar në analizën NLU
-            return await this.generateNLUResponse(message, nluAnalysis, user);
-            
-        } catch (error) {
-            console.error('❌ Gabim në NLU processing:', error);
-            // Kthe përgjigje bazë në rast të gabimit
-            return {
-                success: true,
-                response: this.getDefaultResponse(message)
-            };
-        }
+        // Përgjigju direkt nga NLU - JO nga Gemini!
+        return await this.generateNLUResponse(message, nluAnalysis, user);
+        
+    } catch (error) {
+        console.error('❌ Gabim në NLU processing:', error);
+        return {
+            success: true,
+            response: this.getSimpleResponse(message)
+        };
     }
-
+}
     // ============================ ✅ GJENERIMI I PËRGJIGJEVE BAZË NË NLU =============================
     async generateNLUResponse(message, analysis, user) {
         const { intent, sentiment, entities } = analysis;
