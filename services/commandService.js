@@ -9,7 +9,7 @@
 // ============================ ✅ IMPORT I NLU SERVICE SILENT =============================
 let nluService;
 try {
-    nluService = require('./services/nluService');
+    nluService = require('./nluService'); // ✅ NDRYSHO KËTU!
     console.log('✅ NLU Service u ngarkua me sukses!');
 } catch (error) {
     // MOS SHFAQ MESAZH - VETËM KRIJO FALLBACK
