@@ -6,34 +6,63 @@ const router = express.Router();
 // ✅ SHTIMI I RI - IMPORT I COMMAND SERVICE
 const CommandService = require('../services/commandService');
 
-// ✅ SHTIMI I RI - RUTA PËR PROCESIMIN E MESAZHEVE DHE KOMANDAVE
+
+// =============================== ✅ RREGULLIMI I RUTËS /message PËR TRAJTIMIN E NLU =======================================
 router.post('/message', async (req, res) => {
     try {
-        const { message } = req.body;
-        const user = req.user; // Marrë nga middleware ekzistues
+        const { message, userId } = req.body;
         
-        if (!message) {
+        console.log('🔍 DEBUG /message: Marrë mesazh:', message, 'për user:', userId);
+
+        if (!message || !userId) {
             return res.json({
                 success: false,
-                response: '❌ Ju lutem shkruani një mesazh'
+                response: '❌ Të dhëna të pamjaftueshme'
             });
         }
 
-        // ✅ KONTROLLO NËSE ËSHTË KOMANDË
-        if (message.startsWith('/')) {
-            console.log(`🔧 Duke procesuar komandë: ${message}`);
-            const commandResult = await CommandService.processCommand('/', user, message);
+        // Merr të dhënat e përdoruesit
+        const user = await db.getAsync('SELECT * FROM users WHERE id = ?', [userId]);
+        
+        if (!user) {
+            return res.json({
+                success: false,
+                response: '❌ Përdoruesi nuk u gjet'
+            });
+        }
+
+        console.log('🎯 DEBUG: Duke thirrur CommandService për mesazh:', message);
+        
+        // Dërgo mesazhin te CommandService (që përfshin NLU)
+        const commandResult = await CommandService.processCommand('chat', user, message);
+        
+        console.log('📊 DEBUG: Rezultati nga CommandService:', {
+            success: commandResult.success,
+            intent: 'NLU processed'
+        });
+
+        // Nëse CommandService e trajton mesazhin (përfshirë mesazhet natyrore me NLU)
+        if (commandResult.success) {
             return res.json(commandResult);
         }
 
-        // ✅ NËSE NUK ËSHTË KOMANDË, PROCEO SI MESAZH NORMAL ME GEMINI
-        // Përdor kodin ekzistues të Gemini nga skedari gemini.js
-        const geminiResponse = await require('./gemini').processMessage(message, user.id);
+        // ✅ NËSE ARRIN KËTU, ATHERË COMMAND SERVICE NUK E KA TRAJTUAR MESAZHIN NATYROR!
+        console.log('🔄 DEBUG: CommandService nuk e trajtoi, kontrolloj nëse duhet të shkoj te Gemini...');
         
-        return res.json({
-            success: true,
-            response: geminiResponse
-        });
+        // Vetëm nëse CommandService nuk e trajton, shko te Gemini
+        try {
+            const geminiResponse = await require('./gemini').processMessage(message, userId);
+            return res.json({
+                success: true,
+                response: geminiResponse
+            });
+        } catch (geminiError) {
+            console.error('❌ Gabim në Gemini:', geminiError);
+            return res.json({
+                success: false,
+                response: '❌ Nuk është konfiguruar API Key për Gemini. Përdor /apikey'
+            });
+        }
 
     } catch (error) {
         console.error('❌ Gabim në procesimin e mesazhit:', error);
