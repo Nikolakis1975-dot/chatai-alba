@@ -175,6 +175,38 @@ class CommandService {
         }
     }
 
+  // ============================ ✅ TEST I SAKTËSISË SË PËRGJIGJEVE =============================
+async handleNaturalLanguage(message, user) {
+    try {
+        console.log('🔍 TEST: Duke analizuar mesazhin natyror...');
+        
+        // SHFAQ MESAZHIN ORIGJINAL PËR TEST
+        const testResponse = `🔬 **TEST MODE - Analizë e Mesazhit:**
+        
+📝 **Mesazhi juaj:** "${message}"
+🎯 **Analiza ime:** Ky është një mesazh natyror që normalisht do të përpunobej nga Gemini AI
+💡 **Pa API Key:** Po përdor sistemin bazë të përgjigjeve
+🔧 **Status NLU:** ⚠️ NLU Service nuk po ngarkohet
+
+🤖 **Për përgjigje më inteligjente:** 
+• Vendosni API Key me /apikey
+• Ose rregulloni NLU Service`;
+
+        return {
+            success: true,
+            response: testResponse
+        };
+        
+    } catch (error) {
+        console.error('❌ Gabim në test mode:', error);
+        return {
+            success: true,
+            response: "❌ Test mode failed. Gabim në procesim."
+        };
+    }
+} 
+
+    
     // ============================ ✅ TRAJTIMI I GJUHËS NATYRORE ME NLU =============================
     async handleNaturalLanguage(message, user) {
         try {
