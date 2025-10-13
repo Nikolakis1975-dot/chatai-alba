@@ -120,6 +120,36 @@ class CommandService {
                         success: true,
                         response: `🏛️ **HISTORI SHQIPTARE:** "${args.slice(1).join(' ')}"\n\n💡 Unë mund të ndihmoj me:\n• Periudhat historike\n• Personalitete të shquara\n• Evente dhe beteja\n• Trashëgimi kulturore`
                     };
+
+                case 'book_request':
+            return {
+                success: true,
+                response: "Dëshironi të gjeni një libër? 📚 Mund të përdorni komandën /libër <emri_i_librit> për të kërkuar libra, ose më tregoni më shumë se çfarë lloj libri kërkoni!"
+            };
+
+        case 'weather_question':
+            return {
+                success: true,
+                response: "Dëshironi të dini informacion për motin? 🌤️ Përdorni komandën /moti <qyteti> për të marrë informacion të detajuar të motit për çdo qytet!"
+            };
+
+        case 'location_question':
+            return {
+                success: true,
+                response: "Po kërkoj informacion për lokacione... 🗺️ Mund të më tregoni se çfarë lokacioni specifik po kërkoni, ose të përdorni /google për kërkim të gjerë!"
+            };
+
+        case 'time_question':
+            return {
+                success: true,
+                response: `⏰ Ora aktuale është: ${new Date().toLocaleTimeString('sq-AL')}. Çfarë informacioni specifik për kohën keni nevojë?`
+            };
+
+        case 'reason_question':
+            return {
+                success: true,
+                response: "Po përpiqem të kuptoj arsyen e pyetjes suaj... 🤔 Mund të më jepni më shumë kontekst për t'ju dhënë një përgjigje më të saktë?"
+            };
                 
                 case '/gjeografi':
                 case '/gjeografi':
@@ -199,15 +229,52 @@ class CommandService {
 }
     // ============================ ✅ GJENERIMI I PËRGJIGJEVE BAZË NË NLU =============================
     async generateNLUResponse(message, analysis, user) {
-        const { intent, sentiment, entities } = analysis;
+    const { intent, sentiment } = analysis;
+    const lowerMessage = message.toLowerCase();
 
-        // Përgjigje bazuar në qëllimin
-        switch (intent.type) {
-            case 'greeting':
-                return {
-                    success: true,
-                    response: this.getGreetingResponse(sentiment, intent.parameters.timeOfDay)
-                };
+    console.log('🎯 Generating NLU Response for:', {
+        message: message.substring(0, 50),
+        intent: intent.type,
+        sentiment: sentiment.sentiment
+    });
+
+    // ✅ PËRGJIGJE SPECIFIKE PËR PYETJE TË VEÇANTA
+    switch (intent.type) {
+        case 'age_question':
+            return {
+                success: true,
+                response: "Unë jam një asistent virtual, krijuar për t'ju ndihmuar! 😊 Mosha ime nuk ka rëndësi, por përvoja ime po rritet çdo ditë me ndihmën tuaj!"
+            };
+
+        case 'book_request':
+            return {
+                success: true,
+                response: "Dëshironi të gjeni një libër? 📚 Mund të përdorni komandën /libër <emri_i_librit> për të kërkuar libra, ose më tregoni më shumë se çfarë lloj libri kërkoni!"
+            };
+
+        case 'weather_question':
+            return {
+                success: true,
+                response: "Dëshironi të dini informacion për motin? 🌤️ Përdorni komandën /moti <qyteti> për të marrë informacion të detajuar të motit për çdo qytet!"
+            };
+
+        case 'location_question':
+            return {
+                success: true,
+                response: "Po kërkoj informacion për lokacione... 🗺️ Mund të më tregoni se çfarë lokacioni specifik po kërkoni, ose të përdorni /google për kërkim të gjerë!"
+            };
+
+        case 'time_question':
+            return {
+                success: true,
+                response: `⏰ Ora aktuale është: ${new Date().toLocaleTimeString('sq-AL')}. Çfarë informacioni specifik për kohën keni nevojë?`
+            };
+
+        case 'reason_question':
+            return {
+                success: true,
+                response: "Po përpiqem të kuptoj arsyen e pyetjes suaj... 🤔 Mund të më jepni më shumë kontekst për t'ju dhënë një përgjigje më të saktë?"
+            };
 
             case 'question':
                 return {
