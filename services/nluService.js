@@ -6,7 +6,7 @@ class NLUService {
         console.log('✅ NLU Service u inicializua me sukses!');
         this.initialized = true;
         
-     // =============================== ✅ FJALOR I GJERË SHQIP PËR ANALIZË MË TË MIRË =================================
+     // =================✅ FJALOR I GJERË SHQIP PËR ANALIZË MË TË MIRË ==============
 
         this.shqipKeywords = {
             greetings: [
@@ -47,7 +47,7 @@ class NLUService {
         };
     }
 
-      // 🔍 ====================================== ANALIZA TEXT MLU ===========================================
+      // 🔍 ========================= ANALIZA TEXT MLU =======================
 
     async analyzeText(text, userId = null) {
         try {
@@ -98,6 +98,48 @@ class NLUService {
             if (this.containsAny(lowerText, this.shqipKeywords.greetings)) {
                 return 'greeting';
             }
+
+        // ====================== ✅ PYTJE SPECIFIKE SHQIPE ======================
+
+        if (lowerText.includes('sa vjeç') || lowerText.includes('sa vjec') || 
+            lowerText.includes('mosha') || lowerText.includes('sa vjet')) {
+            return 'age_question';
+        }
+
+         // ======================== ✅ fjale specifike =========================
+        
+        if (lowerText.includes('libër') || lowerText.includes('liber') || 
+            lowerText.includes('libra') || lowerText.includes('libri')) {
+            return 'book_request';
+        }
+
+         // ======================== ✅ fjale smecifike =========================
+        
+        if (lowerText.includes('moti') || lowerText.includes('temperatur') || 
+            lowerText.includes('shi') || lowerText.includes('diell')) {
+            return 'weather_question';
+        }
+
+        // ======================== ✅ fjale specifike ======================
+        
+        if (lowerText.includes('ku është') || lowerText.includes('ku eshte') || 
+            lowerText.includes('adres') || lowerText.includes('lokacion')) {
+            return 'location_question';
+        }
+
+        // ======================== ✅ lidhsa specifike =========================
+        
+        if (lowerText.includes('kur') || lowerText.includes('koh') || 
+            lowerText.includes('or') || lowerText.includes('data')) {
+            return 'time_question';
+        }
+
+        // ======================== ✅ pse =====================================
+        
+        if (lowerText.includes('pse') || lowerText.includes('arsye') || 
+            lowerText.includes('shkak')) {
+            return 'reason_question';
+        }
             
        // ========================= ✅ LAMTUMIRË ===============================
 
@@ -352,7 +394,7 @@ class NLUService {
         return 'neutral';
     }
 
-    // ==================================== ✅ METODË NDIHMËSE =======================================================
+    // ==========================✅ METODË NDIHMËSE ==================================
 
     containsAny(text, keywords) {
         return keywords.some(keyword => text.includes(keyword));
@@ -370,7 +412,7 @@ class NLUService {
     }
 }
 
-// ====================✅ KRIJO DHE EKSPORTO INSTANCËN - KY RRESHT ËSHTË SHUMË I RËNDËSISHËM! =========================
+// ======✅ KRIJO DHE EKSPORTO INSTANCËN - KY RRESHT ËSHTË SHUMË I RËNDËSISHËM! ===========
 
 const nluService = new NLUService();
 module.exports = nluService;
