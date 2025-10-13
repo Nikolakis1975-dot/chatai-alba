@@ -1,4 +1,4 @@
-// ==================== ✅ COMMAND SERVICE - 12.10.2024 ====================
+// ==================== ✅ COMMAND SERVICE - 13.10.2024 ====================
 // 📝 DESKRIMI: Shërbim për procesimin e të gjitha komandave të sistemit
 // 🎯 QËLLIMI: Një vend i vetëm për të gjitha komandat
 // 📥 INPUT: command string nga përdoruesi
@@ -6,7 +6,6 @@
 // 🔧 AUTORI: ChatAI ALBA Team
 // ========================================================================
 
-// ============================ ✅ IMPORT I NLU SERVICE ME ERROR HANDLING =============================
 // ============================ ✅ IMPORT I NLU SERVICE =============================
 let nluService;
 try {
@@ -23,6 +22,7 @@ try {
         })
     };
 }
+
 class CommandService {
     
     // ============================ ✅ PROCESIMI I KOMANDËS KRYESORE =============================
@@ -30,6 +30,12 @@ class CommandService {
         try {
             const args = message.split(' ');
             const mainCommand = args[0].toLowerCase();
+
+            // ======================= ✅ KONTROLLO PËR LLOGARITJE MATEMATIKE ======================
+            const mathResult = await this.handleMathCalculation(message);
+            if (mathResult) {
+                return mathResult;
+            }
 
             // ======================= ✅ ANALIZË NLU PËR MESAZHET JO-KOMANDË ======================
             if (!mainCommand.startsWith('/') && message.trim().length > 2) {
@@ -120,38 +126,7 @@ class CommandService {
                         success: true,
                         response: `🏛️ **HISTORI SHQIPTARE:** "${args.slice(1).join(' ')}"\n\n💡 Unë mund të ndihmoj me:\n• Periudhat historike\n• Personalitete të shquara\n• Evente dhe beteja\n• Trashëgimi kulturore`
                     };
-
-                case 'book_request':
-            return {
-                success: true,
-                response: "Dëshironi të gjeni një libër? 📚 Mund të përdorni komandën /libër <emri_i_librit> për të kërkuar libra, ose më tregoni më shumë se çfarë lloj libri kërkoni!"
-            };
-
-        case 'weather_question':
-            return {
-                success: true,
-                response: "Dëshironi të dini informacion për motin? 🌤️ Përdorni komandën /moti <qyteti> për të marrë informacion të detajuar të motit për çdo qytet!"
-            };
-
-        case 'location_question':
-            return {
-                success: true,
-                response: "Po kërkoj informacion për lokacione... 🗺️ Mund të më tregoni se çfarë lokacioni specifik po kërkoni, ose të përdorni /google për kërkim të gjerë!"
-            };
-
-        case 'time_question':
-            return {
-                success: true,
-                response: `⏰ Ora aktuale është: ${new Date().toLocaleTimeString('sq-AL')}. Çfarë informacioni specifik për kohën keni nevojë?`
-            };
-
-        case 'reason_question':
-            return {
-                success: true,
-                response: "Po përpiqem të kuptoj arsyen e pyetjes suaj... 🤔 Mund të më jepni më shumë kontekst për t'ju dhënë një përgjigje më të saktë?"
-            };
                 
-                case '/gjeografi':
                 case '/gjeografi':
                     return {
                         success: true,
@@ -205,93 +180,201 @@ class CommandService {
         }
     }
 
+    // ============================ ✅ TRAJTIMI I LLOGARITJEVE MATEMATIKE =============================
+    async handleMathCalculation(message) {
+        try {
+            // Kontrollo nëse mesazhi përmban shprehje matematikore
+            const mathPatterns = [
+                /(\d+[\+\-\*\/\^\(\)\d\s]+)/, // Shprehje të thjeshta
+                /sa bejn[ëe]\s+([\d\+\-\*\/\^\(\)\s]+)/i, // "sa bejne 5+5"
+                /llogarit\s+([\d\+\-\*\/\^\(\)\s]+)/i, // "llogarit 10*2"
+                /([\d\.]+\s*[\+\-\*\/\^]\s*[\d\.]+)/ // Operacione bazë
+            ];
+
+            for (const pattern of mathPatterns) {
+                const match = message.match(pattern);
+                if (match && match[1]) {
+                    const expression = match[1].trim();
+                    
+                    // Kontrollo nëse shprehja është më e gjatë se 3 karaktere
+                    if (expression.length > 3) {
+                        console.log('🧮 Duke analizuar shprehjen matematikore:', expression);
+                        
+                        const result = this.evaluateMathExpression(expression);
+                        if (result !== null) {
+                            return {
+                                success: true,
+                                response: `🧮 Rezultati: **${result}**`
+                            };
+                        }
+                    }
+                }
+            }
+            
+            return null;
+        } catch (error) {
+            console.error('❌ Gabim në trajtimin e llogaritjes:', error);
+            return null;
+        }
+    }
+
+    // ============================ ✅ EVALUIMI I SHPREHJEVE MATEMATIKE =============================
+    evaluateMathExpression(expression) {
+        try {
+            console.log('🧮 Duke evaluuar shprehjen matematikore:', expression);
+            
+            // Pastro shprehjen
+            let cleanExpr = expression
+                .replace(/[^0-9+\-*/().^√πe\s]/g, '') // Largo karakteret e padëshiruara
+                .replace(/\s+/g, '') // Largo hapësirat
+                .trim();
+
+            // Zëvendëso simbolet e fuqisë
+            cleanExpr = cleanExpr.replace(/\^/g, '**');
+            
+            // Kontrollo për pjesëtim me zero
+            if (cleanExpr.includes('/0') || cleanExpr.match(/\/\s*0(?!\.)/)) {
+                throw new Error('Pjesëtimi me zero nuk lejohet');
+            }
+
+            // Sigurohu që shprehja është e sigurt
+            if (!/^[0-9+\-*/().\s]+$/.test(cleanExpr.replace(/\*\*/g, ''))) {
+                throw new Error('Shprehje matematikore e pavlefshme');
+            }
+            
+            // Evaluo shprehjen
+            const result = eval(cleanExpr);
+            
+            // Format rezultatin
+            let formattedResult;
+            if (Number.isInteger(result)) {
+                formattedResult = result.toString();
+            } else {
+                formattedResult = parseFloat(result.toFixed(6)).toString();
+            }
+            
+            console.log('✅ Rezultati i llogaritjes:', formattedResult);
+            return formattedResult;
+            
+        } catch (error) {
+            console.error('❌ Gabim në llogaritje:', error.message);
+            return null;
+        }
+    }
+
     // ============================ ✅ TRAJTIMI I GJUHËS NATYRORE ME NLU =============================
     async handleNaturalLanguage(message, user) {
-    try {
-        console.log('🔍 NLU Duke analizuar mesazhin natyror...');
-        console.log('📝 Mesazhi për analizë:', message);
-        
-        // Analizo mesazhin me NLU Service
-        const nluAnalysis = await nluService.analyzeText(message, user.id);
-        
-        console.log('📊 NLU Analysis Result:', JSON.stringify(nluAnalysis, null, 2));
+        try {
+            console.log('🔍 NLU Duke analizuar mesazhin natyror...');
+            console.log('📝 Mesazhi për analizë:', message);
+            
+            // Së pari kontrollo për llogaritje matematikore
+            const mathResult = await this.handleMathCalculation(message);
+            if (mathResult) {
+                return mathResult;
+            }
 
-        // Përgjigju direkt nga NLU - JO nga Gemini!
-        return await this.generateNLUResponse(message, nluAnalysis, user);
-        
-    } catch (error) {
-        console.error('❌ Gabim në NLU processing:', error);
-        return {
-            success: true,
-            response: this.getSimpleResponse(message)
-        };
+            // Pastaj analizo me NLU Service
+            const nluAnalysis = await nluService.analyzeText(message, user.id);
+            
+            console.log('📊 NLU Analysis Result:', JSON.stringify(nluAnalysis, null, 2));
+
+            // Përgjigju direkt nga NLU
+            return await this.generateNLUResponse(message, nluAnalysis, user);
+            
+        } catch (error) {
+            console.error('❌ Gabim në NLU processing:', error);
+            return {
+                success: true,
+                response: this.getSimpleResponse(message)
+            };
+        }
     }
-}
+
     // ============================ ✅ GJENERIMI I PËRGJIGJEVE BAZË NË NLU =============================
     async generateNLUResponse(message, analysis, user) {
-    const { intent, sentiment } = analysis;
-    const lowerMessage = message.toLowerCase();
+        const { intent, sentiment } = analysis;
+        const lowerMessage = message.toLowerCase();
 
-    console.log('🎯 Generating NLU Response for:', {
-        message: message.substring(0, 50),
-        intent: intent.type,
-        sentiment: sentiment.sentiment
-    });
+        console.log('🎯 Generating NLU Response for:', {
+            message: message.substring(0, 50),
+            intent: intent.type,
+            sentiment: sentiment.sentiment
+        });
 
-    // ✅ PËRGJIGJE SPECIFIKE PËR PYETJE TË VEÇANTA
-    switch (intent.type) {
-        case 'age_question':
+        // ✅ PËRGJIGJE SPECIFIKE PËR PYETJE TË VEÇANTA
+        if (lowerMessage.includes('vjeç') || lowerMessage.includes('mosha') || lowerMessage.includes('moshe')) {
             return {
                 success: true,
                 response: "Unë jam një asistent virtual, krijuar për t'ju ndihmuar! 😊 Mosha ime nuk ka rëndësi, por përvoja ime po rritet çdo ditë me ndihmën tuaj!"
             };
+        }
 
-        case 'book_request':
+        if (lowerMessage.includes('libër') || lowerMessage.includes('libra')) {
             return {
                 success: true,
                 response: "Dëshironi të gjeni një libër? 📚 Mund të përdorni komandën /libër <emri_i_librit> për të kërkuar libra, ose më tregoni më shumë se çfarë lloj libri kërkoni!"
             };
+        }
 
-        case 'weather_question':
+        if (lowerMessage.includes('moti') || lowerMessage.includes('mot') || lowerMessage.includes('temperatur')) {
             return {
                 success: true,
                 response: "Dëshironi të dini informacion për motin? 🌤️ Përdorni komandën /moti <qyteti> për të marrë informacion të detajuar të motit për çdo qytet!"
             };
+        }
 
-        case 'location_question':
+        if (lowerMessage.includes('ku ') || lowerMessage.includes('lokacion') || lowerMessage.includes('vendndodhje')) {
             return {
                 success: true,
                 response: "Po kërkoj informacion për lokacione... 🗺️ Mund të më tregoni se çfarë lokacioni specifik po kërkoni, ose të përdorni /google për kërkim të gjerë!"
             };
+        }
 
-        case 'time_question':
+        if (lowerMessage.includes('or') || lowerMessage.includes('koh') || lowerMessage.includes('sa është ora')) {
             return {
                 success: true,
                 response: `⏰ Ora aktuale është: ${new Date().toLocaleTimeString('sq-AL')}. Çfarë informacioni specifik për kohën keni nevojë?`
             };
+        }
 
-        case 'reason_question':
+        if (lowerMessage.includes('pse') || lowerMessage.includes('arsye') || lowerMessage.includes('shkak')) {
             return {
                 success: true,
                 response: "Po përpiqem të kuptoj arsyen e pyetjes suaj... 🤔 Mund të më jepni më shumë kontekst për t'ju dhënë një përgjigje më të saktë?"
             };
+        }
+
+        // ✅ PËRGJIGJE BAZË NË INTENT
+        switch (intent.type) {
+            case 'greeting':
+                return {
+                    success: true,
+                    response: this.getGreetingResponse(sentiment, intent.parameters.timeOfDay)
+                };
+
+            case 'gratitude':
+                return {
+                    success: true,
+                    response: "S'ka përse! 😊 Gjithmonë i lumtur të ndihmoj!"
+                };
 
             case 'question':
                 return {
                     success: true,
-                    response: this.getQuestionResponse(message, intent, entities)
+                    response: this.getQuestionResponse(message, intent, analysis.entities)
                 };
 
             case 'request':
                 return {
                     success: true,
-                    response: this.getRequestResponse(message, intent, entities)
+                    response: this.getRequestResponse(message, intent, analysis.entities)
                 };
 
             case 'statement':
                 return {
                     success: true,
-                    response: this.getStatementResponse(message, sentiment, entities)
+                    response: this.getStatementResponse(message, sentiment, analysis.entities)
                 };
 
             default:
@@ -306,9 +389,9 @@ class CommandService {
     
     getGreetingResponse(sentiment, timeOfDay) {
         const greetings = {
-            morning: ['Mirëmëngjes!', 'Mëngjes i mbarë!', 'Fillim të mbarë të ditës!'],
-            afternoon: ['Mirëdita!', 'Dita e mbarë!', 'Përshëndetje!'],
-            evening: ['Mirëmbrëma!', 'Mbrëmje e mbarë!', 'Përshëndetje!']
+            morning: ['Mirëmëngjes! ☀️', 'Mëngjes i mbarë! 🌅', 'Fillim të mbarë të ditës! ✨'],
+            afternoon: ['Mirëdita! 🌞', 'Dita e mbarë! 😊', 'Përshëndetje! 👋'],
+            evening: ['Mirëmbrëma! 🌙', 'Mbrëmje e mbarë! 🌆', 'Përshëndetje! 🙏']
         };
 
         const timeGreetings = greetings[timeOfDay] || greetings.afternoon;
@@ -324,17 +407,17 @@ class CommandService {
     }
 
     getQuestionResponse(message, intent, entities) {
-        const questionType = intent.parameters.questionType;
+        const lowerMessage = message.toLowerCase();
         
-        if (message.toLowerCase().includes('si je') || message.toLowerCase().includes('si jeni')) {
+        if (lowerMessage.includes('si je') || lowerMessage.includes('si jeni')) {
             return "Jam shumë mirë, faleminderit që pyetët! 😊 Jam këtu për t'ju ndihmuar. Çfarë mund të bëj për ju?";
         }
 
-        if (message.toLowerCase().includes('sa është') || message.toLowerCase().includes('llogarit')) {
-            return "Duket se keni nevojë për ndihmë me llogaritje! Mund të përdorni komandën /matematikë <problem> për zgjidhje të detajuara.";
+        if (lowerMessage.includes('sa është') || lowerMessage.includes('llogarit') || lowerMessage.includes('bejn')) {
+            return "Duket se keni nevojë për ndihmë me llogaritje! Mund të shkruani shprehjen matematikore direkt ose të përdorni /matematikë <problem> për zgjidhje të detajuara.";
         }
 
-        if (entities.locations.length > 0) {
+        if (entities.locations && entities.locations.length > 0) {
             return `Po kërkoj informacion për ${entities.locations.join(', ')}. Mund të përdorni /wiki për më shumë detaje.`;
         }
 
@@ -342,7 +425,7 @@ class CommandService {
     }
 
     getRequestResponse(message, intent, entities) {
-        const requestType = intent.parameters.requestType;
+        const requestType = intent.parameters?.requestType;
 
         if (requestType === 'help') {
             return "Sigurisht, jam këtu për t'ju ndihmuar! Çfarë saktësisht keni nevojë të dini? Ose mund të përdorni /ndihmo për të parë të gjitha mundësitë.";
@@ -375,12 +458,12 @@ class CommandService {
         // Përgjigje inteligjente bazuar në analizën e plotë
         const { sentiment, entities, nuances } = analysis;
 
-        if (nuances.figurativeLanguage.length > 0) {
+        if (nuances.figurativeLanguage && nuances.figurativeLanguage.length > 0) {
             const figurative = nuances.figurativeLanguage[0];
             return `Ah, po përdorni një shprehje figurativë! "${figurative.expression}" nënkupton "${figurative.meaning}". Shumë elegante!`;
         }
 
-        if (entities.persons.length > 0) {
+        if (entities.persons && entities.persons.length > 0) {
             return `Po flisni për ${entities.persons.join(', ')}? Interesante! Çfarë dëshironi të dini për ta?`;
         }
 
@@ -391,7 +474,7 @@ class CommandService {
         return "E kam dëgjuar! A mund të më jepni më shumë kontekst ose të përdorni një komandë specifike për të marrë ndihmë më të detajuar?";
     }
 
-    getDefaultResponse(message) {
+    getSimpleResponse(message) {
         const defaultResponses = [
             "E kuptoj! Si mund t'ju ndihmoj më tej?",
             "Shumë mirë! A dëshironi të vazhdoni bisedën?",
@@ -437,6 +520,15 @@ class CommandService {
             return {
                 success: false,
                 response: '❌ Ju lutem shkruani problemin: /matematikë <problem>'
+            };
+        }
+        
+        // Provo të zgjidhësh problemin matematikor
+        const mathResult = this.evaluateMathExpression(problem);
+        if (mathResult) {
+            return {
+                success: true,
+                response: `🧮 **ZGJIDHJA E PROBLEMIT:** "${problem}"\n\n🔢 **Rezultati:** ${mathResult}\n\n💡 Shpjegim: Problemi u zgjidh duke evaluuar shprehjen matematikore.`
             };
         }
         
