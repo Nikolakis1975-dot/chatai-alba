@@ -132,6 +132,9 @@ class CommandService {
                         success: true,
                         response: `🗺️ **GJEOGRAFI SHQIPTARE:** "${args.slice(1).join(' ')}"\n\n💡 Unë mund të ndihmoj me:\n• Qytete dhe rajone\n• Vende turistike\n• Klima dhe reliev\n• Burime natyrore`
                     };
+
+                case '/meso':
+                    return await this.learnCommand(args.slice(1).join(' '));
                 
                 // ======================= ✅ KOMANDAT EKZISTUESE ======================
                 case '/wiki':
@@ -139,9 +142,6 @@ class CommandService {
                 
                 case '/perkthim':
                     return await this.translationCommand(args.slice(1));
-                
-                case '/meso':
-                    return await this.learnCommand(args.slice(1).join(' '));
                 
                 case '/moti':
                     return await this.weatherCommand(args.slice(1).join(' '));
@@ -266,20 +266,26 @@ class CommandService {
     async handleNaturalLanguage(message, user) {
         try {
             console.log('🔍 NLU Duke analizuar mesazhin natyror...');
-            console.log('📝 Mesazhi për analizë:', message);
             
-            // Së pari kontrollo për llogaritje matematikore
+            // ✅ SË PARI KONTROLLO KNOWLEDGE BASE
+            const knowledgeResult = await this.checkKnowledgeBase(message, user.id);
+            if (knowledgeResult) {
+                console.log('✅ Gjetëm përgjigje në Knowledge Base');
+                return knowledgeResult;
+            }
+
+            // ✅ PASTAJ KONTROLLO LLOGARITJE MATEMATIKE
             const mathResult = await this.handleMathCalculation(message);
             if (mathResult) {
                 return mathResult;
             }
 
-            // Pastaj analizo me NLU Service
+            // ✅ VETËM PASTAJ ANALIZO ME NLU
+            console.log('📝 Mesazhi për analizë:', message);
             const nluAnalysis = await nluService.analyzeText(message, user.id);
             
             console.log('📊 NLU Analysis Result:', JSON.stringify(nluAnalysis, null, 2));
 
-            // Përgjigju direkt nga NLU
             return await this.generateNLUResponse(message, nluAnalysis, user);
             
         } catch (error) {
@@ -288,6 +294,70 @@ class CommandService {
                 success: true,
                 response: this.getSimpleResponse(message)
             };
+        }
+    }
+
+    // ============================ ✅ KONTROLLIMI I KNOWLEDGE BASE =============================
+    async checkKnowledgeBase(message, userId) {
+        try {
+            console.log('🔍 Duke kontrolluar Knowledge Base për:', message.substring(0, 50));
+            
+            const db = require('../database');
+            
+            // Kërko në knowledge_base për pyetje të sakta
+            const exactKnowledge = await new Promise((resolve, reject) => {
+                db.get(
+                    'SELECT answer FROM knowledge_base WHERE user_id = ? AND LOWER(question) = LOWER(?)',
+                    [userId, message.trim()],
+                    (err, row) => {
+                        if (err) {
+                            console.error('❌ Gabim në kërkimin e saktë të knowledge base:', err);
+                            resolve(null);
+                        } else {
+                            resolve(row);
+                        }
+                    }
+                );
+            });
+
+            if (exactKnowledge && exactKnowledge.answer) {
+                console.log('✅ Gjetëm përgjigje të saktë në Knowledge Base');
+                return {
+                    success: true,
+                    response: exactKnowledge.answer
+                };
+            }
+
+            // Kërko me pyetje të ngjashme (fjalë kyçe)
+            const similarKnowledge = await new Promise((resolve, reject) => {
+                db.get(
+                    'SELECT question, answer FROM knowledge_base WHERE user_id = ? AND ? LIKE "%" || question || "%"',
+                    [userId, message.toLowerCase()],
+                    (err, row) => {
+                        if (err) {
+                            console.error('❌ Gabim në kërkimin e ngjashëm të knowledge base:', err);
+                            resolve(null);
+                        } else {
+                            resolve(row);
+                        }
+                    }
+                );
+            });
+
+            if (similarKnowledge && similarKnowledge.answer) {
+                console.log('✅ Gjetëm përgjigje të ngjashme në Knowledge Base');
+                return {
+                    success: true,
+                    response: similarKnowledge.answer
+                };
+            }
+
+            console.log('ℹ️ Nuk u gjet asnjë përgjigje në Knowledge Base');
+            return null;
+
+        } catch (error) {
+            console.error('❌ Gabim në checkKnowledgeBase:', error);
+            return null;
         }
     }
 
@@ -350,7 +420,7 @@ class CommandService {
             case 'greeting':
                 return {
                     success: true,
-                    response: this.getGreetingResponse(sentiment, intent.parameters.timeOfDay)
+                    response: this.getGreetingResponse(sentiment, intent.parameters?.timeOfDay)
                 };
 
             case 'gratitude':
@@ -484,6 +554,51 @@ class CommandService {
         ];
 
         return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
+    }
+
+    // ========================= ✅ KOMANDA /MESO - MËSIM I RI ===========================
+    async learnCommand(data) {
+        try {
+            const [question, answer] = data.split('|');
+            
+            if (!question || !answer) {
+                return {
+                    success: false,
+                    response: '❌ Format i gabuar: /meso <pyetje>|<përgjigje>'
+                };
+            }
+            
+            // Pastro dhe ruaj në knowledge base
+            const cleanQuestion = question.trim();
+            const cleanAnswer = answer.trim();
+            
+            console.log('💾 Duke ruajtur në Knowledge Base:', {
+                question: cleanQuestion.substring(0, 50),
+                answer: cleanAnswer.substring(0, 50)
+            });
+            
+            // Ruaj në knowledge base
+            const saved = await this.saveToKnowledgeBase(cleanQuestion, cleanAnswer);
+            
+            if (saved) {
+                return {
+                    success: true,
+                    response: `✅ Mësova diçka të re! Tani kur të më pyesni "${cleanQuestion}", do t'ju përgjigjem: "${cleanAnswer}"`
+                };
+            } else {
+                return {
+                    success: false,
+                    response: '❌ Gabim në ruajtjen e njohurive'
+                };
+            }
+            
+        } catch (error) {
+            console.error('❌ Gabim në learnCommand:', error);
+            return {
+                success: false,
+                response: '❌ Gabim në procesimin e komandës /meso'
+            };
+        }
     }
 
     // ========================= ✅ FUNKSIONET E REJA PËR STUDENTË ===========================
@@ -633,26 +748,6 @@ class CommandService {
         };
     }
 
-    // ========================✅ KOMANDA /MESO - MËSIM I RI PËR AI ==============================
-    async learnCommand(data) {
-        const [question, answer] = data.split('|');
-        
-        if (!question || !answer) {
-            return {
-                success: false,
-                response: '❌ Format i gabuar: /meso <pyetje>|<përgjigje>'
-            };
-        }
-        
-        // Ruaj në knowledge base
-        await this.saveToKnowledgeBase(question, answer);
-        
-        return {
-            success: true,
-            response: '✅ U mësua me sukses! Tani AI di për: ' + question
-        };
-    }
-
     // ======================== ✅ KOMANDA /MOTI - INFORMACION MOTI =============================
     async weatherCommand(city) {
         if (!city) {
@@ -733,8 +828,28 @@ class CommandService {
     }
     
     async saveToKnowledgeBase(question, answer) {
-        // Implementimi i ruajtjes
-        console.log(`💾 Ruajtur: ${question} -> ${answer}`);
+        try {
+            const db = require('../database');
+            
+            return new Promise((resolve, reject) => {
+                db.run(
+                    'INSERT OR REPLACE INTO knowledge_base (user_id, question, answer, created_at) VALUES (?, ?, ?, ?)',
+                    [1, question, answer, new Date().toISOString()],
+                    function(err) {
+                        if (err) {
+                            console.error('❌ Gabim në ruajtjen e knowledge base:', err);
+                            resolve(false);
+                        } else {
+                            console.log('✅ Knowledge Base u përditësua me ID:', this.lastID);
+                            resolve(true);
+                        }
+                    }
+                );
+            });
+        } catch (error) {
+            console.error('❌ Gabim në saveToKnowledgeBase:', error);
+            return false;
+        }
     }
     
     async saveApiKey(userId, apiKey) {
