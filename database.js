@@ -71,6 +71,38 @@ function addUpdatedAtColumnToApiKeys() {
     });
 }
 
+// ✅ FUNKSION PËR TË SHTUAR KOLONËN RESPONSE NË MESSAGES
+function addResponseColumnToMessages() {
+    console.log('🔍 Duke kontrolluar nëse tabela messages ka kolonën response...');
+    
+    db.all("PRAGMA table_info(messages)", (err, columns) => {
+        if (err) {
+            console.error('❌ Gabim në kontrollimin e kolonave:', err);
+            return;
+        }
+        
+        const columnNames = Array.isArray(columns) 
+            ? columns.map(col => col.name) 
+            : [];
+        
+        console.log('📊 Kolonat ekzistuese në messages:', columnNames);
+        
+        if (!columnNames.includes('response')) {
+            console.log('🔄 Duke shtuar kolonën response në tabelën messages...');
+            
+            db.run('ALTER TABLE messages ADD COLUMN response TEXT', (err) => {
+                if (err) {
+                    console.error('❌ Gabim në shtimin e kolonës response:', err);
+                } else {
+                    console.log('✅ Kolona response u shtua me sukses në tabelën messages');
+                }
+            });
+        } else {
+            console.log('✅ Kolona response ekziston tashmë në messages');
+        }
+    });
+}
+
 // Funksioni për të inicializuar tabelat nëse nuk ekzistojnë
 function initializeDatabase() {
     console.log('🔄 Duke inicializuar databazën...');
@@ -110,12 +142,13 @@ function initializeDatabase() {
         }
     });
 
-    // Tabela e mesazheve
+    // ✅ TABELA E MESAZHEVE - ME KOLONËN RESPONSE
     db.run(`CREATE TABLE IF NOT EXISTS messages (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
         content TEXT NOT NULL,
         sender TEXT NOT NULL,
+        response TEXT,
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users (id)
     )`, (err) => {
@@ -160,8 +193,11 @@ function initializeDatabase() {
 
     console.log('✅ Inicializimi i databazës përfundoi!');
     
-    // ✅ THIRRE FUNKSIONIN PËR SHTIMIN E KOLONËS PAS INICIALIZIMIT
-    setTimeout(addUpdatedAtColumnToApiKeys, 2000);
+    // ✅ THIRRE FUNKSIONET PËR SHTIMIN E KOLONAVE PAS INICIALIZIMIT
+    setTimeout(() => {
+        addUpdatedAtColumnToApiKeys();
+        addResponseColumnToMessages();
+    }, 2000);
 }
 
 // Eksporto db object
