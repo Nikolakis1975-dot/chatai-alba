@@ -75,115 +75,118 @@ function getSimpleNaturalResponse(message) {
 }
 
 // ✅ RUTA KRYESORE PËR MESAZHET - TRAJTON TË GJITHA MESAZHET
-router.post('/', async (req, res) => {
-    try {
-        const { message, userId } = req.body;
-        
-        console.log('🔍 routes/chat: Marrë mesazh:', message?.substring(0, 50));
-
-        if (!message) {
-            return res.status(constants.HTTP_STATUS.BAD_REQUEST).json({
-                success: false,
-                response: '❌ Ju lutem shkruani një mesazh'
-            });
-        }
-
-        // ✅ SË PARI PROVO ME COMMAND SERVICE (SISTEMI I RI)
-        try {
-            const user = await getUserById(userId || 1);
-            
-            if (user) {
-                console.log('🎯 routes/chat: Duke thirrur CommandService...');
-                const result = await CommandService.processCommand('chat', user, message);
-                
-                // ✅ NËSE COMMAND SERVICE E TRAJTON, KTHEJ PËRGJIGJEN
-                if (result.success) {
-                    console.log('✅ routes/chat: CommandService e trajtoi mesazhin');
-                    return res.status(constants.HTTP_STATUS.OK).json(result);
-                }
-            }
-        } catch (cmdError) {
-            console.error('❌ routes/chat: Gabim në CommandService:', cmdError.message);
-        }
-
-        // ✅ NËSE COMMAND SERVICE NUK E TRAJTON, SHKO TE SISTEMI I VJETËR (GEMINI)
-        console.log('🔄 routes/chat: CommandService nuk e trajtoi, duke shkuar te Gemini...');
-        
-        try {
-            // Kontrollo nëse ka API Key
-            const hasApiKey = await checkApiKey(userId || 1);
-            
-            if (!hasApiKey) {
-                // ✅ NËSE NUK KA API KEY, KTHE PËRGJIGJE BAZË
-                console.log('ℹ️ routes/chat: Nuk ka API Key, duke kthyer përgjigje bazë');
-                return res.status(constants.HTTP_STATUS.OK).json({
-                    success: true,
-                    response: getSimpleNaturalResponse(message)
-                });
-            }
-            
-            // Nëse ka API Key, shko te Gemini
-            console.log('🔑 routes/chat: Ka API Key, duke shkuar te Gemini...');
-            const geminiResponse = await require('./gemini').processMessage(message, userId || 1);
-            return res.status(constants.HTTP_STATUS.OK).json({
-                success: true,
-                response: geminiResponse
-            });
-            
-        } catch (geminiError) {
-            console.error('❌ routes/chat: Gabim në Gemini:', geminiError);
-            return res.status(constants.HTTP_STATUS.OK).json({
-                success: true,
-                response: getSimpleNaturalResponse(message)
-            });
-        }
-
-    } catch (error) {
-        console.error('❌ routes/chat: Gabim i përgjithshëm:', error);
-        return res.status(constants.HTTP_STATUS.INTERNAL_ERROR).json({
-            success: false,
-            response: '❌ Gabim në server. Provo përsëri.'
-        });
-    }
-});
+// router.post('/', async (req, res) => {
+ //   try {
+   //     const { message, userId } = req.body;
+   //     
+   //     console.log('🔍 routes/chat: Marrë mesazh:', message?.substring(0, 50));
+//
+    //    if (!message) {
+    //        return res.status(constants.HTTP_STATUS.BAD_REQUEST).json({
+   //             success: false,
+   //             response: '❌ Ju lutem shkruani një mesazh'
+  //          });
+  //      }
+//
+     //   // ✅ SË PARI PROVO ME COMMAND SERVICE (SISTEMI I RI)
+     //   try {
+     //       const user = await getUserById(userId || 1);
+    //        
+     //       if (user) {
+     //           console.log('🎯 routes/chat: Duke thirrur CommandService...');
+     //           const result = await CommandService.processCommand('chat', user, message);
+     //           
+    //            // ✅ NËSE COMMAND SERVICE E TRAJTON, KTHEJ PËRGJIGJEN
+    //            if (result.success) {
+   //                 console.log('✅ routes/chat: CommandService e trajtoi mesazhin');
+   //                 return res.status(constants.HTTP_STATUS.OK).json(result);
+   //             }
+   //         }
+  //      } catch (cmdError) {
+  //          console.error('❌ routes/chat: Gabim në CommandService:', cmdError.message);
+  //      }
+//
+    //    // ✅ NËSE COMMAND SERVICE NUK E TRAJTON, SHKO TE SISTEMI I VJETËR (GEMINI)
+     //   console.log('🔄 routes/chat: CommandService nuk e trajtoi, duke shkuar te Gemini...');
+    //    
+     //   try {
+    //        // Kontrollo nëse ka API Key
+    //        const hasApiKey = await checkApiKey(userId || 1);
+    //        
+    //        if (!hasApiKey) {
+     //           // ✅ NËSE NUK KA API KEY, KTHE PËRGJIGJE BAZË
+     //           console.log('ℹ️ routes/chat: Nuk ka API Key, duke kthyer përgjigje bazë');
+     //           return res.status(constants.HTTP_STATUS.OK).json({
+     //               success: true,
+     //               response: getSimpleNaturalResponse(message)
+     //           });
+    //        }
+    //        
+    //        // Nëse ka API Key, shko te Gemini
+    //        console.log('🔑 routes/chat: Ka API Key, duke shkuar te Gemini...');
+   //         const geminiResponse = await require('./gemini').processMessage(message, userId || 1);
+   //         return res.status(constants.HTTP_STATUS.OK).json({
+   //             success: true,
+    //            response: geminiResponse
+   //         });
+   //         
+  //      } catch (geminiError) {
+  //          console.error('❌ routes/chat: Gabim në Gemini:', geminiError);
+  //          return res.status(constants.HTTP_STATUS.OK).json({
+ //               success: true,
+ //               response: getSimpleNaturalResponse(message)
+  //          });
+//        }
+//
+//    } catch (error) {
+//        console.error('❌ routes/chat: Gabim i përgjithshëm:', error);
+//        return res.status(constants.HTTP_STATUS.INTERNAL_ERROR).json({
+ //           success: false,
+   //         response: '❌ Gabim në server. Provo përsëri.'
+   //     });
+ //   }
+// });
 
 // ✅ RUTA PËR MESAZHET E DREJTPËRDREDHURA (PËR FRONTEND)
+
+// ✅ RUTA E THJESHTUAR PËR MESAZHE - PUNON ME URËN
 router.post('/message', async (req, res) => {
     try {
-        const { message, userId } = req.body;
+        const { message, userId = 1 } = req.body;
         
-        console.log('🔍 routes/chat/message: Marrë mesazh:', message?.substring(0, 50));
+        console.log('🔍 routes/chat/message: Marrë mesazh për urë:', message?.substring(0, 50));
 
-        if (!message) {
-            return res.status(constants.HTTP_STATUS.BAD_REQUEST).json({
+        if (!message || message.trim() === '') {
+            return res.json({
                 success: false,
                 response: '❌ Ju lutem shkruani një mesazh'
             });
         }
 
+        // ✅ PERDOR DIRECT COMMAND SERVICE (JO URËN, SE URËRA ËSHTË NË APP.JS)
+        console.log('🎯 routes/chat/message: Duke thirrur CommandService direkt...');
+        const CommandService = require('../services/commandService');
+        
         // Merr përdoruesin
-        const user = await getUserById(userId || 1);
-        
-        if (!user) {
-            return res.status(constants.HTTP_STATUS.NOT_FOUND).json({
-                success: false,
-                response: '❌ Përdoruesi nuk u gjet'
+        const db = require('../database');
+        const user = await new Promise((resolve) => {
+            db.get('SELECT * FROM users WHERE id = ?', [userId], (err, user) => {
+                resolve(user || { id: userId, username: 'user' + userId });
             });
-        }
+        });
 
-        console.log('🎯 routes/chat/message: Duke thirrur CommandService...');
-        const result = await CommandService.processCommand('chat', user, message);
+        const result = await CommandService.processCommand('', user, message);
         
-        console.log('📊 routes/chat/message: Rezultati nga CommandService:', {
+        console.log('📊 routes/chat/message: Rezultati:', {
             success: result.success,
             messageLength: result.response?.length || 0
         });
         
-        return res.status(constants.HTTP_STATUS.OK).json(result);
+        return res.json(result);
 
     } catch (error) {
         console.error('❌ routes/chat/message: Gabim i përgjithshëm:', error);
-        return res.status(constants.HTTP_STATUS.INTERNAL_ERROR).json({
+        return res.json({
             success: false,
             response: '❌ Gabim në server. Provo përsëri.'
         });
