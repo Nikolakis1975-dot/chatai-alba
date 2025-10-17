@@ -14,6 +14,7 @@ const apiRoutes = require('./routes/api');
 const geminiRoutes = require('./routes/gemini');
 const adminRoutes = require('./routes/admin');
 const geminiSimpleRoutes = require('./routes/gemini-simple');
+const voiceRoutes = require('./routes/voice');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -33,14 +34,6 @@ app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
-// ======================================================
-// 3️⃣ Importo & Regjistro rutat
-// ======================================================
-
-// 🟢 Ruta për voice — DUHET të vijë PAS konfigurimit të parserëve
-const voiceRoutes = require('./routes/voice');
-app.use('/api/voice', voiceRoutes);
-
 // ✅ 4. STATIC FILES
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -54,6 +47,7 @@ app.use('/api/api-keys', apiRoutes);
 app.use('/api/gemini', geminiRoutes);
 app.use('/admin', adminRoutes);
 app.use('/api/gemini-simple', geminiSimpleRoutes);
+app.use('/api/voice', voiceRoutes);
 
 // ✅ 6. RUTA DEFAULT
 app.get('/', (req, res) => {
