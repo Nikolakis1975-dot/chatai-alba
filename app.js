@@ -33,6 +33,14 @@ app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
+// ======================================================
+// 3️⃣ Importo & Regjistro rutat
+// ======================================================
+
+// 🟢 Ruta për voice — DUHET të vijë PAS konfigurimit të parserëve
+const voiceRoutes = require('./routes/voice');
+app.use('/api/voice', voiceRoutes);
+
 // ✅ 4. STATIC FILES
 app.use(express.static(path.join(__dirname, 'public')));
 
