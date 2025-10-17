@@ -1,10 +1,46 @@
+// ======================================================
+// 🌟 ChatAI ALBA v3.0 — Server kryesor
+// ======================================================
+
+// 1️⃣ Konfigurime fillestare
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 
-// Importo rutat
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// ======================================================
+// 2️⃣ Konfigurime të përgjithshme
+// ======================================================
+
+// ✅ CORS — lejon komunikimin midis domain-eve
+app.use(cors({
+    origin: [
+        'http://localhost:3000',
+        'https://chatai-alba-gr9dw.ondigitalocean.app'
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
+}));
+
+// ✅ COOKIE & BODY parsers
+app.use(cookieParser());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
+// ======================================================
+// 3️⃣ Importo & Regjistro rutat
+// ======================================================
+
+// 🟢 Ruta për voice — DUHET të vijë PAS konfigurimit të parserëve
+const voiceRoutes = require('./routes/voice');
+app.use('/api/voice', voiceRoutes);
+
+// Rutat ekzistuese
 const authRoutes = require('./routes/auth');
 const authEnhanced = require('./routes/auth-enhanced');
 const chatRoutes = require('./routes/chat');
@@ -14,30 +50,8 @@ const apiRoutes = require('./routes/api');
 const geminiRoutes = require('./routes/gemini');
 const adminRoutes = require('./routes/admin');
 const geminiSimpleRoutes = require('./routes/gemini-simple');
-const voiceRoutes = require('./routes/voice');
 
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-// ✅ 1. CORS CONFIGURATION - VETËM NJË HERË
-app.use(cors({
-    origin: 'https://chatai-alba-gr9dw.ondigitalocean.app',
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
-}));
-
-// ✅ 2. COOKIE PARSER
-app.use(cookieParser());
-
-// ✅ 3. BODY PARSER
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ limit: '10mb', extended: true }));
-
-// ✅ 4. STATIC FILES
-app.use(express.static(path.join(__dirname, 'public')));
-
-// ✅ 5. ROUTES
+// Regjistro të gjitha rutat
 app.use('/api/auth', authRoutes);
 app.use('/api/auth', authEnhanced);
 app.use('/api/chat', chatRoutes);
@@ -47,46 +61,52 @@ app.use('/api/api-keys', apiRoutes);
 app.use('/api/gemini', geminiRoutes);
 app.use('/admin', adminRoutes);
 app.use('/api/gemini-simple', geminiSimpleRoutes);
-app.use('/api/voice', voiceRoutes);
 
-// ✅ 6. RUTA DEFAULT
+// ======================================================
+// 4️⃣ Static files (Frontend)
+app.use(express.static(path.join(__dirname, 'public')));
+
+// ======================================================
+// 5️⃣ Default route — për SPA frontend
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// ✅ 7. ERROR HANDLING
+// ======================================================
+// 6️⃣ Error & 404 Handlers
 app.use((err, req, res, next) => {
     console.error('❌ Gabim në server:', err);
-    res.status(500).json({ 
-        success: false, 
-        message: 'Gabim i brendshëm i serverit' 
+    res.status(500).json({
+        success: false,
+        message: 'Gabim i brendshëm i serverit.'
     });
 });
 
-// ✅ 8. 404 HANDLER
 app.use((req, res) => {
-    res.status(404).json({ 
-        success: false, 
-        message: 'Ruta nuk u gjet' 
+    res.status(404).json({
+        success: false,
+        message: 'Ruta nuk u gjet.'
     });
 });
 
-// ✅ 9. TESTO ENKRIPTIMIN
+// ======================================================
+// 7️⃣ Test enkriptimi
 const encryption = require('./utils/encryption');
 setTimeout(() => {
     console.log('🛡️ Testi i enkriptimit AES-256-CBC:');
     encryption.testEncryption();
 }, 2000);
 
-// 📄 app.js - Shto në FUND, para app.listen()
+// ======================================================
+// 8️⃣ Ura (Bridge System)
 const AppBridge = require('./bridges/app-bridge');
-
-// ✅ INICIALIZO URËN E SIGURT (NUK NDRYSHON FUNKSIONIMIN EKZISTUES)
 AppBridge.initializeSafeBridge(app);
 
-// ✅ 10. START SERVER
+// ======================================================
+// 9️⃣ Start server
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Serveri është duke u drejtuar në portin ${PORT}`);
     console.log(`🌐 URL: http://localhost:${PORT}`);
     console.log(`🔐 NODE_ENV: ${process.env.NODE_ENV}`);
+    console.log(`🎤 Voice Routes u regjistruan: /api/voice/transcribe`);
 });
