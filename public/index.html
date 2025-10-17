@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ChatAI ALBA - Version i Ri me Server</title>
+
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -251,7 +252,7 @@
 
   <!-- CHAT INTERFACE -->
   <div id="chat-screen" style="display: none;">
-    <header>
+    <header>     
       <div id="user-profile">
         <img id="profile-pic" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%234285f4'%3E%3Cpath d='M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E" alt="Foto profili">
         <span id="profile-name"></span>
@@ -264,21 +265,28 @@
       <button id="download-history">📥 Shkarko</button>
       <button id="upload-history">📤 Ngarko</button>
       <button id="clear-history">🗑️ Fshi</button>
-      <button onclick="logout()">🚪 Dil</button>
+      <button onclick="logout()">🚪 Dil</button>     
     </header>
     
     <main id="chat"></main>
 
-    <footer id="input-area">
-      <button id="emoji-btn">😊</button>
-      <div id="emoji-panel" class="hidden">
+  <!-- NË public/index.html - ZËVENDËSO BUTONIN -->
+<footer id="input-area">
+    <button id="emoji-btn">😊</button>
+    <div id="emoji-panel" class="hidden">
         <span>😀</span><span>😂</span><span>😍</span><span>🔥</span><span>😎</span>
         <span>🤔</span><span>😢</span><span>❤️</span><span>👍</span><span>👎</span>
-      </div>
-      <input type="text" id="user-input" placeholder="Shkruaj mesazhin...">
-      <button id="send-btn">➤</button>
-    </footer>
-  </div>
+    </div>
+
+    <!-- 🎤 Buton për regjistrim zanor -->
+<button id="voiceBtn">🎤 Fillo të flasësh</button>
+
+<!-- opsionale: për të dëgjuar zërin e ALBA-s -->
+<audio id="audioPlayer" controls style="display:none;"></audio>
+
+    <input type="text" id="user-input" placeholder="Shkruaj mesazhin...">
+    <button id="send-btn">➤</button>
+</footer>
 
   <!-- Modal për API Key -->
   <div id="api-key-modal" class="modal">
@@ -321,7 +329,8 @@
 
   <script src="script.js"></script>
   <script>
-    // ==================== SISTEMI I RI I VERIFIKIMIT EMAIL ====================
+
+        // ==================== SISTEMI I RI I VERIFIKIMIT EMAIL ====================
 
     // Funksioni për regjistrim me email
     async function registerWithEmail() {
@@ -625,7 +634,6 @@ async function updateApiKeyStatus() {
         statusElement.className = "api-status invalid";
     }
 }
-
 // ✅ FUNKSION I KORRIGJUAR PËR MARRJE API KEY PËR CHATBOT
 async function getApiKeyFromServer() {
     try {
@@ -647,6 +655,7 @@ async function getApiKeyFromServer() {
         return null;
     }
 }
+
 // ✅ FUNKSION I RI PËR API KEY (PA LOCALSTORAGE)
 async function saveApiKey() {
     const apiKey = document.getElementById('api-key-input').value.trim();
@@ -688,38 +697,69 @@ async function saveApiKey() {
     }
 }
 
-// ✅ FUNKSION I RI PËR STATUS (PA LOCALSTORAGE)
-async function updateApiKeyStatus() {
-    const statusElement = document.getElementById('api-key-status');
-    
-    try {
-        // ✅ Përdor cookies - nuk dërgoj userId
-        const response = await fetch('/api/status/gemini', {
-            credentials: 'include' // ✅ Dërgon cookies
-        });
 
-        if (response.ok) {
-            const data = await response.json();
-            
-            if (data.success && data.hasApiKey) {
-                statusElement.textContent = "✅ API Key është i konfiguruar në server";
-                statusElement.className = "api-status valid";
-                document.getElementById('api-key-input').value = "••••••••••••••••";
-            } else {
-                statusElement.textContent = "❌ Nuk ka API Key të konfiguruar";
-                statusElement.className = "api-status invalid";
-                document.getElementById('api-key-input').value = "";
+    // ==================== SPEECH-TO-TEXT ME WAV ====================
+    document.addEventListener("DOMContentLoaded", () => {
+      const voiceBtn = document.getElementById("voiceBtn");
+      const userInput = document.getElementById("user-input");
+
+      if (!voiceBtn) return console.error("❌ Butoni voiceBtn nuk u gjet!");
+      if (!userInput) return console.error("❌ Input field user-input nuk u gjet!");
+
+      let mediaRecorder;
+      let audioChunks = [];
+
+      voiceBtn.addEventListener("click", async () => {
+        if (!mediaRecorder || mediaRecorder.state === "inactive") {
+          // Fillo regjistrimin
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaRecorder = new MediaRecorder(stream);
+
+          mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+
+          mediaRecorder.onstop = async () => {
+            const blob = new Blob(audioChunks, { type: "audio/wav" }); // ✅ WAV format
+            const formData = new FormData();
+            formData.append("audio", blob, "live.wav");
+
+            try {
+              const res = await fetch("/api/voice/transcribe", {
+                method: "POST",
+                body: formData,
+              });
+
+              const data = await res.json();
+              console.log("📩 Përgjigje nga serveri:", data);
+
+              if (data.transcript) {
+                // Vendos tekstin direkt në textbox
+                userInput.value = data.transcript;
+
+                // Opsionale: mund ta dërgojë automatikisht në chat
+                // sendMessage(); // Nëse keni funksion sendMessage()
+              } else {
+                alert("❌ " + (data.message || "Gabim gjatë transkriptimit."));
+              }
+            } catch (err) {
+              console.error("❌ Gabim gjatë transkriptimit:", err);
+              alert("❌ Gabim gjatë transkriptimit.");
             }
-        } else {
-            statusElement.textContent = "❌ Gabim në kontrollimin e statusit";
-            statusElement.className = "api-status invalid";
+
+            audioChunks = [];
+          };
+
+          mediaRecorder.start();
+          voiceBtn.textContent = "⏹️ Ndal regjistrimin";
+
+        } else if (mediaRecorder.state === "recording") {
+          // Ndal regjistrimin kur përdoruesi klikon përsëri
+          mediaRecorder.stop();
+          voiceBtn.textContent = "🎤 Flas";
         }
-    } catch (error) {
-        console.error('Gabim në kontrollimin e statusit:', error);
-        statusElement.textContent = "❌ Problem me serverin";
-        statusElement.className = "api-status invalid";
-    }
-}
+      });
+    });
   </script>
+  
+<!-- ✅ KËTO MBETIN SI JANË -->
 </body>
 </html>
