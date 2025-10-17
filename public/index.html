@@ -278,11 +278,13 @@
         <span>🤔</span><span>😢</span><span>❤️</span><span>👍</span><span>👎</span>
     </div>
 
-    <!-- 🎤 Buton për regjistrim zanor -->
-<button id="voiceBtn">🎤 Fillo të flasësh</button>
-
-<!-- opsionale: për të dëgjuar zërin e ALBA-s -->
-<audio id="audioPlayer" controls style="display:none;"></audio>
+  <!-- 🎤 BUTONI I VOICE AI -->
+    <button id="voice-btn" 
+            onclick="voiceButtonClick(event)"
+            style="background:#2E86AB; color:white; border:none; border-radius:50%; width:45px; height:45px; margin-right:10px; cursor:pointer; font-size:18px;"
+            title="Kliko për të folur (Voice AI)">
+        🎤
+    </button> 
 
     <input type="text" id="user-input" placeholder="Shkruaj mesazhin...">
     <button id="send-btn">➤</button>
