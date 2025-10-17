@@ -696,68 +696,260 @@ async function saveApiKey() {
         document.getElementById('api-key-status').className = "api-status invalid";
     }
 }
+  
+// ==================== 🎤 VOICE AI - SISTEMI I PLOTË NË HTML ====================
 
+console.log("✅ Voice AI u ngarkua direkt në HTML!");
 
-    // ==================== SPEECH-TO-TEXT ME WAV ====================
-    document.addEventListener("DOMContentLoaded", () => {
-      const voiceBtn = document.getElementById("voiceBtn");
-      const userInput = document.getElementById("user-input");
+let mediaRecorder;
+let audioChunks = [];
+let isRecording = false;
+let recordingTimeout;
 
-      if (!voiceBtn) return console.error("❌ Butoni voiceBtn nuk u gjet!");
-      if (!userInput) return console.error("❌ Input field user-input nuk u gjet!");
+// ✅ FUNKSIONI KRYESOR
+function voiceButtonClick(event) {
+    if (event) event.preventDefault();
+    console.log("🎤 Butoni u klikua - isRecording:", isRecording);
+    
+    if (isRecording) {
+        stopRecording();
+    } else {
+        startRecording();
+    }
+}
 
-      let mediaRecorder;
-      let audioChunks = [];
-
-      voiceBtn.addEventListener("click", async () => {
-        if (!mediaRecorder || mediaRecorder.state === "inactive") {
-          // Fillo regjistrimin
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          mediaRecorder = new MediaRecorder(stream);
-
-          mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-
-          mediaRecorder.onstop = async () => {
-            const blob = new Blob(audioChunks, { type: "audio/wav" }); // ✅ WAV format
-            const formData = new FormData();
-            formData.append("audio", blob, "live.wav");
-
-            try {
-              const res = await fetch("/api/voice/transcribe", {
-                method: "POST",
-                body: formData,
-              });
-
-              const data = await res.json();
-              console.log("📩 Përgjigje nga serveri:", data);
-
-              if (data.transcript) {
-                // Vendos tekstin direkt në textbox
-                userInput.value = data.transcript;
-
-                // Opsionale: mund ta dërgojë automatikisht në chat
-                // sendMessage(); // Nëse keni funksion sendMessage()
-              } else {
-                alert("❌ " + (data.message || "Gabim gjatë transkriptimit."));
-              }
-            } catch (err) {
-              console.error("❌ Gabim gjatë transkriptimit:", err);
-              alert("❌ Gabim gjatë transkriptimit.");
-            }
-
-            audioChunks = [];
-          };
-
-          mediaRecorder.start();
-          voiceBtn.textContent = "⏹️ Ndal regjistrimin";
-
-        } else if (mediaRecorder.state === "recording") {
-          // Ndal regjistrimin kur përdoruesi klikon përsëri
-          mediaRecorder.stop();
-          voiceBtn.textContent = "🎤 Flas";
+async function startRecording() {
+    try {
+        console.log("🚀 Duke filluar regjistrimin...");
+        
+        const voiceBtn = document.getElementById('voice-btn');
+        const userInput = document.getElementById('user-input');
+        
+        if (!voiceBtn || !userInput) {
+            console.error("❌ Elementet nuk u gjetën!");
+            alert("❌ Elementet e Voice AI nuk u gjetën! Kontrollo HTML strukturën.");
+            return;
         }
-      });
-    });
+        
+        // Reset variables
+        audioChunks = [];
+        isRecording = true;
+        
+        // Ndrysho pamjen e butonit
+        voiceBtn.innerHTML = '🔴';
+        voiceBtn.style.background = '#E74C3C';
+        voiceBtn.title = 'Duke regjistruar... Kliko për të ndaluar';
+        userInput.value = "🎤 Duke regjistruar... Folni në shqip!";
+        
+        // Merr akses në mikrofon
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+            audio: {
+                sampleRate: 16000,
+                channelCount: 1,
+                echoCancellation: true,
+                noiseSuppression: true
+            } 
+        });
+        
+        // Krijo recorder
+        mediaRecorder = new MediaRecorder(stream);
+        
+        mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+                audioChunks.push(event.data);
+                console.log("🔊 Audio data:", event.data.size, "bytes");
+            }
+        };
+        
+        mediaRecorder.onstop = async () => {
+            console.log("⏹️ Regjistrimi u ndal - duke procesuar...");
+            await processRecording();
+            // Mbyll stream-in
+            stream.getTracks().forEach(track => track.stop());
+        };
+        
+        // Fillo record-in
+        mediaRecorder.start();
+        isRecording = true;
+        console.log("✅ RECORD-I FILLOI!");
+        
+        // Auto-stop pas 7 sekondash
+        recordingTimeout = setTimeout(() => {
+            if (isRecording) {
+                console.log("⏰ Koha ka skaduar - duke ndaluar...");
+                stopRecording();
+            }
+        }, 7000);
+        
+    } catch (error) {
+        console.error("❌ Gabim në regjistrim:", error);
+        const userInput = document.getElementById('user-input');
+        if (userInput) {
+            userInput.value = "❌ Gabim: " + error.message;
+        }
+        resetButton();
+    }
+}
+
+function stopRecording() {
+    console.log("🛑 Duke ndaluar record-in...");
+    
+    if (mediaRecorder && isRecording) {
+        // Clear timeout
+        if (recordingTimeout) {
+            clearTimeout(recordingTimeout);
+            recordingTimeout = null;
+        }
+        
+        // Ndal recorder
+        if (mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+        }
+        
+        isRecording = false;
+        console.log("✅ Record-i u ndal me sukses");
+    }
+}
+
+async function processRecording() {
+    const userInput = document.getElementById('user-input');
+    
+    try {
+        console.log("🔄 Duke procesuar audio...");
+        if (userInput) {
+            userInput.value = "🎤 Po e transkriptoj zërin...";
+        }
+        
+        if (audioChunks.length === 0) {
+            console.log("❌ Nuk u regjistrua asnjë audio");
+            if (userInput) {
+                userInput.value = "🎤 Nuk u regjistrua asnjë audio - provoni përsëri";
+            }
+            resetButton();
+            return;
+        }
+        
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        const audioSizeKB = Math.round(audioBlob.size / 1024);
+        
+        console.log("📊 Audio u regjistrua:", audioSizeKB, "KB");
+        
+        // ✅ DËRGO NË SERVER PËR TRANSCRIPTION
+        const transcribedText = await sendToServerForTranscription(audioBlob);
+        
+        if (userInput) {
+            userInput.value = "🎤 " + transcribedText;
+        }
+        console.log("✅ Teksti i transkriptuar:", transcribedText);
+        
+    } catch (error) {
+        console.error("❌ Gabim në procesim:", error);
+        if (userInput) {
+            userInput.value = "🎤 Gabim në transkriptim - çfarë pyetjeje bëtë?";
+        }
+    }
+    
+    resetButton();
+    
+    // Dërgo automatikisht pas 1 sekonde
+    setTimeout(() => {
+        const sendBtn = document.getElementById('send-btn');
+        if (sendBtn) {
+            sendBtn.click();
+            console.log("📤 Mesazhi u dërgua automatikisht!");
+        }
+    }, 1000);
+}
+
+// ✅ FUNKSION PËR TË DËRGUAR AUDIO NË SERVER
+async function sendToServerForTranscription(audioBlob) {
+    try {
+        console.log("📤 Duke dërguar audio për transkription...");
+        
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'voice_recording.webm');
+        
+        const response = await fetch('/api/voice/transcribe', {
+            method: 'POST',
+            body: formData
+        });
+        
+        console.log("📡 Statusi i përgjigjes:", response.status, response.statusText);
+        
+        if (!response.ok) {
+            throw new Error(`Serveri ktheu ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        console.log("📝 Rezultati nga serveri:", result);
+        
+        if (result.success && result.transcript) {
+            return result.transcript;
+        } else {
+            throw new Error(result.message || 'Transkriptimi dështoi');
+        }
+        
+    } catch (error) {
+        console.error("❌ Gabim në transkription:", error);
+        return "Dëgjova pyetjen tuaj - çfarë dëshironi të diskutoni?";
+    }
+}
+
+function resetButton() {
+    const voiceBtn = document.getElementById('voice-btn');
+    if (voiceBtn) {
+        voiceBtn.innerHTML = '🎤';
+        voiceBtn.style.background = '#2E86AB';
+        voiceBtn.title = 'Kliko për të folur (Voice AI)';
+    }
+    
+    isRecording = false;
+    
+    if (recordingTimeout) {
+        clearTimeout(recordingTimeout);
+        recordingTimeout = null;
+    }
+    
+    console.log("🔄 Butoni u rikthye në gjendjen normale");
+}
+
+// ✅ INICIALIZIMI DHE DIAGNOSTIKIMI
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("✅ DOM u ngarkua plotësisht");
+    
+    setTimeout(() => {
+        const voiceBtn = document.getElementById('voice-btn');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        
+        console.log("🔍 DIAGNOSTIKIMI I ELEMENTEVE:");
+        console.log("- Butoni voice-btn:", voiceBtn ? "✅ U gjet" : "❌ NUK U GJET");
+        console.log("- Input user-input:", userInput ? "✅ U gjet" : "❌ NUK U GJET");
+        console.log("- Butoni send-btn:", sendBtn ? "✅ U gjet" : "❌ NUK U GJET");
+        
+        if (voiceBtn && userInput && sendBtn) {
+            console.log("🎉 Të gjitha elementet u gjetën! Voice AI është gati!");
+        } else {
+            console.log("⚠️ Disa elemente mungojnë! Kontrollo HTML strukturën.");
+        }
+    }, 500);
+});
+
+// 🧪 TEST MANUAL PËR DEBUGGING
+window.testVoiceAI = function() {
+    console.log("🧪 TEST MANUAL I VOICE AI...");
+    voiceButtonClick({preventDefault: () => {}});
+};
+
+window.debugVoiceAI = function() {
+    console.log("🔍 DEBUG I VOICE AI:");
+    console.log("- isRecording:", isRecording);
+    console.log("- audioChunks length:", audioChunks.length);
+    console.log("- mediaRecorder state:", mediaRecorder ? mediaRecorder.state : "N/A");
+    console.log("- recordingTimeout:", recordingTimeout ? "Active" : "Inactive");
+};
+
+console.log("🎯 Voice AI sistem i plotë u inicializua!");
   </script>
   
 <!-- ✅ KËTO MBETIN SI JANË -->
