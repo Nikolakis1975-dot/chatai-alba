@@ -301,6 +301,7 @@ router.post('/message', async (req, res) => {
 // ======================================================
 
 // ✅ ENDPOINT PËR SHKARKIM TË HISTORISË - VECORI E RE!
+// ✅ KORRIGJIMI I ENDPOINT-IT TË SHKARKIMIT - Zëvendëso në routes/chat.js
 router.get('/download-history/:userId', async (req, res) => {
     try {
         const { userId } = req.params;
@@ -320,6 +321,7 @@ router.get('/download-history/:userId', async (req, res) => {
                         console.error('❌ Gabim në marrjen e historisë:', err);
                         resolve([]);
                     } else {
+                        console.log(`✅ Gjetur ${rows?.length || 0} mesazhe për shkarkim`);
                         resolve(rows || []);
                     }
                 }
@@ -327,37 +329,54 @@ router.get('/download-history/:userId', async (req, res) => {
         });
 
         if (history.length === 0) {
+            // Kthe si JSON nëse nuk ka të dhëna
             return res.json({
                 success: false,
                 message: '❌ Nuk ka histori për të shkarkuar'
             });
         }
 
-        // Krijo skedarin tekst
+        // Krijo skedarin tekst ME FORMATIM TË KORREKT
         let fileContent = `📊 HISTORIA E BISEDËS - CHATAI ALBA\n`;
         fileContent += `👤 Përdorues: ${userId}\n`;
         fileContent += `📅 Data e shkarkimit: ${new Date().toLocaleDateString('sq-AL')}\n`;
         fileContent += `⏰ Ora: ${new Date().toLocaleTimeString('sq-AL')}\n`;
         fileContent += `📨 Total mesazhe: ${history.length}\n`;
-        fileContent += '='.repeat(50) + '\n\n';
+        fileContent += '='.repeat(60) + '\n\n';
 
         history.forEach((msg, index) => {
             const emoji = msg.sender === 'user' ? '👤 USER' : '🤖 BOT';
-            const time = new Date(msg.timestamp).toLocaleString('sq-AL');
-            fileContent += `${index + 1}. ${emoji} [${time}]\n`;
+            
+            // ✅ KORRIGJIMI KRITIK: Formatimi i datës
+            let displayTime = 'Koha e panjohur';
+            try {
+                if (msg.timestamp) {
+                    const date = new Date(msg.timestamp);
+                    displayTime = isNaN(date.getTime()) ? 'Koha e panjohur' : date.toLocaleString('sq-AL');
+                }
+            } catch (error) {
+                console.error('❌ Gabim në formatimin e kohës:', error);
+                displayTime = 'Koha e panjohur';
+            }
+            
+            fileContent += `${index + 1}. ${emoji} [${displayTime}]\n`;
             fileContent += `   ${msg.content}\n`;
-            fileContent += '-'.repeat(50) + '\n';
+            fileContent += '-'.repeat(60) + '\n';
         });
 
         fileContent += `\n✅ Shkarkuar nga ChatAI ALBA\n`;
-        fileContent += `🔗 https://chatai-alba-gr9dw.ondigitalocean.app`;
+        fileContent += `🔗 https://chatai-alba-gr9dw.ondigitalocean.app\n`;
+        fileContent += `⏰ Sistemi online: ${new Date().toLocaleString('sq-AL')}`;
 
-        // Kthe si skedar të shkarkueshëm
+        // ✅ KONFIGURIMI I KORREKT I HEADERS PËR SHKARKIM
         res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-        res.setHeader('Content-Disposition', `attachment; filename="historia-chatai-${userId}-${Date.now()}.txt"`);
-        res.send(fileContent);
+        res.setHeader('Content-Disposition', `attachment; filename="historia-chatai-${userId}.txt"`);
+        res.setHeader('Content-Length', Buffer.byteLength(fileContent, 'utf8'));
+        
+        console.log(`✅ Historia u përgatit për shkarkim: ${history.length} mesazhe, ${fileContent.length} karaktere`);
 
-        console.log(`✅ Historia u shkarkua me sukses për ${userId}: ${history.length} mesazhe`);
+        // Dërgo përmbajtjen
+        res.send(fileContent);
 
     } catch (error) {
         console.error('❌ Gabim në shkarkimin e historisë:', error);
@@ -367,6 +386,8 @@ router.get('/download-history/:userId', async (req, res) => {
         });
     }
 });
+
+// =========================================================================================================== //
 
 // ✅ ENDPOINT PËR IMPORT TË DHËNASH - VECORI E RE!
 router.post('/import-data', async (req, res) => {
