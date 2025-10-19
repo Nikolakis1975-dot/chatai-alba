@@ -63,9 +63,13 @@ class AppBridge {
         // ✅ RUTA E RE PËR MESAZHET NATYRORE - KAP PARA SE TË SHKOJNË TE GEMINI
         app.post('/api/chat', async (req, res) => {
             try {
-                const { message, userId } = req.body;
+                // ✅ KORRIGJIM I RI: SHTO SESSION DATA
+                const userId = req.userId || req.body.userId || 'user-' + Date.now();
+                const sessionId = req.sessionId || req.body.sessionId || 'session-' + Date.now();
                 
-                console.log('🌉 AppBridge: Duke kapur mesazh në /api/chat:', message?.substring(0, 50));
+                console.log('🌉 AppBridge: Duke kapur mesazh në /api/chat - Session:', { userId, sessionId });
+
+                const { message } = req.body;
 
                 // ✅ KONTROLLO NËSE ËSHTË MESAZH NATYROR (JO KOMANDË)
                 if (message && !message.startsWith('/') && message.trim().length > 2) {
@@ -84,7 +88,15 @@ class AppBridge {
                             
                             if (result.success) {
                                 console.log('✅ AppBridge: CommandService dha përgjigje për mesazhin natyror');
-                                return res.json(result);
+                                
+                                // ✅ KORRIGJIM I RI: KTHE PËRGJIGJE ME SESSION DATA
+                                return res.json({
+                                    ...result,
+                                    sessionData: {
+                                        userId: userId,
+                                        sessionId: sessionId
+                                    }
+                                });
                             } else {
                                 console.log('⚠️ AppBridge: CommandService nuk dha përgjigje, duke vazhduar...');
                             }
@@ -120,7 +132,15 @@ class AppBridge {
                                 
                                 if (result.success) {
                                     console.log('✅ AppBridge: CommandService procesoi komandën:', command);
-                                    return res.json(result);
+                                    
+                                    // ✅ KORRIGJIM I RI: KTHE PËRGJIGJE ME SESSION DATA
+                                    return res.json({
+                                        ...result,
+                                        sessionData: {
+                                            userId: userId,
+                                            sessionId: sessionId
+                                        }
+                                    });
                                 }
                             }
                         } catch (cmdError) {
@@ -146,14 +166,23 @@ class AppBridge {
         // ✅ RUTA E RE PËR MESAZHET E DREJTPËRDREDHURA NGA FRONTEND
         app.post('/api/chat/message', async (req, res) => {
             try {
-                const { message, userId } = req.body;
+                // ✅ KORRIGJIM I RI: SHTO SESSION DATA
+                const userId = req.userId || req.body.userId || 'user-' + Date.now();
+                const sessionId = req.sessionId || req.body.sessionId || 'session-' + Date.now();
                 
-                console.log('🌉 AppBridge: Duke kapur mesazh në /api/chat/message:', message?.substring(0, 50));
+                console.log('🌉 AppBridge: Duke kapur mesazh në /api/chat/message - Session:', { userId, sessionId });
+
+                const { message } = req.body;
 
                 if (!message) {
                     return res.json({ 
                         success: false, 
-                        response: '❌ Ju lutem shkruani një mesazh' 
+                        response: '❌ Ju lutem shkruani një mesazh',
+                        // ✅ KORRIGJIM I RI: KTHE SESSION DATA EDHE NË ERROR
+                        sessionData: {
+                            userId: userId,
+                            sessionId: sessionId
+                        }
                     });
                 }
 
@@ -173,18 +202,35 @@ class AppBridge {
                             messageLength: result.response?.length || 0
                         });
                         
-                        return res.json(result);
+                        // ✅ KORRIGJIM I RI: KTHE PËRGJIGJE ME SESSION DATA
+                        return res.json({
+                            ...result,
+                            sessionData: {
+                                userId: userId,
+                                sessionId: sessionId
+                            }
+                        });
                     } else {
                         return res.json({
                             success: false,
-                            response: '❌ Përdoruesi nuk u gjet'
+                            response: '❌ Përdoruesi nuk u gjet',
+                            // ✅ KORRIGJIM I RI: KTHE SESSION DATA EDHE NË ERROR
+                            sessionData: {
+                                userId: userId,
+                                sessionId: sessionId
+                            }
                         });
                     }
                 } catch (cmdError) {
                     console.error('❌ AppBridge: Gabim në CommandService për /api/chat/message:', cmdError.message);
                     return res.json({
                         success: false,
-                        response: '❌ Gabim në procesimin e mesazhit'
+                        response: '❌ Gabim në procesimin e mesazhit',
+                        // ✅ KORRIGJIM I RI: KTHE SESSION DATA EDHE NË ERROR
+                        sessionData: {
+                            userId: userId,
+                            sessionId: sessionId
+                        }
                     });
                 }
 
@@ -192,7 +238,12 @@ class AppBridge {
                 console.error('❌ AppBridge: Gabim i përgjithshëm në /api/chat/message:', error);
                 return res.json({
                     success: false,
-                    response: '❌ Gabim në server. Provo përsëri.'
+                    response: '❌ Gabim në server. Provo përsëri.',
+                    // ✅ KORRIGJIM I RI: KTHE SESSION DATA EDHE NË ERROR
+                    sessionData: {
+                        userId: req.userId || req.body.userId,
+                        sessionId: req.sessionId || req.body.sessionId
+                    }
                 });
             }
         });
