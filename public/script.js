@@ -822,27 +822,47 @@ function toggleEmojiPanel() {
 }
 
 // Funksionet për download/upload history (mbetet e njëjta)
+// ✅ KORRIGJIMI I FUNKSIONIT downloadHistory - Zëvendëso në script.js
 async function downloadHistory() {
-    if (!currentUser) return;
-    
     try {
-        const response = await fetch(`/api/chat/export/${currentUser.id}`, {
-            credentials: 'include'
-        });
-        const data = await response.json();
+        console.log('📥 [SHKARKO] Duke filluar shkarkimin...');
         
-        if (response.ok) {
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = "chat_history.json";
-            link.click();
-            addMessage("💾 Eksportova historinë.", "bot");
-        } else {
-            addMessage("❌ Gabim gjatë eksportimit: " + data.error, "bot");
+        // ✅ MERR USER ID NGA COOKIES
+        const userId = getUserIdFromCookies();
+        console.log('👤 [SHKARKO] User ID:', userId);
+        
+        if (!userId) {
+            showNotification('❌ Nuk mund të gjendet sesioni. Rifresko faqen.', 'error');
+            return;
         }
+
+        // ✅ KRIJO URL PËR SHKARKIM
+        const downloadUrl = `/api/chat/download-history/${userId}`;
+        console.log('🔗 [SHKARKO] Download URL:', downloadUrl);
+        
+        // ✅ METODA E THJESHTË: HAP LINKUN
+        window.open(downloadUrl, '_blank');
+        showNotification('✅ Historia po shkarkohet...', 'success');
+        
     } catch (error) {
-        addMessage("❌ Gabim gjatë eksportimit.", "bot");
+        console.error('❌ [SHKARKO] Gabim:', error);
+        showNotification('❌ Gabim gjatë shkarkimit', 'error');
+    }
+}
+
+// ✅ FUNKSION I RI PËR TË MARRË USER ID NGA COOKIES
+function getUserIdFromCookies() {
+    try {
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            const [name, value] = cookie.trim().split('=');
+            if (name === 'chatUserId' && value) {
+                return value;
+            }
+        }
+        return '1'; // Fallback
+    } catch (error) {
+        return '1'; // Fallback
     }
 }
 
