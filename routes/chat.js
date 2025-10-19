@@ -78,107 +78,58 @@ function getSimpleNaturalResponse(message) {
 // ✅ SISTEMI I RI I KOMANDAVE PËR VECORITË QË NUK FUNKSIONOJNË
 // ======================================================
 
+// ✅ KORRIGJIMI I KOMANDAVE - Shto në routes/chat.js
 const fixedCommands = {
-    // ✅ KOMANDA EKSPORTO - RIPARIM
     '/eksporto': async (args, userId) => {
         try {
-            console.log('📤 Komanda /eksporto u thirr për user:', userId);
-            
             const history = await new Promise((resolve) => {
                 db.all(
                     'SELECT content, sender, timestamp FROM messages WHERE user_id = ? ORDER BY timestamp DESC LIMIT 50',
                     [userId],
                     (err, rows) => {
-                        if (err) {
-                            console.error('❌ Gabim në marrjen e historisë:', err);
-                            resolve([]);
-                        } else {
-                            console.log(`✅ Gjetur ${rows?.length || 0} mesazhe për eksportim`);
-                            resolve(rows || []);
-                        }
+                        resolve(rows || []);
                     }
                 );
             });
 
-            if (history.length === 0) {
-                return '📭 Nuk ka histori për të eksportuar.';
-            }
+            if (history.length === 0) return '📭 Nuk ka histori për të eksportuar.';
 
-            let exportText = `📊 **HISTORIA E EKSPORTUAR - CHATAI ALBA**\n\n`;
-            exportText += `👤 Përdorues: ${userId}\n`;
-            exportText += `📅 Data: ${new Date().toLocaleDateString('sq-AL')}\n`;
-            exportText += `⏰ Ora: ${new Date().toLocaleTimeString('sq-AL')}\n`;
-            exportText += `📨 Total mesazhe: ${history.length}\n`;
-            exportText += '='.repeat(50) + '\n\n';
-
+            let exportText = `📊 HISTORIA E EKSPORTUAR\n👤 Përdorues: ${userId}\n📅 Data: ${new Date().toLocaleDateString()}\n📨 Mesazhe: ${history.length}\n\n`;
+            
             history.forEach((msg, index) => {
                 const emoji = msg.sender === 'user' ? '👤' : '🤖';
-                const time = new Date(msg.timestamp).toLocaleString('sq-AL');
-                exportText += `${index + 1}. ${emoji} [${time}]\n`;
-                exportText += `   ${msg.content}\n`;
-                exportText += '-'.repeat(40) + '\n';
+                const time = new Date(msg.timestamp).toLocaleTimeString();
+                exportText += `${emoji} [${time}] ${msg.content}\n`;
             });
 
-            exportText += `\n✅ Eksporti u krye me sukses!\n`;
-            exportText += `🔗 https://chatai-alba-gr9dw.ondigitalocean.app`;
-
-            return exportText;
+            return exportText + `\n✅ Eksporti u krye!`;
             
         } catch (error) {
-            console.error('❌ Gabim në /eksporto:', error);
-            return '❌ Gabim gjatë eksportimit. Provo përsëri.';
+            return '❌ Gabim gjatë eksportimit.';
         }
     },
 
-    // ✅ KOMANDA IMPORT - RIPARIM
     '/importo': (args, userId) => {
-        console.log('📥 Komanda /importo u thirr:', args);
-        
-        if (!args || args.trim() === '') {
-            return `📥 **SISTEMI I IMPORTIMIT**\n\n🔧 **Status: Gati për importim**\n\n💡 **Si të importoni:**\n1. Përdorni butonin "Ngarko" në UI\n2. Zgjidhni skedarin për të importuar\n3. Sistemi do të procesojë automatikisht\n\n📊 **Çfarë mund të importohet:**\n• Historinë e bisedave (JSON/CSV)\n• Njohuri të reja\n• Cilësime përdoruesi\n\n✅ *Sistemi është gati për importim!*`;
-        }
-
-        return `📥 **IMPORTIMI I TË DHËNAVE**\n\nTeksti i importuar: "${args.substring(0, 50)}..."\n\n✅ **Procesimi i importimit:**\n• Duke analizuar të dhënat...\n• Duke ruajtur në database...\n• Duke përditësuar sistemin...\n\n🔧 *Importimi u krye me sukses!*`;
+        return `📥 **SISTEMI I IMPORTIMIT**\n\n💡 Përdorni butonin "Ngarko" në UI për importim.\n\n✅ Sistemi është gati!`;
     },
 
-    // ✅ KOMANDA MESO - RIPARIM
     '/meso': async (args, userId) => {
         try {
-            console.log('🎓 Komanda /meso u thirr:', args);
+            const [pyetje, pergjigje] = args.split('|').map(s => s.trim());
+            if (!pyetje || !pergjigje) return '❌ Format: /meso <pyetje>|<përgjigje>';
             
-            if (!args) {
-                return '❌ Format: /meso <pyetje>|<përgjigje>\n\n💡 Shembull: /meso "Kryeqyteti i Shqipërisë"|"Tirana"';
-            }
+            // Ruaj në database
+            db.run(
+                'INSERT INTO knowledge_base (question, answer, user_id, created_at) VALUES (?, ?, ?, ?)',
+                [pyetje, pergjigje, userId, new Date().toISOString()]
+            );
 
-            const [pyetje, pergjigje] = args.split('|').map(s => s?.trim()).filter(Boolean);
-            
-            if (!pyetje || !pergjigje) {
-                return '❌ Format i gabuar! Përdorni: /meso <pyetje>|<përgjigje>';
-            }
-
-            // Ruaj në knowledge_base
-            await new Promise((resolve) => {
-                db.run(
-                    'INSERT INTO knowledge_base (question, answer, user_id, created_at) VALUES (?, ?, ?, ?)',
-                    [pyetje, pergjigje, userId, new Date().toISOString()],
-                    function(err) {
-                        if (err) {
-                            console.error('❌ Gabim në ruajtjen e njohurive:', err);
-                        } else {
-                            console.log('✅ Njohuri e re u mësua, ID:', this.lastID);
-                        }
-                        resolve();
-                    }
-                );
-            });
-
-            return `✅ **NJOHURI E RE U MËSUA!**\n\n❓ **Pyetja:** "${pyetje}"\n\n💡 **Përgjigja:** "${pergjigje}"\n\n🎯 Tani unë do të mbaj mend këtë informacion!`;
-            
+            return `✅ U mësua: "${pyetje}" → "${pergjigje}"`;
         } catch (error) {
-            console.error('❌ Gabim në /meso:', error);
-            return '❌ Gabim gjatë mësimit. Provo përsëri.';
+            return '❌ Gabim gjatë mësimit.';
         }
-    },
+    }
+};
 
     // ✅ KOMANDA SHKARKO - ENDPOINT I RI
     '/shkarko': async (args, userId) => {
