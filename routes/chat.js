@@ -1,184 +1,89 @@
+const crypto = require('crypto');
 const express = require('express');
 const db = require('../database');
 const router = express.Router();
 
-// ======================================================
-// ✅ SISTEMI I PLOTË I KOMANDAVE
-// ======================================================
+// ✅ IMPORT I KONSTANTAVE
+const constants = require('../config/constants');
 
-const commandSystem = {
-    // ✅ KOMANDA PËRSHËNDETJE
-    '/pershendetje': () => 'Jam mirë, faleminderit që pyetët! Si jeni ju?',
-    
-    // ✅ KOMANDA NDIHMË
-    '/ndihmo': () => `👑 **SISTEMI I KOMANDAVE**\n
-• /pershendetje - Përshëndetje
-• /ndihmo - Shfaq ndihmën
-• /apikey <key> - Vendos API Key
-• /wiki <kerkimi> - Kërko në Wikipedia
-• /importo - Importo historinë
-• /perkthim <teksti> - Përkthen tekst
-• /llogarit <shprehja> - Llogarit matematikë
-• /eksporto - Eksporto historinë
-• /meso <pyetje>|<përgjigje> - Mëso chatbot-in
-• /statistikat - Shfaq statistikat`,
-// ============================================================================================ //
-    // ✅ KOMANDA WIKIPEDIA
-    '/wiki': (args) => {
-        if (!args) return '❌ Ju lutem jepni një kërkim për Wikipedia.';
-        return `🌐 Rezultati për "${args}":\nInformacione nga Wikipedia do të shfaqeshin këtu.`;
-    },
-// =============================================================================================== //
-    // ✅ KOMANDA PËRKTHIM
-    '/perkthim': (args) => {
-        if (!args) return '❌ Ju lutem jepni tekst për të përkthyer.';
-        return `🔤 Përkthimi i "${args}":\n[Përkthimi do të shfaqej këtu]`;
-    },
-// ================================================================================================ //
-    // ✅ KOMANDA LLOGARITJE
-    '/llogarit': (args) => {
-        if (!args) return '❌ Ju lutem jepni një shprehje matematikore.';
-        try {
-            const result = eval(args);
-            return `🧮 Rezultati: ${args} = ${result}`;
-        } catch (error) {
-            return '❌ Shprehje matematikore e pavlefshme.';
-        }
-    },
-// ======================================================================================================== //
-    // ✅ KOMANDA EKSPORTO
-    '/eksporto': async (args, userId) => {
-        try {
-            const history = await new Promise((resolve) => {
-                db.all(
-                    'SELECT content, sender, timestamp FROM messages WHERE user_id = ? ORDER BY timestamp',
-                    [userId],
-                    (err, rows) => {
-                        if (err) {
-                            console.error('❌ Gabim në marrjen e historisë:', err);
-                            resolve([]);
-                        } else {
-                            resolve(rows || []);
-                        }
-                    }
-                );
-            });
+// ✅ IMPORT I COMMAND SERVICE
+const CommandService = require('../services/commandService');
 
-            return `📊 **HISTORIA E EKSPORTUAR**\nTotal mesazhe: ${history.length}\nEksporti u krye me sukses!`;
-        } catch (error) {
-            return '❌ Gabim gjatë eksportimit.';
-        }
-    },
-// ======================================================================================================== //
-    // ✅ KOMANDA MËSO
-    '/meso': async (args, userId) => {
-        try {
-            const [pyetje, pergjigje] = args.split('|').map(s => s.trim());
-            if (!pyetje || !pergjigje) {
-                return '❌ Format: /meso <pyetje>|<përgjigje>';
+// ✅ FUNKSIONET NDIHMËSE ME DATABASE CORRECT
+async function checkApiKey(userId) {
+    return new Promise((resolve, reject) => {
+        db.get(
+            'SELECT api_key FROM api_keys WHERE user_id = ? AND service_name = ?',
+            [userId, 'gemini'],
+            (err, result) => {
+                if (err) {
+                    console.error('❌ Gabim në checkApiKey:', err);
+                    resolve(false);
+                } else {
+                    resolve(!!result);
+                }
             }
+        );
+    });
+}
 
-            // Ruaj në knowledge_base
-            db.run(
-                'INSERT INTO knowledge_base (question, answer, user_id, created_at) VALUES (?, ?, ?, ?)',
-                [pyetje, pergjigje, userId, new Date().toISOString()],
-                function(err) {
-                    if (err) {
-                        console.error('❌ Gabim në ruajtjen e njohurive:', err);
-                    } else {
-                        console.log('✅ Njohuri e re u mësua, ID:', this.lastID);
-                    }
+async function getUserById(userId) {
+    return new Promise((resolve, reject) => {
+        db.get(
+            'SELECT * FROM users WHERE id = ?',
+            [userId],
+            (err, user) => {
+                if (err) {
+                    console.error('❌ Gabim në getUserById:', err);
+                    resolve(null);
+                } else {
+                    resolve(user);
                 }
-            );
+            }
+        );
+    });
+}
 
-            return `✅ U mësua: "${pyetje}" → "${pergjigje}"`;
-        } catch (error) {
-            return '❌ Gabim gjatë mësimit.';
-        }
-    },
-// ======================================================================================================== //
-    // ✅ KOMANDA STATISTIKAT
-    '/statistikat': async (args, userId) => {
-        try {
-            const userCount = await new Promise((resolve) => {
-                db.get('SELECT COUNT(*) as count FROM users', (err, row) => {
-                    resolve(row?.count || 0);
-                });
-            });
-
-            const messageCount = await new Promise((resolve) => {
-                db.get('SELECT COUNT(*) as count FROM messages', (err, row) => {
-                    resolve(row?.count || 0);
-                });
-            });
-
-            const apiKeyCount = await new Promise((resolve) => {
-                db.get('SELECT COUNT(*) as count FROM api_keys', (err, row) => {
-                    resolve(row?.count || 0);
-                });
-            });
-
-            return `📊 **STATISTIKAT E SISTEMIT:**\n👥 Përdorues të regjistruar: **${userCount}**\n💬 Mesazhe totale: **${messageCount}**\n🔑 API Keys: **${apiKeyCount}**\n🔄 Versioni: **2.0**\n🌟 Status: **Online & Stable**`;
-        } catch (error) {
-            return '❌ Gabim gjatë marrjes së statistikave.';
-        }
-    },
-// ======================================================================================================== //
-    // ✅ KOMANDA APIKEY
-    '/apikey': async (args, userId) => {
-        if (!args) return '❌ Ju lutem jepni API Key: /apikey <key_juaj>';
-
-        try {
-            // Fshi API key ekzistues
-            db.run(
-                'DELETE FROM api_keys WHERE user_id = ? AND service_name = ?',
-                [userId, 'gemini'],
-                function(deleteErr) {
-                    if (deleteErr) {
-                        console.error('❌ Gabim në fshirjen e API key:', deleteErr);
-                        return;
-                    }
-                    
-                    console.log(`✅ U fshinë ${this.changes} API keys`);
-                    
-                    // Shto API key të ri
-                    db.run(
-                        'INSERT INTO api_keys (user_id, api_key, service_name, created_at) VALUES (?, ?, ?, ?)',
-                        [userId, args, 'gemini', new Date().toISOString()],
-                        function(insertErr) {
-                            if (insertErr) {
-                                console.error('❌ Gabim në insertimin e API key:', insertErr);
-                            } else {
-                                console.log('✅ API Key u ruajt me sukses, ID:', this.lastID);
-                            }
-                        }
-                    );
-                }
-            );
-
-            return '✅ API Key u ruajt me sukses! Tani mund të përdorni pyetje të avancuara.';
-        } catch (error) {
-            return '❌ Gabim në ruajtjen e API key.';
-        }
+function getSimpleNaturalResponse(message) {
+    const lowerMessage = message.toLowerCase();
+    
+    if (lowerMessage.includes('përshëndetje') || lowerMessage.includes('tungjatjeta') || lowerMessage.includes('hello')) {
+        return "Përshëndetje! 😊 Mirë se ju gjetëm! Si mund t'ju ndihmoj sot?";
     }
-};
+    
+    if (lowerMessage.includes('si je') || lowerMessage.includes('si jeni')) {
+        return "Jam shumë mirë, faleminderit që pyetët! 😊 Çfarë mund të bëj për ju?";
+    }
+    
+    if (lowerMessage.includes('faleminderit') || lowerMessage.includes('rrofsh') || lowerMessage.includes('thanks')) {
+        return "S'ka përse! 😊 Gjithmonë i lumtur të ndihmoj!";
+    }
+    
+    if (lowerMessage.includes('ndihmë') || lowerMessage.includes('help')) {
+        return "Sigurisht! 😊 Çfarë lloj ndihme keni nevojë? Mund të përdorni /ndihmo për të parë të gjitha mundësitë.";
+    }
+    
+    if (lowerMessage.includes('mirëmëngjes')) {
+        return "Mirëmëngjes! ☀️ Fillim të mbarë të ditës! Si mund t'ju ndihmoj sot?";
+    }
+    
+    if (lowerMessage.includes('mirëmbrëma')) {
+        return "Mirëmbrëma! 🌙 Mbrëmje e mbarë! Si mund t'ju shërbej?";
+    }
+    
+    return "E kuptoj! 😊 Përdorni /ndihmo për të parë të gjitha komandat e mia, ose më tregoni më shumë se çfarë keni nevojë.";
+}
 
-// ====================================================================================================== //
-
-// ======================================================
-// ✅ ENDPOINT KRYESOR PËR MESAZHE
-// ======================================================
-
+// ✅ RUTA PËR MESAZHET E DREJTPËRDREDHURA (PËR FRONTEND) ME RUAJTJE NË DATABASE
 router.post('/message', async (req, res) => {
     try {
-        console.log('💬 /message endpoint i thirrur');
-        
-        const userId = req.userId || 'user-' + Date.now();
+        // ✅ PËRDOR COOKIES NGA MIDDLEWARE - KORRIGJIM KRITIK!
+        const userId = req.userId || 'anonymous';
         const sessionId = req.sessionId || 'session-' + Date.now();
         const message = req.body.message;
-
-        console.log('📨 Mesazhi:', message);
-        console.log('🔐 Session:', { userId, sessionId });
+        
+        console.log('🔍 routes/chat/message: Marrë mesazh për urë:', message?.substring(0, 50));
+        console.log('🔒 Session data nga middleware:', { userId, sessionId });
 
         if (!message || message.trim() === '') {
             return res.json({
@@ -187,169 +92,310 @@ router.post('/message', async (req, res) => {
             });
         }
 
-        let response;
-
-        // ✅ PROCESIMI I KOMANDAVE ME /
-        if (message.startsWith('/')) {
-            const [command, ...argsArray] = message.slice(1).split(' ');
-            const args = argsArray.join(' ');
-
-            console.log(`🔧 Komanda: /${command}, Argumentet: ${args}`);
-
-            if (commandSystem[command]) {
-                response = await commandSystem[command](args, userId);
-            } else {
-                response = '❌ Komandë e panjohur. Përdorni /ndihmo për listën.';
-            }
-        }
-        // ✅ PYTJE TË AVANCUARA (PROGRAMIM, MATEMATIKË)
-        else if (message.match(/\d+[\+\-\*\/]\d+/) || 
-                 message.includes('kod') || 
-                 message.includes('javascript') ||
-                 message.includes('programim') ||
-                 message.includes('html') ||
-                 message.includes('css')) {
-            
-            // Kontrollo nëse është shprehje matematikore
-            if (message.match(/\d+[\+\-\*\/]\d+/)) {
-                try {
-                    const result = eval(message);
-                    response = `🧮 Rezultati: ${message} = ${result}`;
-                } catch (error) {
-                    response = '❌ Shprehje matematikore e pavlefshme.';
-                }
-            }
-            // Pytje programimi
-            else {
-                // Kontrollo API Key
-                const hasApiKey = await new Promise((resolve) => {
-                    db.get(
-                        'SELECT api_key FROM api_keys WHERE user_id = ? AND service_name = ?',
-                        [userId, 'gemini'],
-                        (err, result) => {
-                            if (err) {
-                                console.error('❌ Gabim në kontrollimin e API key:', err);
-                                resolve(false);
-                            } else {
-                                console.log('🔑 API Key status:', !!result);
-                                resolve(!!result);
-                            }
-                        }
-                    );
-                });
-
-                if (hasApiKey) {
-                    response = '💻 **PO PROCESOJ KËRKESËN TUAJ...**\n\nPyetja juaj kërkon përgjigje të specializuar. Duke kontaktuar Gemini AI...';
-                } else {
-                    response = `💻 **NDIHMË PËR KOD/PROGRAMIM**\n\nPyetja juaj "${message}" kërkon përgjigje të avancuar teknike! 🤖\n\n🔑 **Vendosni API Key:** Përdorni komandën /apikey <key_juaj> për të aktivizuar Gemini AI!`;
-                }
-            }
-        }
-        // ✅ MESAZHE NATYRORE
-        else {
-            const lowerMessage = message.toLowerCase().trim();
-
-            if (lowerMessage.includes('përshëndetje') || 
-                lowerMessage.includes('pershendetje') ||
-                lowerMessage.includes('hello') || 
-                lowerMessage.includes('tung') ||
-                lowerMessage.includes('si jeni') ||
-                lowerMessage.includes('si je') ||
-                lowerMessage.includes('si kaloni')) {
-                response = 'Përshëndetje! 😊 Mirë se ju gjetëm! Si mund t\'ju ndihmoj sot?';
-            }
-            else if (lowerMessage.includes('faleminderit') || 
-                     lowerMessage.includes('rrofsh') || 
-                     lowerMessage.includes('thanks')) {
-                response = 'S\'ka përse! 😊 Gjithmonë i lumtur të ndihmoj!';
-            }
-            else if (lowerMessage.includes('ndihmë') || 
-                     lowerMessage.includes('help') || 
-                     lowerMessage.includes('asistenc')) {
-                response = 'Sigurisht! 😊 Çfarë lloj ndihme keni nevojë?';
-            }
-            else {
-                response = 'E kuptoj! 😊 Si mund t\'ju shërbej më mirë? Përdorni /ndihmo për opsione.';
-            }
-        }
-   // ================================================================================================ //
-        
-        // ✅ RUAJ MESAZHET NË DATABASE
+        // ✅ 1. RUAJ MESAZHIN E PËRDORUESIT NË DATABASE - SHTIM I RI KRITIK!
+        console.log('💾 Duke ruajtur mesazhin e USER në database...');
         db.run(
             'INSERT INTO messages (user_id, content, sender, timestamp) VALUES (?, ?, ?, ?)',
             [userId, message, 'user', new Date().toISOString()],
             function(err) {
-                if (err) console.error('❌ Gabim në ruajtjen e mesazhit user:', err);
-                else console.log('✅ Mesazhi i userit u ruajt');
+                if (err) {
+                    console.error('❌ Gabim në ruajtjen e mesazhit user:', err);
+                } else {
+                    console.log('✅ Mesazhi i userit u ruajt, ID:', this.lastID);
+                }
             }
         );
 
-        db.run(
-            'INSERT INTO messages (user_id, content, sender, timestamp) VALUES (?, ?, ?, ?)',
-            [userId, response, 'bot', new Date().toISOString()],
-            function(err) {
-                if (err) console.error('❌ Gabim në ruajtjen e përgjigjes:', err);
-                else console.log('✅ Përgjigja u ruajt');
-            }
-        );
-  // ======================================================================================================= //
-        console.log('✅ Duke kthyer përgjigjen:', response.substring(0, 50));
+        // ✅ 2. PERDOR DIRECT COMMAND SERVICE
+        console.log('🎯 routes/chat/message: Duke thirrur CommandService direkt...');
+        const CommandService = require('../services/commandService');
         
-        res.json({
-            success: true,
-            response: response,
-            sessionData: { userId, sessionId }
+        // Merr përdoruesin
+        const user = await new Promise((resolve) => {
+            db.get('SELECT * FROM users WHERE id = ?', [userId], (err, user) => {
+                resolve(user || { id: userId, username: 'user-' + userId });
+            });
+        });
+
+        const result = await CommandService.processCommand('', user, message);
+        
+        console.log('📊 routes/chat/message: Rezultati:', {
+            success: result.success,
+            messageLength: result.response?.length || 0
+        });
+
+        // ✅ 3. RUAJ PËRGJIGJEN E AI NË DATABASE - SHTIM I RI KRITIK!
+        if (result.success && result.response) {
+            console.log('💾 Duke ruajtur përgjigjen e BOT në database...');
+            db.run(
+                'INSERT INTO messages (user_id, content, sender, timestamp) VALUES (?, ?, ?, ?)',
+                [userId, result.response, 'bot', new Date().toISOString()],
+                function(err) {
+                    if (err) {
+                        console.error('❌ Gabim në ruajtjen e mesazhit bot:', err);
+                    } else {
+                        console.log('✅ Përgjigja e bot u ruajt, ID:', this.lastID);
+                    }
+                }
+            );
+        }
+        
+        // ✅ 4. KTHE SESSION DATA TË NJËJTË - JO TË REJA!
+        return res.json({
+            ...result,
+            sessionData: {
+                userId: userId,    // ✅ SESIONI I NJËJTË
+                sessionId: sessionId // ✅ SESIONI I NJËJTË
+            }
         });
 
     } catch (error) {
-        console.error('❌ Gabim i përgjithshëm në /message:', error);
-        res.json({
+        console.error('❌ routes/chat/message: Gabim i përgjithshëm:', error);
+        return res.json({
             success: false,
             response: '❌ Gabim në server. Provo përsëri.',
             sessionData: {
-                userId: req.userId || 'user-' + Date.now(),
+                userId: req.userId || 'anonymous',
                 sessionId: req.sessionId || 'session-' + Date.now()
             }
         });
     }
 });
-// ====================================================================================================== //
-// ✅ KOMANDA IMPORTO - VERSION I KORRIGJUAR
-'/importo': async (args, userId) => {
-    try {
-        console.log('📥 Komanda /importo u thirr me args:', args);
-        
-        if (!args || args.trim() === '') {
-            return `📥 **SISTEMI I IMPORTIMIT**\n\n🔧 **Status: Gati për importim**\n\n💡 **Si të importoni:**\n1. Përdorni butonin "Ngarko" në UI\n2. Zgjidhni skedarin për të importuar\n3. Sistemi do të procesojë automatikisht\n\n📊 **Çfarë mund të importohet:**\n• Historinë e bisedave (JSON)\n• Njohuri të reja\n• Cilësime përdoruesi\n\n✅ *Sistemi është gati për importim!*`;
-        }
 
-        // Nëse ka argumente, trego se si do të përdoren
-        return `📥 **IMPORTIMI I TË DHËNAVE**\n\nTeksti i importuar: "${args.substring(0, 50)}..."\n\n✅ **Procesimi i importimit:**\n• Duke analizuar të dhënat...\n• Duke ruajtur në database...\n• Duke përditësuar sistemin...\n\n🔧 *Importimi u krye me sukses!*`;
-        
-    } catch (error) {
-        console.error('❌ Gabim i plotë në komandën /importo:', error);
-        return `❌ Gabim gjatë importimit.\n\n🔧 **Diagnoza:** ${error.message || 'Gabim i panjohur'}\n\n💡 **Zgjidhje:**\n• Kontrolloni formatin e të dhënave\n• Sigurohuni që keni të drejta të mjaftueshme\n• Provojeni përsëri`;
-    }
-},
-// ================================================================================================= //
-
-// ======================================================
-// ✅ ENDPOINT-E TESTUESE DHE DEBUG
-// ======================================================
-
-router.get('/simple-test', (req, res) => {
+// =============== ✅ ENDPOINT DEBUG PËR TË TESTUAR MIDDLEWARE =====================
+router.get('/test-middleware', (req, res) => {
+    console.log('🔍 TEST MIDDLEWARE - Request object:');
+    console.log('   🍪 req.cookies:', req.cookies);
+    console.log('   🔑 req.userId:', req.userId);
+    console.log('   🔑 req.sessionId:', req.sessionId);
+    console.log('   📨 req.headers.cookie:', req.headers.cookie);
+    
     res.json({
         success: true,
-        message: '✅ Serveri po funksionon!',
-        timestamp: new Date().toISOString()
+        middleware_data: {
+            userId: req.userId,
+            sessionId: req.sessionId,
+            cookies: req.cookies,
+            headers_cookie: req.headers.cookie
+        },
+        message: 'Middleware test completed'
     });
 });
-// =================================================================================================== //
+
+// ==================== ✅ ENDPOINT I THJESHTË PËR TESTIM TË COOKIES ========================
+router.get('/test-cookies', (req, res) => {
+    console.log('🍪 TEST: Cookies të pranuara:', req.cookies);
+    console.log('🔍 TEST: Session data nga middleware:', { 
+        userId: req.userId, 
+        sessionId: req.sessionId 
+    });
+    
+    res.json({
+        success: true,
+        cookies: req.cookies,
+        sessionData: {
+            userId: req.userId,
+            sessionId: req.sessionId
+        },
+        message: 'Test i cookies'
+    });
+});
+
+// ✅ ENDPOINT TEST PËR DATABASE - SHTIM I RI!
+router.get('/test-database', (req, res) => {
+    console.log('🔍 Test database - Duke kontrolluar tabelën messages...');
+    
+    db.all('SELECT name FROM sqlite_master WHERE type="table"', (err, tables) => {
+        if (err) {
+            console.error('❌ Gabim në marrjen e tabelave:', err);
+            return res.json({ success: false, error: err.message });
+        }
+        
+        console.log('📊 Tabelat në database:', tables);
+        
+        // Kontrollo nëse ekziston tabela messages
+        const messagesTableExists = tables.some(table => table.name === 'messages');
+        
+        if (messagesTableExists) {
+            // Numëro mesazhet
+            db.get('SELECT COUNT(*) as count FROM messages', (err, row) => {
+                if (err) {
+                    console.error('❌ Gabim në numërimin e mesazheve:', err);
+                } else {
+                    console.log(`📨 Total mesazhe në database: ${row.count}`);
+                }
+                
+                res.json({
+                    success: true,
+                    tables: tables,
+                    messages_table_exists: messagesTableExists,
+                    total_messages: row?.count || 0
+                });
+            });
+        } else {
+            res.json({
+                success: true,
+                tables: tables,
+                messages_table_exists: false,
+                message: 'Tabela messages nuk ekziston!'
+            });
+        }
+    });
+});
+
+// ✅ KODI EKZISTUES - RUAJ MESAZHIN NË HISTORI
+router.post('/save', (req, res) => {
+    const { userId, content, sender, timestamp } = req.body;
+
+    if (!userId || !content || !sender) {
+        return res.status(400).json({ error: 'Të dhëna të pamjaftueshme' });
+    }
+
+    db.run(
+        'INSERT INTO messages (user_id, content, sender, timestamp) VALUES (?, ?, ?, ?)',
+        [userId, content, sender, timestamp || new Date().toISOString()],
+        function(err) {
+            if (err) {
+                return res.status(500).json({ error: 'Gabim gjatë ruajtjes së mesazhit' });
+            }
+
+            res.json({ message: 'Mesazhi u ruajt me sukses', id: this.lastID });
+        }
+    );
+});
+
+// ================ ✅ KODI EKZISTUES - FSHI HISTORINË E PËRDORUESIT ==================
+router.delete('/clear/:userId', (req, res) => {
+    const { userId } = req.params;
+
+    db.run(
+        'DELETE FROM messages WHERE user_id = ?',
+        [userId],
+        function(err) {
+            if (err) {
+                return res.status(500).json({ error: 'Gabim gjatë fshirjes së historisë' });
+            }
+            res.json({ message: 'Historia u fshi me sukses' });
+        }
+   );
+ });
+
+// =========================== ✅ ENDPOINT I RI PËR HISTORI ==============================
+router.get('/history/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        
+        console.log('📊 Duke marrë historinë për user:', userId);
+        
+        // Merr historinë nga database
+        const history = await new Promise((resolve) => {
+            db.all(
+                'SELECT content, sender, timestamp FROM messages WHERE user_id = ? ORDER BY timestamp DESC LIMIT 50',
+                [userId],
+                (err, rows) => {
+                    if (err) {
+                        console.error('❌ Gabim në histori:', err);
+                        resolve([]);
+                    } else {
+                        resolve(rows || []);
+                    }
+                }
+            );
+        });
+        
+        res.json({
+            success: true,
+            history: history,
+            count: history.length
+        });
+        
+    } catch (error) {
+        console.error('❌ Gabim në marrjen e historisë:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Gabim në marrjen e historisë'
+        });
+    }
+});
+
+// ✅ ENDPOINT PËR FSHIRJEN E SESIONEVE PAS DALJES
+router.post('/clear-session', async (req, res) => {
+    try {
+        const { userId, sessionId } = req.body;
+        
+        console.log('🧹 Duke fshirë sesionin:', { userId, sessionId });
+        
+        if (userId && sessionId) {
+            // ✅ FSHI TË DHËNAT E KËTIJ SESIONI
+            db.run(
+                'DELETE FROM conversation_contexts WHERE user_id = ? AND session_id = ?',
+                [userId, sessionId],
+                function(err) {
+                    if (err) {
+                        console.error('❌ Gabim në fshirjen e sesionit:', err);
+                    } else {
+                        console.log(`✅ U fshinë ${this.changes} të dhëna sesioni`);
+                    }
+                }
+            );
+        }
+        
+        // ✅ FSHI COOKIES NË PËRGJIGJE
+        res.clearCookie('chatUserId');
+        res.clearCookie('chatSessionId');
+        
+        res.json({
+            success: true,
+            message: 'Sesioni u fshi me sukses',
+            cookiesCleared: true
+        });
+        
+    } catch (error) {
+        console.error('❌ Gabim në fshirjen e sesionit:', error);
+        res.json({
+            success: false,
+            message: 'Gabim në fshirjen e sesionit'
+        });
+    }
+});
+
+// ✅ ENDPOINT I RI PËR INICIALIZIM TË SESIONIT
+router.get('/init-session', (req, res) => {
+    try {
+        // ✅ MIDDLEWARE TASHMË KA KRIJUAR/KONTROLLUAR COOKIES
+        const sessionData = {
+            userId: req.userId || 'anonymous',
+            sessionId: req.sessionId || 'session-' + Date.now()
+        };
+        
+        console.log('🎯 Session init endpoint:', sessionData);
+        
+        res.json({
+            success: true,
+            message: 'Session initialized successfully',
+            sessionData: sessionData
+        });
+        
+    } catch (error) {
+        console.error('❌ Gabim në session init:', error);
+        res.json({
+            success: false,
+            message: 'Gabim në inicializimin e sesionit',
+            sessionData: {
+                userId: 'user-' + Date.now(),
+                sessionId: 'session-' + Date.now()
+            }
+        });
+    }
+});
+
+// ===================== ✅ ENDPOINT DEBUG PËR SESSION ==================
 router.get('/debug-session', (req, res) => {
     const debugInfo = {
         success: true,
         timestamp: new Date().toISOString(),
         cookies_received: req.cookies,
+        headers_cookie: req.headers.cookie,
         session_from_middleware: {
             userId: req.userId,
             sessionId: req.sessionId
@@ -359,24 +405,8 @@ router.get('/debug-session', (req, res) => {
     };
     
     console.log('🔍 DEBUG SESSION:', debugInfo);
+    
     res.json(debugInfo);
-});
-// =================================================================================================== //
-router.get('/test-database', (req, res) => {
-    db.all('SELECT name FROM sqlite_master WHERE type="table"', (err, tables) => {
-        if (err) {
-            return res.json({ success: false, error: err.message });
-        }
-        
-        db.get('SELECT COUNT(*) as count FROM messages', (err, row) => {
-            res.json({
-                success: true,
-                tables: tables,
-                messages_table_exists: tables.some(table => table.name === 'messages'),
-                total_messages: row?.count || 0
-            });
-        });
-    });
 });
 
 module.exports = router;
