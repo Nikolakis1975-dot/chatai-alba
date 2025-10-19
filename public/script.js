@@ -1447,43 +1447,63 @@ function toggleEmojiPanel() {
     document.getElementById("emoji-panel").classList.toggle("hidden");
 }
 
-// Funksionet për eksport/import të historisë
+// ============================= Funksionet për eksport/import të historisë ====================================== 
+// ✅ FUNKSIONI I RI PËR SHKARKIM TË HISTORISË 
 async function downloadHistory() {
-    if (!currentUser) return;
-    
     try {
-        const response = await fetch(`/api/chat/export-history/${currentUser.id}`);
-        const data = await response.json();
+        console.log('📥 Duke shkarkuar historinë...');
+        
+        const userId = getCurrentUserId(); // Merr userId nga session
+        
+        if (!userId) {
+            alert('❌ Nuk mund të gjendet sesioni. Rifresko faqen.');
+            return;
+        }
+
+        // Krijo URL për shkarkim
+        const downloadUrl = `https://chatai-alba-gr9dw.ondigitalocean.app/api/chat/download-history/${userId}`;
+        
+        console.log('🔗 Duke hapur URL për shkarkim:', downloadUrl);
+        
+        // Hap linkun në tab të ri për shkarkim
+        window.open(downloadUrl, '_blank');
+        
+        // Ose përdor fetch për shkarkim direkt
+        const response = await fetch(downloadUrl);
         
         if (response.ok) {
-            const historyData = {
-                version: "1.0",
-                exportedAt: new Date().toISOString(),
-                username: currentUser.username,
-                chatHistory: data.history
-            };
-            
-            const jsonData = JSON.stringify(historyData, null, 2);
-            const blob = new Blob([jsonData], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
+            a.style.display = 'none';
             a.href = url;
-            a.download = `chat_history_${currentUser.username}_${new Date().toISOString().slice(0, 10)}.json`;
+            a.download = `historia-chatai-${userId}-${Date.now()}.txt`;
             document.body.appendChild(a);
             a.click();
+            window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
-            URL.revokeObjectURL(url);
             
-            addMessage("✅ Historia u eksportua në formatin JSON!", "bot");
+            showNotification('✅ Historia u shkarkua me sukses!', 'success');
         } else {
-            addMessage("❌ Gabim gjatë eksportimit të historisë: " + data.error, "bot");
+            throw new Error('Gabim në shkarkim');
         }
+        
     } catch (error) {
-        console.error("Gabim gjatë eksportimit të historisë:", error);
-        addMessage("❌ Gabim gjatë eksportimit të historisë.", "bot");
+        console.error('❌ Gabim në shkarkimin e historisë:', error);
+        showNotification('❌ Gabim gjatë shkarkimit të historisë', 'error');
     }
 }
 
+// ✅ FUNKSIONI PËR TË MARRË USER ID - Shto në script.js
+function getCurrentUserId() {
+    // Provo të marrësh userId nga sessionStorage ose cookies
+    return sessionStorage.getItem('chatUserId') || 
+           localStorage.getItem('chatUserId') || 
+           'user-1'; // Fallback për testim
+}
+
+// ======================================================================================================== //
+// ✅ FUKSIONI UPLOAD
 function uploadHistory() {
     const input = document.createElement("input");
     input.type = "file";
