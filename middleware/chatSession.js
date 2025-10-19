@@ -1,4 +1,4 @@
-// middleware/chatSession.js - VERSIONI I KORRIGJUAR PERFEKT
+// ==== middleware/chatSession.js - VERSIONI I KORRIGJUAR PERFEKT =======
 const chatSessionMiddleware = (req, res, next) => {
     // ✅ APLIKO VETËM PËR RUTAT E CHAT & CONTEXT
     if (!req.path.startsWith('/api/chat') && !req.path.startsWith('/api/context')) {
