@@ -110,27 +110,44 @@ app.use((req, res, next) => {
 });
 
 // ======================================================
-// 3️⃣ IMPORT & REGJISTRO RUTAT
+// 3️⃣ IMPORT & REGJISTRO RUTAT ME ERROR HANDLING
 // ======================================================
 
-// 🟢 RUTAT E CHAT
-const chatRoutes = require('./routes/chat');
-app.use('/api/chat', chatRoutes);
+// 🟢 RUTAT E CHAT - GJITHMONË EKZISTON
+try {
+    const chatRoutes = require('./routes/chat');
+    app.use('/api/chat', chatRoutes);
+    console.log('✅ Chat routes u ngarkuan');
+} catch (error) {
+    console.error('❌ Chat routes nuk mund të ngarkohen:', error.message);
+}
 
-// 🧠 RUTAT E CONTEXT
-const contextRoutes = require('./routes/context-routes');
-app.use('/api/context', contextRoutes);
+// 🧠 RUTAT E CONTEXT - ME ERROR HANDLING
+try {
+    const contextRoutes = require('./routes/context-routes');
+    app.use('/api/context', contextRoutes);
+    console.log('✅ Context routes u ngarkuan');
+} catch (error) {
+    console.error('❌ Context routes nuk mund të ngarkohen:', error.message);
+    console.log('⚠️  Duke vazhduar pa context routes...');
+}
 
-// 🎤 RUTA PËR VOICE
-const voiceRoutes = require('./routes/voice');
-app.use('/api/voice', voiceRoutes);
+// 🎤 RUTA PËR VOICE - ME ERROR HANDLING
+try {
+    const voiceRoutes = require('./routes/voice');
+    app.use('/api/voice', voiceRoutes);
+    console.log('✅ Voice routes u ngarkuan');
+} catch (error) {
+    console.error('❌ Voice routes nuk mund të ngarkohen:', error.message);
+}
 
 // ======================================================
-// 4️⃣ RUTAT E TJERA
+// 4️⃣ RUTAT E TJERA ME ERROR HANDLING
 // ======================================================
 
+// ✅ RUTAT THEMELORE QË GJITHMONË EKZISTOJNË
 const authRoutes = require('./routes/auth');
-const authEnhanced = require('./routes/auth-enhanced');
+const authEnhanced = require('./routes/auth-enhanced'); 
 const userRoutes = require('./routes/users');
 const emailVerification = require('./routes/email-verification');
 const apiRoutes = require('./routes/api');
@@ -148,20 +165,27 @@ app.use('/admin', adminRoutes);
 app.use('/api/gemini-simple', geminiSimpleRoutes);
 
 // ======================================================
-// 5️⃣ MIDDLEWARE PËR CONTEXT-AWARE SYSTEM
+// 5️⃣ MIDDLEWARE PËR CONTEXT-AWARE SYSTEM - ME ERROR HANDLING
 // ======================================================
 
-const { 
-    initializeContext, 
-    analyzeVoiceContext, 
-    enhanceWithContext,
-    updateContextAfterResponse,
-    contextErrorHandler 
-} = require('./middleware/contextMiddleware');
+try {
+    const { 
+        initializeContext, 
+        analyzeVoiceContext, 
+        enhanceWithContext,
+        updateContextAfterResponse,
+        contextErrorHandler 
+    } = require('./middleware/contextMiddleware');
 
-// ✅ APLIKO MIDDLEWARE PËR RUTAT E CHAT & VOICE
-app.use('/api/chat', initializeContext, analyzeVoiceContext, enhanceWithContext, updateContextAfterResponse);
-app.use('/api/voice', initializeContext, analyzeVoiceContext, enhanceWithContext, updateContextAfterResponse);
+    // ✅ APLIKO MIDDLEWARE PËR RUTAT E CHAT & VOICE
+    app.use('/api/chat', initializeContext, analyzeVoiceContext, enhanceWithContext, updateContextAfterResponse);
+    app.use('/api/voice', initializeContext, analyzeVoiceContext, enhanceWithContext, updateContextAfterResponse);
+    
+    console.log('✅ Context middleware u ngarkua');
+} catch (error) {
+    console.error('❌ Context middleware nuk mund të ngarkohet:', error.message);
+    console.log('⚠️  Duke vazhduar pa context middleware...');
+}
 
 // ======================================================
 // 6️⃣ STATIC FILES & DEFAULT ROUTE
@@ -177,8 +201,7 @@ app.get('/', (req, res) => {
 // 7️⃣ ERROR & 404 HANDLERS
 // ======================================================
 
-app.use(contextErrorHandler);
-
+// ✅ ERROR HANDLER I THJESHTË PA VARËSI
 app.use((err, req, res, next) => {
     console.error('❌ Gabim në server:', err);
     res.status(500).json({
@@ -195,24 +218,33 @@ app.use((req, res) => {
 });
 
 // ======================================================
-// 8️⃣ TEST ENKRIPTIMI
+// 8️⃣ TEST ENKRIPTIMI - ME ERROR HANDLING
 // ======================================================
 
-const encryption = require('./utils/encryption');
-setTimeout(() => {
-    console.log('🛡️ Testi i enkriptimit AES-256-CBC:');
-    encryption.testEncryption();
-}, 2000);
+try {
+    const encryption = require('./utils/encryption');
+    setTimeout(() => {
+        console.log('🛡️ Testi i enkriptimit AES-256-CBC:');
+        encryption.testEncryption();
+    }, 2000);
+} catch (error) {
+    console.error('❌ Encryption test nuk mund të ekzekutohet:', error.message);
+}
 
 // ======================================================
-// 9️⃣ URA (BRIDGE SYSTEM)
+// 9️⃣ URA (BRIDGE SYSTEM) - ME ERROR HANDLING
 // ======================================================
 
-const AppBridge = require('./bridges/app-bridge');
-AppBridge.initializeSafeBridge(app);
+try {
+    const AppBridge = require('./bridges/app-bridge');
+    AppBridge.initializeSafeBridge(app);
+    console.log('✅ AppBridge u inicializua');
+} catch (error) {
+    console.error('❌ AppBridge nuk mund të inicializohet:', error.message);
+}
 
 // ======================================================
-// 🎯 CONTEXT SYSTEM INITIALIZATION
+// 🎯 CONTEXT SYSTEM INITIALIZATION - ME ERROR HANDLING
 // ======================================================
 
 setTimeout(async () => {
@@ -229,31 +261,35 @@ setTimeout(async () => {
             console.log('✅ Context Memory System: OPERATIVE');
         }
     } catch (error) {
-        console.error('❌ Context Memory System: INITIALIZATION FAILED', error);
+        console.error('❌ Context Memory System: INITIALIZATION FAILED', error.message);
     }
 }, 1000);
 
 // ======================================================
-// 🧹 AUTOMATIC CLEANUP
+// 🧹 AUTOMATIC CLEANUP - ME ERROR HANDLING
 // ======================================================
 
 setInterval(() => {
-    console.log('🧹 Automatic cleanup: Duke fshirë sesionet e vjetra...');
-    const db = require('./database');
-    
-    const cutoffTime = new Date(Date.now() - (24 * 60 * 60 * 1000)).toISOString();
-    
-    db.run(
-        'DELETE FROM conversation_contexts WHERE created_at < ?',
-        [cutoffTime],
-        function(err) {
-            if (err) {
-                console.error('❌ Gabim në automatic cleanup:', err);
-            } else {
-                console.log(`✅ U fshinë ${this.changes} sesione të vjetra`);
+    try {
+        console.log('🧹 Automatic cleanup: Duke fshirë sesionet e vjetra...');
+        const db = require('./database');
+        
+        const cutoffTime = new Date(Date.now() - (24 * 60 * 60 * 1000)).toISOString();
+        
+        db.run(
+            'DELETE FROM conversation_contexts WHERE created_at < ?',
+            [cutoffTime],
+            function(err) {
+                if (err) {
+                    console.error('❌ Gabim në automatic cleanup:', err);
+                } else {
+                    console.log(`✅ U fshinë ${this.changes} sesione të vjetra`);
+                }
             }
-        }
-    );
+        );
+    } catch (error) {
+        console.error('❌ Automatic cleanup failed:', error.message);
+    }
 }, 24 * 60 * 60 * 1000);
 
 // ======================================================
