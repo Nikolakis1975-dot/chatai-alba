@@ -1,4 +1,4 @@
-// middleware/chatSession.js - VERSIONI I KORRIGJUAR PERFEKT
+// ==== middleware/chatSession.js - VERSIONI I KORRIGJUAR PERFEKT =======
 const chatSessionMiddleware = (req, res, next) => {
     // ✅ APLIKO VETËM PËR RUTAT E CHAT & CONTEXT
     if (!req.path.startsWith('/api/chat') && !req.path.startsWith('/api/context')) {
@@ -32,14 +32,14 @@ const chatSessionMiddleware = (req, res, next) => {
     
     console.log('🆕 ChatSession: Duke krijuar session të re:', { userId, sessionId });
     
-    // ✅ VENDOS COOKIE TË QËNDRUESHME
-    const cookieOptions = {
-        httpOnly: true,
-        secure: false, // ✅ FALSE PËR LOCALHOST
-        sameSite: 'lax',
-        path: '/',
-        maxAge: 365 * 24 * 60 * 60 * 1000 // 1 VIT
-    };
+   // ✅ KONFIGURIM I FORTUAR I COOKIES PËR PRODUKSION
+const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    path: '/',
+    maxAge: 365 * 24 * 60 * 60 * 1000 // 1 vit
+};
     
     res.cookie('chatUserId', userId, cookieOptions);
     res.cookie('chatSessionId', sessionId, cookieOptions);
