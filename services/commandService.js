@@ -349,75 +349,73 @@ isTechnicalRequest(message) {
 // ✅ KORRIGJIMI I PLOTË I handleNaturalLanguage - Në commandService.js
 async handleNaturalLanguage(message, user) {
     try {
-        console.log('🔍 ========== HANDLE NATURAL LANGUAGE ==========');
-        console.log('🔍 Mesazhi:', message);
-        console.log('🔍 User ID:', user.id);
-
-        // ✅ 1. KONTROLLO NËSE KA API KEY
+        console.log('🔍 [FIX-GEMINI] handleNaturalLanguage called:', message.substring(0, 50));
+        
+        // ✅ PROVO GEMINI NËSE KA API KEY
         const hasApiKey = await this.checkApiKey(user.id);
-        console.log('🔑 STATUSI I API KEY:', hasApiKey ? '✅ EKZISTON' : '❌ NUK EKZISTON');
-
-        // ✅ 2. NËSE KA API KEY, DËRGO DIREKT TE GEMINI!
+        console.log('🔑 [FIX-GEMINI] API Key status:', hasApiKey);
+        
         if (hasApiKey) {
-            console.log('🚀 Duke dërguar direkt te Gemini API...');
-            const geminiResult = await this.sendToGemini(message, user.id);
-            
-            if (geminiResult && geminiResult.success) {
-                console.log('✅ Gemini u përgjigj me sukses');
-                return geminiResult;
-            } else {
-                console.log('❌ Gemini dështoi, duke vazhduar me NLU...');
-                // Vazhdo me NLU nëse Gemini dështon
+            console.log('🚀 [FIX-GEMINI] Duke provuar Gemini për mesazh natyror...');
+            try {
+                const geminiResult = await this.sendToGemini(message, user.id);
+                if (geminiResult && geminiResult.success) {
+                    console.log('✅ [FIX-GEMINI] Gemini u përgjigj me sukses!');
+                    return geminiResult;
+                } else {
+                    console.log('❌ [FIX-GEMINI] Gemini kthye rezultat të pavlefshëm');
+                }
+            } catch (geminiError) {
+                console.error('❌ [FIX-GEMINI] Gemini dështoi:', geminiError.message);
             }
+        } else {
+            console.log('🔑 [FIX-GEMINI] Nuk ka API Key, duke përdorur përgjigje bazë');
         }
 
-        // ✅ 3. NËSE NUK KA API KEY OSE GEMINI DËSHTOI, VAZHDO ME NLU
-        console.log('🔍 Duke vazhduar me NLU Service...');
+        // ✅ PËRGJIGJE BAZË NËSE NUK KA API KEY OSE GEMINI DËSHTOI
+        return this.getBasicNaturalResponse(message);
         
-        // ... KODI EKZISTUES I NLU ...
-        const lowerMessage = message.toLowerCase();
-        
-        // Kontrollo Knowledge Base
-        const kbResult = await this.checkKnowledgeBase(lowerMessage, user.id);
-        if (kbResult) {
-            return {
-                success: true,
-                response: kbResult
-            };
-        }
-
-        // Kontrollo nëse është llogaritje
-        if (this.isMathExpression(message)) {
-            const mathResult = this.evaluateMathExpression(message);
-            if (mathResult) {
-                return {
-                    success: true,
-                    response: `🧮 Rezultati: ${mathResult}`
-                };
-            }
-        }
-
-        // Analizo me NLU
-        const nluAnalysis = await this.nluService.analyze(message);
-        console.log('📊 NLU Analysis:', nluAnalysis);
-
-        // Gjenero përgjigje nga NLU
-        const nluResponse = await this.generateNLUResponse(message, nluAnalysis, user.id);
-        
-        return {
-            success: true,
-            response: nluResponse,
-            source: 'nlu'
-        };
-
     } catch (error) {
-        console.error('❌ Gabim në handleNaturalLanguage:', error);
+        console.error('❌ [FIX-GEMINI] Gabim kritik në handleNaturalLanguage:', error);
         return {
             success: false,
             response: '❌ Gabim në server. Provo përsëri.'
         };
     }
 }
+
+// ✅ FUNKSION I RI PËR PËRGJIGJE BAZË
+getBasicNaturalResponse(message) {
+    const lowerMessage = message.toLowerCase();
+    
+    if (lowerMessage.includes('përshëndetje') || lowerMessage.includes('pershendetje') || lowerMessage.includes('hello') || lowerMessage.includes('tung')) {
+        return {
+            success: true,
+            response: "Përshëndetje! 😊 Mirë se ju gjetëm! Si mund t'ju ndihmoj sot?"
+        };
+    }
+    
+    if (lowerMessage.includes('si je') || lowerMessage.includes('si jeni') || lowerMessage.includes('si kaloni')) {
+        return {
+            success: true, 
+            response: "Jam shumë mirë, faleminderit që pyetët! 😊 Çfarë mund të bëj për ju?"
+        };
+    }
+    
+    if (lowerMessage.includes('faleminderit') || lowerMessage.includes('rrofsh') || lowerMessage.includes('thanks')) {
+        return {
+            success: true,
+            response: "S'ka përse! 😊 Gjithmonë i lumtur të ndihmoj!"
+        };
+    }
+
+    // ✅ PËRGJIGJE DEFAULT
+    return {
+        success: true,
+        response: "E kuptoj! 😊 Përdorni /ndihmo për të parë të gjitha komandat e mia."
+    };
+}
+    
     // ============================ ✅ KONTROLLIMI I KNOWLEDGE BASE =============================
     async checkKnowledgeBase(message, userId) {
         try {
