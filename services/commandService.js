@@ -346,60 +346,75 @@ isTechnicalRequest(message) {
   
 // ============================ ✅ TRAJTIMI I GJUHËS NATYRORE ME NLU =============================
 
+// ✅ KORRIGJIMI I PLOTË I handleNaturalLanguage - Në commandService.js
 async handleNaturalLanguage(message, user) {
     try {
         console.log('🔍 ========== HANDLE NATURAL LANGUAGE ==========');
-        console.log(`🔍 Mesazhi: "${message}"`);
-        console.log(`🔍 User ID: ${user.id}`);
-        
-        // ✅ 1. KONTROLLO API KEY SË PARI
-        const hasApiKey = await this.checkApiKey(user.id);
-        console.log('🔑 1. Statusi i API Key:', hasApiKey ? '✅ EKZISTON' : '❌ NUK EKZISTON');
+        console.log('🔍 Mesazhi:', message);
+        console.log('🔍 User ID:', user.id);
 
-        // ✅ 2. NËSE KA API KEY, DËRGO DREJT TE GEMINI PA KONTROLLUAR NLU!
+        // ✅ 1. KONTROLLO NËSE KA API KEY
+        const hasApiKey = await this.checkApiKey(user.id);
+        console.log('🔑 STATUSI I API KEY:', hasApiKey ? '✅ EKZISTON' : '❌ NUK EKZISTON');
+
+        // ✅ 2. NËSE KA API KEY, DËRGO DIREKT TE GEMINI!
         if (hasApiKey) {
-            console.log('🚀 2. Ka API Key - duke dërguar DREJT te Gemini...');
+            console.log('🚀 Duke dërguar direkt te Gemini API...');
             const geminiResult = await this.sendToGemini(message, user.id);
             
             if (geminiResult && geminiResult.success) {
-                console.log('✅ 3. Gemini u përgjigj me sukses');
+                console.log('✅ Gemini u përgjigj me sukses');
                 return geminiResult;
             } else {
-                console.log('⚠️ 4. Gemini dështoi, duke vazhduar me sistemin bazë...');
+                console.log('❌ Gemini dështoi, duke vazhduar me NLU...');
+                // Vazhdo me NLU nëse Gemini dështon
             }
         }
 
-        // ✅ 3. KNOWLEDGE BASE (vetëm nëse Gemini dështoi ose nuk ka API Key)
-        console.log('🔍 5. Duke kontrolluar Knowledge Base...');
-        const knowledgeResult = await this.checkKnowledgeBase(message, user.id);
-        if (knowledgeResult) {
-            console.log('✅ 6. Gjetëm në Knowledge Base');
-            return knowledgeResult;
+        // ✅ 3. NËSE NUK KA API KEY OSE GEMINI DËSHTOI, VAZHDO ME NLU
+        console.log('🔍 Duke vazhduar me NLU Service...');
+        
+        // ... KODI EKZISTUES I NLU ...
+        const lowerMessage = message.toLowerCase();
+        
+        // Kontrollo Knowledge Base
+        const kbResult = await this.checkKnowledgeBase(lowerMessage, user.id);
+        if (kbResult) {
+            return {
+                success: true,
+                response: kbResult
+            };
         }
 
-        // ✅ 4. LLOGARITJE MATEMATIKE
-        console.log('🔍 7. Duke kontrolluar llogaritje...');
-        const mathResult = await this.handleMathCalculation(message);
-        if (mathResult) {
-            console.log('✅ 8. Gjetëm llogaritje');
-            return mathResult;
+        // Kontrollo nëse është llogaritje
+        if (this.isMathExpression(message)) {
+            const mathResult = this.evaluateMathExpression(message);
+            if (mathResult) {
+                return {
+                    success: true,
+                    response: `🧮 Rezultati: ${mathResult}`
+                };
+            }
         }
 
-        // ✅ 5. NLU ANALIZË (VETËM NËSE GJITHÇKA TJETËR DËSHTOI)
-        console.log('🔍 9. Duke analizuar me NLU...');
-        const nluAnalysis = await nluService.analyzeText(message, user.id);
+        // Analizo me NLU
+        const nluAnalysis = await this.nluService.analyze(message);
+        console.log('📊 NLU Analysis:', nluAnalysis);
+
+        // Gjenero përgjigje nga NLU
+        const nluResponse = await this.generateNLUResponse(message, nluAnalysis, user.id);
         
-        console.log('🤖 10. Duke gjeneruar përgjigje nga NLU...');
-        const nluResponse = await this.generateNLUResponse(message, nluAnalysis, user);
-        
-        console.log('🔍 ========== PROCESIMI I PLOTËSUAR ==========');
-        return nluResponse;
-        
+        return {
+            success: true,
+            response: nluResponse,
+            source: 'nlu'
+        };
+
     } catch (error) {
         console.error('❌ Gabim në handleNaturalLanguage:', error);
         return {
-            success: true,
-            response: this.getSimpleResponse(message)
+            success: false,
+            response: '❌ Gabim në server. Provo përsëri.'
         };
     }
 }
