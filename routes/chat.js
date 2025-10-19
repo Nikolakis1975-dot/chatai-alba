@@ -389,66 +389,6 @@ router.get('/init-session', (req, res) => {
     }
 });
 
-// ========================== ✅ ENDPOINT DEBUG PËR API KEYS ==============================
-router.get('/debug-apikeys/:userId', async (req, res) => {
-    try {
-        const { userId } = req.params;
-        
-        console.log('🔍 DEBUG API KEYS për user:', userId);
-        
-        // Kontrollo të gjitha API keys për këtë user
-        const apiKeys = await new Promise((resolve) => {
-            db.all(
-                'SELECT * FROM api_keys WHERE user_id = ?',
-                [userId],
-                (err, rows) => {
-                    if (err) {
-                        console.error('❌ Gabim në marrjen e API keys:', err);
-                        resolve([]);
-                    } else {
-                        console.log('📊 API Keys të gjetur:', rows);
-                        resolve(rows || []);
-                    }
-                }
-            );
-        });
-        
-        // Kontrollo specifikisht për Gemini
-        const geminiKey = await new Promise((resolve) => {
-            db.get(
-                'SELECT * FROM api_keys WHERE user_id = ? AND service_name = ?',
-                [userId, 'gemini'],
-                (err, result) => {
-                    if (err) {
-                        console.error('❌ Gabim në marrjen e Gemini key:', err);
-                        resolve(null);
-                    } else {
-                        console.log('🔑 Gemini Key:', result);
-                        resolve(result);
-                    }
-                }
-            );
-        });
-        
-        res.json({
-            success: true,
-            userId: userId,
-            allApiKeys: apiKeys,
-            geminiKey: geminiKey,
-            hasAnyKeys: apiKeys.length > 0,
-            hasGeminiKey: !!geminiKey,
-            count: apiKeys.length
-        });
-        
-    } catch (error) {
-        console.error('❌ Gabim në debug-apikeys:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Gabim në debug'
-        });
-    }
-});
-
 // ===================== ✅ ENDPOINT DEBUG PËR SESSION ==================
 router.get('/debug-session', (req, res) => {
     const debugInfo = {
@@ -467,38 +407,6 @@ router.get('/debug-session', (req, res) => {
     console.log('🔍 DEBUG SESSION:', debugInfo);
     
     res.json(debugInfo);
-});
-
-// ✅ ENDPOINT DEBUG I DETAJUAR - Shto në routes/chat.js
-router.get('/debug-database', (req, res) => {
-    console.log('🔍 DEBUG DATABASE STRUCTURE');
-    
-    // Kontrollo strukturën e tabelës api_keys
-    db.all("PRAGMA table_info(api_keys)", (err, columns) => {
-        if (err) {
-            console.error('❌ Gabim në marrjen e strukturës:', err);
-            return res.json({ success: false, error: err.message });
-        }
-        
-        console.log('📊 Struktura e api_keys:', columns);
-        
-        // Kontrollo të dhënat aktuale
-        db.all("SELECT * FROM api_keys", (err, rows) => {
-            if (err) {
-                console.error('❌ Gabim në marrjen e të dhënave:', err);
-                return res.json({ success: false, error: err.message });
-            }
-            
-            console.log('📊 Të dhënat në api_keys:', rows);
-            
-            res.json({
-                success: true,
-                structure: columns,
-                data: rows,
-                count: rows.length
-            });
-        });
-    });
 });
 
 module.exports = router;
