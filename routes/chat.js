@@ -138,7 +138,8 @@ router.post('/message', async (req, res) => {
     }
 });
 
-// ======================= ✅  endpoint routes =====================
+// ======================= ✅  endpoint routes API KEY  =====================
+// ✅ Shto këtë në routes/chat.js - KOMANDA APIKEY
 router.post('/apikey-command', async (req, res) => {
     try {
         const { userId, apiKey } = req.body;
@@ -150,45 +151,57 @@ router.post('/apikey-command', async (req, res) => {
             });
         }
 
-        console.log('🔑 Komanda /apikey për user:', userId);
+        console.log('🔑 Duke ruajtur API Key për user:', userId);
         
-        // Fshi API key ekzistues
-        db.run(
-            'DELETE FROM api_keys WHERE user_id = ? AND service_name = ?',
-            [userId, 'gemini'],
-            function(deleteErr) {
-                if (deleteErr) {
-                    console.error('❌ Gabim në fshirjen e API key:', deleteErr);
-                    return res.json({ success: false, error: deleteErr.message });
-                }
-                
-                console.log(`✅ U fshinë ${this.changes} API keys`);
-                
-                // Shto API key të ri
-                db.run(
-                    'INSERT INTO api_keys (user_id, api_key, service_name, created_at) VALUES (?, ?, ?, ?)',
-                    [userId, apiKey, 'gemini', new Date().toISOString()],
-                    function(insertErr) {
-                        if (insertErr) {
-                            console.error('❌ Gabim në insertimin e API key:', insertErr);
-                            res.json({ success: false, error: insertErr.message });
-                        } else {
-                            console.log('✅ API Key u ruajt me sukses, ID:', this.lastID);
-                            res.json({ 
-                                success: true, 
-                                message: '✅ API Key u ruajt me sukses! Tani mund të përdorni Gemini AI.' 
-                            });
-                        }
+        const result = await new Promise((resolve) => {
+            // Fshi të vjetrat
+            db.run(
+                'DELETE FROM api_keys WHERE user_id = ? AND service_name = ?',
+                [userId, 'gemini'],
+                function(deleteErr) {
+                    if (deleteErr) {
+                        console.error('❌ Gabim në fshirje:', deleteErr);
+                        resolve({ success: false, error: deleteErr.message });
+                        return;
                     }
-                );
-            }
-        );
+                    
+                    console.log(`✅ U fshinë ${this.changes} API keys`);
+                    
+                    // Shto të ren
+                    db.run(
+                        'INSERT INTO api_keys (user_id, api_key, service_name, created_at) VALUES (?, ?, ?, ?)',
+                        [userId, apiKey, 'gemini', new Date().toISOString()],
+                        function(insertErr) {
+                            if (insertErr) {
+                                console.error('❌ Gabim në insertim:', insertErr);
+                                resolve({ success: false, error: insertErr.message });
+                            } else {
+                                console.log('✅ API Key u ruajt, ID:', this.lastID);
+                                resolve({ success: true, lastID: this.lastID });
+                            }
+                        }
+                    );
+                }
+            );
+        });
+
+        if (result.success) {
+            res.json({ 
+                success: true, 
+                message: '✅ API Key u ruajt me sukses! Tani mund të përdorni Gemini AI.'
+            });
+        } else {
+            res.json({ 
+                success: false, 
+                message: '❌ Gabim në ruajtje: ' + result.error 
+            });
+        }
         
     } catch (error) {
         console.error('❌ Gabim në apikey-command:', error);
         res.json({ 
             success: false, 
-            message: 'Gabim në ruajtjen e API key: ' + error.message 
+            message: 'Gabim i përgjithshëm: ' + error.message 
         });
     }
 });
