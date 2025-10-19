@@ -1,90 +1,26 @@
-const crypto = require('crypto');
+// routes/chat.js - VERSION I RI I THJESHTË DHE STABIL
 const express = require('express');
 const db = require('../database');
 const router = express.Router();
 
-// ✅ IMPORT I KONSTANTAVE
-const constants = require('../config/constants');
+// ======================================================
+// ✅ ENDPOINT-I BAZË PËR CHAT - VERSION I THJESHTË
+// ======================================================
 
-// ✅ IMPORT I COMMAND SERVICE
-const CommandService = require('../services/commandService');
-
-// ✅ FUNKSIONET NDIHMËSE ME DATABASE CORRECT
-async function checkApiKey(userId) {
-    return new Promise((resolve, reject) => {
-        db.get(
-            'SELECT api_key FROM api_keys WHERE user_id = ? AND service_name = ?',
-            [userId, 'gemini'],
-            (err, result) => {
-                if (err) {
-                    console.error('❌ Gabim në checkApiKey:', err);
-                    resolve(false);
-                } else {
-                    resolve(!!result);
-                }
-            }
-        );
-    });
-}
-
-async function getUserById(userId) {
-    return new Promise((resolve, reject) => {
-        db.get(
-            'SELECT * FROM users WHERE id = ?',
-            [userId],
-            (err, user) => {
-                if (err) {
-                    console.error('❌ Gabim në getUserById:', err);
-                    resolve(null);
-                } else {
-                    resolve(user);
-                }
-            }
-        );
-    });
-}
-
-function getSimpleNaturalResponse(message) {
-    const lowerMessage = message.toLowerCase();
-    
-    if (lowerMessage.includes('përshëndetje') || lowerMessage.includes('tungjatjeta') || lowerMessage.includes('hello')) {
-        return "Përshëndetje! 😊 Mirë se ju gjetëm! Si mund t'ju ndihmoj sot?";
-    }
-    
-    if (lowerMessage.includes('si je') || lowerMessage.includes('si jeni')) {
-        return "Jam shumë mirë, faleminderit që pyetët! 😊 Çfarë mund të bëj për ju?";
-    }
-    
-    if (lowerMessage.includes('faleminderit') || lowerMessage.includes('rrofsh') || lowerMessage.includes('thanks')) {
-        return "S'ka përse! 😊 Gjithmonë i lumtur të ndihmoj!";
-    }
-    
-    if (lowerMessage.includes('ndihmë') || lowerMessage.includes('help')) {
-        return "Sigurisht! 😊 Çfarë lloj ndihme keni nevojë? Mund të përdorni /ndihmo për të parë të gjitha mundësitë.";
-    }
-    
-    if (lowerMessage.includes('mirëmëngjes')) {
-        return "Mirëmëngjes! ☀️ Fillim të mbarë të ditës! Si mund t'ju ndihmoj sot?";
-    }
-    
-    if (lowerMessage.includes('mirëmbrëma')) {
-        return "Mirëmbrëma! 🌙 Mbrëmje e mbarë! Si mund t'ju shërbej?";
-    }
-    
-    return "E kuptoj! 😊 Përdorni /ndihmo për të parë të gjitha komandat e mia, ose më tregoni më shumë se çfarë keni nevojë.";
-}
-
-// ✅ RUTA PËR MESAZHET E DREJTPËRDREDHURA (PËR FRONTEND) ME RUAJTJE NË DATABASE
+// ✅ ENDPOINT KRYESOR PËR MESAZHE
 router.post('/message', async (req, res) => {
     try {
-        // ✅ PËRDOR COOKIES NGA MIDDLEWARE - KORRIGJIM KRITIK!
-        const userId = req.userId || 'anonymous';
+        console.log('💬 /message endpoint i thirrur');
+        
+        // Merr të dhënat nga middleware
+        const userId = req.userId || 'user-' + Date.now();
         const sessionId = req.sessionId || 'session-' + Date.now();
         const message = req.body.message;
-        
-        console.log('🔍 routes/chat/message: Marrë mesazh për urë:', message?.substring(0, 50));
-        console.log('🔒 Session data nga middleware:', { userId, sessionId });
 
+        console.log('📨 Mesazhi:', message?.substring(0, 50));
+        console.log('🔐 Session:', { userId, sessionId });
+
+        // Kontrollo nëse ka mesazh
         if (!message || message.trim() === '') {
             return res.json({
                 success: false,
@@ -92,8 +28,36 @@ router.post('/message', async (req, res) => {
             });
         }
 
-        // ✅ 1. RUAJ MESAZHIN E PËRDORUESIT NË DATABASE - SHTIM I RI KRITIK!
-        console.log('💾 Duke ruajtur mesazhin e USER në database...');
+        // ✅ PROCESIMI I THJESHTË I MESAZHEVE
+        let response;
+        const lowerMessage = message.toLowerCase().trim();
+
+        // Përgjigje bazë për përshëndetje
+        if (lowerMessage.includes('përshëndetje') || 
+            lowerMessage.includes('hello') || 
+            lowerMessage.includes('tung') ||
+            lowerMessage.includes('si jeni') ||
+            lowerMessage.includes('si je')) {
+            response = 'Përshëndetje! 😊 Mirë se ju gjetëm! Si mund t\'ju ndihmoj sot?';
+        }
+        // Përgjigje për faleminderit
+        else if (lowerMessage.includes('faleminderit') || 
+                 lowerMessage.includes('rrofsh') || 
+                 lowerMessage.includes('thanks')) {
+            response = 'S\'ka përse! 😊 Gjithmonë i lumtur të ndihmoj!';
+        }
+        // Përgjigje për ndihmë
+        else if (lowerMessage.includes('ndihmë') || 
+                 lowerMessage.includes('help') || 
+                 lowerMessage.includes('asistenc')) {
+            response = 'Sigurisht! 😊 Çfarë lloj ndihme keni nevojë?';
+        }
+        // Përgjigje e përgjithshme
+        else {
+            response = 'E kuptoj! 😊 Si mund t\'ju shërbej më mirë?';
+        }
+
+        // ✅ RUAJ MESAZHIN E PËRDORUESIT NË DATABASE
         db.run(
             'INSERT INTO messages (user_id, content, sender, timestamp) VALUES (?, ?, ?, ?)',
             [userId, message, 'user', new Date().toISOString()],
@@ -106,104 +70,79 @@ router.post('/message', async (req, res) => {
             }
         );
 
-        // ✅ 2. PERDOR DIRECT COMMAND SERVICE
-        console.log('🎯 routes/chat/message: Duke thirrur CommandService direkt...');
-        const CommandService = require('../services/commandService');
-        
-        // Merr përdoruesin
-        const user = await new Promise((resolve) => {
-            db.get('SELECT * FROM users WHERE id = ?', [userId], (err, user) => {
-                resolve(user || { id: userId, username: 'user-' + userId });
-            });
-        });
-
-        const result = await CommandService.processCommand('', user, message);
-        
-        console.log('📊 routes/chat/message: Rezultati:', {
-            success: result.success,
-            messageLength: result.response?.length || 0
-        });
-
-        // ✅ 3. RUAJ PËRGJIGJEN E AI NË DATABASE - SHTIM I RI KRITIK!
-        if (result.success && result.response) {
-            console.log('💾 Duke ruajtur përgjigjen e BOT në database...');
-            db.run(
-                'INSERT INTO messages (user_id, content, sender, timestamp) VALUES (?, ?, ?, ?)',
-                [userId, result.response, 'bot', new Date().toISOString()],
-                function(err) {
-                    if (err) {
-                        console.error('❌ Gabim në ruajtjen e mesazhit bot:', err);
-                    } else {
-                        console.log('✅ Përgjigja e bot u ruajt, ID:', this.lastID);
-                    }
+        // ✅ RUAJ PËRGJIGJEN NË DATABASE
+        db.run(
+            'INSERT INTO messages (user_id, content, sender, timestamp) VALUES (?, ?, ?, ?)',
+            [userId, response, 'bot', new Date().toISOString()],
+            function(err) {
+                if (err) {
+                    console.error('❌ Gabim në ruajtjen e përgjigjes:', err);
+                } else {
+                    console.log('✅ Përgjigja u ruajt, ID:', this.lastID);
                 }
-            );
-        }
+            }
+        );
+
+        console.log('✅ Duke kthyer përgjigjen:', response.substring(0, 50));
         
-        // ✅ 4. KTHE SESSION DATA TË NJËJTË - JO TË REJA!
-        return res.json({
-            ...result,
+        // ✅ KTHE PËRGJIGJEN
+        res.json({
+            success: true,
+            response: response,
             sessionData: {
-                userId: userId,    // ✅ SESIONI I NJËJTË
-                sessionId: sessionId // ✅ SESIONI I NJËJTË
+                userId: userId,
+                sessionId: sessionId
             }
         });
 
     } catch (error) {
-        console.error('❌ routes/chat/message: Gabim i përgjithshëm:', error);
-        return res.json({
+        console.error('❌ Gabim i përgjithshëm në /message:', error);
+        res.json({
             success: false,
             response: '❌ Gabim në server. Provo përsëri.',
             sessionData: {
-                userId: req.userId || 'anonymous',
+                userId: req.userId || 'user-' + Date.now(),
                 sessionId: req.sessionId || 'session-' + Date.now()
             }
         });
     }
 });
 
-// =============== ✅ ENDPOINT DEBUG PËR TË TESTUAR MIDDLEWARE =====================
-router.get('/test-middleware', (req, res) => {
-    console.log('🔍 TEST MIDDLEWARE - Request object:');
-    console.log('   🍪 req.cookies:', req.cookies);
-    console.log('   🔑 req.userId:', req.userId);
-    console.log('   🔑 req.sessionId:', req.sessionId);
-    console.log('   📨 req.headers.cookie:', req.headers.cookie);
-    
+// ======================================================
+// ✅ ENDPOINT-E TESTUESE DHE DEBUG
+// ======================================================
+
+// ✅ TEST I THJESHTË
+router.get('/simple-test', (req, res) => {
+    console.log('🧪 Simple Test i thirrur');
     res.json({
         success: true,
-        middleware_data: {
-            userId: req.userId,
-            sessionId: req.sessionId,
-            cookies: req.cookies,
-            headers_cookie: req.headers.cookie
-        },
-        message: 'Middleware test completed'
+        message: '✅ Serveri po funksionon!',
+        timestamp: new Date().toISOString()
     });
 });
 
-// ==================== ✅ ENDPOINT I THJESHTË PËR TESTIM TË COOKIES ========================
-router.get('/test-cookies', (req, res) => {
-    console.log('🍪 TEST: Cookies të pranuara:', req.cookies);
-    console.log('🔍 TEST: Session data nga middleware:', { 
-        userId: req.userId, 
-        sessionId: req.sessionId 
-    });
-    
-    res.json({
+// ✅ DEBUG SESIONI
+router.get('/debug-session', (req, res) => {
+    const debugInfo = {
         success: true,
-        cookies: req.cookies,
-        sessionData: {
+        timestamp: new Date().toISOString(),
+        cookies_received: req.cookies,
+        session_from_middleware: {
             userId: req.userId,
             sessionId: req.sessionId
         },
-        message: 'Test i cookies'
-    });
+        middleware_exists: !!(req.userId && req.sessionId),
+        has_chat_cookies: !!(req.cookies?.chatUserId && req.cookies?.chatSessionId)
+    };
+    
+    console.log('🔍 DEBUG SESSION:', debugInfo);
+    res.json(debugInfo);
 });
 
-// ✅ ENDPOINT TEST PËR DATABASE - SHTIM I RI!
+// ✅ TEST DATABASE
 router.get('/test-database', (req, res) => {
-    console.log('🔍 Test database - Duke kontrolluar tabelën messages...');
+    console.log('🗄️ Test Database i thirrur');
     
     db.all('SELECT name FROM sqlite_master WHERE type="table"', (err, tables) => {
         if (err) {
@@ -211,86 +150,69 @@ router.get('/test-database', (req, res) => {
             return res.json({ success: false, error: err.message });
         }
         
-        console.log('📊 Tabelat në database:', tables);
-        
-        // Kontrollo nëse ekziston tabela messages
-        const messagesTableExists = tables.some(table => table.name === 'messages');
-        
-        if (messagesTableExists) {
-            // Numëro mesazhet
-            db.get('SELECT COUNT(*) as count FROM messages', (err, row) => {
-                if (err) {
-                    console.error('❌ Gabim në numërimin e mesazheve:', err);
-                } else {
-                    console.log(`📨 Total mesazhe në database: ${row.count}`);
-                }
-                
-                res.json({
-                    success: true,
-                    tables: tables,
-                    messages_table_exists: messagesTableExists,
-                    total_messages: row?.count || 0
-                });
-            });
-        } else {
+        // Kontrollo numrin e mesazheve
+        db.get('SELECT COUNT(*) as count FROM messages', (err, row) => {
+            if (err) {
+                console.error('❌ Gabim në numërimin e mesazheve:', err);
+            } else {
+                console.log(`📨 Total mesazhe: ${row.count}`);
+            }
+            
             res.json({
                 success: true,
                 tables: tables,
-                messages_table_exists: false,
-                message: 'Tabela messages nuk ekziston!'
+                messages_table_exists: tables.some(table => table.name === 'messages'),
+                total_messages: row?.count || 0
             });
-        }
+        });
     });
 });
 
-// ✅ KODI EKZISTUES - RUAJ MESAZHIN NË HISTORI
-router.post('/save', (req, res) => {
-    const { userId, content, sender, timestamp } = req.body;
-
-    if (!userId || !content || !sender) {
-        return res.status(400).json({ error: 'Të dhëna të pamjaftueshme' });
-    }
-
-    db.run(
-        'INSERT INTO messages (user_id, content, sender, timestamp) VALUES (?, ?, ?, ?)',
-        [userId, content, sender, timestamp || new Date().toISOString()],
-        function(err) {
-            if (err) {
-                return res.status(500).json({ error: 'Gabim gjatë ruajtjes së mesazhit' });
-            }
-
-            res.json({ message: 'Mesazhi u ruajt me sukses', id: this.lastID });
-        }
-    );
+// ✅ PRODUCTION DEBUG
+router.get('/production-debug', (req, res) => {
+    res.json({
+        success: true,
+        environment: process.env.NODE_ENV,
+        sessionData: {
+            userId: req.userId,
+            sessionId: req.sessionId
+        },
+        cookies: req.cookies,
+        timestamp: new Date().toISOString(),
+        message: '✅ Production debug endpoint po funksionon!'
+    });
 });
 
-// ================ ✅ KODI EKZISTUES - FSHI HISTORINË E PËRDORUESIT ==================
-router.delete('/clear/:userId', (req, res) => {
-    const { userId } = req.params;
+// ✅ INICIALIZIM I SESIONIT
+router.get('/init-session', (req, res) => {
+    const sessionData = {
+        userId: req.userId || 'user-' + Date.now(),
+        sessionId: req.sessionId || 'session-' + Date.now()
+    };
+    
+    console.log('🎯 Session init:', sessionData);
+    
+    res.json({
+        success: true,
+        message: 'Session initialized successfully',
+        sessionData: sessionData
+    });
+});
 
-    db.run(
-        'DELETE FROM messages WHERE user_id = ?',
-        [userId],
-        function(err) {
-            if (err) {
-                return res.status(500).json({ error: 'Gabim gjatë fshirjes së historisë' });
-            }
-            res.json({ message: 'Historia u fshi me sukses' });
-        }
-   );
- });
+// ======================================================
+// ✅ HISTORI DHE MENAXHIM I DHËNAVE
+// ======================================================
 
-// =========================== ✅ ENDPOINT I RI PËR HISTORI ==============================
+// ✅ MERRE HISTORINË
 router.get('/history/:userId', async (req, res) => {
     try {
         const { userId } = req.params;
         
         console.log('📊 Duke marrë historinë për user:', userId);
         
-        // Merr historinë nga database
         const history = await new Promise((resolve) => {
             db.all(
-                'SELECT content, sender, timestamp FROM messages WHERE user_id = ? ORDER BY timestamp DESC LIMIT 50',
+                'SELECT content, sender, timestamp FROM messages WHERE user_id = ? ORDER BY timestamp DESC LIMIT 20',
                 [userId],
                 (err, rows) => {
                     if (err) {
@@ -318,95 +240,42 @@ router.get('/history/:userId', async (req, res) => {
     }
 });
 
-// ✅ ENDPOINT PËR FSHIRJEN E SESIONEVE PAS DALJES
-router.post('/clear-session', async (req, res) => {
+// ✅ FSHI HISTORINË
+router.delete('/clear-history/:userId', async (req, res) => {
     try {
-        const { userId, sessionId } = req.body;
+        const { userId } = req.params;
         
-        console.log('🧹 Duke fshirë sesionin:', { userId, sessionId });
+        console.log('🧹 Duke fshirë historinë për user:', userId);
         
-        if (userId && sessionId) {
-            // ✅ FSHI TË DHËNAT E KËTIJ SESIONI
+        const result = await new Promise((resolve) => {
             db.run(
-                'DELETE FROM conversation_contexts WHERE user_id = ? AND session_id = ?',
-                [userId, sessionId],
+                'DELETE FROM messages WHERE user_id = ?',
+                [userId],
                 function(err) {
                     if (err) {
-                        console.error('❌ Gabim në fshirjen e sesionit:', err);
+                        console.error('❌ Gabim në fshirjen e historisë:', err);
+                        resolve({ success: false, error: err.message });
                     } else {
-                        console.log(`✅ U fshinë ${this.changes} të dhëna sesioni`);
+                        console.log(`✅ U fshinë ${this.changes} mesazhe`);
+                        resolve({ success: true, deletedCount: this.changes });
                     }
                 }
             );
-        }
-        
-        // ✅ FSHI COOKIES NË PËRGJIGJE
-        res.clearCookie('chatUserId');
-        res.clearCookie('chatSessionId');
+        });
         
         res.json({
             success: true,
-            message: 'Sesioni u fshi me sukses',
-            cookiesCleared: true
+            message: `Historia u fshi me sukses`,
+            deletedCount: result.deletedCount
         });
         
     } catch (error) {
-        console.error('❌ Gabim në fshirjen e sesionit:', error);
-        res.json({
+        console.error('❌ Gabim në fshirjen e historisë:', error);
+        res.status(500).json({
             success: false,
-            message: 'Gabim në fshirjen e sesionit'
+            message: 'Gabim në fshirjen e historisë'
         });
     }
-});
-
-// ✅ ENDPOINT I RI PËR INICIALIZIM TË SESIONIT
-router.get('/init-session', (req, res) => {
-    try {
-        // ✅ MIDDLEWARE TASHMË KA KRIJUAR/KONTROLLUAR COOKIES
-        const sessionData = {
-            userId: req.userId || 'anonymous',
-            sessionId: req.sessionId || 'session-' + Date.now()
-        };
-        
-        console.log('🎯 Session init endpoint:', sessionData);
-        
-        res.json({
-            success: true,
-            message: 'Session initialized successfully',
-            sessionData: sessionData
-        });
-        
-    } catch (error) {
-        console.error('❌ Gabim në session init:', error);
-        res.json({
-            success: false,
-            message: 'Gabim në inicializimin e sesionit',
-            sessionData: {
-                userId: 'user-' + Date.now(),
-                sessionId: 'session-' + Date.now()
-            }
-        });
-    }
-});
-
-// ===================== ✅ ENDPOINT DEBUG PËR SESSION ==================
-router.get('/debug-session', (req, res) => {
-    const debugInfo = {
-        success: true,
-        timestamp: new Date().toISOString(),
-        cookies_received: req.cookies,
-        headers_cookie: req.headers.cookie,
-        session_from_middleware: {
-            userId: req.userId,
-            sessionId: req.sessionId
-        },
-        middleware_exists: !!(req.userId && req.sessionId),
-        has_chat_cookies: !!(req.cookies?.chatUserId && req.cookies?.chatSessionId)
-    };
-    
-    console.log('🔍 DEBUG SESSION:', debugInfo);
-    
-    res.json(debugInfo);
 });
 
 module.exports = router;
