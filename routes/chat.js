@@ -469,4 +469,36 @@ router.get('/debug-session', (req, res) => {
     res.json(debugInfo);
 });
 
+// ✅ ENDPOINT DEBUG I DETAJUAR - Shto në routes/chat.js
+router.get('/debug-database', (req, res) => {
+    console.log('🔍 DEBUG DATABASE STRUCTURE');
+    
+    // Kontrollo strukturën e tabelës api_keys
+    db.all("PRAGMA table_info(api_keys)", (err, columns) => {
+        if (err) {
+            console.error('❌ Gabim në marrjen e strukturës:', err);
+            return res.json({ success: false, error: err.message });
+        }
+        
+        console.log('📊 Struktura e api_keys:', columns);
+        
+        // Kontrollo të dhënat aktuale
+        db.all("SELECT * FROM api_keys", (err, rows) => {
+            if (err) {
+                console.error('❌ Gabim në marrjen e të dhënave:', err);
+                return res.json({ success: false, error: err.message });
+            }
+            
+            console.log('📊 Të dhënat në api_keys:', rows);
+            
+            res.json({
+                success: true,
+                structure: columns,
+                data: rows,
+                count: rows.length
+            });
+        });
+    });
+});
+
 module.exports = router;
