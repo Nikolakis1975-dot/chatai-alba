@@ -8,19 +8,17 @@ const router = express.Router();
 // ======================================================
 
 // ✅ ENDPOINT KRYESOR PËR MESAZHE
+// ✅ PËRMIRËSO FUNKSIONIN E MESAZHEVE NË routes/chat.js
 router.post('/message', async (req, res) => {
     try {
         console.log('💬 /message endpoint i thirrur');
         
-        // Merr të dhënat nga middleware
         const userId = req.userId || 'user-' + Date.now();
         const sessionId = req.sessionId || 'session-' + Date.now();
         const message = req.body.message;
 
         console.log('📨 Mesazhi:', message?.substring(0, 50));
-        console.log('🔐 Session:', { userId, sessionId });
 
-        // Kontrollo nëse ka mesazh
         if (!message || message.trim() === '') {
             return res.json({
                 success: false,
@@ -28,47 +26,163 @@ router.post('/message', async (req, res) => {
             });
         }
 
-        // ✅ PROCESIMI I THJESHTË I MESAZHEVE
-        let response;
+        // ✅ DETEKTO NËSE PYETJA KËRKON PËRGJIGJE TË AVANCUAR
         const lowerMessage = message.toLowerCase().trim();
+        let response;
 
-        // Përgjigje bazë për përshëndetje
-        if (lowerMessage.includes('përshëndetje') || 
-            lowerMessage.includes('hello') || 
-            lowerMessage.includes('tung') ||
-            lowerMessage.includes('si jeni') ||
-            lowerMessage.includes('si je')) {
+        // ✅ PYETJE TË AVANCUARA QË KËRKONIN GEMINI
+        const advancedKeywords = [
+            'kod', 'code', 'programim', 'program', 'javascript', 'html', 'css',
+            'python', 'java', 'function', 'funksion', 'algorithm', 'algoritëm',
+            'api', 'database', 'databazë', 'server', 'backend', 'frontend'
+        ];
+
+        const isAdvancedQuestion = advancedKeywords.some(keyword => 
+            lowerMessage.includes(keyword)
+        );
+
+        if (isAdvancedQuestion) {
+            console.log('🚀 Pyetje e avancuar - Duke kërkuar API Key');
+            
+            // Kontrollo nëse ka API Key në database
+            const hasApiKey = await new Promise((resolve) => {
+                db.get(
+                    'SELECT api_key FROM api_keys WHERE user_id = ? AND service_name = ?',
+                    [userId, 'gemini'],
+                    (err, result) => {
+                        if (err) {
+                            console.error('❌ Gabim në kontrollimin e API key:', err);
+                            resolve(false);
+                        } else {
+                            console.log('🔑 Rezultati i API key:', !!result);
+                            resolve(!!result);
+                        }
+                    }
+                );
+            });
+
+            if (hasApiKey) {
+                response = `💻 **NDIHME PER KOD/PROGRAMIM** Pyetja juaj "${message}" kërkon një përgjigje të avancuar teknike! 🤖\n\n🔑 **API Key aktive:** Sistemi po përpunon kërkesën tuaj...\n\n📚 **Duke gjeneruar përgjigje të specializuar...**`;
+            } else {
+                response = `💻 **NDIHME PER KOD/PROGRAMIM** Pyetja juaj "${message}" kërkon një përgjigje të avancuar teknike! 🤖\n\n🔑 **Vendosni API Key për Gemini AI:** Përdorni komandën /apikey <key_juaj> për të aktivizuar asistencën e avancuar AI!\n\n📚 **Alternative:** Përdorni /google për të kërkuar në internet.`;
+            }
+        }
+        // ✅ PËRGJIGJE BAZË
+        else if (lowerMessage.includes('përshëndetje') || 
+                lowerMessage.includes('hello') || 
+                lowerMessage.includes('tung') ||
+                lowerMessage.includes('si jeni') ||
+                lowerMessage.includes('si je')) {
             response = 'Përshëndetje! 😊 Mirë se ju gjetëm! Si mund t\'ju ndihmoj sot?';
         }
-        // Përgjigje për faleminderit
         else if (lowerMessage.includes('faleminderit') || 
                  lowerMessage.includes('rrofsh') || 
                  lowerMessage.includes('thanks')) {
             response = 'S\'ka përse! 😊 Gjithmonë i lumtur të ndihmoj!';
         }
-        // Përgjigje për ndihmë
         else if (lowerMessage.includes('ndihmë') || 
                  lowerMessage.includes('help') || 
                  lowerMessage.includes('asistenc')) {
             response = 'Sigurisht! 😊 Çfarë lloj ndihme keni nevojë?';
         }
-        // Përgjigje e përgjithshme
         else {
             response = 'E kuptoj! 😊 Si mund t\'ju shërbej më mirë?';
         }
 
-        // ✅ RUAJ MESAZHIN E PËRDORUESIT NË DATABASE
+        // ✅ RUAJ MESAZHET NË DATABASE
         db.run(
             'INSERT INTO messages (user_id, content, sender, timestamp) VALUES (?, ?, ?, ?)',
             [userId, message, 'user', new Date().toISOString()],
             function(err) {
-                if (err) {
-                    console.error('❌ Gabim në ruajtjen e mesazhit user:', err);
-                } else {
-                    console.log('✅ Mesazhi i userit u ruajt, ID:', this.lastID);
-                }
+                if (err) console.error('❌ Gabim në ruajtjen e mesazhit user:', err);
+                else console.log('✅ Mesazhi i userit u ruajt');
             }
         );
+
+        db.run(
+            'INSERT INTO messages (user_id, content, sender, timestamp) VALUES (?, ?, ?, ?)',
+            [userId, response, 'bot', new Date().toISOString()],
+            function(err) {
+                if (err) console.error('❌ Gabim në ruajtjen e përgjigjes:', err);
+                else console.log('✅ Përgjigja u ruajt');
+            }
+        );
+
+        console.log('✅ Duke kthyer përgjigjen');
+        
+        res.json({
+            success: true,
+            response: response,
+            sessionData: { userId, sessionId }
+        });
+
+    } catch (error) {
+        console.error('❌ Gabim i përgjithshëm në /message:', error);
+        res.json({
+            success: false,
+            response: '❌ Gabim në server. Provo përsëri.',
+            sessionData: {
+                userId: req.userId || 'user-' + Date.now(),
+                sessionId: req.sessionId || 'session-' + Date.now()
+            }
+        });
+    }
+});
+
+// ======================= ✅  endpoint routes =====================
+router.post('/apikey-command', async (req, res) => {
+    try {
+        const { userId, apiKey } = req.body;
+        
+        if (!userId || !apiKey) {
+            return res.json({ 
+                success: false, 
+                message: 'userId dhe apiKey janë të detyrueshme' 
+            });
+        }
+
+        console.log('🔑 Komanda /apikey për user:', userId);
+        
+        // Fshi API key ekzistues
+        db.run(
+            'DELETE FROM api_keys WHERE user_id = ? AND service_name = ?',
+            [userId, 'gemini'],
+            function(deleteErr) {
+                if (deleteErr) {
+                    console.error('❌ Gabim në fshirjen e API key:', deleteErr);
+                    return res.json({ success: false, error: deleteErr.message });
+                }
+                
+                console.log(`✅ U fshinë ${this.changes} API keys`);
+                
+                // Shto API key të ri
+                db.run(
+                    'INSERT INTO api_keys (user_id, api_key, service_name, created_at) VALUES (?, ?, ?, ?)',
+                    [userId, apiKey, 'gemini', new Date().toISOString()],
+                    function(insertErr) {
+                        if (insertErr) {
+                            console.error('❌ Gabim në insertimin e API key:', insertErr);
+                            res.json({ success: false, error: insertErr.message });
+                        } else {
+                            console.log('✅ API Key u ruajt me sukses, ID:', this.lastID);
+                            res.json({ 
+                                success: true, 
+                                message: '✅ API Key u ruajt me sukses! Tani mund të përdorni Gemini AI.' 
+                            });
+                        }
+                    }
+                );
+            }
+        );
+        
+    } catch (error) {
+        console.error('❌ Gabim në apikey-command:', error);
+        res.json({ 
+            success: false, 
+            message: 'Gabim në ruajtjen e API key: ' + error.message 
+        });
+    }
+});
 
         // ✅ RUAJ PËRGJIGJEN NË DATABASE
         db.run(
