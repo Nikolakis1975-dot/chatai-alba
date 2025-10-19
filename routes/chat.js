@@ -7,8 +7,7 @@ const router = express.Router();
 // ✅ ENDPOINT-I BAZË PËR CHAT - VERSION I THJESHTË
 // ======================================================
 
-// ✅ ENDPOINT KRYESOR PËR MESAZHE
-// ✅ PËRMIRËSO FUNKSIONIN E MESAZHEVE NË routes/chat.js
+// ✅ ======================== KORRIGJIMI I SHPEJTË I routes ==========================================
 router.post('/message', async (req, res) => {
     try {
         console.log('💬 /message endpoint i thirrur');
@@ -17,7 +16,7 @@ router.post('/message', async (req, res) => {
         const sessionId = req.sessionId || 'session-' + Date.now();
         const message = req.body.message;
 
-        console.log('📨 Mesazhi:', message?.substring(0, 50));
+        console.log('📨 Mesazhi:', message);
 
         if (!message || message.trim() === '') {
             return res.json({
@@ -26,53 +25,30 @@ router.post('/message', async (req, res) => {
             });
         }
 
-        // ✅ DETEKTO NËSE PYETJA KËRKON PËRGJIGJE TË AVANCUAR
-        const lowerMessage = message.toLowerCase().trim();
+        // ✅ SHQYRTIM I THJESHTË I MESAZHEVE - PA NLU KOMPLEKS
         let response;
+        const lowerMessage = message.toLowerCase().trim();
 
-        // ✅ PYETJE TË AVANCUARA QË KËRKONIN GEMINI
-        const advancedKeywords = [
-            'kod', 'code', 'programim', 'program', 'javascript', 'html', 'css',
-            'python', 'java', 'function', 'funksion', 'algorithm', 'algoritëm',
-            'api', 'database', 'databazë', 'server', 'backend', 'frontend'
-        ];
-
-        const isAdvancedQuestion = advancedKeywords.some(keyword => 
-            lowerMessage.includes(keyword)
-        );
-
-        if (isAdvancedQuestion) {
-            console.log('🚀 Pyetje e avancuar - Duke kërkuar API Key');
-            
-            // Kontrollo nëse ka API Key në database
-            const hasApiKey = await new Promise((resolve) => {
-                db.get(
-                    'SELECT api_key FROM api_keys WHERE user_id = ? AND service_name = ?',
-                    [userId, 'gemini'],
-                    (err, result) => {
-                        if (err) {
-                            console.error('❌ Gabim në kontrollimin e API key:', err);
-                            resolve(false);
-                        } else {
-                            console.log('🔑 Rezultati i API key:', !!result);
-                            resolve(!!result);
-                        }
-                    }
-                );
-            });
-
-            if (hasApiKey) {
-                response = `💻 **NDIHME PER KOD/PROGRAMIM** Pyetja juaj "${message}" kërkon një përgjigje të avancuar teknike! 🤖\n\n🔑 **API Key aktive:** Sistemi po përpunon kërkesën tuaj...\n\n📚 **Duke gjeneruar përgjigje të specializuar...**`;
-            } else {
-                response = `💻 **NDIHME PER KOD/PROGRAMIM** Pyetja juaj "${message}" kërkon një përgjigje të avancuar teknike! 🤖\n\n🔑 **Vendosni API Key për Gemini AI:** Përdorni komandën /apikey <key_juaj> për të aktivizuar asistencën e avancuar AI!\n\n📚 **Alternative:** Përdorni /google për të kërkuar në internet.`;
+        // ✅ KOMANDAT ME /
+        if (lowerMessage.startsWith('/')) {
+            if (lowerMessage.includes('pershendetje') || lowerMessage.includes('përshëndetje')) {
+                response = 'Jam mirë, faleminderit që pyetët! Si jeni ju?';
+            }
+            else if (lowerMessage.includes('ndihme') || lowerMessage.includes('ndihmë')) {
+                response = '👑 **SISTEMI I KOMANDAVE**\n• /pershendetje - Përshëndetje\n• /ndihme - Shfaq ndihmën\n• /apikey <key> - Vendos API Key';
+            }
+            else {
+                response = '❌ Komandë e panjohur. Përdorni /ndihme për lista.';
             }
         }
-        // ✅ PËRGJIGJE BAZË
+        // ✅ MESAZHE NATYRORE - PA NLU
         else if (lowerMessage.includes('përshëndetje') || 
+                lowerMessage.includes('pershendetje') ||
                 lowerMessage.includes('hello') || 
                 lowerMessage.includes('tung') ||
                 lowerMessage.includes('si jeni') ||
-                lowerMessage.includes('si je')) {
+                lowerMessage.includes('si je') ||
+                lowerMessage.includes('si kaloni')) {
             response = 'Përshëndetje! 😊 Mirë se ju gjetëm! Si mund t\'ju ndihmoj sot?';
         }
         else if (lowerMessage.includes('faleminderit') || 
@@ -85,11 +61,44 @@ router.post('/message', async (req, res) => {
                  lowerMessage.includes('asistenc')) {
             response = 'Sigurisht! 😊 Çfarë lloj ndihme keni nevojë?';
         }
+        // ✅ PYTJE TË AVANCUARA
+        else if (lowerMessage.includes('kod') || 
+                 lowerMessage.includes('code') || 
+                 lowerMessage.includes('programim') ||
+                 lowerMessage.includes('javascript') || 
+                 lowerMessage.includes('html') ||
+                 lowerMessage.includes('python') || 
+                 lowerMessage.includes('java')) {
+            
+            // Kontrollo API Key
+            const hasApiKey = await new Promise((resolve) => {
+                db.get(
+                    'SELECT api_key FROM api_keys WHERE user_id = ? AND service_name = ?',
+                    [userId, 'gemini'],
+                    (err, result) => {
+                        if (err) {
+                            console.error('❌ Gabim në kontrollimin e API key:', err);
+                            resolve(false);
+                        } else {
+                            console.log('🔑 API Key status:', !!result);
+                            resolve(!!result);
+                        }
+                    }
+                );
+            });
+
+            if (hasApiKey) {
+                response = '💻 **PO PROCESOJ KËRKESËN TUAJ...**\n\nPyetja juaj kërkon përgjigje të specializuar. Duke kontaktuar Gemini AI...';
+            } else {
+                response = '💻 **NDIHMË PËR KOD/PROGRAMIM**\n\nPyetja juaj kërkon përgjigje të avancuar teknike! 🤖\n\n🔑 **Vendosni API Key:** Përdorni komandën /apikey <key_juaj> për të aktivizuar Gemini AI!\n\n📚 **Alternative:** Përdorni /ndihme për opsione të tjera.';
+            }
+        }
+        // ✅ PËRGJIGJE E PËRGJITHSHME
         else {
-            response = 'E kuptoj! 😊 Si mund t\'ju shërbej më mirë?';
+            response = 'E kuptoj! 😊 Si mund t\'ju shërbej më mirë? Përdorni /ndihme për opsione.';
         }
 
-        // ✅ RUAJ MESAZHET NË DATABASE
+        // ✅ RUAJ MESAZHET
         db.run(
             'INSERT INTO messages (user_id, content, sender, timestamp) VALUES (?, ?, ?, ?)',
             [userId, message, 'user', new Date().toISOString()],
@@ -108,7 +117,7 @@ router.post('/message', async (req, res) => {
             }
         );
 
-        console.log('✅ Duke kthyer përgjigjen');
+        console.log('✅ Duke kthyer përgjigjen:', response.substring(0, 50));
         
         res.json({
             success: true,
