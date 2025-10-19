@@ -1,218 +1,160 @@
-// routes/chat.js - SISTEM I RI I PLOTË I KOMANDAVE
+const crypto = require('crypto');
 const express = require('express');
 const db = require('../database');
 const router = express.Router();
 
-// ======================================================
-// ✅ SISTEMI I PLOTË I KOMANDAVE - VERSION I RI STABIL
-// ======================================================
+// ✅ IMPORT I KONSTANTAVE
+const constants = require('../config/constants');
 
-const commandSystem = {
-    // ✅ KOMANDA THEMELORE
-    '/ndihmo': () => `👑 **SISTEMI I KOMANDAVE - CHATAI ALBA** 👑
+// ✅ IMPORT I COMMAND SERVICE
+const CommandService = require('../services/commandService');
 
-📋 **KOMANDAT BAZE:**
-• /ndihmo - Shfaq këtë listë
-• /wiki <kërkim> - Kërko në Wikipedia  
-• /perkthim <gjuhë> <tekst> - Përkthen tekst
-• /moti <qytet> - Informacion moti
-• /eksporto - Eksporto historinë
-• /importo - Importo të dhëna
-• /meso <pyetje>|<përgjigje> - Mëso diçka të re
-• /apikey <key> - Vendos API Key
-
-🔍 **KOMANDA KËRKIMI:**
-• /kerko <kërkim> - Kërkim i thjeshtë
-• /gjej <kërkim> - Kërkim i thelluar
-
-🎓 **KOMANDA PËR STUDENTË:**
-• /student - Menu e studentit
-• /matematike <problem> - Zgjidh probleme
-• /detyre - Ndihmë për detyra
-
-💡 **SHEMBUJ:**
-• /wiki Shqipëria
-• /perkthim anglisht "Përshëndetje"
-• /moti Tirana
-• /meso "Kryeqyteti"|"Tirana"`,
-
-    // ✅ KOMANDA WIKI
-    '/wiki': (args) => {
-        if (!args) return '❌ Ju lutem jepni një kërkim për Wikipedia.';
-        return `🌐 **REZULTAT PËR "${args}"**\n\nInformacione nga Wikipedia do të shfaqeshin këtu.`;
-    },
-
-    // ✅ KOMANDA MOTI
-    '/moti': (args) => {
-        if (!args) return '❌ Ju lutem jepni një qytet.';
-        return `🌍 **MOTI NË ${args.toUpperCase()}**\n\nInformacione moti do të shfaqeshin këtu.`;
-    },
-
-    // ✅ KOMANDA PËRKTHIM
-    '/perkthim': (args) => {
-        if (!args) return '❌ Format: /perkthim <gjuhë> <tekst>';
-        return `🔤 **PËRKTHIMI**\n\nTeksti do të përkthehej këtu.`;
-    },
-
-    // ✅ KOMANDA EKSPORTO - RIPARIM
-    '/eksporto': async (args, userId) => {
-        try {
-            console.log('📤 Komanda /eksporto u thirr për user:', userId);
-            
-            const history = await new Promise((resolve) => {
-                db.all(
-                    'SELECT content, sender, timestamp FROM messages WHERE user_id = ? ORDER BY timestamp DESC LIMIT 20',
-                    [userId],
-                    (err, rows) => {
-                        if (err) {
-                            console.error('❌ Gabim në marrjen e historisë:', err);
-                            resolve([]);
-                        } else {
-                            resolve(rows || []);
-                        }
-                    }
-                );
-            });
-
-            if (history.length === 0) {
-                return '📭 Nuk ka histori për të eksportuar.';
+// ✅ FUNKSIONET NDIHMËSE ME DATABASE CORRECT
+async function checkApiKey(userId) {
+    return new Promise((resolve, reject) => {
+        db.get(
+            'SELECT api_key FROM api_keys WHERE user_id = ? AND service_name = ?',
+            [userId, 'gemini'],
+            (err, result) => {
+                if (err) {
+                    console.error('❌ Gabim në checkApiKey:', err);
+                    resolve(false);
+                } else {
+                    resolve(!!result);
+                }
             }
+        );
+    });
+}
 
-            let exportText = `📊 **HISTORIA E EKSPORTUAR**\n\n`;
-            exportText += `👤 Përdorues: ${userId}\n`;
-            exportText += `📅 Data: ${new Date().toLocaleDateString('sq-AL')}\n`;
-            exportText += `📨 Total mesazhe: ${history.length}\n\n`;
+async function getUserById(userId) {
+    return new Promise((resolve, reject) => {
+        db.get(
+            'SELECT * FROM users WHERE id = ?',
+            [userId],
+            (err, user) => {
+                if (err) {
+                    console.error('❌ Gabim në getUserById:', err);
+                    resolve(null);
+                } else {
+                    resolve(user);
+                }
+            }
+        );
+    });
+}
 
-            history.forEach((msg, index) => {
-                const emoji = msg.sender === 'user' ? '👤' : '🤖';
-                const time = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString('sq-AL') : 'Koha e panjohur';
-                exportText += `${index + 1}. ${emoji} [${time}]\n   ${msg.content}\n\n`;
-            });
-
-            return exportText + `✅ **Eksporti u krye me sukses!**`;
-            
-        } catch (error) {
-            console.error('❌ Gabim në /eksporto:', error);
-            return '❌ Gabim gjatë eksportimit. Provo përsëri.';
-        }
-    },
-
-    // ✅ KOMANDA IMPORT - RIPARIM
-    '/importo': (args, userId) => {
-        return `📥 **SISTEMI I IMPORTIMIT**\n\n💡 Përdorni butonin "Ngarko" në UI për importim.\n\n✅ Sistemi është gati për importim!`;
-    },
-
-    // ✅ KOMANDA MESO - RIPARIM
-    '/meso': async (args, userId) => {
-        try {
-            if (!args) return '❌ Format: /meso <pyetje>|<përgjigje>';
-
-            const parts = args.split('|').map(part => part.trim());
-            if (parts.length < 2) return '❌ Duhen të paktën 2 pjesë: <pyetje>|<përgjigje>';
-
-            const pyetje = parts[0];
-            const pergjigje = parts.slice(1).join('|');
-
-            // Ruaj në knowledge_base
-            await new Promise((resolve) => {
-                db.run(
-                    'INSERT INTO knowledge_base (question, answer, user_id, created_at) VALUES (?, ?, ?, ?)',
-                    [pyetje, pergjigje, userId, new Date().toISOString()],
-                    function(err) {
-                        if (err) {
-                            console.error('❌ Gabim në ruajtjen e njohurive:', err);
-                        } else {
-                            console.log('✅ Njohuri e re u mësua, ID:', this.lastID);
-                        }
-                        resolve();
-                    }
-                );
-            });
-
-            return `✅ **NJOHURI E RE U MËSUA!**\n\n❓ **Pyetja:** "${pyetje}"\n\n💡 **Përgjigja:** "${pergjigje}"`;
-            
-        } catch (error) {
-            console.error('❌ Gabim në /meso:', error);
-            return '❌ Gabim gjatë mësimit. Provo përsëri.';
-        }
-    },
-
-    // ✅ KOMANDA KËRKIM
-    '/kerko': (args) => {
-        if (!args) return '❌ Ju lutem jepni një kërkim.';
-        return `🔍 **REZULTATET PËR "${args}"**\n\nRezultatet e kërkimit do të shfaqeshin këtu.`;
-    },
-
-    // ✅ KOMANDA GJEJ
-    '/gjej': (args) => {
-        if (!args) return '❌ Ju lutem jepni një kërkim.';
-        return `🔎 **KËRKIM I THELLUAR PËR "${args}"**\n\nRezultatet e kërkimit të thelluar do të shfaqeshin këtu.`;
-    },
-
-    // ✅ KOMANDA APIKEY
-    '/apikey': async (args, userId) => {
-        if (!args) return '❌ Format: /apikey <key_juaj>';
-
-        try {
-            // Fshi API key ekzistues
-            await new Promise((resolve) => {
-                db.run(
-                    'DELETE FROM api_keys WHERE user_id = ? AND service_name = ?',
-                    [userId, 'gemini'],
-                    function(err) {
-                        resolve();
-                    }
-                );
-            });
-
-            // Shto API key të ri
-            await new Promise((resolve) => {
-                db.run(
-                    'INSERT INTO api_keys (user_id, api_key, service_name, created_at) VALUES (?, ?, ?, ?)',
-                    [userId, args, 'gemini', new Date().toISOString()],
-                    function(err) {
-                        resolve();
-                    }
-                );
-            });
-
-            return '✅ **API KEY U RUAJT ME SUKSES!**\n\nTani mund të përdorni funksionalitetin e avancuar të Gemini AI.';
-            
-        } catch (error) {
-            console.error('❌ Gabim në /apikey:', error);
-            return '❌ Gabim në ruajtjen e API key. Provo përsëri.';
-        }
-    },
-
-    // ✅ KOMANDA STUDENT
-    '/student': () => {
-        return `🎓 **MENU E STUDENTIT**\n\n• /matematike <problem> - Zgjidh probleme matematike\n• /detyre <lëndë> - Ndihmë për detyra\n• /liber <titull> - Gjej libra shkollore\n\n💡 **SHEMBUJ:**\n• /matematike "2x + 5 = 15"\n• /detyre "histori"\n• /liber "Matematike 10"`;
-    },
-
-    // ✅ KOMANDA MATEMATIKE
-    '/matematike': (args) => {
-        if (!args) return '❌ Ju lutem jepni një problem matematikor.';
-        return `🧮 **ZGJIDHJA E PROBLEMIT**\n\n"${args}"\n\nZgjidhja do të shfaqej këtu.`;
-    },
-
-    // ✅ KOMANDA DETYRE
-    '/detyre': (args) => {
-        if (!args) return '❌ Ju lutem specifikoni lëndën.';
-        return `📚 **NDIHMË PËR DETYRË - ${args.toUpperCase()}**\n\nNdihma për detyrën do të shfaqej këtu.`;
+function getSimpleNaturalResponse(message) {
+    const lowerMessage = message.toLowerCase();
+    
+    if (lowerMessage.includes('përshëndetje') || lowerMessage.includes('tungjatjeta') || lowerMessage.includes('hello')) {
+        return "Përshëndetje! 😊 Mirë se ju gjetëm! Si mund t'ju ndihmoj sot?";
     }
-};
+    
+    if (lowerMessage.includes('si je') || lowerMessage.includes('si jeni')) {
+        return "Jam shumë mirë, faleminderit që pyetët! 😊 Çfarë mund të bëj për ju?";
+    }
+    
+    if (lowerMessage.includes('faleminderit') || lowerMessage.includes('rrofsh') || lowerMessage.includes('thanks')) {
+        return "S'ka përse! 😊 Gjithmonë i lumtur të ndihmoj!";
+    }
+    
+    if (lowerMessage.includes('ndihmë') || lowerMessage.includes('help')) {
+        return "Sigurisht! 😊 Çfarë lloj ndihme keni nevojë? Mund të përdorni /ndihmo për të parë të gjitha mundësitë.";
+    }
+    
+    if (lowerMessage.includes('mirëmëngjes')) {
+        return "Mirëmëngjes! ☀️ Fillim të mbarë të ditës! Si mund t'ju ndihmoj sot?";
+    }
+    
+    if (lowerMessage.includes('mirëmbrëma')) {
+        return "Mirëmbrëma! 🌙 Mbrëmje e mbarë! Si mund t'ju shërbej?";
+    }
+    
+    return "E kuptoj! 😊 Përdorni /ndihmo për të parë të gjitha komandat e mia, ose më tregoni më shumë se çfarë keni nevojë.";
+}
 
-// ======================================================
-// ✅ ENDPOINT KRYESOR PËR MESAZHE - VERSION I RI STABIL
-// ======================================================
+// ✅ RUTA KRYESORE PËR MESAZHET - TRAJTON TË GJITHA MESAZHET
+// router.post('/', async (req, res) => {
+ //   try {
+   //     const { message, userId } = req.body;
+   //     
+   //     console.log('🔍 routes/chat: Marrë mesazh:', message?.substring(0, 50));
+//
+    //    if (!message) {
+    //        return res.status(constants.HTTP_STATUS.BAD_REQUEST).json({
+   //             success: false,
+   //             response: '❌ Ju lutem shkruani një mesazh'
+  //          });
+  //      }
+//
+     //   // ✅ SË PARI PROVO ME COMMAND SERVICE (SISTEMI I RI)
+     //   try {
+     //       const user = await getUserById(userId || 1);
+    //        
+     //       if (user) {
+     //           console.log('🎯 routes/chat: Duke thirrur CommandService...');
+     //           const result = await CommandService.processCommand('chat', user, message);
+     //           
+    //            // ✅ NËSE COMMAND SERVICE E TRAJTON, KTHEJ PËRGJIGJEN
+    //            if (result.success) {
+   //                 console.log('✅ routes/chat: CommandService e trajtoi mesazhin');
+   //                 return res.status(constants.HTTP_STATUS.OK).json(result);
+   //             }
+   //         }
+  //      } catch (cmdError) {
+  //          console.error('❌ routes/chat: Gabim në CommandService:', cmdError.message);
+  //      }
+//
+    //    // ✅ NËSE COMMAND SERVICE NUK E TRAJTON, SHKO TE SISTEMI I VJETËR (GEMINI)
+     //   console.log('🔄 routes/chat: CommandService nuk e trajtoi, duke shkuar te Gemini...');
+    //    
+     //   try {
+    //        // Kontrollo nëse ka API Key
+    //        const hasApiKey = await checkApiKey(userId || 1);
+    //        
+    //        if (!hasApiKey) {
+     //           // ✅ NËSE NUK KA API KEY, KTHE PËRGJIGJE BAZË
+     //           console.log('ℹ️ routes/chat: Nuk ka API Key, duke kthyer përgjigje bazë');
+     //           return res.status(constants.HTTP_STATUS.OK).json({
+     //               success: true,
+     //               response: getSimpleNaturalResponse(message)
+     //           });
+    //        }
+    //        
+    //        // Nëse ka API Key, shko te Gemini
+    //        console.log('🔑 routes/chat: Ka API Key, duke shkuar te Gemini...');
+   //         const geminiResponse = await require('./gemini').processMessage(message, userId || 1);
+   //         return res.status(constants.HTTP_STATUS.OK).json({
+   //             success: true,
+    //            response: geminiResponse
+   //         });
+   //         
+  //      } catch (geminiError) {
+  //          console.error('❌ routes/chat: Gabim në Gemini:', geminiError);
+  //          return res.status(constants.HTTP_STATUS.OK).json({
+ //               success: true,
+ //               response: getSimpleNaturalResponse(message)
+  //          });
+//        }
+//
+//    } catch (error) {
+//        console.error('❌ routes/chat: Gabim i përgjithshëm:', error);
+//        return res.status(constants.HTTP_STATUS.INTERNAL_ERROR).json({
+ //           success: false,
+   //         response: '❌ Gabim në server. Provo përsëri.'
+   //     });
+ //   }
+// });
 
+// ✅ RUTA PËR MESAZHET E DREJTPËRDREDHURA (PËR FRONTEND)
+
+// ✅ RUTA E THJESHTUAR PËR MESAZHE - PUNON ME URËN
 router.post('/message', async (req, res) => {
     try {
-        const userId = req.userId || 'user-' + Date.now();
-        const sessionId = req.sessionId || 'session-' + Date.now();
-        const message = req.body.message;
-
-        console.log('💬 [NEW-SYSTEM] Mesazh i marrë:', message?.substring(0, 50));
+        const { message, userId = 1 } = req.body;
+        
+        console.log('🔍 routes/chat/message: Marrë mesazh për urë:', message?.substring(0, 50));
 
         if (!message || message.trim() === '') {
             return res.json({
@@ -221,113 +163,288 @@ router.post('/message', async (req, res) => {
             });
         }
 
-        let response;
-
-        // ✅ PROCESIMI I KOMANDAVE ME /
-        if (message.startsWith('/')) {
-            const [command, ...argsArray] = message.slice(1).split(' ');
-            const args = argsArray.join(' ');
-
-            console.log(`🔧 [NEW-SYSTEM] Komanda: /${command}, Args: ${args}`);
-
-            if (commandSystem[`/${command}`]) {
-                response = await commandSystem[`/${command}`](args, userId);
-            } else {
-                response = '❌ Komandë e panjohur. Përdorni /ndihmo për listën.';
-            }
-        }
-        // ✅ MESAZHE NATYRORE
-        else {
-            const lowerMessage = message.toLowerCase();
-            
-            if (lowerMessage.includes('përshëndetje') || lowerMessage.includes('pershendetje') || lowerMessage.includes('hello')) {
-                response = 'Përshëndetje! 😊 Mirë se ju gjetëm! Si mund t\'ju ndihmoj sot?';
-            }
-            else if (lowerMessage.includes('si je') || lowerMessage.includes('si jeni')) {
-                response = 'Jam shumë mirë, faleminderit që pyetët! 😊 Çfarë mund të bëj për ju?';
-            }
-            else if (lowerMessage.includes('faleminderit') || lowerMessage.includes('rrofsh')) {
-                response = 'S\'ka përse! 😊 Gjithmonë i lumtur të ndihmoj!';
-            }
-            else {
-                response = 'E kuptoj! 😊 Përdorni /ndihmo për të parë të gjitha komandat e mia.';
-            }
-        }
-
-        // ✅ RUAJ MESAZHET NË DATABASE
-        db.run(
-            'INSERT INTO messages (user_id, content, sender, timestamp) VALUES (?, ?, ?, ?)',
-            [userId, message, 'user', new Date().toISOString()],
-            function(err) {
-                if (err) console.error('❌ Gabim në ruajtjen e mesazhit user:', err);
-            }
-        );
-
-        db.run(
-            'INSERT INTO messages (user_id, content, sender, timestamp) VALUES (?, ?, ?, ?)',
-            [userId, response, 'bot', new Date().toISOString()],
-            function(err) {
-                if (err) console.error('❌ Gabim në ruajtjen e përgjigjes:', err);
-            }
-        );
-
-        console.log('✅ [NEW-SYSTEM] Duke kthyer përgjigjen');
+        // ✅ PERDOR DIRECT COMMAND SERVICE (JO URËN, SE URËRA ËSHTË NË APP.JS)
+        console.log('🎯 routes/chat/message: Duke thirrur CommandService direkt...');
+        const CommandService = require('../services/commandService');
         
-        res.json({
-            success: true,
-            response: response,
-            sessionData: { userId, sessionId }
+        // Merr përdoruesin
+        const db = require('../database');
+        const user = await new Promise((resolve) => {
+            db.get('SELECT * FROM users WHERE id = ?', [userId], (err, user) => {
+                resolve(user || { id: userId, username: 'user' + userId });
+            });
         });
 
+        const result = await CommandService.processCommand('', user, message);
+        
+        console.log('📊 routes/chat/message: Rezultati:', {
+            success: result.success,
+            messageLength: result.response?.length || 0
+        });
+        
+        return res.json(result);
+
     } catch (error) {
-        console.error('❌ [NEW-SYSTEM] Gabim i përgjithshëm:', error);
-        res.json({
+        console.error('❌ routes/chat/message: Gabim i përgjithshëm:', error);
+        return res.json({
             success: false,
-            response: '❌ Gabim në server. Provo përsëri.',
-            sessionData: {
-                userId: req.userId || 'user-' + Date.now(),
-                sessionId: req.sessionId || 'session-' + Date.now()
-            }
+            response: '❌ Gabim në server. Provo përsëri.'
         });
     }
 });
 
-// ======================================================
-// ✅ ENDPOINT-E TESTUESE DHE DEBUG
-// ======================================================
+// ✅ KODI EKZISTUES - MERR HISTORINË E BISEDËS
+// ✅ RUTA E RE PËR PANELIN E NDIHMËS ME BUTONA - Shto në routes/chat.js ekzistues
+router.get('/help-panel', async (req, res) => {
+    try {
+        const helpPanel = `
+<div class="help-panel" style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+  <div class="panel-header" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px;">
+    <h2 style="margin: 0;">👑 CHATAI ALBA - PANELI I NDIHMËS 👑</h2>
+  </div>
 
-router.get('/simple-test', (req, res) => {
-    res.json({
-        success: true,
-        message: '✅ Serveri po funksionon!',
-        timestamp: new Date().toISOString()
-    });
-});
+  <div class="panel-section" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
+    <h3 style="color: #2c3e50; margin-top: 0;">🔹 KOMANDAT BAZË</h3>
+    <div class="button-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+      <button onclick="useCommand('/ndihmo')" style="background: #4CAF50; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">📋 /ndihmo</button>
+      <button onclick="useCommand('/wiki ')" style="background: #2196F3; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">🌐 /wiki</button>
+      <button onclick="useCommand('/perkthim ')" style="background: #FF9800; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">🔄 /perkthim</button>
+      <button onclick="useCommand('/meso ')" style="background: #9C27B0; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">🎓 /meso</button>
+      <button onclick="useCommand('/moti ')" style="background: #607D8B; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">🌍 /moti</button>
+      <button onclick="useCommand('/apikey ')" style="background: #795548; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">🔑 /apikey</button>
+    </div>
+  </div>
 
-router.get('/debug-session', (req, res) => {
-    const debugInfo = {
-        success: true,
-        timestamp: new Date().toISOString(),
-        cookies_received: req.cookies,
-        session_from_middleware: {
-            userId: req.userId,
-            sessionId: req.sessionId
+  <div class="panel-section" style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 15px 0;">
+    <h3 style="color: #1565c0; margin-top: 0;">🚀 KËRKIM NË INTERNET</h3>
+    <div class="button-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+      <button onclick="useCommand('/gjej ')" style="background: #FF5722; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">🔍 /gjej</button>
+      <button onclick="useCommand('/google ')" style="background: #4285F4; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">🔎 /google</button>
+      <button onclick="useCommand('/kërko ')" style="background: #34A853; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">📰 /kërko</button>
+    </div>
+  </div>
+
+  <div class="panel-section" style="background: #fff3e0; padding: 15px; border-radius: 8px; margin: 15px 0;">
+    <h3 style="color: #e65100; margin-top: 0;">💾 MENAXHIM I DHËNAVE</h3>
+    <div class="button-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+      <button onclick="useCommand('/eksporto')" style="background: #009688; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">📥 /eksporto</button>
+      <button onclick="useCommand('/importo')" style="background: #FFC107; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">📤 /importo</button>
+    </div>
+  </div>
+
+  <div class="panel-section" style="background: #fce4ec; padding: 15px; border-radius: 8px; margin: 15px 0;">
+    <h3 style="color: #c2185b; margin-top: 0;">👑 ADMIN PANEL</h3>
+    <div class="button-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+      <button onclick="useCommand('/admin')" style="background: #7B1FA2; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">⚡ /admin</button>
+      <button onclick="useCommand('/users')" style="background: #512DA8; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">👥 /users</button>
+      <button onclick="useCommand('/stats')" style="background: #303F9F; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">📊 /stats</button>
+      <button onclick="useCommand('/panel')" style="background: #1976D2; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">🛠️ /panel</button>
+    </div>
+  </div>
+
+  <div class="quick-actions" style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin: 15px 0;">
+    <h3 style="color: #2e7d32; margin-top: 0;">⚡ VEPRIME TË SHPEJTA</h3>
+    <input type="text" id="quickCommand" placeholder="Shkruaj komandën këtu..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 10px;">
+    <button onclick="executeQuickCommand()" style="background: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%;">🚀 Ekzekuto Komandën</button>
+  </div>
+</div>
+
+<script>
+function useCommand(command) {
+    const input = document.getElementById('user-input');
+    if (input) {
+        input.value = command;
+        input.focus();
+    }
+}
+
+function executeQuickCommand() {
+    const quickInput = document.getElementById('quickCommand');
+    const command = quickInput.value.trim();
+    if (command) {
+        const input = document.getElementById('user-input');
+        if (input) {
+            input.value = command;
+            input.focus();
         }
-    };
-    
-    res.json(debugInfo);
+    }
+}
+</script>
+        `;
+        
+        res.json({
+            success: true,
+            response: helpPanel
+        });
+        
+    } catch (error) {
+        console.error('❌ Gabim në panelin e ndihmës:', error);
+        res.json({
+            success: false,
+            response: '❌ Gabim në server'
+        });
+    }
 });
 
-router.get('/test-database', (req, res) => {
-    db.all('SELECT name FROM sqlite_master WHERE type="table"', (err, tables) => {
-        db.get('SELECT COUNT(*) as count FROM messages', (err, row) => {
-            res.json({
-                success: true,
-                tables: tables,
-                total_messages: row?.count || 0
-            });
+// ✅ KODI EKZISTUES - RUAJ MESAZHIN NË HISTORI
+router.post('/save', (req, res) => {
+    const { userId, content, sender, timestamp } = req.body;
+
+    if (!userId || !content || !sender) {
+        return res.status(400).json({ error: 'Të dhëna të pamjaftueshme' });
+    }
+
+    db.run(
+        'INSERT INTO messages (user_id, content, sender, timestamp) VALUES (?, ?, ?, ?)',
+        [userId, content, sender, timestamp || new Date().toISOString()],
+        function(err) {
+            if (err) {
+                return res.status(500).json({ error: 'Gabim gjatë ruajtjes së mesazhit' });
+            }
+
+            res.json({ message: 'Mesazhi u ruajt me sukses', id: this.lastID });
+        }
+    );
+});
+
+// ✅ KODI EKZISTUES - RUAJ NJOHURI TË REJA
+router.post('/knowledge', (req, res) => {
+    const { userId, question, answer } = req.body;
+
+    if (!userId || !question || !answer) {
+        return res.status(400).json({ error: 'Të dhëna të pamjaftueshme' });
+    }
+
+    db.run(
+        'INSERT INTO knowledge_base (user_id, question, answer) VALUES (?, ?, ?)',
+        [userId, question, answer],
+        function(err) {
+            if (err) {
+                return res.status(500).json({ error: 'Gabim gjatë ruajtjes së njohurive' });
+            }
+
+            res.json({ message: 'Njohuria u ruajt me sukses', id: this.lastID });
+        }
+    );
+});
+
+// ✅ KODI EKZISTUES - KËRKO NJOHURI
+router.get('/knowledge/:userId/:question', (req, res) => {
+    const { userId, question } = req.params;
+
+    db.get(
+        'SELECT answer FROM knowledge_base WHERE user_id = ? AND question = ?',
+        [userId, question],
+        (err, row) => {
+            if (err) {
+                return res.status(500).json({ error: 'Gabim gjatë kërkimit të njohurive' });
+            }
+
+            if (row) {
+                res.json({ answer: row.answer });
+            } else {
+                res.json({ answer: null });
+            }
+        }
+    );
+});
+
+// ✅ KODI EKZISTUES - EKSPORTO NJOHURITË
+router.get('/export/:userId', (req, res) => {
+    const { userId } = req.params;
+
+    db.all(
+        'SELECT question, answer FROM knowledge_base WHERE user_id = ?',
+        [userId],
+        (err, rows) => {
+            if (err) {
+                return res.status(500).json({ error: 'Gabim gjatë eksportimit të njohurive' });
+            }
+
+            res.json(rows);
+        }
+    );
+});
+
+// ✅ KODI EKZISTUES - IMPORTO NJOHURITË
+router.post('/import', (req, res) => {
+    const { userId, knowledge } = req.body;
+
+    if (!userId || !knowledge || !Array.isArray(knowledge)) {
+        return res.status(400).json({ error: 'Të dhëna të pamjaftueshme' });
+    }
+
+    // Fshi njohuritë ekzistuese për këtë përdorues
+    db.run('DELETE FROM knowledge_base WHERE user_id = ?', [userId], (err) => {
+        if (err) {
+            return res.status(500).json({ error: 'Gabim gjatë importimit të njohurive' });
+        }
+
+        // Shto njohuritë e reja
+        const stmt = db.prepare('INSERT INTO knowledge_base (user_id, question, answer) VALUES (?, ?, ?)');
+        
+        knowledge.forEach(item => {
+            if (item.question && item.answer) {
+                stmt.run([userId, item.question, item.answer]);
+            }
+        });
+
+        stmt.finalize((err) => {
+            if (err) {
+                return res.status(500).json({ error: 'Gabim gjatë importimit të njohurive' });
+            }
+
+            res.json({ message: 'Njohuritë u importuan me sukses' });
         });
     });
+});
+
+// ✅ KODI EKZISTUES - FSHI HISTORINË E PËRDORUESIT
+router.delete('/clear/:userId', (req, res) => {
+    const { userId } = req.params;
+
+    db.run(
+        'DELETE FROM messages WHERE user_id = ?',
+        [userId],
+        function(err) {
+            if (err) {
+                return res.status(500).json({ error: 'Gabim gjatë fshirjes së historisë' });
+            }
+            res.json({ message: 'Historia u fshi me sukses' });
+        }
+    );
+});
+
+// ✅ KODI EKZISTUES - EKSPORTO HISTORINË
+router.get('/export-history/:userId', (req, res) => {
+    const { userId } = req.params;
+
+    db.all(
+        'SELECT content, sender, timestamp FROM messages WHERE user_id = ? ORDER BY timestamp ASC',
+        [userId],
+        (err, rows) => {
+            if (err) {
+                return res.status(500).json({ error: 'Gabim gjatë eksportimit të historisë' });
+            }
+            res.json({ history: rows });
+        }
+    );
+});
+
+// ✅ KODI EKZISTUES - RUAJ FEEDBACK
+router.post('/feedback', (req, res) => {
+    const { userId, messageId, feedbackType } = req.body;
+
+    db.run(
+        'INSERT INTO feedback (user_id, message_id, feedback_type) VALUES (?, ?, ?)',
+        [userId, messageId, feedbackType],
+        function(err) {
+            if (err) {
+                return res.status(500).json({ error: 'Gabim gjatë ruajtjes së feedback' });
+            }
+            res.json({ message: 'Feedback u ruajt me sukses' });
+        }
+    );
 });
 
 module.exports = router;
