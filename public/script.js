@@ -633,30 +633,85 @@ async function saveToHistory(content, sender, timestamp) {
     }
 }
 
+// ======================= ✅ FUNKSIONI I KORRIGJUAR - LOADHISTORY ====================
+
 async function loadHistory() {
-    if (!currentUser) return;
-    
     try {
-        const response = await fetch(`/api/chat/history/${currentUser.id}`, {
+        console.log('🔄 Duke ngarkuar historinë...');
+        
+        // ✅ METODA 1: Përdor userId nga session cookies
+        const userId = await getCurrentUserId();
+        
+        if (!userId) {
+            console.log('ℹ️ Nuk ka user aktiv, duke filluar bisedë të re');
+            return; // Nuk ka histori për të ngarkuar
+        }
+        
+        console.log('📊 Duke kërkuar historinë për user:', userId);
+        
+        const response = await fetch(`/api/chat/history/${userId}`, {
+            method: 'GET',
             credentials: 'include'
         });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status} - ${response.statusText}`);
+        }
+        
         const data = await response.json();
         
-        if (response.ok) {
+        console.log('📨 Përgjigja e historisë:', data);
+        
+        if (data.success && data.history) {
             const chat = document.getElementById("chat");
+            if (!chat) {
+                console.error('❌ Elementi #chat nuk u gjet');
+                return;
+            }
+            
+            // Pastro chat-in ekzistues
             chat.innerHTML = "";
             
+            // Shto mesazhet historike
             data.history.forEach(msg => {
                 addMessage(msg.content, msg.sender, msg.timestamp);
             });
             
+            // Scroll në fund
             chat.scrollTop = chat.scrollHeight;
+            
+            console.log(`✅ U ngarkuan ${data.history.length} mesazhe historike`);
         } else {
-            console.error("Gabim gjatë ngarkimit të historisë:", data.error);
+            console.log('ℹ️ Nuk ka histori të mëparshme ose gabim në përgjigje:', data.message);
+        }
+        
+    } catch (error) {
+        console.error("❌ Gabim gjatë ngarkimit të historisë:", error.message);
+        // Mos e shfaq error-in për përdoruesin, thjesht fillo bisedë të re
+        console.log('🆕 Duke filluar bisedë të re pa histori...');
+    }
+}
+
+// ✅ FUNKSION I RI - MER USER ID NGA SESIONI
+async function getCurrentUserId() {
+    try {
+        // Provo të marrësh session nga server
+        const response = await fetch('/api/chat/init-session', {
+            credentials: 'include'
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.sessionData) {
+                return data.sessionData.userId;
+            }
         }
     } catch (error) {
-        console.error("Gabim gjatë ngarkimit të historisë:", error);
+        console.log('ℹ️ Nuk mund të merret session, duke përdorur default');
     }
+    
+    // Fallback nëse nuk funksionon
+    return '2'; // ose '1' - përdoruesi default
 }
 
 async function clearHistory() {
@@ -1539,10 +1594,10 @@ async function showAllUsers() {
 
 // =============================== FUKSIONI I URES TESTIMIT TE SISTEMIT ==========================================
 // 📄 script.js - Shto në FUND, para përfundimit
-const ScriptBridge = require('../bridges/script-bridge');
+// const ScriptBridge = require('../bridges/script-bridge');
 
 // ✅ INICIALIZO URËN E SCRIPT-IT (NUK NDRYSHON FUNKSIONIMIN)
-ScriptBridge.initialize();
+// ScriptBridge.initialize();
 
 // ========================== Shfaq statistikat e sistemit =============================================
 
@@ -1974,3 +2029,321 @@ async function showSystemStats() {
     }
 }
 
+// ================================ FUKSION  initializeChatSession ==========================
+// ✅ INITIALIZO CHAT ME SESSION COOKIES
+async function initializeChatSession() {
+    try {
+        // THIRR ENDPOINT QË KRIJON/KONTROLLON COOKIES
+        const response = await fetch('/api/chat/init-session', {
+            credentials: 'include' // ✅ DËRGON COOKIES
+        });
+        
+        const data = await response.json();
+        console.log('🔒 Chat session initialized:', data);
+        
+        // SHFAQ SESIONIN NË CONSOLE PËR DEBUG
+        if (data.success) {
+            console.log('🎯 Sesioni aktiv:', data.sessionData);
+            // Mund të ruaj session data në localStorage për referencë
+            if (data.sessionData) {
+                localStorage.setItem('currentSession', JSON.stringify(data.sessionData));
+            }
+        }
+    } catch (error) {
+        console.error('❌ Gabim në inicializim të sesionit:', error);
+    }
+}
+
+// ✅ THIRR INIT KUR HA PET CHAT
+document.addEventListener('DOMContentLoaded', function() {
+    initializeChatSession();
+    
+    // Kontrollo nëse ka session të ruajtur
+    const savedSession = localStorage.getItem('currentSession');
+    if (savedSession) {
+        console.log('💾 Sesioni i ruajtur:', JSON.parse(savedSession));
+    }
+});
+
+// ======================== PASTRO COKJES ===========================================
+
+// ✅ INITIALIZO PA RUAJTUR ASGJË NË LOCALSTORAGE
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Chat-i u hap - Sesion i ri i përkohshëm');
+    
+    // ✅ PASTRO ÇDO GJË TË MBETUR
+    localStorage.removeItem('currentSession');
+    localStorage.removeItem('chatHistory');
+    localStorage.removeItem('userData');
+    
+    // ✅ INICIALIZO SESION TË RI
+    initializeChatSession();
+});
+
+// ✅ FUNKSIONI I RI PËR FSHIRJEN E SESIONIT PARA DALJES
+function cleanupBeforeExit() {
+    console.log('🧹 Duke pastruar para daljes...');
+    
+    // Merr session nga cookies për t'i fshirë
+    const cookies = document.cookie.split(';');
+    let userId = null;
+    let sessionId = null;
+    
+    cookies.forEach(cookie => {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'chatUserId') userId = value;
+        if (name === 'chatSessionId') sessionId = value;
+    });
+    
+    // ✅ FSHI TË DHËNAT E SESIONIT NË SERVER
+    if (userId && sessionId) {
+        fetch('/api/chat/clear-session', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ userId, sessionId }),
+            credentials: 'include'
+        }).then(r => r.json()).then(data => {
+            console.log('✅ Pastrimi i sesionit:', data);
+        });
+    }
+    
+    // ✅ PASTRO LOCALSTORAGE PLOTËSISHT
+    localStorage.clear();
+    
+    // ✅ PASTRO COOKIES
+    document.cookie = 'chatUserId=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    document.cookie = 'chatSessionId=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+}
+
+// ✅ FSHI SESIONIN KUR MBYLET FAQJA/BRWSER
+window.addEventListener('beforeunload', cleanupBeforeExit);
+window.addEventListener('pagehide', cleanupBeforeExit);
+
+// ✅ FSHI SESIONIN KUR PËRDORUESI LË CHAT-IN
+function exitChat() {
+    cleanupBeforeExit();
+    // Redirect ose mbyll chat-in
+    window.location.href = '/goodbye.html'; // ose ndonjë faqe tjetër
+}
+
+// ================================ TEST BUTON EXPORT HISTORI ==========================
+
+// ✅ TESTO NËSE BUTONI I EKSPORTIT EKZISTON DHE FUNKSIONON
+function testExportButton() {
+    console.log('🔍 Duke kontrolluar butonin e eksportit...');
+    
+    // Kontrollo nëse ka buton eksporti
+    const exportButtons = document.querySelectorAll('button, [onclick*="export"], [id*="export"], [class*="export"]');
+    
+    console.log('📋 Butonat e gjetur:', exportButtons.length);
+    
+    exportButtons.forEach((btn, index) => {
+        console.log(`Button ${index}:`, {
+            text: btn.textContent,
+            id: btn.id,
+            className: btn.className,
+            onclick: btn.onclick
+        });
+        
+        // Testo nëse është butoni i eksportit
+        if (btn.textContent.toLowerCase().includes('export') || 
+            btn.id.toLowerCase().includes('export') ||
+            btn.className.toLowerCase().includes('export')) {
+            console.log('🎯 BUTONI I EKSPORTIT U GJET!');
+            
+            // Shto funksion të ri të eksportit
+            btn.onclick = function(e) {
+                e.preventDefault();
+                enhancedExportHistory();
+            };
+            
+            console.log('✅ Butoni i eksportit u përmirësua!');
+        }
+    });
+    
+    // Nëse nuk gjen buton, krijo një të ri
+    if (exportButtons.length === 0) {
+        console.log('🆕 Nuk ka buton eksporti, duke krijuar të ri...');
+        createEmergencyExportButton();
+    }
+}
+
+// ✅ FUNKSIONI I PERFEKT PËR EKSPORTIM
+async function enhancedExportHistory() {
+    try {
+        console.log('💾 Duke filluar eksportim të përmirësuar...');
+        
+        // Merr session aktuale
+        const sessionData = await getCurrentSession();
+        const userId = sessionData?.userId || 'unknown-user';
+        
+        console.log('👤 User për eksport:', userId);
+        
+        // Merr historinë e plotë
+        const response = await fetch(`/api/chat/history/${userId}`, {
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.history && data.history.length > 0) {
+            // Krijo JSON të organizuar
+            const exportData = {
+                meta: {
+                    exportDate: new Date().toISOString(),
+                    exportTime: new Date().toLocaleString('sq-AL'),
+                    userId: userId,
+                    totalMessages: data.history.length,
+                    version: "ChatAI Alba v4.0"
+                },
+                messages: data.history.map(msg => ({
+                    content: msg.content,
+                    sender: msg.sender,
+                    timestamp: msg.timestamp,
+                    time: msg.timestamp ? new Date(msg.timestamp).toLocaleString('sq-AL') : 'N/A'
+                }))
+            };
+            
+            // Krijo download
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { 
+                type: 'application/json;charset=utf-8' 
+            });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `chat-history-${userId}-${Date.now()}.json`;
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            console.log(`✅ EKSPORTIM I SUKSESHSHËM! ${data.history.length} mesazhe`);
+            
+            // Shfaq alert me sukses
+            alert(`✅ HISTORIA U EKSPORTUA ME SUKSES!\n\n📊 ${data.history.length} mesazhe\n💾 Ruaj skedarin .json në siguri\n🔄 Mund ta importosh kur të kthehesh!`);
+            
+        } else {
+            alert('ℹ️ Nuk ka histori për të eksportuar!');
+        }
+        
+    } catch (error) {
+        console.error('❌ Gabim në eksportim:', error);
+        alert('❌ GABIM NË EKSPORTIM!\n\nShiko console për detaje.');
+    }
+}
+
+// ✅ KRIJO BUTON EMERGJENCE NËSE NUK EKZISTON
+function createEmergencyExportButton() {
+    console.log('🚨 Duke krijuar buton emergjence për eksport...');
+    
+    const emergencyBtn = document.createElement('button');
+    emergencyBtn.innerHTML = '💾 <strong>EXPORT HISTORI</strong>';
+    emergencyBtn.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        background: #ff4444;
+        color: white;
+        border: none;
+        padding: 15px 20px;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    `;
+    emergencyBtn.onclick = enhancedExportHistory;
+    
+    // Shto në body
+    document.body.appendChild(emergencyBtn);
+    
+    // Shfaq alert për përdoruesin
+    setTimeout(() => {
+        alert('⚠️ IMPORTANTE!\n\nPara se të dalësh nga chat-i, KLIKO BUTONIN "EXPORT HISTORI" në cepin e sipërm djathtas për të ruajtur bisedën tënde!\n\nPastaj mund ta importosh kur të kthehesh.');
+    }, 2000);
+    
+    console.log('✅ Butoni emergjence u krijua!');
+}
+
+// ✅ FUNKSIONI PËR MARRJEN E SESIONIT AKTUAL
+async function getCurrentSession() {
+    try {
+        const response = await fetch('/api/chat/init-session', {
+            credentials: 'include'
+        });
+        const data = await response.json();
+        return data.sessionData;
+    } catch (error) {
+        console.log('ℹ️ Duke përdorur session fallback');
+        return { userId: 'user-' + Date.now() };
+    }
+}
+
+// ✅ AUTO-TESTO BUTONIN KUR FAQA NGARKOHET
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Duke testuar butonin e eksportit...');
+    setTimeout(testExportButton, 1000);
+});
+
+// ✅ AUTO-EKSPORT PARA DALJES (BACKUP)
+window.addEventListener('beforeunload', function() {
+    console.log('🔄 Duke bërë backup automatik...');
+    enhancedExportHistory().catch(() => {
+        console.log('ℹ️ Backup automatik dështoi - jo problem');
+    });
+});
+
+// ========== ✅ FUNKSIONI I PËRMBITUR PËR FSHIRJE - Përdor endpoint ekzistues ==============
+
+async function clearChatHistory() {
+    if (!confirm('⚠️ JE I SIGURT QË DO TË FSHISH TË GJITHË HISTORINË?\n\nKjo veprim nuk mund të zhbëhet!')) {
+        return;
+    }
+    
+    try {
+        const sessionData = await getCurrentSession();
+        const userId = sessionData?.userId;
+        const sessionId = sessionData?.sessionId;
+        
+        if (!userId) {
+            alert('❌ Nuk mund të identifikohet useri!');
+            return;
+        }
+        
+        // ✅ PËRDOR ENDPOINT-IN EKZISTUES /clear/:userId
+        const response = await fetch(`/api/chat/clear/${userId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({ 
+                sessionId: sessionId // ✅ Dërgo sessionId si pjesë e body
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert(`✅ Historia u fshi me sukses!\n\nU fshinë ${result.deletedCount} mesazhe.`);
+            
+            // Rifresko chat-in
+            const chat = document.getElementById("chat");
+            if (chat) chat.innerHTML = "";
+            
+            console.log('✅ Historia u fshi manualisht nga useri');
+        } else {
+            throw new Error(result.error || result.message);
+        }
+        
+    } catch (error) {
+        console.error('❌ Gabim në fshirjen e historisë:', error);
+        alert('❌ Gabim në fshirjen e historisë!');
+    }
+}
