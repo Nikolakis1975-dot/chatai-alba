@@ -74,87 +74,16 @@ function getSimpleNaturalResponse(message) {
     return "E kuptoj! 😊 Përdorni /ndihmo për të parë të gjitha komandat e mia, ose më tregoni më shumë se çfarë keni nevojë.";
 }
 
-// ✅ RUTA KRYESORE PËR MESAZHET - TRAJTON TË GJITHA MESAZHET
-// router.post('/', async (req, res) => {
- //   try {
-   //     const { message, userId } = req.body;
-   //     
-   //     console.log('🔍 routes/chat: Marrë mesazh:', message?.substring(0, 50));
-//
-    //    if (!message) {
-    //        return res.status(constants.HTTP_STATUS.BAD_REQUEST).json({
-   //             success: false,
-   //             response: '❌ Ju lutem shkruani një mesazh'
-  //          });
-  //      }
-//
-     //   // ✅ SË PARI PROVO ME COMMAND SERVICE (SISTEMI I RI)
-     //   try {
-     //       const user = await getUserById(userId || 1);
-    //        
-     //       if (user) {
-     //           console.log('🎯 routes/chat: Duke thirrur CommandService...');
-     //           const result = await CommandService.processCommand('chat', user, message);
-     //           
-    //            // ✅ NËSE COMMAND SERVICE E TRAJTON, KTHEJ PËRGJIGJEN
-    //            if (result.success) {
-   //                 console.log('✅ routes/chat: CommandService e trajtoi mesazhin');
-   //                 return res.status(constants.HTTP_STATUS.OK).json(result);
-   //             }
-   //         }
-  //      } catch (cmdError) {
-  //          console.error('❌ routes/chat: Gabim në CommandService:', cmdError.message);
-  //      }
-//
-    //    // ✅ NËSE COMMAND SERVICE NUK E TRAJTON, SHKO TE SISTEMI I VJETËR (GEMINI)
-     //   console.log('🔄 routes/chat: CommandService nuk e trajtoi, duke shkuar te Gemini...');
-    //    
-     //   try {
-    //        // Kontrollo nëse ka API Key
-    //        const hasApiKey = await checkApiKey(userId || 1);
-    //        
-    //        if (!hasApiKey) {
-     //           // ✅ NËSE NUK KA API KEY, KTHE PËRGJIGJE BAZË
-     //           console.log('ℹ️ routes/chat: Nuk ka API Key, duke kthyer përgjigje bazë');
-     //           return res.status(constants.HTTP_STATUS.OK).json({
-     //               success: true,
-     //               response: getSimpleNaturalResponse(message)
-     //           });
-    //        }
-    //        
-    //        // Nëse ka API Key, shko te Gemini
-    //        console.log('🔑 routes/chat: Ka API Key, duke shkuar te Gemini...');
-   //         const geminiResponse = await require('./gemini').processMessage(message, userId || 1);
-   //         return res.status(constants.HTTP_STATUS.OK).json({
-   //             success: true,
-    //            response: geminiResponse
-   //         });
-   //         
-  //      } catch (geminiError) {
-  //          console.error('❌ routes/chat: Gabim në Gemini:', geminiError);
-  //          return res.status(constants.HTTP_STATUS.OK).json({
- //               success: true,
- //               response: getSimpleNaturalResponse(message)
-  //          });
-//        }
-//
-//    } catch (error) {
-//        console.error('❌ routes/chat: Gabim i përgjithshëm:', error);
-//        return res.status(constants.HTTP_STATUS.INTERNAL_ERROR).json({
- //           success: false,
-   //         response: '❌ Gabim në server. Provo përsëri.'
-   //     });
- //   }
-// });
-
-// ✅ RUTA PËR MESAZHET E DREJTPËRDREDHURA (PËR FRONTEND)
-
-// ✅ RUTA E THJESHTUAR PËR MESAZHE - PUNON ME URËN
+// ✅ RUTA PËR MESAZHET E DREJTPËRDREDHURA (PËR FRONTEND) ME RUAJTJE NË DATABASE
 router.post('/message', async (req, res) => {
     try {
-        const { message, userId = 1 } = req.body;
+        // ✅ PËRDOR COOKIES NGA MIDDLEWARE - KORRIGJIM KRITIK!
+        const userId = req.userId || 'anonymous';
+        const sessionId = req.sessionId || 'session-' + Date.now();
+        const message = req.body.message;
         
         console.log('🔍 routes/chat/message: Marrë mesazh për urë:', message?.substring(0, 50));
+        console.log('🔒 Session data nga middleware:', { userId, sessionId });
 
         if (!message || message.trim() === '') {
             return res.json({
@@ -163,15 +92,28 @@ router.post('/message', async (req, res) => {
             });
         }
 
-        // ✅ PERDOR DIRECT COMMAND SERVICE (JO URËN, SE URËRA ËSHTË NË APP.JS)
+        // ✅ 1. RUAJ MESAZHIN E PËRDORUESIT NË DATABASE - SHTIM I RI KRITIK!
+        console.log('💾 Duke ruajtur mesazhin e USER në database...');
+        db.run(
+            'INSERT INTO messages (user_id, content, sender, timestamp) VALUES (?, ?, ?, ?)',
+            [userId, message, 'user', new Date().toISOString()],
+            function(err) {
+                if (err) {
+                    console.error('❌ Gabim në ruajtjen e mesazhit user:', err);
+                } else {
+                    console.log('✅ Mesazhi i userit u ruajt, ID:', this.lastID);
+                }
+            }
+        );
+
+        // ✅ 2. PERDOR DIRECT COMMAND SERVICE
         console.log('🎯 routes/chat/message: Duke thirrur CommandService direkt...');
         const CommandService = require('../services/commandService');
         
         // Merr përdoruesin
-        const db = require('../database');
         const user = await new Promise((resolve) => {
             db.get('SELECT * FROM users WHERE id = ?', [userId], (err, user) => {
-                resolve(user || { id: userId, username: 'user' + userId });
+                resolve(user || { id: userId, username: 'user-' + userId });
             });
         });
 
@@ -181,109 +123,124 @@ router.post('/message', async (req, res) => {
             success: result.success,
             messageLength: result.response?.length || 0
         });
+
+        // ✅ 3. RUAJ PËRGJIGJEN E AI NË DATABASE - SHTIM I RI KRITIK!
+        if (result.success && result.response) {
+            console.log('💾 Duke ruajtur përgjigjen e BOT në database...');
+            db.run(
+                'INSERT INTO messages (user_id, content, sender, timestamp) VALUES (?, ?, ?, ?)',
+                [userId, result.response, 'bot', new Date().toISOString()],
+                function(err) {
+                    if (err) {
+                        console.error('❌ Gabim në ruajtjen e mesazhit bot:', err);
+                    } else {
+                        console.log('✅ Përgjigja e bot u ruajt, ID:', this.lastID);
+                    }
+                }
+            );
+        }
         
-        return res.json(result);
+        // ✅ 4. KTHE SESSION DATA TË NJËJTË - JO TË REJA!
+        return res.json({
+            ...result,
+            sessionData: {
+                userId: userId,    // ✅ SESIONI I NJËJTË
+                sessionId: sessionId // ✅ SESIONI I NJËJTË
+            }
+        });
 
     } catch (error) {
         console.error('❌ routes/chat/message: Gabim i përgjithshëm:', error);
         return res.json({
             success: false,
-            response: '❌ Gabim në server. Provo përsëri.'
+            response: '❌ Gabim në server. Provo përsëri.',
+            sessionData: {
+                userId: req.userId || 'anonymous',
+                sessionId: req.sessionId || 'session-' + Date.now()
+            }
         });
     }
 });
 
-// ✅ KODI EKZISTUES - MERR HISTORINË E BISEDËS
-// ✅ RUTA E RE PËR PANELIN E NDIHMËS ME BUTONA - Shto në routes/chat.js ekzistues
-router.get('/help-panel', async (req, res) => {
-    try {
-        const helpPanel = `
-<div class="help-panel" style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-  <div class="panel-header" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px;">
-    <h2 style="margin: 0;">👑 CHATAI ALBA - PANELI I NDIHMËS 👑</h2>
-  </div>
+// =============== ✅ ENDPOINT DEBUG PËR TË TESTUAR MIDDLEWARE =====================
+router.get('/test-middleware', (req, res) => {
+    console.log('🔍 TEST MIDDLEWARE - Request object:');
+    console.log('   🍪 req.cookies:', req.cookies);
+    console.log('   🔑 req.userId:', req.userId);
+    console.log('   🔑 req.sessionId:', req.sessionId);
+    console.log('   📨 req.headers.cookie:', req.headers.cookie);
+    
+    res.json({
+        success: true,
+        middleware_data: {
+            userId: req.userId,
+            sessionId: req.sessionId,
+            cookies: req.cookies,
+            headers_cookie: req.headers.cookie
+        },
+        message: 'Middleware test completed'
+    });
+});
 
-  <div class="panel-section" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
-    <h3 style="color: #2c3e50; margin-top: 0;">🔹 KOMANDAT BAZË</h3>
-    <div class="button-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-      <button onclick="useCommand('/ndihmo')" style="background: #4CAF50; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">📋 /ndihmo</button>
-      <button onclick="useCommand('/wiki ')" style="background: #2196F3; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">🌐 /wiki</button>
-      <button onclick="useCommand('/perkthim ')" style="background: #FF9800; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">🔄 /perkthim</button>
-      <button onclick="useCommand('/meso ')" style="background: #9C27B0; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">🎓 /meso</button>
-      <button onclick="useCommand('/moti ')" style="background: #607D8B; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">🌍 /moti</button>
-      <button onclick="useCommand('/apikey ')" style="background: #795548; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">🔑 /apikey</button>
-    </div>
-  </div>
+// ==================== ✅ ENDPOINT I THJESHTË PËR TESTIM TË COOKIES ========================
+router.get('/test-cookies', (req, res) => {
+    console.log('🍪 TEST: Cookies të pranuara:', req.cookies);
+    console.log('🔍 TEST: Session data nga middleware:', { 
+        userId: req.userId, 
+        sessionId: req.sessionId 
+    });
+    
+    res.json({
+        success: true,
+        cookies: req.cookies,
+        sessionData: {
+            userId: req.userId,
+            sessionId: req.sessionId
+        },
+        message: 'Test i cookies'
+    });
+});
 
-  <div class="panel-section" style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 15px 0;">
-    <h3 style="color: #1565c0; margin-top: 0;">🚀 KËRKIM NË INTERNET</h3>
-    <div class="button-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
-      <button onclick="useCommand('/gjej ')" style="background: #FF5722; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">🔍 /gjej</button>
-      <button onclick="useCommand('/google ')" style="background: #4285F4; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">🔎 /google</button>
-      <button onclick="useCommand('/kërko ')" style="background: #34A853; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">📰 /kërko</button>
-    </div>
-  </div>
-
-  <div class="panel-section" style="background: #fff3e0; padding: 15px; border-radius: 8px; margin: 15px 0;">
-    <h3 style="color: #e65100; margin-top: 0;">💾 MENAXHIM I DHËNAVE</h3>
-    <div class="button-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-      <button onclick="useCommand('/eksporto')" style="background: #009688; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">📥 /eksporto</button>
-      <button onclick="useCommand('/importo')" style="background: #FFC107; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">📤 /importo</button>
-    </div>
-  </div>
-
-  <div class="panel-section" style="background: #fce4ec; padding: 15px; border-radius: 8px; margin: 15px 0;">
-    <h3 style="color: #c2185b; margin-top: 0;">👑 ADMIN PANEL</h3>
-    <div class="button-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-      <button onclick="useCommand('/admin')" style="background: #7B1FA2; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">⚡ /admin</button>
-      <button onclick="useCommand('/users')" style="background: #512DA8; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">👥 /users</button>
-      <button onclick="useCommand('/stats')" style="background: #303F9F; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">📊 /stats</button>
-      <button onclick="useCommand('/panel')" style="background: #1976D2; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">🛠️ /panel</button>
-    </div>
-  </div>
-
-  <div class="quick-actions" style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin: 15px 0;">
-    <h3 style="color: #2e7d32; margin-top: 0;">⚡ VEPRIME TË SHPEJTA</h3>
-    <input type="text" id="quickCommand" placeholder="Shkruaj komandën këtu..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 10px;">
-    <button onclick="executeQuickCommand()" style="background: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%;">🚀 Ekzekuto Komandën</button>
-  </div>
-</div>
-
-<script>
-function useCommand(command) {
-    const input = document.getElementById('user-input');
-    if (input) {
-        input.value = command;
-        input.focus();
-    }
-}
-
-function executeQuickCommand() {
-    const quickInput = document.getElementById('quickCommand');
-    const command = quickInput.value.trim();
-    if (command) {
-        const input = document.getElementById('user-input');
-        if (input) {
-            input.value = command;
-            input.focus();
+// ✅ ENDPOINT TEST PËR DATABASE - SHTIM I RI!
+router.get('/test-database', (req, res) => {
+    console.log('🔍 Test database - Duke kontrolluar tabelën messages...');
+    
+    db.all('SELECT name FROM sqlite_master WHERE type="table"', (err, tables) => {
+        if (err) {
+            console.error('❌ Gabim në marrjen e tabelave:', err);
+            return res.json({ success: false, error: err.message });
         }
-    }
-}
-</script>
-        `;
         
-        res.json({
-            success: true,
-            response: helpPanel
-        });
+        console.log('📊 Tabelat në database:', tables);
         
-    } catch (error) {
-        console.error('❌ Gabim në panelin e ndihmës:', error);
-        res.json({
-            success: false,
-            response: '❌ Gabim në server'
-        });
-    }
+        // Kontrollo nëse ekziston tabela messages
+        const messagesTableExists = tables.some(table => table.name === 'messages');
+        
+        if (messagesTableExists) {
+            // Numëro mesazhet
+            db.get('SELECT COUNT(*) as count FROM messages', (err, row) => {
+                if (err) {
+                    console.error('❌ Gabim në numërimin e mesazheve:', err);
+                } else {
+                    console.log(`📨 Total mesazhe në database: ${row.count}`);
+                }
+                
+                res.json({
+                    success: true,
+                    tables: tables,
+                    messages_table_exists: messagesTableExists,
+                    total_messages: row?.count || 0
+                });
+            });
+        } else {
+            res.json({
+                success: true,
+                tables: tables,
+                messages_table_exists: false,
+                message: 'Tabela messages nuk ekziston!'
+            });
+        }
+    });
 });
 
 // ✅ KODI EKZISTUES - RUAJ MESAZHIN NË HISTORI
@@ -307,99 +264,7 @@ router.post('/save', (req, res) => {
     );
 });
 
-// ✅ KODI EKZISTUES - RUAJ NJOHURI TË REJA
-router.post('/knowledge', (req, res) => {
-    const { userId, question, answer } = req.body;
-
-    if (!userId || !question || !answer) {
-        return res.status(400).json({ error: 'Të dhëna të pamjaftueshme' });
-    }
-
-    db.run(
-        'INSERT INTO knowledge_base (user_id, question, answer) VALUES (?, ?, ?)',
-        [userId, question, answer],
-        function(err) {
-            if (err) {
-                return res.status(500).json({ error: 'Gabim gjatë ruajtjes së njohurive' });
-            }
-
-            res.json({ message: 'Njohuria u ruajt me sukses', id: this.lastID });
-        }
-    );
-});
-
-// ✅ KODI EKZISTUES - KËRKO NJOHURI
-router.get('/knowledge/:userId/:question', (req, res) => {
-    const { userId, question } = req.params;
-
-    db.get(
-        'SELECT answer FROM knowledge_base WHERE user_id = ? AND question = ?',
-        [userId, question],
-        (err, row) => {
-            if (err) {
-                return res.status(500).json({ error: 'Gabim gjatë kërkimit të njohurive' });
-            }
-
-            if (row) {
-                res.json({ answer: row.answer });
-            } else {
-                res.json({ answer: null });
-            }
-        }
-    );
-});
-
-// ✅ KODI EKZISTUES - EKSPORTO NJOHURITË
-router.get('/export/:userId', (req, res) => {
-    const { userId } = req.params;
-
-    db.all(
-        'SELECT question, answer FROM knowledge_base WHERE user_id = ?',
-        [userId],
-        (err, rows) => {
-            if (err) {
-                return res.status(500).json({ error: 'Gabim gjatë eksportimit të njohurive' });
-            }
-
-            res.json(rows);
-        }
-    );
-});
-
-// ✅ KODI EKZISTUES - IMPORTO NJOHURITË
-router.post('/import', (req, res) => {
-    const { userId, knowledge } = req.body;
-
-    if (!userId || !knowledge || !Array.isArray(knowledge)) {
-        return res.status(400).json({ error: 'Të dhëna të pamjaftueshme' });
-    }
-
-    // Fshi njohuritë ekzistuese për këtë përdorues
-    db.run('DELETE FROM knowledge_base WHERE user_id = ?', [userId], (err) => {
-        if (err) {
-            return res.status(500).json({ error: 'Gabim gjatë importimit të njohurive' });
-        }
-
-        // Shto njohuritë e reja
-        const stmt = db.prepare('INSERT INTO knowledge_base (user_id, question, answer) VALUES (?, ?, ?)');
-        
-        knowledge.forEach(item => {
-            if (item.question && item.answer) {
-                stmt.run([userId, item.question, item.answer]);
-            }
-        });
-
-        stmt.finalize((err) => {
-            if (err) {
-                return res.status(500).json({ error: 'Gabim gjatë importimit të njohurive' });
-            }
-
-            res.json({ message: 'Njohuritë u importuan me sukses' });
-        });
-    });
-});
-
-// ✅ KODI EKZISTUES - FSHI HISTORINË E PËRDORUESIT
+// ================ ✅ KODI EKZISTUES - FSHI HISTORINË E PËRDORUESIT ==================
 router.delete('/clear/:userId', (req, res) => {
     const { userId } = req.params;
 
@@ -412,39 +277,136 @@ router.delete('/clear/:userId', (req, res) => {
             }
             res.json({ message: 'Historia u fshi me sukses' });
         }
-    );
+   );
+ });
+
+// =========================== ✅ ENDPOINT I RI PËR HISTORI ==============================
+router.get('/history/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        
+        console.log('📊 Duke marrë historinë për user:', userId);
+        
+        // Merr historinë nga database
+        const history = await new Promise((resolve) => {
+            db.all(
+                'SELECT content, sender, timestamp FROM messages WHERE user_id = ? ORDER BY timestamp DESC LIMIT 50',
+                [userId],
+                (err, rows) => {
+                    if (err) {
+                        console.error('❌ Gabim në histori:', err);
+                        resolve([]);
+                    } else {
+                        resolve(rows || []);
+                    }
+                }
+            );
+        });
+        
+        res.json({
+            success: true,
+            history: history,
+            count: history.length
+        });
+        
+    } catch (error) {
+        console.error('❌ Gabim në marrjen e historisë:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Gabim në marrjen e historisë'
+        });
+    }
 });
 
-// ✅ KODI EKZISTUES - EKSPORTO HISTORINË
-router.get('/export-history/:userId', (req, res) => {
-    const { userId } = req.params;
-
-    db.all(
-        'SELECT content, sender, timestamp FROM messages WHERE user_id = ? ORDER BY timestamp ASC',
-        [userId],
-        (err, rows) => {
-            if (err) {
-                return res.status(500).json({ error: 'Gabim gjatë eksportimit të historisë' });
-            }
-            res.json({ history: rows });
+// ✅ ENDPOINT PËR FSHIRJEN E SESIONEVE PAS DALJES
+router.post('/clear-session', async (req, res) => {
+    try {
+        const { userId, sessionId } = req.body;
+        
+        console.log('🧹 Duke fshirë sesionin:', { userId, sessionId });
+        
+        if (userId && sessionId) {
+            // ✅ FSHI TË DHËNAT E KËTIJ SESIONI
+            db.run(
+                'DELETE FROM conversation_contexts WHERE user_id = ? AND session_id = ?',
+                [userId, sessionId],
+                function(err) {
+                    if (err) {
+                        console.error('❌ Gabim në fshirjen e sesionit:', err);
+                    } else {
+                        console.log(`✅ U fshinë ${this.changes} të dhëna sesioni`);
+                    }
+                }
+            );
         }
-    );
+        
+        // ✅ FSHI COOKIES NË PËRGJIGJE
+        res.clearCookie('chatUserId');
+        res.clearCookie('chatSessionId');
+        
+        res.json({
+            success: true,
+            message: 'Sesioni u fshi me sukses',
+            cookiesCleared: true
+        });
+        
+    } catch (error) {
+        console.error('❌ Gabim në fshirjen e sesionit:', error);
+        res.json({
+            success: false,
+            message: 'Gabim në fshirjen e sesionit'
+        });
+    }
 });
 
-// ✅ KODI EKZISTUES - RUAJ FEEDBACK
-router.post('/feedback', (req, res) => {
-    const { userId, messageId, feedbackType } = req.body;
-
-    db.run(
-        'INSERT INTO feedback (user_id, message_id, feedback_type) VALUES (?, ?, ?)',
-        [userId, messageId, feedbackType],
-        function(err) {
-            if (err) {
-                return res.status(500).json({ error: 'Gabim gjatë ruajtjes së feedback' });
+// ✅ ENDPOINT I RI PËR INICIALIZIM TË SESIONIT
+router.get('/init-session', (req, res) => {
+    try {
+        // ✅ MIDDLEWARE TASHMË KA KRIJUAR/KONTROLLUAR COOKIES
+        const sessionData = {
+            userId: req.userId || 'anonymous',
+            sessionId: req.sessionId || 'session-' + Date.now()
+        };
+        
+        console.log('🎯 Session init endpoint:', sessionData);
+        
+        res.json({
+            success: true,
+            message: 'Session initialized successfully',
+            sessionData: sessionData
+        });
+        
+    } catch (error) {
+        console.error('❌ Gabim në session init:', error);
+        res.json({
+            success: false,
+            message: 'Gabim në inicializimin e sesionit',
+            sessionData: {
+                userId: 'user-' + Date.now(),
+                sessionId: 'session-' + Date.now()
             }
-            res.json({ message: 'Feedback u ruajt me sukses' });
-        }
-    );
+        });
+    }
+});
+
+// ===================== ✅ ENDPOINT DEBUG PËR SESSION ==================
+router.get('/debug-session', (req, res) => {
+    const debugInfo = {
+        success: true,
+        timestamp: new Date().toISOString(),
+        cookies_received: req.cookies,
+        headers_cookie: req.headers.cookie,
+        session_from_middleware: {
+            userId: req.userId,
+            sessionId: req.sessionId
+        },
+        middleware_exists: !!(req.userId && req.sessionId),
+        has_chat_cookies: !!(req.cookies?.chatUserId && req.cookies?.chatSessionId)
+    };
+    
+    console.log('🔍 DEBUG SESSION:', debugInfo);
+    
+    res.json(debugInfo);
 });
 
 module.exports = router;
