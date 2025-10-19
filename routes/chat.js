@@ -389,6 +389,66 @@ router.get('/init-session', (req, res) => {
     }
 });
 
+// ========================== ✅ ENDPOINT DEBUG PËR API KEYS ==============================
+router.get('/debug-apikeys/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        
+        console.log('🔍 DEBUG API KEYS për user:', userId);
+        
+        // Kontrollo të gjitha API keys për këtë user
+        const apiKeys = await new Promise((resolve) => {
+            db.all(
+                'SELECT * FROM api_keys WHERE user_id = ?',
+                [userId],
+                (err, rows) => {
+                    if (err) {
+                        console.error('❌ Gabim në marrjen e API keys:', err);
+                        resolve([]);
+                    } else {
+                        console.log('📊 API Keys të gjetur:', rows);
+                        resolve(rows || []);
+                    }
+                }
+            );
+        });
+        
+        // Kontrollo specifikisht për Gemini
+        const geminiKey = await new Promise((resolve) => {
+            db.get(
+                'SELECT * FROM api_keys WHERE user_id = ? AND service_name = ?',
+                [userId, 'gemini'],
+                (err, result) => {
+                    if (err) {
+                        console.error('❌ Gabim në marrjen e Gemini key:', err);
+                        resolve(null);
+                    } else {
+                        console.log('🔑 Gemini Key:', result);
+                        resolve(result);
+                    }
+                }
+            );
+        });
+        
+        res.json({
+            success: true,
+            userId: userId,
+            allApiKeys: apiKeys,
+            geminiKey: geminiKey,
+            hasAnyKeys: apiKeys.length > 0,
+            hasGeminiKey: !!geminiKey,
+            count: apiKeys.length
+        });
+        
+    } catch (error) {
+        console.error('❌ Gabim në debug-apikeys:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Gabim në debug'
+        });
+    }
+});
+
 // ===================== ✅ ENDPOINT DEBUG PËR SESSION ==================
 router.get('/debug-session', (req, res) => {
     const debugInfo = {
