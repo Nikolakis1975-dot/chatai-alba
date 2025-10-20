@@ -822,36 +822,11 @@ function toggleEmojiPanel() {
 }
 
 // =================== Funksionet për download/upload history (mbetet e njëjta) ===========================
-// ======================================================
-// 💾 ENDPOINT PËR SHKARKIM TË HISTORISË SË BISEDËS SI JSON
-// ======================================================
-
-async function downloadHistory() {
-    if (!currentUser) return;
-    
-    try {
-        // ✅ KJO RUTË TANI DO TE EKZISTOJË
-        const response = await fetch(`/api/chat/export/${currentUser.id}`, {
-            credentials: 'include'
-        });
-        const data = await response.json();
-        
-        if (response.ok && data.success) {
-            // ✅ SHKARKO SI JSON FILE
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = `historia-bisedes-${currentUser.id}.json`;
-            link.click();
-            addMessage("💾 Shkarkova historinë e bisedës.", "bot");
-        } else {
-            addMessage(`❌ ${data.message || 'Gabim gjatë shkarkimit'}`, "bot");
-        }
-    } catch (error) {
-        addMessage("❌ Gabim gjatë shkarkimit.", "bot");
-    }
-}
-
+// ======================================================                                           ========
+// 💾 KETU VENDOSET-ENDPOINT PËR SHKARKIM TË HISTORISË SË BISEDËS SI JSON                           ========
+// ======================================================                                            ========
+//                                                                                                    ========  
+// ===========================================================================================================
 
 // ✅ FUNKSION I RI PËR TË MARRË USER ID NGA COOKIES
 function getUserIdFromCookies() {
