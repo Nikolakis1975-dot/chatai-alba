@@ -1,5 +1,5 @@
 // ======================================================
-// 🌟 ChatAI ALBA - VERSION I THJESHTË & STABIL
+// 🌟 ChatAI ALBA - VERSION I PLOTË ME TË GJITHA RUTAT
 // ======================================================
 
 require('dotenv').config();
@@ -12,81 +12,70 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ======================================================
-// ✅ KONFIGURIME BAZË - PA LOGIME TË MËDHA
+// ✅ KONFIGURIME BAZË
 // ======================================================
 
-// CORS i thjeshtë
 app.use(cors({
-    origin: true, // Lejo të gjitha origin (më e thjeshtë)
+    origin: true,
     credentials: true
 }));
 
-// Parser bazë
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // ======================================================
-// ✅ SESION MIDDLEWARE - I THJESHTË & EFIKAS
+// ✅ SESION MIDDLEWARE
 // ======================================================
 
-app.use((req, res, next) => {
-    // ✅ VETËM PËR RUTAT E CHAT & CONTEXT
-    if (!req.path.startsWith('/api/chat') && !req.path.startsWith('/api/context')) {
-        return next();
-    }
-    
-    // ✅ MERRE COOKIES EKZISTUESE
-    let userId = req.cookies?.chatUserId;
-    let sessionId = req.cookies?.chatSessionId;
-    
-    // ✅ KRJO SESION TË RI NËSE NUK KA
-    if (!userId || !sessionId) {
-        userId = 'user-' + Date.now();
-        sessionId = 'session-' + Date.now();
-        
-        // ✅ VENDOS COOKIES TË REJA
-        const cookieOptions = {
-            httpOnly: true,
-            secure: true,
-            sameSite: 'none',
-            path: '/',
-            maxAge: 365 * 24 * 60 * 60 * 1000 // 1 vit
-        };
-        
-        res.cookie('chatUserId', userId, cookieOptions);
-        res.cookie('chatSessionId', sessionId, cookieOptions);
-    }
-    
-    // ✅ VENDOS NË REQUEST
-    req.userId = userId;
-    req.sessionId = sessionId;
-    
-    next();
-});
+const chatSessionMiddleware = require('./middleware/chatSession');
+app.use(chatSessionMiddleware);
 
 // ======================================================
-// ✅ RUTAT BAZË - PA ERROR HANDLING TË MËDHA
+// ✅ RUTAT E AUTH (LOGIN/REGJISTRIM) - KRYESORE!
 // ======================================================
 
-// 🟢 RUTAT E CHAT (KRYESORE)
+// 🟢 RUTAT E AUTHENTIKIMIT
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/auth', require('./routes/auth-enhanced'));
+
+// 🟢 RUTAT E PËRDORUESVE
+app.use('/api/users', require('./routes/users'));
+
+// 🟢 RUTAT E EMAIL VERIFICATION
+app.use('/api/email', require('./routes/email-verification'));
+
+// 🟢 RUTAT E API KEYS
+app.use('/api/api-keys', require('./routes/api'));
+
+// 🟢 RUTAT E GEMINI
+app.use('/api/gemini', require('./routes/gemini'));
+app.use('/api/gemini-simple', require('./routes/gemini-simple'));
+
+// 🟢 RUTAT E ADMIN
+app.use('/admin', require('./routes/admin'));
+
+// ======================================================
+// ✅ RUTAT E CHAT (KRYESORE)
+// ======================================================
+
 const chatRoutes = require('./routes/chat');
 app.use('/api/chat', chatRoutes);
 
-// 🟢 RUTAT E TJERA THEMELORE
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/users', require('./routes/users'));
-app.use('/api/gemini', require('./routes/gemini'));
+// ======================================================
+// ✅ RUTAT OPTIONAL (ME TRY-CATCH)
+// ======================================================
 
-// 🟢 RUTAT OPTIONAL (ME TRY-CATCH)
 try {
     app.use('/api/context', require('./routes/context-routes'));
+    console.log('✅ Context routes u ngarkuan');
 } catch (error) {
     console.log('⚠️  Context routes nuk u ngarkuan');
 }
 
 try {
     app.use('/api/voice', require('./routes/voice'));
+    console.log('✅ Voice routes u ngarkuan');
 } catch (error) {
     console.log('⚠️  Voice routes nuk u ngarkuan');
 }
@@ -102,16 +91,45 @@ app.get('/', (req, res) => {
 });
 
 // ======================================================
+// ✅ RUTA TESTUESE PËR AUTH
+// ======================================================
+
+app.get('/api/auth/test', (req, res) => {
+    res.json({ 
+        success: true, 
+        message: '✅ Auth API po funksionon!',
+        endpoints: [
+            'POST /api/auth/register',
+            'POST /api/auth/login', 
+            'POST /api/auth/verify',
+            'GET /api/auth/me'
+        ]
+    });
+});
+
+// ======================================================
 // ✅ ERROR HANDLERS
 // ======================================================
 
 app.use((req, res) => {
-    res.status(404).json({ success: false, message: 'Ruta nuk u gjet' });
+    res.status(404).json({ 
+        success: false, 
+        message: `Ruta nuk u gjet: ${req.method} ${req.path}`,
+        availableRoutes: [
+            '/api/auth/register',
+            '/api/auth/login',
+            '/api/chat/message',
+            '/api/users'
+        ]
+    });
 });
 
 app.use((err, req, res, next) => {
     console.error('❌ Gabim serveri:', err);
-    res.status(500).json({ success: false, message: 'Gabim serveri' });
+    res.status(500).json({ 
+        success: false, 
+        message: 'Gabim i brendshëm i serverit'
+    });
 });
 
 // ======================================================
@@ -120,5 +138,7 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 CHATAI ALBA - PORT: ${PORT}`);
-    console.log(`✅ Sistemi i thjeshtë u ngarkua`);
+    console.log(`✅ Të gjitha rutat u ngarkuan`);
+    console.log(`🔐 Auth API: /api/auth/register, /api/auth/login`);
+    console.log(`💬 Chat API: /api/chat/message`);
 });
