@@ -1,57 +1,43 @@
-// ✅ MIDDLEWARE I RIPARUAR PËR SESIONIN - VERSION FINAL
+// ✅ MIDDLEWARE I THJESHTË PËR SESIONIN
 module.exports = (req, res, next) => {
-    // ✅ APLIKO PËR TË GJITHA RUTAT E API
-    if (!req.path.startsWith('/api/')) {
+    // ✅ VETËM PËR RUTAT QË KANË NEVOJË PËR SESION
+    if (!req.path.startsWith('/api/chat') && 
+        !req.path.startsWith('/api/voice') && 
+        !req.path.includes('/upload') &&
+        !req.path.startsWith('/api/context')) {
         return next();
     }
     
-    // ✅ MERRE COOKIES ME KONTROLL TË FORTUAR
-    const cookies = req.cookies || {};
-    let userId = cookies.chatUserId;
-    let sessionId = cookies.chatSessionId;
-
-    // ✅ VERIFIKO NËSE COOKIES JANË TË VLEFSHME
-    const hasValidCookies = userId && sessionId && 
-                           userId !== 'undefined' && 
-                           sessionId !== 'undefined' &&
-                           userId !== 'null' && 
-                           sessionId !== 'null';
-
-    // ✅ KRJO SESION TË RI NËSE NUK KA COOKIES TË VLEFSHME
-    if (!hasValidCookies) {
+    // ✅ MERRE COOKIES EKZISTUESE
+    let userId = req.cookies?.chatUserId;
+    let sessionId = req.cookies?.chatSessionId;
+    
+    // ✅ KRJO SESION TË RI NËSE NUK KA
+    if (!userId) {
         userId = 'user-' + Date.now();
         sessionId = 'session-' + Date.now();
         
-        console.log('🆕 SESION I RI I KRIJUAR:', { userId, sessionId });
-
-        // ✅ VENDOS COOKIES TË REJA ME KONFIGURIM TË FORTUAR
-        const cookieOptions = {
+        // ✅ VENDOS COOKIES TË REJA
+        res.cookie('chatUserId', userId, {
             httpOnly: true,
-            secure: true, // TRUE për HTTPS
-            sameSite: 'none', // DOMOSDOSHMË për cross-site
+            secure: true,
+            sameSite: 'none',
             path: '/',
-            maxAge: 365 * 24 * 60 * 60 * 1000 // 1 VIT
-        };
+            maxAge: 30 * 24 * 60 * 60 * 1000 // 30 ditë
+        });
         
-        res.cookie('chatUserId', userId, cookieOptions);
-        res.cookie('chatSessionId', sessionId, cookieOptions);
-        
-    } else {
-        console.log('🔁 SESION I VJETER I RIKTHYER:', { userId, sessionId });
-    }
-
-    // ✅ VENDOS NË REQUEST PËR TË GJITHA RUTAT
-    req.userId = userId;
-    req.sessionId = sessionId;
-
-    // ✅ LOG PËR DEBUG (VETËM PËR RUTAT E RËNDËSISHME)
-    if (req.path.includes('/chat/') || req.path.includes('/users/')) {
-        console.log('🎯 SESIONI I PËRDORUR:', { 
-            path: req.path, 
-            userId: req.userId, 
-            sessionId: req.sessionId 
+        res.cookie('chatSessionId', sessionId, {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'none',
+            path: '/',
+            maxAge: 30 * 24 * 60 * 60 * 1000 // 30 ditë
         });
     }
-
+    
+    // ✅ VENDOS NË REQUEST
+    req.userId = userId;
+    req.sessionId = sessionId;
+    
     next();
 };
