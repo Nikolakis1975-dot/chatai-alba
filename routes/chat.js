@@ -9,7 +9,7 @@ const constants = require('../config/constants');
 // ✅ IMPORT I COMMAND SERVICE
 const CommandService = require('../services/commandService');
 
-// ============================= ✅ FUNKSIONET NDIHMËSE ME DATABASE =================================
+// ✅ FUNKSIONET NDIHMËSE ME DATABASE CORRECT
 async function checkApiKey(userId) {
     return new Promise((resolve, reject) => {
         db.get(
@@ -74,28 +74,82 @@ function getSimpleNaturalResponse(message) {
     return "E kuptoj! 😊 Përdorni /ndihmo për të parë të gjitha komandat e mia, ose më tregoni më shumë se çfarë keni nevojë.";
 }
 
-// ✅ FUNKSION PËR RUAJTJE MESAZHESH NË DATABASE
-function saveMessageToDatabase(userId, content, sender) {
-    return new Promise((resolve, reject) => {
-        const timestamp = new Date().toISOString();
-        
-        db.run(
-            'INSERT INTO messages (user_id, content, sender, timestamp) VALUES (?, ?, ?, ?)',
-            [userId, content, sender, timestamp],
-            function(err) {
-                if (err) {
-                    console.error('❌ Gabim në ruajtjen e mesazhit:', err);
-                    reject(err);
-                } else {
-                    console.log(`✅ Mesazh u ruajt për ${userId}: ${sender} - ${content.substring(0, 50)}...`);
-                    resolve(this.lastID);
-                }
-            }
-        );
-    });
-}
+// ✅ RUTA KRYESORE PËR MESAZHET - TRAJTON TË GJITHA MESAZHET
+// router.post('/', async (req, res) => {
+ //   try {
+   //     const { message, userId } = req.body;
+   //     
+   //     console.log('🔍 routes/chat: Marrë mesazh:', message?.substring(0, 50));
+//
+    //    if (!message) {
+    //        return res.status(constants.HTTP_STATUS.BAD_REQUEST).json({
+   //             success: false,
+   //             response: '❌ Ju lutem shkruani një mesazh'
+  //          });
+  //      }
+//
+     //   // ✅ SË PARI PROVO ME COMMAND SERVICE (SISTEMI I RI)
+     //   try {
+     //       const user = await getUserById(userId || 1);
+    //        
+     //       if (user) {
+     //           console.log('🎯 routes/chat: Duke thirrur CommandService...');
+     //           const result = await CommandService.processCommand('chat', user, message);
+     //           
+    //            // ✅ NËSE COMMAND SERVICE E TRAJTON, KTHEJ PËRGJIGJEN
+    //            if (result.success) {
+   //                 console.log('✅ routes/chat: CommandService e trajtoi mesazhin');
+   //                 return res.status(constants.HTTP_STATUS.OK).json(result);
+   //             }
+   //         }
+  //      } catch (cmdError) {
+  //          console.error('❌ routes/chat: Gabim në CommandService:', cmdError.message);
+  //      }
+//
+    //    // ✅ NËSE COMMAND SERVICE NUK E TRAJTON, SHKO TE SISTEMI I VJETËR (GEMINI)
+     //   console.log('🔄 routes/chat: CommandService nuk e trajtoi, duke shkuar te Gemini...');
+    //    
+     //   try {
+    //        // Kontrollo nëse ka API Key
+    //        const hasApiKey = await checkApiKey(userId || 1);
+    //        
+    //        if (!hasApiKey) {
+     //           // ✅ NËSE NUK KA API KEY, KTHE PËRGJIGJE BAZË
+     //           console.log('ℹ️ routes/chat: Nuk ka API Key, duke kthyer përgjigje bazë');
+     //           return res.status(constants.HTTP_STATUS.OK).json({
+     //               success: true,
+     //               response: getSimpleNaturalResponse(message)
+     //           });
+    //        }
+    //        
+    //        // Nëse ka API Key, shko te Gemini
+    //        console.log('🔑 routes/chat: Ka API Key, duke shkuar te Gemini...');
+   //         const geminiResponse = await require('./gemini').processMessage(message, userId || 1);
+   //         return res.status(constants.HTTP_STATUS.OK).json({
+   //             success: true,
+    //            response: geminiResponse
+   //         });
+   //         
+  //      } catch (geminiError) {
+  //          console.error('❌ routes/chat: Gabim në Gemini:', geminiError);
+  //          return res.status(constants.HTTP_STATUS.OK).json({
+ //               success: true,
+ //               response: getSimpleNaturalResponse(message)
+  //          });
+//        }
+//
+//    } catch (error) {
+//        console.error('❌ routes/chat: Gabim i përgjithshëm:', error);
+//        return res.status(constants.HTTP_STATUS.INTERNAL_ERROR).json({
+ //           success: false,
+   //         response: '❌ Gabim në server. Provo përsëri.'
+   //     });
+ //   }
+// });
 
-// ====================== ✅ RUTA KRYESORE PËR MESAZHET ===============================
+// ✅ RUTA PËR MESAZHET E DREJTPËRDREDHURA (PËR FRONTEND)
+
+// ✅ RUTA E THJESHTUAR PËR MESAZHE - PUNON ME URËN
 router.post('/message', async (req, res) => {
     try {
         const { message, userId = 1 } = req.body;
@@ -109,18 +163,12 @@ router.post('/message', async (req, res) => {
             });
         }
 
-        // ✅ RUAJ MESAZHIN E PËRDORUESIT
-        try {
-            await saveMessageToDatabase(userId, message, 'user');
-        } catch (saveError) {
-            console.error('❌ Gabim në ruajtjen e mesazhit të përdoruesit:', saveError);
-        }
-
-        // ✅ PERDOR COMMAND SERVICE
+        // ✅ PERDOR DIRECT COMMAND SERVICE (JO URËN, SE URËRA ËSHTË NË APP.JS)
         console.log('🎯 routes/chat/message: Duke thirrur CommandService direkt...');
         const CommandService = require('../services/commandService');
         
         // Merr përdoruesin
+        const db = require('../database');
         const user = await new Promise((resolve) => {
             db.get('SELECT * FROM users WHERE id = ?', [userId], (err, user) => {
                 resolve(user || { id: userId, username: 'user' + userId });
@@ -133,15 +181,6 @@ router.post('/message', async (req, res) => {
             success: result.success,
             messageLength: result.response?.length || 0
         });
-
-        // ✅ RUAJ PËRGJIGJEN E BOTIT
-        if (result.success && result.response) {
-            try {
-                await saveMessageToDatabase(userId, result.response, 'bot');
-            } catch (saveError) {
-                console.error('❌ Gabim në ruajtjen e përgjigjes së botit:', saveError);
-            }
-        }
         
         return res.json(result);
 
@@ -154,7 +193,8 @@ router.post('/message', async (req, res) => {
     }
 });
 
-// ✅ RUTA PËR PANELIN E NDIHMËS ME BUTONA
+// ✅ KODI EKZISTUES - MERR HISTORINË E BISEDËS
+// ✅ RUTA E RE PËR PANELIN E NDIHMËS ME BUTONA - Shto në routes/chat.js ekzistues
 router.get('/help-panel', async (req, res) => {
     try {
         const helpPanel = `
@@ -406,175 +446,5 @@ router.post('/feedback', (req, res) => {
         }
     );
 });
-
-// ======================================================
-// 🆕 SISTEMI I RI PËR SHKARKIM HISTORIE BISEDE
-// ======================================================
-// ✅ ENDPOINT I RIPARUAR PËR SHKARKIM HISTORIE BISEDE
-router.get('/export-chat/:userId', async (req, res) => {
-    try {
-        const { userId } = req.params;
-        
-        console.log('💾 SHKARKO CHAT HISTORY: Duke përgatitur historinë për:', userId);
-        
-        // ✅ MERRE HISTORINË E BISEDËS NGA TABELA messages
-        const chatHistory = await new Promise((resolve) => {
-            db.all(
-                `SELECT content, sender, timestamp 
-                 FROM messages 
-                 WHERE user_id = ? 
-                 ORDER BY timestamp ASC`,
-                [userId],
-                (err, rows) => {
-                    if (err) {
-                        console.error('❌ GABIM SHKARKIMI CHAT HISTORY:', err);
-                        resolve([]);
-                    } else {
-                        console.log(`✅ SHKARKO CHAT HISTORY: Gjetur ${rows?.length || 0} mesazhe`);
-                        resolve(rows || []);
-                    }
-                }
-            );
-        });
-
-        // ✅ NËSE NUK KA HISTORI, KTHE JSON ME GABIM
-        if (chatHistory.length === 0) {
-            return res.json({
-                success: false,
-                message: '❌ Nuk ka histori bisede për të shkarkuar'
-            });
-        }
-
-        // ✅ NËSE KA HISTORI, KTHE JSON ME TË DHËNAT
-        console.log(`✅ SHKARKO CHAT HISTORY: Duke dërguar ${chatHistory.length} mesazhe si JSON`);
-        
-        res.json({
-            success: true,
-            history: chatHistory,
-            user: userId,
-            exportDate: new Date().toISOString(),
-            totalMessages: chatHistory.length
-        });
-
-    } catch (error) {
-        console.error('❌ GABIM NË SHKARKIM CHAT HISTORY:', error);
-        res.status(500).json({
-            success: false,
-            message: '❌ Gabim gjatë shkarkimit të historisë'
-        });
-    }
-});
-
-// ✅ ENDPOINT I RI PËR NGARKIM HISTORIE BISEDE
-router.post('/upload-chat-history', async (req, res) => {
-    try {
-        const { userId = 'user-1', historyData } = req.body;
-
-        console.log('📤 NGARKIM: Duke procesuar skedarin për:', userId);
-
-        if (!historyData) {
-            return res.json({
-                success: false,
-                message: '❌ Nuk ka të dhëna për ngarkim'
-            });
-        }
-
-        // ✅ KONTROLLO FORMATIN
-        let messages;
-        if (historyData.messages) {
-            messages = historyData.messages;
-        } else if (historyData.history) {
-            messages = historyData.history;
-        } else {
-            return res.json({
-                success: false,
-                message: '❌ Formati i skedarit nuk është i vlefshëm! Skedari duhet të ketë "messages" ose "history".'
-            });
-        }
-
-        if (!Array.isArray(messages)) {
-            return res.json({
-                success: false,
-                message: '❌ Formati i mesazheve nuk është i vlefshëm.'
-            });
-        }
-
-        console.log(`📤 NGARKIM: Gjetur ${messages.length} mesazhe`);
-
-        // ✅ FSHI HISTORINË E VJETËR
-        await new Promise((resolve) => {
-            db.run('DELETE FROM messages WHERE user_id = ?', [userId], (err) => {
-                if (err) {
-                    console.error('❌ Gabim në fshirje:', err);
-                } else {
-                    console.log('✅ Historia e vjetër u fshi');
-                }
-                resolve();
-            });
-        });
-
-        // ✅ NGARKO MESAZHET E REJA
-        let successfulImports = 0;
-        
-        for (const msg of messages) {
-            if (msg.content && msg.sender) {
-                await new Promise((resolve) => {
-                    db.run(
-                        'INSERT INTO messages (user_id, content, sender, timestamp) VALUES (?, ?, ?, ?)',
-                        [userId, msg.content, msg.sender, msg.timestamp || new Date().toISOString()],
-                        (err) => {
-                            if (err) {
-                                console.error('❌ Gabim në ngarkim:', err);
-                            } else {
-                                successfulImports++;
-                            }
-                            resolve();
-                        }
-                    );
-                });
-            }
-        }
-
-        console.log(`✅ NGARKIM: ${successfulImports} mesazhe u importuan`);
-
-        res.json({
-            success: true,
-            message: `✅ Historia u ngarkua me sukses! ${successfulImports} mesazhe të importuara.`,
-            importedCount: successfulImports
-        });
-
-    } catch (error) {
-        console.error('❌ Gabim në ngarkim:', error);
-        res.json({
-            success: false,
-            message: '❌ Gabim gjatë ngarkimit të historisë'
-        });
-    }
-});
-
-// ✅ ENDPOINT PËR DEBUG - KONTROLLO MESAZHET
-router.get('/debug-messages/:userId', (req, res) => {
-    const { userId } = req.params;
-    
-    db.all(
-        'SELECT * FROM messages WHERE user_id = ? ORDER BY timestamp DESC LIMIT 10',
-        [userId],
-        (err, rows) => {
-            if (err) {
-                console.error('❌ Gabim në debug:', err);
-                return res.json({ error: err.message });
-            }
-            
-            console.log(`🔍 DEBUG: ${rows?.length || 0} mesazhe për ${userId}`);
-            
-            res.json({
-                userId: userId,
-                totalMessages: rows?.length || 0,
-                messages: rows || []
-            });
-        }
-    );
-});
-
 
 module.exports = router;
