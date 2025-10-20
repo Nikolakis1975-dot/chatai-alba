@@ -451,7 +451,7 @@ router.post('/feedback', (req, res) => {
 // 📥 3. SISTEMI I SHKARKIMIT & NGARKIMIT TË HISTORISË
 // ======================================================
 
-// ✅ ENDPOINT PËR SHKARKIM TË HISTORISË - VENDOS NË FUND TË SKEDARIT
+// ✅ ENDPOINT PËR SHKARKIM TË HISTORISË - VERSION I PLOTË
 router.get('/download-history/:userId?', async (req, res) => {
     try {
         // ✅ MERRE userId NGA PARAMETER OSE NGA SESIONI
@@ -478,6 +478,7 @@ router.get('/download-history/:userId?', async (req, res) => {
             );
         });
 
+        // ✅ NËSE NUK KA HISTORI, KTHE JSON (SI MË PARË)
         if (history.length === 0) {
             return res.json({
                 success: false,
@@ -485,7 +486,7 @@ router.get('/download-history/:userId?', async (req, res) => {
             });
         }
 
-        // ✅ KRIJO SKEDARIN TEKST
+        // ✅ NËSE KA HISTORI, KTHE SKEDARIN .TXT
         let fileContent = `HISTORIA E BISEDËS - CHATAI ALBA\n`;
         fileContent += `Përdorues: ${userId}\n`;
         fileContent += `Data: ${new Date().toLocaleDateString('sq-AL')}\n`;
@@ -519,39 +520,6 @@ router.get('/download-history/:userId?', async (req, res) => {
         res.status(500).json({
             success: false,
             message: '❌ Gabim gjatë shkarkimit të historisë'
-        });
-    }
-});
-
-// ✅ ENDPOINT PËR NGARKIM TË HISTORISË - VENDOS PAS SHKARKIMIT
-router.post('/upload-history', async (req, res) => {
-    try {
-        const { userId } = req;
-        const { historyData } = req.body;
-
-        if (!historyData) {
-            return res.json({
-                success: false,
-                message: '❌ Nuk ka të dhëna për ngarkim'
-            });
-        }
-
-        console.log('📤 NGARKIM HISTORIE për user:', userId);
-
-        // ✅ PROCESO TË DHËNAT E NGARKUARA
-        // (Shto logjikën e nevojshme këtu)
-
-        res.json({
-            success: true,
-            message: '✅ Historia u ngarkua me sukses!',
-            mesazheNgarkuar: historyData.length || 0
-        });
-
-    } catch (error) {
-        console.error('❌ Gabim në ngarkim:', error);
-        res.json({
-            success: false,
-            message: '❌ Gabim gjatë ngarkimit të historisë'
         });
     }
 });
