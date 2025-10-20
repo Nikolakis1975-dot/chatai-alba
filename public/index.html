@@ -958,14 +958,13 @@ console.log("🎯 Voice AI sistem i plotë u inicializua!");
 <!-- 💾 FUNKSIONI PËR SHKARKIM - VERSION I SAKTË ME COOKIES -->
 <!-- ====================================================== -->
 
-// ✅ FUNKSIONI I SAKTË - PERDOR COOKIES PËR SESIONIN
+// ✅ FUNKSIONI I THJESHTË - SI BUTONI "NGARKO"
 async function downloadHistory() {
     try {
         console.log('📥 Duke shkarkuar historinë...');
         
-        // ✅ PERDOR COOKIES PËR TË MARRË SESIONIN
-        // Serveri automatikisht e di userId nga cookies (chatSessionMiddleware)
-        const response = await fetch(`/api/chat/export`, {
+        // ✅ PERDOR ENDPOINT-IN E RI QË MERRE USER ID AUTOMATIKISHT
+        const response = await fetch(`/api/chat/download-history`, {
             method: 'GET',
             credentials: 'include' // ✅ DËRGON COOKIES AUTOMATIKISHT
         });
@@ -986,7 +985,7 @@ async function downloadHistory() {
             });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.download = `historia-bisedes.json`;
+            link.download = `historia-bisedes-${data.user || 'user'}.json`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -1002,15 +1001,8 @@ async function downloadHistory() {
     }
 }
 
-// ✅ LIDH BUTONIN "SHKARKO"
-document.addEventListener('DOMContentLoaded', function() {
-    const downloadBtn = document.getElementById('download-history');
-    
-    if (downloadBtn) {
-        downloadBtn.onclick = downloadHistory;
-        console.log('✅ Butoni "Shkarko" u lidh me funksionin');
-    }
-});
+// ✅ LIDH BUTONIN
+document.getElementById('download-history').onclick = downloadHistory;
   
   </script>
   
