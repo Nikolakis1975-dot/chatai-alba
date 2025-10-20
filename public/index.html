@@ -953,46 +953,36 @@ window.debugVoiceAI = function() {
 
 console.log("🎯 Voice AI sistem i plotë u inicializua!");
 
-// ======================================================
-// 💾 SISTEMI I RIPARUAR PËR SHKARKIM & NGARKIM
-// ======================================================
+<!-- ====================================================== -->
+<!-- 💾 SISTEMI MINIMAL PËR SHKARKIM & NGARKIM -->
+<!-- MOS PRISH FUNKSIONET EKZISTUESE -->
+<!-- ====================================================== -->
 
-// ✅ BUTONI "SHKARKO" - VERSION I RIPARUAR (PA MULTI-DOWNLOAD)
+// ✅ VARIABLA PËR KONTROLL MULTI-DOWNLOAD/UPLOAD
 let isDownloading = false;
+let isUploading = false;
 
+// ✅ BUTONI "SHKARKO" - VERSION MINIMAL
 async function downloadHistory() {
-    if (isDownloading) {
-        console.log('⏳ Download në progres, prisni...');
-        return;
-    }
-    
+    if (isDownloading) return;
     isDownloading = true;
     
     try {
-        console.log('📥 Duke shkarkuar historinë e bisedës...');
-        
         const response = await fetch(`/api/chat/export-chat/user-1`, {
             method: 'GET',
             credentials: 'include'
         });
         
-        console.log('📡 Statusi:', response.status);
-        
         const data = await response.json();
-        console.log('📄 Përgjigja:', data);
         
         if (data.success && data.history) {
             const exportData = {
                 version: "1.0",
-                type: "chat_history",
+                type: "chat_history", 
                 user: data.user,
                 exportDate: data.exportDate,
                 totalMessages: data.totalMessages,
-                messages: data.history.map(msg => ({
-                    content: msg.content,
-                    sender: msg.sender,
-                    timestamp: msg.timestamp
-                }))
+                messages: data.history
             };
             
             const blob = new Blob([JSON.stringify(exportData, null, 2)], { 
@@ -1001,38 +991,33 @@ async function downloadHistory() {
             
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.download = `historia-bisedes-${data.user}-${new Date().getTime()}.json`;
-            
-            document.body.appendChild(link);
+            link.download = `historia-bisedes-${data.user}.json`;
             link.click();
             
-            setTimeout(() => {
-                document.body.removeChild(link);
-                URL.revokeObjectURL(link.href);
-            }, 100);
-            
+            // ✅ PERDOR FUNKSIONIN EKZISTUES addMessage
             if (window.addMessage) {
-                window.addMessage("✅ Historia e bisedës u shkarkua me sukses!", "bot", false);
+                window.addMessage("✅ Historia e bisedës u shkarkua me sukses!", "bot");
             }
         } else {
             if (window.addMessage) {
-                window.addMessage(`❌ ${data.message || 'Nuk ka histori bisede për të shkarkuar'}`, "bot", false);
+                window.addMessage(`❌ ${data.message || 'Nuk ka histori'}`, "bot");
             }
         }
     } catch (error) {
         console.error('❌ Gabim në shkarkim:', error);
         if (window.addMessage) {
-            window.addMessage("❌ Gabim gjatë shkarkimit të historisë.", "bot", false);
+            window.addMessage("❌ Gabim gjatë shkarkimit", "bot");
         }
     } finally {
-        setTimeout(() => {
-            isDownloading = false;
-        }, 2000);
+        setTimeout(() => { isDownloading = false; }, 2000);
     }
 }
 
-// ✅ BUTONI "NGARKO" - FUNKSIONI I RI
+// ✅ BUTONI "NGARKO" - VERSION MINIMAL  
 async function uploadHistory() {
+    if (isUploading) return;
+    isUploading = true;
+    
     try {
         const fileInput = document.createElement('input');
         fileInput.type = 'file';
@@ -1041,27 +1026,22 @@ async function uploadHistory() {
         
         fileInput.onchange = async function(event) {
             const file = event.target.files[0];
-            if (!file) return;
+            if (!file) {
+                isUploading = false;
+                return;
+            }
             
             try {
-                console.log('📤 Duke ngarkuar skedarin...');
-                
                 if (window.addMessage) {
-                    window.addMessage("📤 Po ngarkoj historinë...", "bot", false);
+                    window.addMessage("📤 Po ngarkoj historinë...", "bot");
                 }
                 
                 const fileContent = await file.text();
                 const fileData = JSON.parse(fileContent);
                 
-                if (!fileData.messages && !fileData.history) {
-                    throw new Error('Skedari nuk përmban historinë e duhur');
-                }
-                
                 const response = await fetch('/api/chat/upload-chat-history', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: {'Content-Type': 'application/json'},
                     credentials: 'include',
                     body: JSON.stringify({
                         userId: 'user-1',
@@ -1073,53 +1053,52 @@ async function uploadHistory() {
                 
                 if (result.success) {
                     if (window.addMessage) {
-                        window.addMessage(`✅ ${result.message}`, "bot", false);
+                        window.addMessage(`✅ ${result.message}`, "bot");
                     }
-                    setTimeout(() => {
-                        location.reload();
-                    }, 2000);
+                    setTimeout(() => location.reload(), 2000);
                 } else {
                     if (window.addMessage) {
-                        window.addMessage(`❌ ${result.message}`, "bot", false);
+                        window.addMessage(`❌ ${result.message}`, "bot");
                     }
                 }
-                
             } catch (error) {
                 console.error('❌ Gabim në ngarkim:', error);
                 if (window.addMessage) {
-                    window.addMessage(`❌ Gabim: ${error.message}`, "bot", false);
+                    window.addMessage(`❌ Gabim: ${error.message}`, "bot");
                 }
+            } finally {
+                isUploading = false;
             }
         };
         
         document.body.appendChild(fileInput);
         fileInput.click();
-        document.body.removeChild(fileInput);
+        setTimeout(() => {
+            if (document.body.contains(fileInput)) {
+                document.body.removeChild(fileInput);
+            }
+            isUploading = false;
+        }, 10000);
         
     } catch (error) {
         console.error('❌ Gabim në uploadHistory:', error);
         if (window.addMessage) {
-            window.addMessage("❌ Gabim gjatë ngarkimit", "bot", false);
+            window.addMessage("❌ Gabim gjatë ngarkimit", "bot");
         }
+        isUploading = false;
     }
 }
 
-// ✅ LIDH BUTONAT PAS NGARKIMIT
+// ✅ LIDH BUTONAT
 document.addEventListener('DOMContentLoaded', function() {
     const downloadBtn = document.getElementById('download-history');
-    if (downloadBtn) {
-        downloadBtn.onclick = downloadHistory;
-        console.log('✅ Butoni "Shkarko" u lidh');
-    }
+    if (downloadBtn) downloadBtn.onclick = downloadHistory;
     
     const uploadBtn = document.getElementById('upload-history');
-    if (uploadBtn) {
-        uploadBtn.onclick = uploadHistory;
-        console.log('✅ Butoni "Ngarko" u lidh');
-    }
+    if (uploadBtn) uploadBtn.onclick = uploadHistory;
+    
+    console.log('✅ Butonat e shkarkimit/ngarkimit u lidhën');
 });
-
-console.log('🎯 Sistemi i shkarkimit dhe ngarkimit u ngarkua!');
     
   </script>
   
