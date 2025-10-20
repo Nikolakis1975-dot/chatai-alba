@@ -74,7 +74,7 @@ function getSimpleNaturalResponse(message) {
     return "E kuptoj! 😊 Përdorni /ndihmo për të parë të gjitha komandat e mia, ose më tregoni më shumë se çfarë keni nevojë.";
 }
 
-// ✅ RUTA KRYESORE PËR MESAZHET - TRAJTON TË GJITHA MESAZHET
+// ====================== ✅ RUTA KRYESORE PËR MESAZHET - TRAJTON TË GJITHA MESAZHET ===============================
 // router.post('/', async (req, res) => {
  //   try {
    //     const { message, userId } = req.body;
