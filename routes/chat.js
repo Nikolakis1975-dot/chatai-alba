@@ -349,21 +349,63 @@ router.get('/knowledge/:userId/:question', (req, res) => {
     );
 });
 
-// ✅ KODI EKZISTUES - EKSPORTO NJOHURITË
-router.get('/export/:userId', (req, res) => {
-    const { userId } = req.params;
+// ======================================================
+// 💾 ENDPOINT I RI PËR SHKARKIM HISTORIE BISEDE
+// ======================================================
 
-    db.all(
-        'SELECT question, answer FROM knowledge_base WHERE user_id = ?',
-        [userId],
-        (err, rows) => {
-            if (err) {
-                return res.status(500).json({ error: 'Gabim gjatë eksportimit të njohurive' });
-            }
+// ✅ ENDPOINT I RI PËR SHKARKIM HISTORIE BISEDE SI JSON
+router.get('/export-chat/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        
+        console.log('💾 SHKARKO CHAT HISTORY: Duke përgatitur historinë e bisedës për:', userId);
+        
+        // ✅ MERRE HISTORINË E BISEDËS NGA TABELA messages
+        const chatHistory = await new Promise((resolve) => {
+            db.all(
+                `SELECT content, sender, timestamp 
+                 FROM messages 
+                 WHERE user_id = ? 
+                 ORDER BY timestamp ASC`,
+                [userId],
+                (err, rows) => {
+                    if (err) {
+                        console.error('❌ GABIM SHKARKIMI CHAT HISTORY:', err);
+                        resolve([]);
+                    } else {
+                        console.log(`✅ SHKARKO CHAT HISTORY: Gjetur ${rows?.length || 0} mesazhe`);
+                        resolve(rows || []);
+                    }
+                }
+            );
+        });
 
-            res.json(rows);
+        // ✅ NËSE NUK KA HISTORI, KTHE JSON ME GABIM
+        if (chatHistory.length === 0) {
+            return res.json({
+                success: false,
+                message: '❌ Nuk ka histori bisede për të shkarkuar'
+            });
         }
-    );
+
+        // ✅ NËSE KA HISTORI, KTHE JSON ME TË DHËNAT
+        console.log(`✅ SHKARKO CHAT HISTORY: Duke dërguar ${chatHistory.length} mesazhe si JSON`);
+        
+        res.json({
+            success: true,
+            history: chatHistory,
+            user: userId,
+            exportDate: new Date().toISOString(),
+            totalMessages: chatHistory.length
+        });
+
+    } catch (error) {
+        console.error('❌ GABIM NË SHKARKIM CHAT HISTORY:', error);
+        res.status(500).json({
+            success: false,
+            message: '❌ Gabim gjatë shkarkimit të historisë'
+        });
+    }
 });
 
 // ✅ KODI EKZISTUES - IMPORTO NJOHURITË
