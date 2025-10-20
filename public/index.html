@@ -953,30 +953,28 @@ window.debugVoiceAI = function() {
 
 console.log("🎯 Voice AI sistem i plotë u inicializua!");
  
-  <!-- ====================================================== -->
-<!-- 💾 VETËM FUNKSIONI PËR SHKARKIM - SHUMË E THJESHTË -->
+
+<!-- ====================================================== -->
+<!-- 💾 FUNKSIONI PËR SHKARKIM - VERSION I SAKTË ME COOKIES -->
 <!-- ====================================================== -->
 
-
-// ✅ VETËM FUNKSIONI PËR SHKARKIM HISTORIE
+// ✅ FUNKSIONI I SAKTË - PERDOR COOKIES PËR SESIONIN
 async function downloadHistory() {
-    // Kontrollo nëse përdoruesi është i kyçur
-    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
-    
-    if (!currentUser || !currentUser.id) {
-        addMessage("❌ Ju duhet të jeni i kyçur për të shkarkuar historinë.", "bot");
-        return;
-    }
-    
     try {
-        const userId = currentUser.id;
-        console.log('📥 Duke shkarkuar historinë për:', userId);
+        console.log('📥 Duke shkarkuar historinë...');
         
-        // ✅ THËRRE ENDPOINT-IN PËR SHKARKIM
-        const response = await fetch(`/api/chat/export/${userId}`, {
+        // ✅ PERDOR COOKIES PËR TË MARRË SESIONIN
+        // Serveri automatikisht e di userId nga cookies (chatSessionMiddleware)
+        const response = await fetch(`/api/chat/export`, {
             method: 'GET',
-            credentials: 'include'
+            credentials: 'include' // ✅ DËRGON COOKIES AUTOMATIKISHT
         });
+        
+        console.log('📡 Statusi i përgjigjes:', response.status);
+        
+        if (!response.ok) {
+            throw new Error(`Serveri ktheu ${response.status}`);
+        }
         
         const data = await response.json();
         console.log('📄 Përgjigja nga serveri:', data);
@@ -988,7 +986,7 @@ async function downloadHistory() {
             });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.download = `historia-bisedes-${userId}.json`;
+            link.download = `historia-bisedes.json`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -1004,18 +1002,15 @@ async function downloadHistory() {
     }
 }
 
-// ✅ LIDH VETËM BUTONIN "SHKARKO"
+// ✅ LIDH BUTONIN "SHKARKO"
 document.addEventListener('DOMContentLoaded', function() {
     const downloadBtn = document.getElementById('download-history');
     
     if (downloadBtn) {
         downloadBtn.onclick = downloadHistory;
         console.log('✅ Butoni "Shkarko" u lidh me funksionin');
-    } else {
-        console.log('❌ Butoni "Shkarko" nuk u gjet');
     }
 });
-
   
   </script>
   
