@@ -448,17 +448,24 @@ router.post('/feedback', (req, res) => {
 });
 
 // ======================================================
-// 💾 ENDPOINT PËR SHKARKIM TË HISTORISË SË BISEDËS SI JSON
+// 💾 ENDPOINT PËR SHKARKIM - SI BUTONI "NGARKO" QË FUNKSIONON
 // ======================================================
 
-// ✅ ENDPOINT PËR SHKARKIM HISTORIE BISEDE SI JSON (PËR BUTONIN "SHKARKO")
-router.get('/export/:userId', async (req, res) => {
+// ✅ ENDPOINT PËR SHKARKIM HISTORIE (SI /export-history QË EKZISTON)
+router.get('/download-history', async (req, res) => {
     try {
-        const { userId } = req.params;
+        const userId = req.userId; // ✅ MERRE AUTOMATIKISHT NGA SESIONI
         
-        console.log('💾 SHKARKO JSON: Duke përgatitur historinë e bisedës si JSON për:', userId);
+        console.log('💾 DOWNLOAD-HISTORY: Duke përgatitur historinë për:', userId);
         
-        // ✅ MERRE HISTORINË E BISEDËS NGA TABELA messages
+        if (!userId) {
+            return res.json({
+                success: false,
+                message: '❌ Nuk ka sesion aktiv'
+            });
+        }
+        
+        // ✅ MERRE HISTORINË E BISEDËS - PËRDOR TË NJËJTËN LOGJIKË SI /export-history
         const chatHistory = await new Promise((resolve) => {
             db.all(
                 `SELECT content, sender, timestamp 
@@ -468,17 +475,17 @@ router.get('/export/:userId', async (req, res) => {
                 [userId],
                 (err, rows) => {
                     if (err) {
-                        console.error('❌ GABIM SHKARKIMI JSON:', err);
+                        console.error('❌ GABIM SHKARKIMI:', err);
                         resolve([]);
                     } else {
-                        console.log(`✅ SHKARKO JSON: Gjetur ${rows?.length || 0} mesazhe`);
+                        console.log(`✅ DOWNLOAD-HISTORY: Gjetur ${rows?.length || 0} mesazhe`);
                         resolve(rows || []);
                     }
                 }
             );
         });
 
-        // ✅ NËSE NUK KA HISTORI, KTHE JSON ME GABIM
+        // ✅ NËSE NUK KA HISTORI, KTHE JSON
         if (chatHistory.length === 0) {
             return res.json({
                 success: false,
@@ -486,9 +493,7 @@ router.get('/export/:userId', async (req, res) => {
             });
         }
 
-        // ✅ NËSE KA HISTORI, KTHE JSON ME TË DHËNAT
-        console.log(`✅ SHKARKO JSON: Duke dërguar ${chatHistory.length} mesazhe si JSON`);
-        
+        // ✅ KTHE JSON SI BUTONI "NGARKO"
         res.json({
             success: true,
             history: chatHistory,
@@ -498,7 +503,7 @@ router.get('/export/:userId', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('❌ GABIM NË SHKARKIM JSON:', error);
+        console.error('❌ GABIM NË DOWNLOAD-HISTORY:', error);
         res.status(500).json({
             success: false,
             message: '❌ Gabim gjatë shkarkimit të historisë'
