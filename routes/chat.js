@@ -9,7 +9,7 @@ const constants = require('../config/constants');
 // ✅ IMPORT I COMMAND SERVICE
 const CommandService = require('../services/commandService');
 
-// ✅ FUNKSIONET NDIHMËSE ME DATABASE CORRECT
+// ============================= ✅ FUNKSIONET NDIHMËSE ME DATABASE CORRECT =================================
 async function checkApiKey(userId) {
     return new Promise((resolve, reject) => {
         db.get(
