@@ -410,13 +410,12 @@ router.post('/feedback', (req, res) => {
 // ======================================================
 // 🆕 SISTEMI I RI PËR SHKARKIM HISTORIE BISEDE
 // ======================================================
-
-// ✅ ENDPOINT I RI PËR SHKARKIM HISTORIE BISEDE SI JSON
+// ✅ ENDPOINT I RIPARUAR PËR SHKARKIM HISTORIE BISEDE
 router.get('/export-chat/:userId', async (req, res) => {
     try {
         const { userId } = req.params;
         
-        console.log('💾 SHKARKO CHAT HISTORY: Duke përgatitur historinë e bisedës për:', userId);
+        console.log('💾 SHKARKO CHAT HISTORY: Duke përgatitur historinë për:', userId);
         
         // ✅ MERRE HISTORINË E BISEDËS NGA TABELA messages
         const chatHistory = await new Promise((resolve) => {
@@ -466,6 +465,93 @@ router.get('/export-chat/:userId', async (req, res) => {
     }
 });
 
+// ✅ ENDPOINT I RI PËR NGARKIM HISTORIE BISEDE
+router.post('/upload-chat-history', async (req, res) => {
+    try {
+        const { userId = 'user-1', historyData } = req.body;
+
+        console.log('📤 NGARKIM: Duke procesuar skedarin për:', userId);
+
+        if (!historyData) {
+            return res.json({
+                success: false,
+                message: '❌ Nuk ka të dhëna për ngarkim'
+            });
+        }
+
+        // ✅ KONTROLLO FORMATIN
+        let messages;
+        if (historyData.messages) {
+            messages = historyData.messages;
+        } else if (historyData.history) {
+            messages = historyData.history;
+        } else {
+            return res.json({
+                success: false,
+                message: '❌ Formati i skedarit nuk është i vlefshëm! Skedari duhet të ketë "messages" ose "history".'
+            });
+        }
+
+        if (!Array.isArray(messages)) {
+            return res.json({
+                success: false,
+                message: '❌ Formati i mesazheve nuk është i vlefshëm.'
+            });
+        }
+
+        console.log(`📤 NGARKIM: Gjetur ${messages.length} mesazhe`);
+
+        // ✅ FSHI HISTORINË E VJETËR
+        await new Promise((resolve) => {
+            db.run('DELETE FROM messages WHERE user_id = ?', [userId], (err) => {
+                if (err) {
+                    console.error('❌ Gabim në fshirje:', err);
+                } else {
+                    console.log('✅ Historia e vjetër u fshi');
+                }
+                resolve();
+            });
+        });
+
+        // ✅ NGARKO MESAZHET E REJA
+        let successfulImports = 0;
+        
+        for (const msg of messages) {
+            if (msg.content && msg.sender) {
+                await new Promise((resolve) => {
+                    db.run(
+                        'INSERT INTO messages (user_id, content, sender, timestamp) VALUES (?, ?, ?, ?)',
+                        [userId, msg.content, msg.sender, msg.timestamp || new Date().toISOString()],
+                        (err) => {
+                            if (err) {
+                                console.error('❌ Gabim në ngarkim:', err);
+                            } else {
+                                successfulImports++;
+                            }
+                            resolve();
+                        }
+                    );
+                });
+            }
+        }
+
+        console.log(`✅ NGARKIM: ${successfulImports} mesazhe u importuan`);
+
+        res.json({
+            success: true,
+            message: `✅ Historia u ngarkua me sukses! ${successfulImports} mesazhe të importuara.`,
+            importedCount: successfulImports
+        });
+
+    } catch (error) {
+        console.error('❌ Gabim në ngarkim:', error);
+        res.json({
+            success: false,
+            message: '❌ Gabim gjatë ngarkimit të historisë'
+        });
+    }
+});
+
 // ✅ ENDPOINT PËR DEBUG - KONTROLLO MESAZHET
 router.get('/debug-messages/:userId', (req, res) => {
     const { userId } = req.params;
@@ -489,5 +575,6 @@ router.get('/debug-messages/:userId', (req, res) => {
         }
     );
 });
+
 
 module.exports = router;
