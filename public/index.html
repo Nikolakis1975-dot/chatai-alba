@@ -262,7 +262,7 @@
       <button id="verify-email-btn" onclick="verifyEmail()">📧 Verifiko Email</button>
       <button id="change-photo">🖼️ Ndrysho Foto</button>
       <button id="api-key-btn">🔑 API Key</button>
-      <button id="download-history">📥 Shkarko</button>
+      <button id="download-history" onclick="downloadHistory()">📥 Shkarko</button>
       <button id="upload-history">📤 Ngarko</button>
       <button id="clear-history">🗑️ Fshi</button>
       <button onclick="logout()">🚪 Dil</button>     
@@ -952,6 +952,71 @@ window.debugVoiceAI = function() {
 };
 
 console.log("🎯 Voice AI sistem i plotë u inicializua!");
+ 
+  <!-- ====================================================== -->
+<!-- 💾 VETËM FUNKSIONI PËR SHKARKIM - SHUMË E THJESHTË -->
+<!-- ====================================================== -->
+
+
+// ✅ VETËM FUNKSIONI PËR SHKARKIM HISTORIE
+async function downloadHistory() {
+    // Kontrollo nëse përdoruesi është i kyçur
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    
+    if (!currentUser || !currentUser.id) {
+        addMessage("❌ Ju duhet të jeni i kyçur për të shkarkuar historinë.", "bot");
+        return;
+    }
+    
+    try {
+        const userId = currentUser.id;
+        console.log('📥 Duke shkarkuar historinë për:', userId);
+        
+        // ✅ THËRRE ENDPOINT-IN PËR SHKARKIM
+        const response = await fetch(`/api/chat/export/${userId}`, {
+            method: 'GET',
+            credentials: 'include'
+        });
+        
+        const data = await response.json();
+        console.log('📄 Përgjigja nga serveri:', data);
+        
+        if (data.success && data.history) {
+            // ✅ SHKARKO SI JSON FILE
+            const blob = new Blob([JSON.stringify(data, null, 2)], { 
+                type: "application/json" 
+            });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `historia-bisedes-${userId}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+            
+            addMessage("✅ Historia e bisedës u shkarkua me sukses!", "bot");
+        } else {
+            addMessage(`❌ ${data.message || 'Nuk ka histori për të shkarkuar'}`, "bot");
+        }
+    } catch (error) {
+        console.error('❌ Gabim në shkarkim:', error);
+        addMessage("❌ Gabim gjatë shkarkimit të historisë.", "bot");
+    }
+}
+
+// ✅ LIDH VETËM BUTONIN "SHKARKO"
+document.addEventListener('DOMContentLoaded', function() {
+    const downloadBtn = document.getElementById('download-history');
+    
+    if (downloadBtn) {
+        downloadBtn.onclick = downloadHistory;
+        console.log('✅ Butoni "Shkarko" u lidh me funksionin');
+    } else {
+        console.log('❌ Butoni "Shkarko" nuk u gjet');
+    }
+});
+
+  
   </script>
   
 <!-- ✅ KËTO MBETIN SI JANË -->
