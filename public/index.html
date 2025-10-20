@@ -952,6 +952,50 @@ window.debugVoiceAI = function() {
 };
 
 console.log("🎯 Voice AI sistem i plotë u inicializua!");
+
+// ======================== ✅ VENDOS KËTË NË FUND TË <script> TAG NË index.html ===========================
+
+// ======================================================
+// 🔧 KORRIGJIME TË SHPEJTA PA PRISHJE - RRUFEJA 333
+// ======================================================
+
+// ✅ 1. FUNKSIONI I THJESHTË PËR RUAJTJE (VETËM KUR ËSHTË GATI)
+async function saveMessageToDatabaseSimple(content, sender) {
+    try {
+        await fetch('/api/chat/save', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                userId: 'user-1',
+                content: content,
+                sender: sender,
+                timestamp: new Date().toISOString()
+            })
+        });
+    } catch (error) {
+        console.log('💾 Ruajtja nuk funksionoi, vazhdojmë:');
+    }
+}
+
+// ✅ 2. MBISHTRO VETËM PËR TË RUAJTUR PAS PËRGJIGJES
+const originalAddMessage = window.addMessage;
+window.addMessage = async function(content, sender) {
+    // THIRRE ORIGJINALIN GJITHMONË
+    if (originalAddMessage) {
+        originalAddMessage(content, sender);
+    }
+    
+    // ✅ RUAJ VETËM PASI TË JETË DHËNË PËRGJIGJA
+    // MOS NDAIH KUR SISTEMI ËSHTË NË PROCESIM
+    setTimeout(async () => {
+        if (sender !== 'system' && !content.includes('❌') && content.length > 2) {
+            await saveMessageToDatabaseSimple(content, sender);
+        }
+    }, 1000);
+}
+
+console.log('✅ Korrigjimet u ngarkuan pa prishje!');
+    
   </script>
   
 <!-- ✅ KËTO MBETIN SI JANË -->
