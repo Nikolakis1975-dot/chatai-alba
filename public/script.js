@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// ==================== SISTEMI I RI I AUTHENTIKIMIT ====================
+// ====================== SISTEMI I RI I AUTHENTIKIMIT ====================
 
 // ✅ KONTROLLO STATUSIN E AUTH ME HTTP-ONLY COOKIES
 async function checkAuthStatus() {
