@@ -448,18 +448,19 @@ router.post('/feedback', (req, res) => {
 });
 
 // ======================================================
-// 📥 3. SISTEMI I SHKARKIMIT & NGARKIMIT TË HISTORISË
+// 💾 3. SISTEMI I SHKARKIMIT & NGARKIMIT TË HISTORISË SË BISEDËS
 // ======================================================
 
-// ✅ ENDPOINT PËR SHKARKIM TË HISTORISË - VERSION I PLOTË
-router.get('/download-history/:userId?', async (req, res) => {
+// ✅ ENDPOINT PËR SHKARKIM TË HISTORISË SË BISEDËS - VERSION I SAKTË
+router.get('/download-chat-history/:userId?', async (req, res) => {
     try {
         // ✅ MERRE userId NGA PARAMETER OSE NGA SESIONI
         const userId = req.params.userId || req.userId;
         
-        console.log('📥 SHKARKO: Duke përgatitur historinë për:', userId);
+        console.log('💾 SHKARKO CHAT HISTORY: Duke përgatitur historinë e bisedës për:', userId);
         
-        const history = await new Promise((resolve) => {
+        // ✅ MERRE HISTORINË E BISEDËS NGA TABELA messages
+        const chatHistory = await new Promise((resolve) => {
             db.all(
                 `SELECT content, sender, timestamp 
                  FROM messages 
@@ -468,33 +469,33 @@ router.get('/download-history/:userId?', async (req, res) => {
                 [userId],
                 (err, rows) => {
                     if (err) {
-                        console.error('❌ GABIM SHKARKIMI:', err);
+                        console.error('❌ GABIM SHKARKIMI CHAT HISTORY:', err);
                         resolve([]);
                     } else {
-                        console.log(`✅ SHKARKO: Gjetur ${rows?.length || 0} mesazhe`);
+                        console.log(`✅ SHKARKO CHAT HISTORY: Gjetur ${rows?.length || 0} mesazhe`);
                         resolve(rows || []);
                     }
                 }
             );
         });
 
-        // ✅ NËSE NUK KA HISTORI, KTHE JSON (SI MË PARË)
-        if (history.length === 0) {
+        // ✅ NËSE NUK KA HISTORI BISEDE, KTHE JSON
+        if (chatHistory.length === 0) {
             return res.json({
                 success: false,
-                message: '❌ Nuk ka histori për të shkarkuar'
+                message: '❌ Nuk ka histori bisede për të shkarkuar'
             });
         }
 
-        // ✅ NËSE KA HISTORI, KTHE SKEDARIN .TXT
+        // ✅ NËSE KA HISTORI BISEDE, KTHE SKEDARIN .TXT
         let fileContent = `HISTORIA E BISEDËS - CHATAI ALBA\n`;
         fileContent += `Përdorues: ${userId}\n`;
         fileContent += `Data: ${new Date().toLocaleDateString('sq-AL')}\n`;
         fileContent += `Ora: ${new Date().toLocaleTimeString('sq-AL')}\n`;
-        fileContent += `Total mesazhe: ${history.length}\n`;
+        fileContent += `Total mesazhe: ${chatHistory.length}\n`;
         fileContent += '='.repeat(50) + '\n\n';
 
-        history.forEach((msg, index) => {
+        chatHistory.forEach((msg, index) => {
             const person = msg.sender === 'user' ? 'USER' : 'BOT';
             const time = msg.timestamp ? 
                 new Date(msg.timestamp).toLocaleString('sq-AL') : 'Koha e panjohur';
@@ -509,17 +510,73 @@ router.get('/download-history/:userId?', async (req, res) => {
 
         // ✅ VENDOS HEADERS PËR SHKARKIM
         res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-        res.setHeader('Content-Disposition', `attachment; filename="historia-${userId}.txt"`);
+        res.setHeader('Content-Disposition', `attachment; filename="historia-bisedes-${userId}.txt"`);
         
-        console.log(`✅ SHKARKO: Duke dërguar ${history.length} mesazhe`);
+        console.log(`✅ SHKARKO CHAT HISTORY: Duke dërguar ${chatHistory.length} mesazhe`);
 
         res.send(fileContent);
 
     } catch (error) {
-        console.error('❌ GABIM NË SHKARKIM:', error);
+        console.error('❌ GABIM NË SHKARKIM CHAT HISTORY:', error);
         res.status(500).json({
             success: false,
-            message: '❌ Gabim gjatë shkarkimit të historisë'
+            message: '❌ Gabim gjatë shkarkimit të historisë së bisedës'
+        });
+    }
+});
+
+// ✅ ENDPOINT PËR NGARKIM TË HISTORISË SË BISEDËS
+router.post('/upload-chat-history', async (req, res) => {
+    try {
+        const { userId } = req;
+        const { chatHistory } = req.body;
+
+        if (!chatHistory || !Array.isArray(chatHistory)) {
+            return res.json({
+                success: false,
+                message: '❌ Nuk ka të dhëna të vlefshme për ngarkim'
+            });
+        }
+
+        console.log('📤 NGARKIM CHAT HISTORY për user:', userId, 'mesazhe:', chatHistory.length);
+
+        // ✅ FSHI HISTORINË E VJETËR TË BISEDËS
+        await new Promise((resolve) => {
+            db.run('DELETE FROM messages WHERE user_id = ?', [userId], (err) => {
+                if (err) console.error('❌ Gabim në fshirje të historisë së vjetër:', err);
+                resolve();
+            });
+        });
+
+        // ✅ NGARKO HISTORINË E RE TË BISEDËS
+        let mesazheNgarkuar = 0;
+        for (const msg of chatHistory) {
+            if (msg.content && msg.sender) {
+                await new Promise((resolve) => {
+                    db.run(
+                        'INSERT INTO messages (user_id, content, sender, timestamp) VALUES (?, ?, ?, ?)',
+                        [userId, msg.content, msg.sender, msg.timestamp || new Date().toISOString()],
+                        (err) => {
+                            if (err) console.error('❌ Gabim në ngarkim të mesazhit:', err);
+                            else mesazheNgarkuar++;
+                            resolve();
+                        }
+                    );
+                });
+            }
+        }
+
+        res.json({
+            success: true,
+            message: '✅ Historia e bisedës u ngarkua me sukses!',
+            mesazheNgarkuar: mesazheNgarkuar
+        });
+
+    } catch (error) {
+        console.error('❌ Gabim në ngarkim chat history:', error);
+        res.json({
+            success: false,
+            message: '❌ Gabim gjatë ngarkimit të historisë së bisedës'
         });
     }
 });
