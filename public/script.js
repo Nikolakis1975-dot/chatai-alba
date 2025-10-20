@@ -99,7 +99,7 @@ async function login() {
     }
 }
 
-// ✅ LOGIN ME HTTP-ONLY COOKIES - VERSION I SIGURT
+// =================== ✅ LOGIN ME HTTP-ONLY COOKIES - VERSION I SIGURT ===================================
 async function login() {
     try {
         const username = document.getElementById("username").value.trim().toLowerCase();
