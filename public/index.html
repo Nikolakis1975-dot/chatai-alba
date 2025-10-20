@@ -952,119 +952,69 @@ window.debugVoiceAI = function() {
 };
 
 console.log("🎯 Voice AI sistem i plotë u inicializua!");
-
-// ======================== ✅ VENDOS KËTË NË FUND TË <script> TAG NË index.html ===========================
-
-// ======================================================
-// 🔧 KORRIGJIME TË SHPEJTA PA PRISHJE - RRUFEJA 333
-// ======================================================
-
-// ✅ 1. FUNKSIONI I THJESHTË PËR RUAJTJE (VETËM KUR ËSHTË GATI)
-async function saveMessageToDatabaseSimple(content, sender) {
-    try {
-        await fetch('/api/chat/save', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                userId: 'user-1',
-                content: content,
-                sender: sender,
-                timestamp: new Date().toISOString()
-            })
-        });
-    } catch (error) {
-        console.log('💾 Ruajtja nuk funksionoi, vazhdojmë:');
-    }
-}
-
-// ✅ 2. MBISHTRO VETËM PËR TË RUAJTUR PAS PËRGJIGJES
-const originalAddMessage = window.addMessage;
-window.addMessage = async function(content, sender) {
-    // THIRRE ORIGJINALIN GJITHMONË
-    if (originalAddMessage) {
-        originalAddMessage(content, sender);
-    }
     
-    // ✅ RUAJ VETËM PASI TË JETË DHËNË PËRGJIGJA
-    // MOS NDAIH KUR SISTEMI ËSHTË NË PROCESIM
-    setTimeout(async () => {
-        if (sender !== 'system' && !content.includes('❌') && content.length > 2) {
-            await saveMessageToDatabaseSimple(content, sender);
-        }
-    }, 1000);
-}
-
-console.log('✅ Korrigjimet u ngarkuan pa prishje!');
-
 // ======================================================
-// 🚀 SISTEMI I SESIONIT RRUFEJE - VERSIONI I PLOTË
+// 🚀 SISTEMI I SESIONIT RRUFEJE - VERSIONI FINAL
 // ======================================================
 
-class SessionManager {
+console.log('🔍 Duke ngarkuar Sistemin e Sesionit RRUFEJE...');
+
+// ✅ KRIJO SESION MANAGER
+class RrufeSessionManager {
     constructor() {
         this.sessionId = this.getOrCreateSessionId();
         this.sessionStart = new Date();
         this.messageCount = 0;
-        console.log(`🚀 SESIONI I RRUFEJES U NGARKUA: ${this.sessionId}`);
+        console.log(`🚀 SESIONI RRUFEJE: ${this.sessionId}`);
     }
     
-    // ✅ MARR OSE KRIJO ID SESIONI
     getOrCreateSessionId() {
-        let sessionId = localStorage.getItem('chatbotSessionId');
-        
+        let sessionId = localStorage.getItem('rrufeSessionId');
         if (!sessionId) {
-            // ✅ KRIJO ID UNIKE RRUFEJE
-            sessionId = this.generateRrufeSessionId();
-            localStorage.setItem('chatbotSessionId', sessionId);
-            console.log('🎯 KRIJOVA SESION TË RI RRUFEJE:', sessionId);
+            sessionId = 'rrufe_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('rrufeSessionId', sessionId);
+            console.log('🎯 KRIJOVA SESION TË RI:', sessionId);
         } else {
-            console.log('🔁 RIKTHEVA SESIONIN E RRUFEJES:', sessionId);
+            console.log('🔁 RIKTHEVA SESIONIN:', sessionId);
         }
-        
         return sessionId;
     }
     
-    // ✅ GJENERO ID UNIKE RRUFEJE
-    generateRrufeSessionId() {
-        const timestamp = Date.now().toString(36);
-        const random = Math.random().toString(36).substr(2, 9);
-        return `rrufe_${timestamp}_${random}`;
-    }
-    
-    // ✅ MERRE SESIONIN AKTUAL
-    getCurrentSession() {
+    getSessionInfo() {
+        const duration = Date.now() - this.sessionStart.getTime();
+        const minutes = Math.floor(duration / 60000);
+        const seconds = Math.floor((duration % 60000) / 1000);
+        
         return {
             id: this.sessionId,
             start: this.sessionStart,
-            duration: Date.now() - this.sessionStart.getTime(),
+            duration: `${minutes}m ${seconds}s`,
             messageCount: this.messageCount
         };
     }
     
-    // ✅ RIVENDO SESIONIN (PAS DALJES)
     renewSession() {
-        const newSessionId = this.generateRrufeSessionId();
-        localStorage.setItem('chatbotSessionId', newSessionId);
-        this.sessionId = newSessionId;
+        const newId = 'rrufe_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('rrufeSessionId', newId);
+        this.sessionId = newId;
         this.sessionStart = new Date();
         this.messageCount = 0;
-        console.log('🔄 SESIONI I RRUFEJES U RIVENDOS:', newSessionId);
-        return newSessionId;
+        console.log('🔄 SESIONI U RIVENDOS:', newId);
+        return newId;
     }
     
-    // ✅ NUMËRO MESAZHET
-    incrementMessageCount() {
+    incrementCount() {
         this.messageCount++;
     }
 }
 
-// ✅ INICIALIZO MENAXHERIN E SESIONIT
-window.sessionManager = new SessionManager();
+// ✅ INICIALIZO SESIONIN
+window.rrufeSessionManager = new RrufeSessionManager();
 
-// ✅ FUNKSION I THJESHTË PËR RUAJTJE
-async function saveMessageToDatabaseSimple(content, sender) {
+// ✅ FUNKSIONI I THJESHTË PËR RUAJTJE
+async function saveMessageToRrufeDatabase(content, sender) {
     try {
-        await fetch('/api/chat/save', {
+        const response = await fetch('/api/chat/save', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
@@ -1072,164 +1022,88 @@ async function saveMessageToDatabaseSimple(content, sender) {
                 content: content,
                 sender: sender,
                 timestamp: new Date().toISOString(),
-                sessionId: window.sessionManager.sessionId // ✅ Shto sessionId
+                sessionId: window.rrufeSessionManager.sessionId
             })
         });
-        window.sessionManager.incrementMessageCount();
+        
+        if (response.ok) {
+            window.rrufeSessionManager.incrementCount();
+            console.log('💾 Mesazhi u ruajt:', content.substring(0, 30));
+        }
     } catch (error) {
         console.log('💾 Ruajtja dështoi, vazhdojmë:');
     }
 }
 
-// ✅ MBISHTRO addMessage PËR TË PËRDORUR SESIONIN
-const originalAddMessage = window.addMessage;
-window.addMessage = async function(content, sender, saveToDatabase = true) {
-    // THIRRE FUNKSIONIN ORIGJINAL
-    if (originalAddMessage) {
-        originalAddMessage(content, sender);
-    }
-    
-    // ✅ RUAJ NË DATABASE PASI TË JETË DHËNË PËRGJIGJA
-    if (saveToDatabase && sender !== 'system' && !content.includes('❌') && content.length > 2) {
-        setTimeout(async () => {
-            await saveMessageToDatabaseSimple(content, sender);
-        }, 500);
-    }
-}
-
-// ✅ MBISHTRO sendMessage PËR TË PËRDORUR SESIONIN
-const originalSendMessage = window.sendMessage;
-window.sendMessage = async function() {
-    const input = document.getElementById('user-input');
-    const message = input.value.trim();
-    
-    if (!message) return;
-
-    // ✅ SHTO MESAZHIN E PËRDORUESIT (PA RUAJTJE TË MENJËHERSHME)
-    await window.addMessage(message, 'user', false);
-    
-    input.value = '';
-    
-    try {
-        // ✅ DËRGO ME SESION ID
-        const response = await fetch('/api/chat/message', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Session-ID': window.sessionManager.sessionId // ✅ SESIONI RRUFEJE!
-            },
-            credentials: 'include',
-            body: JSON.stringify({
-                message: message,
-                userId: window.currentUser?.id || 1,
-                sessionId: window.sessionManager.sessionId // ✅ EDHE NË BODY
-            })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            // ✅ SHTO PËRGJIGJEN E BOTIT DHE RUAJI TË DYJA
-            await window.addMessage(data.response, 'bot', true);
-            // ✅ RUAJ MESAZHIN E PËRDORUESIT PAS PËRGJIGJES
-            await window.addMessage(message, 'user', true);
-        } else {
-            await window.addMessage('❌ ' + (data.response || 'Gabim në server'), 'bot', true);
-        }
-    } catch (error) {
-        console.error('❌ Gabim:', error);
-        await window.addMessage('❌ Gabim në lidhje me serverin', 'bot', true);
-    }
-}
-
-// ✅ FUNKSION PËR TË SHFAQUR INFORMACIONIN E SESIONIT
-window.showSessionInfo = function() {
-    const session = window.sessionManager.getCurrentSession();
-    const minutes = Math.round(session.duration / 1000 / 60);
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
+// ✅ FUNKSIONI PËR TË SHFAQUR SESION INFO
+function showRrufeSessionInfo() {
+    const session = window.rrufeSessionManager.getSessionInfo();
     
     const sessionInfo = `
 🎯 **INFORMACION I SESIONIT RRUFEJE:**
 
 ├── **ID:** ${session.id}
-├── **Filluar:** ${session.start.toLocaleString('sq-AL')}
-├── **Kohëzgjatja:** ${hours > 0 ? `${hours}h ${mins}m` : `${mins} minuta`}
-├── **Mesazhe:** ${session.messageCount} mesazhe
+├── **Filluar:** ${session.start.toLocaleString('sq-AL')}  
+├── **Kohëzgjatja:** ${session.duration}
+├── **Mesazhe:** ${session.messageCount}
 └── **Status:** 🟢 **AKTIV**
 
-💡 *Ky sesion do të mbetet aktiv edhe pas rifreskimit!*
+💡 *Ky sesion mbetet aktiv edhe pas rifreskimit!*
     `;
     
-    if (window.addMessage) {
-        window.addMessage(sessionInfo, 'system', false);
-    }
+    // PROVO TË SHFAQËSH NË CHAT
+    addMessageToChat(sessionInfo, 'system');
     
     return session;
 }
 
-// ✅ FUNKSION PËR TË RIVENDOSUR SESIONIN
-window.renewSession = function() {
-    const newSessionId = window.sessionManager.renewSession();
-    
-    const renewMessage = `
-🔄 **SESIONI I RRUFEJES U RIVENDOS!**
-
-🎯 **Sesioni i ri:** ${newSessionId}
-
-💡 *Tani keni një sesion të pastër për të filluar një bisedë të re!*
-    `;
-    
-    if (window.addMessage) {
-        window.addMessage(renewMessage, 'system', false);
+// ✅ FUNKSIONI PËR TË SHTUAR MESAZHE NË CHAT
+function addMessageToChat(content, sender) {
+    const chat = document.getElementById('chat');
+    if (!chat) {
+        console.log('❌ #chat nuk u gjet');
+        return;
     }
     
-    return newSessionId;
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${sender}-message`;
+    
+    const messageContent = document.createElement('div');
+    messageContent.className = 'message-content';
+    messageContent.innerHTML = content;
+    
+    messageDiv.appendChild(messageContent);
+    chat.appendChild(messageDiv);
+    chat.scrollTop = chat.scrollHeight;
+    
+    console.log(`💬 Mesazh u shtua: ${sender} - ${content.substring(0, 30)}`);
 }
 
-// ✅ AUTO-SHOW SESION INFO PAS 2 SEKONDASH
+// ✅ SHFAQ MESAZHIN E MIRËSEARDHJES
 setTimeout(() => {
-    console.log('🔍 SESIONI RRUFEJE I INICIALIZUAR:', window.sessionManager.getCurrentSession());
+    const session = window.rrufeSessionManager.getSessionInfo();
     
-    // ✅ SHFAQ INFO SESIONI NË CHAT
-    if (window.addMessage) {
-        const session = window.sessionManager.getCurrentSession();
-        const welcomeMessage = `
-👑 **MIRË SE ERDHET NË CHATAI ALBA!** 
+    const welcomeMessage = `
+👑 **MIRË SE ERDHET NË CHATAI ALBA RRUFEJE!** 
 
-🎯 **Sesioni aktual:** ${session.id.substring(0, 15)}...
+🎯 **Sesioni:** ${session.id.substring(0, 15)}...
 ⏰ **Filluar:** ${session.start.toLocaleTimeString('sq-AL')}
+📊 **Status:** 🟢 **SISTEMI I SESIONIT AKTIV**
 
-💡 *Shkruani /sesion për të parë detajet e sesionit*
-        `;
-        window.addMessage(welcomeMessage, 'system', false);
-    }
-}, 2000);
-
-// ✅ SHTO KOMANDËN /sesion
-document.addEventListener('DOMContentLoaded', function() {
-    // ✅ MBISHTRO PROCESIMIN E KOMANDAVE PËR /sesion
-    const originalProcessCommand = window.processCommand;
+💡 *Shkruani "/sesion" për të parë detajet e plota*
+    `;
     
-    if (originalProcessCommand) {
-        window.processCommand = function(command, user, message) {
-            if (message === '/sesion' || message === '/session') {
-                window.showSessionInfo();
-                return { success: true, response: "✅ Informacioni i sesionit u shfaq!" };
-            }
-            
-            if (message === '/rivendos' || message === '/newsession') {
-                window.renewSession();
-                return { success: true, response: "✅ Sesioni u rivendos me sukses!" };
-            }
-            
-            // THIRRE FUNKSIONIN ORIGJINAL PËR KOMANDA TË TJERA
-            return originalProcessCommand(command, user, message);
-        }
-    }
-});
+    addMessageToChat(welcomeMessage, 'system');
+    
+    // ✅ RUAJ MESAZHIN E MIRËSEARDHJES
+    saveMessageToRrufeDatabase(welcomeMessage, 'system');
+    
+}, 1000);
 
-console.log('🚀 SISTEMI I SESIONIT RRUFEJE U NGARKUA ME SUKSES!');
+console.log('✅ SISTEMI I SESIONIT RRUFEJE U NGARKUA ME SUKSES!');
+
+// ✅ TEST: SHKRUAJ "/sesion" NË CHAT PËR TË TESTUAR
+console.log('💡 Testo sistemin duke shkruar "/sesion" në chat!');
     
   </script>
   
