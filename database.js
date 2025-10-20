@@ -103,102 +103,6 @@ function addResponseColumnToMessages() {
     });
 }
 
-// ✅ FUNKSION PËR TË KRIJUAR TABELAT E REJA PËR CONTEXT MEMORY
-function createContextTables() {
-    console.log('🔄 Duke krijuar tabelat e reja për Context Memory System...');
-    
-    // ✅ TABELA E RE PËR CONVERSATION CONTEXTS
-    db.run(`CREATE TABLE IF NOT EXISTS conversation_contexts (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id TEXT NOT NULL,
-        session_id TEXT NOT NULL,
-        context TEXT NOT NULL,
-        memory_strength REAL DEFAULT 1.0,
-        last_updated DATETIME DEFAULT CURRENT_TIMESTAMP,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )`, (err) => {
-        if (err) {
-            console.error('❌ Gabim në tabelën conversation_contexts:', err);
-        } else {
-            console.log('✅ Tabela conversation_contexts u krijua');
-        }
-    });
-
-    // ✅ TABELA E RE PËR VOICE MEMORY
-    db.run(`CREATE TABLE IF NOT EXISTS voice_memory (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id TEXT NOT NULL,
-        voice_profile TEXT,
-        preferences TEXT,
-        adaptation_history TEXT,
-        usage_statistics TEXT,
-        last_updated DATETIME DEFAULT CURRENT_TIMESTAMP,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )`, (err) => {
-        if (err) {
-            console.error('❌ Gabim në tabelën voice_memory:', err);
-        } else {
-            console.log('✅ Tabela voice_memory u krijua');
-        }
-    });
-
-    // ✅ KRIJO INDEX PËR PERFORMANCË
-    db.run(`CREATE INDEX IF NOT EXISTS idx_context_user_session ON conversation_contexts(user_id, session_id)`, (err) => {
-        if (err) {
-            console.error('❌ Gabim në krijimin e index:', err);
-        } else {
-            console.log('✅ Index u krijua për conversation_contexts');
-        }
-    });
-
-    db.run(`CREATE INDEX IF NOT EXISTS idx_voice_memory_user ON voice_memory(user_id)`, (err) => {
-        if (err) {
-            console.error('❌ Gabim në krijimin e index:', err);
-        } else {
-            console.log('✅ Index u krijua për voice_memory');
-        }
-    });
-
-    // ✅ KRIJO INDEX PËR KOHËN E PËRDITËSIMIT
-    db.run(`CREATE INDEX IF NOT EXISTS idx_context_last_updated ON conversation_contexts(last_updated)`, (err) => {
-        if (err) {
-            console.error('❌ Gabim në krijimin e index:', err);
-        } else {
-            console.log('✅ Index u krijua për last_updated');
-        }
-    });
-}
-
-// ✅ FUNKSION PËR TË KONTROLLUAR TABELAT E REJA
-function checkNewTables() {
-    console.log('🔍 Duke kontrolluar tabelat e reja për Context Memory...');
-    
-    // Kontrollo nëse tabela conversation_contexts ekziston
-    db.all("SELECT name FROM sqlite_master WHERE type='table' AND name='conversation_contexts'", (err, rows) => {
-        if (err) {
-            console.error('❌ Gabim në kontrollimin e tabelave:', err);
-        } else if (rows.length === 0) {
-            console.log('❌ Tabela conversation_contexts NUK ekziston! Duke krijuar...');
-            createContextTables();
-        } else {
-            console.log('✅ Tabela conversation_contexts ekziston');
-            
-            // Kontrollo nëse tabela voice_memory ekziston
-            db.all("SELECT name FROM sqlite_master WHERE type='table' AND name='voice_memory'", (err, voiceRows) => {
-                if (err) {
-                    console.error('❌ Gabim në kontrollimin e voice_memory:', err);
-                } else if (voiceRows.length === 0) {
-                    console.log('❌ Tabela voice_memory NUK ekziston! Duke krijuar...');
-                    createContextTables();
-                } else {
-                    console.log('✅ Tabela voice_memory ekziston');
-                    console.log('🎉 Të gjitha tabelat e Context Memory System ekzistojnë!');
-                }
-            });
-        }
-    });
-}
-
 // Funksioni për të inicializuar tabelat nëse nuk ekzistojnë
 function initializeDatabase() {
     console.log('🔄 Duke inicializuar databazën...');
@@ -287,109 +191,14 @@ function initializeDatabase() {
         }
     });
 
-    // ✅ TABELA E RE PËR CONVERSATION CONTEXTS
-    db.run(`CREATE TABLE IF NOT EXISTS conversation_contexts (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id TEXT NOT NULL,
-        session_id TEXT NOT NULL,
-        context TEXT NOT NULL,
-        memory_strength REAL DEFAULT 1.0,
-        last_updated DATETIME DEFAULT CURRENT_TIMESTAMP,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )`, (err) => {
-        if (err) {
-            console.error('❌ Gabim në tabelën conversation_contexts:', err);
-        } else {
-            console.log('✅ Tabela conversation_contexts u inicializua');
-        }
-    });
-
-    // ✅ TABELA E RE PËR VOICE MEMORY
-    db.run(`CREATE TABLE IF NOT EXISTS voice_memory (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id TEXT NOT NULL,
-        voice_profile TEXT,
-        preferences TEXT,
-        adaptation_history TEXT,
-        usage_statistics TEXT,
-        last_updated DATETIME DEFAULT CURRENT_TIMESTAMP,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )`, (err) => {
-        if (err) {
-            console.error('❌ Gabim në tabelën voice_memory:', err);
-        } else {
-            console.log('✅ Tabela voice_memory u inicializua');
-        }
-    });
-
     console.log('✅ Inicializimi i databazës përfundoi!');
     
     // ✅ THIRRE FUNKSIONET PËR SHTIMIN E KOLONAVE PAS INICIALIZIMIT
     setTimeout(() => {
         addUpdatedAtColumnToApiKeys();
         addResponseColumnToMessages();
-        
-        // ✅ KONTROLLO DHE KRIJO INDEX PËR TABELAT E REJA
-        setTimeout(() => {
-            // ✅ KRIJO INDEX PËR PERFORMANCË
-            db.run(`CREATE INDEX IF NOT EXISTS idx_context_user_session ON conversation_contexts(user_id, session_id)`, (err) => {
-                if (err) {
-                    console.error('❌ Gabim në krijimin e index:', err);
-                } else {
-                    console.log('✅ Index u krijua për conversation_contexts');
-                }
-            });
-
-            db.run(`CREATE INDEX IF NOT EXISTS idx_voice_memory_user ON voice_memory(user_id)`, (err) => {
-                if (err) {
-                    console.error('❌ Gabim në krijimin e index:', err);
-                } else {
-                    console.log('✅ Index u krijua për voice_memory');
-                }
-            });
-
-            db.run(`CREATE INDEX IF NOT EXISTS idx_context_last_updated ON conversation_contexts(last_updated)`, (err) => {
-                if (err) {
-                    console.error('❌ Gabim në krijimin e index:', err);
-                } else {
-                    console.log('✅ Index u krijua për last_updated');
-                }
-            });
-
-            console.log('🎉 Të gjitha tabelat dhe index-et e Context Memory System janë gati!');
-        }, 1000);
     }, 2000);
 }
-
-// ✅ FUNKSION PËR TESTIMIN E DATABAZËS
-function testDatabaseConnection() {
-    console.log('🧪 Duke testuar lidhjen me databazën...');
-    
-    db.get("SELECT name FROM sqlite_master WHERE type='table'", (err, row) => {
-        if (err) {
-            console.error('❌ Testi i lidhjes dështoi:', err);
-        } else {
-            console.log('✅ Lidhja me databazën është funksionale');
-            
-            // Listo të gjitha tabelat
-            db.all("SELECT name FROM sqlite_master WHERE type='table'", (err, tables) => {
-                if (err) {
-                    console.error('❌ Gabim në listimin e tabelave:', err);
-                } else {
-                    console.log('📊 Tabelat në databazë:');
-                    tables.forEach(table => {
-                        console.log(`   - ${table.name}`);
-                    });
-                }
-            });
-        }
-    });
-}
-
-// ✅ THIRRE TESTIN PAS INICIALIZIMIT
-setTimeout(() => {
-    testDatabaseConnection();
-}, 5000);
 
 // Eksporto db object
 module.exports = db;
