@@ -447,5 +447,63 @@ router.post('/feedback', (req, res) => {
     );
 });
 
+// ======================================================
+// 💾 ENDPOINT PËR SHKARKIM TË HISTORISË SË BISEDËS SI JSON
+// ======================================================
+
+// ✅ ENDPOINT PËR SHKARKIM HISTORIE BISEDE SI JSON (PËR BUTONIN "SHKARKO")
+router.get('/export/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        
+        console.log('💾 SHKARKO JSON: Duke përgatitur historinë e bisedës si JSON për:', userId);
+        
+        // ✅ MERRE HISTORINË E BISEDËS NGA TABELA messages
+        const chatHistory = await new Promise((resolve) => {
+            db.all(
+                `SELECT content, sender, timestamp 
+                 FROM messages 
+                 WHERE user_id = ? 
+                 ORDER BY timestamp ASC`,
+                [userId],
+                (err, rows) => {
+                    if (err) {
+                        console.error('❌ GABIM SHKARKIMI JSON:', err);
+                        resolve([]);
+                    } else {
+                        console.log(`✅ SHKARKO JSON: Gjetur ${rows?.length || 0} mesazhe`);
+                        resolve(rows || []);
+                    }
+                }
+            );
+        });
+
+        // ✅ NËSE NUK KA HISTORI, KTHE JSON ME GABIM
+        if (chatHistory.length === 0) {
+            return res.json({
+                success: false,
+                message: '❌ Nuk ka histori bisede për të shkarkuar'
+            });
+        }
+
+        // ✅ NËSE KA HISTORI, KTHE JSON ME TË DHËNAT
+        console.log(`✅ SHKARKO JSON: Duke dërguar ${chatHistory.length} mesazhe si JSON`);
+        
+        res.json({
+            success: true,
+            history: chatHistory,
+            user: userId,
+            exportDate: new Date().toISOString(),
+            totalMessages: chatHistory.length
+        });
+
+    } catch (error) {
+        console.error('❌ GABIM NË SHKARKIM JSON:', error);
+        res.status(500).json({
+            success: false,
+            message: '❌ Gabim gjatë shkarkimit të historisë'
+        });
+    }
+});
 
 module.exports = router;
