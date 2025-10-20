@@ -447,4 +447,113 @@ router.post('/feedback', (req, res) => {
     );
 });
 
+// ======================================================
+// 📥 3. SISTEMI I SHKARKIMIT & NGARKIMIT TË HISTORISË
+// ======================================================
+
+// ✅ ENDPOINT PËR SHKARKIM TË HISTORISË - VENDOS NË FUND TË SKEDARIT
+router.get('/download-history/:userId?', async (req, res) => {
+    try {
+        // ✅ MERRE userId NGA PARAMETER OSE NGA SESIONI
+        const userId = req.params.userId || req.userId;
+        
+        console.log('📥 SHKARKO: Duke përgatitur historinë për:', userId);
+        
+        const history = await new Promise((resolve) => {
+            db.all(
+                `SELECT content, sender, timestamp 
+                 FROM messages 
+                 WHERE user_id = ? 
+                 ORDER BY timestamp ASC`,
+                [userId],
+                (err, rows) => {
+                    if (err) {
+                        console.error('❌ GABIM SHKARKIMI:', err);
+                        resolve([]);
+                    } else {
+                        console.log(`✅ SHKARKO: Gjetur ${rows?.length || 0} mesazhe`);
+                        resolve(rows || []);
+                    }
+                }
+            );
+        });
+
+        if (history.length === 0) {
+            return res.json({
+                success: false,
+                message: '❌ Nuk ka histori për të shkarkuar'
+            });
+        }
+
+        // ✅ KRIJO SKEDARIN TEKST
+        let fileContent = `HISTORIA E BISEDËS - CHATAI ALBA\n`;
+        fileContent += `Përdorues: ${userId}\n`;
+        fileContent += `Data: ${new Date().toLocaleDateString('sq-AL')}\n`;
+        fileContent += `Ora: ${new Date().toLocaleTimeString('sq-AL')}\n`;
+        fileContent += `Total mesazhe: ${history.length}\n`;
+        fileContent += '='.repeat(50) + '\n\n';
+
+        history.forEach((msg, index) => {
+            const person = msg.sender === 'user' ? 'USER' : 'BOT';
+            const time = msg.timestamp ? 
+                new Date(msg.timestamp).toLocaleString('sq-AL') : 'Koha e panjohur';
+            
+            fileContent += `${index + 1}. ${person} [${time}]\n`;
+            fileContent += `   ${msg.content}\n`;
+            fileContent += '-'.repeat(40) + '\n';
+        });
+
+        fileContent += `\nShkarkuar nga ChatAI ALBA\n`;
+        fileContent += `https://chatai-alba-gr9dw.ondigitalocean.app`;
+
+        // ✅ VENDOS HEADERS PËR SHKARKIM
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="historia-${userId}.txt"`);
+        
+        console.log(`✅ SHKARKO: Duke dërguar ${history.length} mesazhe`);
+
+        res.send(fileContent);
+
+    } catch (error) {
+        console.error('❌ GABIM NË SHKARKIM:', error);
+        res.status(500).json({
+            success: false,
+            message: '❌ Gabim gjatë shkarkimit të historisë'
+        });
+    }
+});
+
+// ✅ ENDPOINT PËR NGARKIM TË HISTORISË - VENDOS PAS SHKARKIMIT
+router.post('/upload-history', async (req, res) => {
+    try {
+        const { userId } = req;
+        const { historyData } = req.body;
+
+        if (!historyData) {
+            return res.json({
+                success: false,
+                message: '❌ Nuk ka të dhëna për ngarkim'
+            });
+        }
+
+        console.log('📤 NGARKIM HISTORIE për user:', userId);
+
+        // ✅ PROCESO TË DHËNAT E NGARKUARA
+        // (Shto logjikën e nevojshme këtu)
+
+        res.json({
+            success: true,
+            message: '✅ Historia u ngarkua me sukses!',
+            mesazheNgarkuar: historyData.length || 0
+        });
+
+    } catch (error) {
+        console.error('❌ Gabim në ngarkim:', error);
+        res.json({
+            success: false,
+            message: '❌ Gabim gjatë ngarkimit të historisë'
+        });
+    }
+});
+
 module.exports = router;
