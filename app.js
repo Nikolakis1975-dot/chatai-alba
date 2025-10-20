@@ -1,7 +1,8 @@
 // ======================================================
-// 🌟 ChatAI ALBA v4.0 — Context-Aware Voice Memory 
+// 🌟 ChatAI ALBA v3.0 — Server kryesor
 // ======================================================
 
+// 1️⃣ Konfigurime fillestare
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -12,79 +13,67 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ======================================================
-// 2️⃣ KONFIGURIME THEMELORE - SË PARMI!
+// 2️⃣ Konfigurime të përgjithshme
 // ======================================================
 
-// ✅ CORS — KONFIGURIM PERFEKT PËR PRODUKSION
+// ✅ CORS — lejon komunikimin midis domain-eve
 app.use(cors({
     origin: [
         'http://localhost:3000',
-        'https://chatai-alba-gr9dw.ondigitalocean.app',
-        'https://www.chatai-alba-gr9dw.ondigitalocean.app'
+        'https://chatai-alba-gr9dw.ondigitalocean.app'
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With']
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
 }));
 
-// ✅ COOKIE & BODY PARSERS - SË PARMI!
+// ✅ COOKIE & BODY parsers
 app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // ======================================================
-// 🔒 MIDDLEWARE PËR SESSION PERSISTENCE
+// 3️⃣ Importo & Regjistro rutat
 // ======================================================
 
-const chatSessionMiddleware = require('./middleware/chatSession');
-app.use(chatSessionMiddleware);
+// 🟢 Ruta për voice — DUHET të vijë PAS konfigurimit të parserëve
+const voiceRoutes = require('./routes/voice');
+app.use('/api/voice', voiceRoutes);
+
+// Rutat ekzistuese
+const authRoutes = require('./routes/auth');
+const authEnhanced = require('./routes/auth-enhanced');
+const chatRoutes = require('./routes/chat');
+const userRoutes = require('./routes/users');
+const emailVerification = require('./routes/email-verification');
+const apiRoutes = require('./routes/api');
+const geminiRoutes = require('./routes/gemini');
+const adminRoutes = require('./routes/admin');
+const geminiSimpleRoutes = require('./routes/gemini-simple');
+
+// Regjistro të gjitha rutat
+app.use('/api/auth', authRoutes);
+app.use('/api/auth', authEnhanced);
+app.use('/api/chat', chatRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/email', emailVerification);
+app.use('/api/api-keys', apiRoutes);
+app.use('/api/gemini', geminiRoutes);
+app.use('/admin', adminRoutes);
+app.use('/api/gemini-simple', geminiSimpleRoutes);
 
 // ======================================================
-// 3️⃣ IMPORT & REGJISTRO TË GJITHA RUTAT
-// ======================================================
-
-// 🟢 RUTAT E AUTHENTIKIMIT
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/auth', require('./routes/auth-enhanced'));
-
-// 🟢 RUTAT E PËRDORUESVE & PROFILIT
-app.use('/api/users', require('./routes/users'));
-
-// 🟢 RUTAT E EMAIL VERIFICATION
-app.use('/api/email', require('./routes/email-verification'));
-
-// 🟢 RUTAT E API KEYS
-app.use('/api/api-keys', require('./routes/api'));
-
-// 🟢 RUTAT E GEMINI
-app.use('/api/gemini', require('./routes/gemini'));
-app.use('/api/gemini-simple', require('./routes/gemini-simple'));
-
-// 🟢 RUTAT E ADMIN
-app.use('/admin', require('./routes/admin'));
-
-// 🟢 RUTAT E CHAT (KRYESORE)
-app.use('/api/chat', require('./routes/chat'));
-
-// 🟢 RUTAT E VOICE
-app.use('/api/voice', require('./routes/voice'));
-
-// 🟢 RUTAT E CONTEXT
-app.use('/api/context', require('./routes/context-routes'));
-
-// ======================================================
-// 4️⃣ STATIC FILES & DEFAULT ROUTE
-// ======================================================
-
+// 4️⃣ Static files (Frontend)
 app.use(express.static(path.join(__dirname, 'public')));
+
+// ======================================================
+// 5️⃣ Default route — për SPA frontend
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // ======================================================
-// 5️⃣ ERROR HANDLERS
-// ======================================================
-
+// 6️⃣ Error & 404 Handlers
 app.use((err, req, res, next) => {
     console.error('❌ Gabim në server:', err);
     res.status(500).json({
@@ -101,19 +90,23 @@ app.use((req, res) => {
 });
 
 // ======================================================
-// 🚀 START SERVER
-// ======================================================
+// 7️⃣ Test enkriptimi
+const encryption = require('./utils/encryption');
+setTimeout(() => {
+    console.log('🛡️ Testi i enkriptimit AES-256-CBC:');
+    encryption.testEncryption();
+}, 2000);
 
+// ======================================================
+// 8️⃣ Ura (Bridge System)
+const AppBridge = require('./bridges/app-bridge');
+AppBridge.initializeSafeBridge(app);
+
+// ======================================================
+// 9️⃣ Start server
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`╔══════════════════════════════════════════════════╗`);
-    console.log(`║                🚀 CHATAI ALBA v4.0              ║`);
-    console.log(`║           Context-Aware Voice Memory            ║`);
-    console.log(`╠══════════════════════════════════════════════════╣`);
-    console.log(`║ 🌐 URL: http://localhost:${PORT}                 ║`);
-    console.log(`║ 🔐 NODE_ENV: ${process.env.NODE_ENV}            ║`);
-    console.log(`║ 🎤 Voice API: /api/voice/transcribe             ║`);
-    console.log(`║ 🧠 Context API: /api/context/*                  ║`);
-    console.log(`║ 💬 Chat API: /api/chat/message                  ║`);
-    console.log(`║ 🔐 Auth API: /api/auth/*                        ║`);
-    console.log(`╚══════════════════════════════════════════════════╝`);
+    console.log(`🚀 Serveri është duke u drejtuar në portin ${PORT}`);
+    console.log(`🌐 URL: http://localhost:${PORT}`);
+    console.log(`🔐 NODE_ENV: ${process.env.NODE_ENV}`);
+    console.log(`🎤 Voice Routes u regjistruan: /api/voice/transcribe`);
 });
