@@ -823,76 +823,63 @@ function toggleEmojiPanel() {
 
 // =================== Funksionet për download/upload history (mbetet e njëjta) ===========================
 // ======================================================
-// 💾 FUNKSIONET PËR SHKARKIM & NGARKIM TË HISTORISË - RIPARUAR
+// 💾 ENDPOINT PËR SHKARKIM TË HISTORISË SË BISEDËS SI JSON
 // ======================================================
 
-// ✅ SHKARKO HISTORINË E BISEDËS SI .TXΤ FILE
-async function downloadHistory() {
-    if (!currentUser) {
-        addMessage("❌ Ju duhet të jeni i kyçur për të shkarkuar historinë.", "bot");
-        return;
-    }
-    
+// ✅ ENDPOINT PËR SHKARKIM HISTORIE BISEDE SI JSON (PËR BUTONIN "SHKARKO")
+router.get('/export/:userId', async (req, res) => {
     try {
-        console.log('📥 Duke shkarkuar historinë e bisedës...');
+        const { userId } = req.params;
         
-        // ✅ PERDOR RUTËN E DUHUR PËR .TXΤ FILE
-        const response = await fetch(`/api/chat/download-chat-history/${currentUser.id}`, {
-            credentials: 'include'
+        console.log('💾 SHKARKO JSON: Duke përgatitur historinë e bisedës si JSON për:', userId);
+        
+        // ✅ MERRE HISTORINË E BISEDËS NGA TABELA messages
+        const chatHistory = await new Promise((resolve) => {
+            db.all(
+                `SELECT content, sender, timestamp 
+                 FROM messages 
+                 WHERE user_id = ? 
+                 ORDER BY timestamp ASC`,
+                [userId],
+                (err, rows) => {
+                    if (err) {
+                        console.error('❌ GABIM SHKARKIMI JSON:', err);
+                        resolve([]);
+                    } else {
+                        console.log(`✅ SHKARKO JSON: Gjetur ${rows?.length || 0} mesazhe`);
+                        resolve(rows || []);
+                    }
+                }
+            );
         });
 
-        // ✅ KONTROLLO CONTENT TYPE
-        const contentType = response.headers.get('content-type');
-        
-        if (contentType && contentType.includes('application/json')) {
-            // ✅ NËSE ËSHTË JSON (gabim), lexoje
-            const data = await response.json();
-            if (!response.ok || !data.success) {
-                addMessage(`❌ ${data.message || 'Gabim gjatë shkarkimit'}`, "bot");
-                return;
-            }
-        } else {
-            // ✅ NËSE ËSHTË .TXΤ FILE, shkarkoje
-            const blob = await response.blob();
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = `historia-bisedes-${currentUser.id}.txt`;
-            link.click();
-            URL.revokeObjectURL(link.href);
-            
-            addMessage("✅ Historia e bisedës u shkarkua me sukses si skedar .txt!", "bot");
+        // ✅ NËSE NUK KA HISTORI, KTHE JSON ME GABIM
+        if (chatHistory.length === 0) {
+            return res.json({
+                success: false,
+                message: '❌ Nuk ka histori bisede për të shkarkuar'
+            });
         }
-        
-    } catch (error) {
-        console.error('❌ Gabim në shkarkim:', error);
-        addMessage("❌ Gabim gjatë shkarkimit të historisë.", "bot");
-    }
-}
 
-// ✅ SHKARKO NJOHURITË SI JSON (për komandën /eksporto)
-async function exportKnowledge() {
-    if (!currentUser) return;
-    
-    try {
-        const response = await fetch(`/api/chat/export/${currentUser.id}`, {
-            credentials: 'include'
-        });
-        const data = await response.json();
+        // ✅ NËSE KA HISTORI, KTHE JSON ME TË DHËNAT
+        console.log(`✅ SHKARKO JSON: Duke dërguar ${chatHistory.length} mesazhe si JSON`);
         
-        if (response.ok) {
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = "njohurite_e_mesuara.json";
-            link.click();
-            addMessage("💾 Eksportova njohuritë e mësuara.", "bot");
-        } else {
-            addMessage("❌ Gabim gjatë eksportimit të njohurive: " + data.error, "bot");
-        }
+        res.json({
+            success: true,
+            history: chatHistory,
+            user: userId,
+            exportDate: new Date().toISOString(),
+            totalMessages: chatHistory.length
+        });
+
     } catch (error) {
-        addMessage("❌ Gabim gjatë eksportimit të njohurive.", "bot");
+        console.error('❌ GABIM NË SHKARKIM JSON:', error);
+        res.status(500).json({
+            success: false,
+            message: '❌ Gabim gjatë shkarkimit të historisë'
+        });
     }
-}
+});
 
 
 // ✅ FUNKSION I RI PËR TË MARRË USER ID NGA COOKIES
