@@ -4,6 +4,24 @@
 
 console.log('🔍 Duke ngarkuar Modulin Principal RRUFEJE...');
 
+// ======================================================
+// 🎯 IMPORTS - MODULET E JASHTME
+// ======================================================
+
+// ======================= RRUFE-IMPORT-001 =======================
+// 🧠 MODULI: SessionManager
+// 📍 VENDOSJA: Shkcommento kur të krijohet skedari
+// 📁 SKEDARI: /js/modules/sessionManager.js
+// ================================================================
+// import SessionManager from './modules/sessionManager.js';
+
+// ======================= RRUFE-IMPORT-002 =======================  
+// 🧠 MODULI: ContextMemory
+// 📍 VENDOSJA: Shkcommento kur të krijohet skedari
+// 📁 SKEDARI: /js/modules/contextMemory.js
+// ================================================================
+// import ContextMemory from './modules/contextMemory.js';
+
 class RrufePlatform {
     constructor() {
         this.modules = {};
@@ -15,13 +33,19 @@ class RrufePlatform {
         try {
             console.log('🚀 Duke inicializuar Platformën RRUFEJE...');
             
-            // ✅ INICIALIZO MODULET
+            // ======================================================
+            // 🧠 INICIALIZIMI I MODULEVE
+            // ======================================================
             await this.initializeModules();
             
-            // ✅ SHFAQ MESAZH MIRËSEARDHJEJE
+            // ======================================================
+            // 💬 SHFAQJA E MIRËSEARDHJES
+            // ======================================================
             this.showWelcomeMessage();
             
-            // ✅ NGARKO HISTORINË E SESIONIT
+            // ======================================================
+            // 📂 NGARKIMI I HISTORISË
+            // ======================================================
             await this.loadSessionHistory();
             
             this.isInitialized = true;
@@ -32,17 +56,40 @@ class RrufePlatform {
         }
     }
     
+    // ======================================================
+    // 🧠 METODA: INICIALIZIMI I MODULEVE
+    // ======================================================
     async initializeModules() {
-        // ✅ MODULI I SESIONIT
+        // ✅ MODULI I SESIONIT - BAZË
         this.modules.session = {
             id: this.getOrCreateSessionId(),
             startTime: new Date(),
-            messageCount: 0
+            messageCount: 0,
+            data: {}
         };
         
         console.log('🎯 MODULI I SESIONIT:', this.modules.session.id);
+        
+        // ======================= RRUFE-MODULE-001 =======================
+        // 🧠 MODULI: SessionManager
+        // 📍 VENDOSJA: Në këtë linjë
+        // 🔧 DETYRA: Zëvendëso objektin session me klasën SessionManager
+        // 📁 SKEDARI: /js/modules/sessionManager.js
+        // ================================================================
+        // this.modules.session = new SessionManager();
+        
+        // ======================= RRUFE-MODULE-002 =======================
+        // 🧠 MODULI: ContextMemory  
+        // 📍 VENDOSJA: Në këtë linjë
+        // 🔧 DETYRA: Krijo instancën e ContextMemory
+        // 📁 SKEDARI: /js/modules/contextMemory.js
+        // ================================================================
+        // this.modules.contextMemory = new ContextMemory(this.modules.session.id);
     }
     
+    // ======================================================
+    // 💾 METODA: MENAXHIMI I SESIONIT
+    // ======================================================
     getOrCreateSessionId() {
         let sessionId = localStorage.getItem('rrufeSessionId');
         if (!sessionId) {
@@ -55,8 +102,10 @@ class RrufePlatform {
         return sessionId;
     }
     
+    // ======================================================
+    // 💬 METODA: SHFAQJA E MIRËSEARDHJES
+    // ======================================================
     showWelcomeMessage() {
-        // ✅ PROVO TË SHFAQËSH MESAZH NË CHAT
         setTimeout(() => {
             if (typeof window.addMessage !== 'undefined') {
                 const welcomeMsg = `
@@ -69,22 +118,36 @@ class RrufePlatform {
 💡 *Sistemi i ri i moduleve është gati!*
                 `;
                 window.addMessage(welcomeMsg, 'system', false);
-            } else {
-                console.log('💬 Sistemi është gati, por addMessage nuk ekziston');
             }
         }, 1000);
     }
     
+    // ======================================================
+    // 📂 METODA: NGARKIMI I HISTORISË
+    // ======================================================
     async loadSessionHistory() {
         try {
             console.log('📂 Duke kontrolluar historinë e sesionit...');
-            // ✅ KËTU DO VIJË LOGJIKA E HISTORISË
+            
+            // ======================= RRUFE-FEATURE-001 =======================
+            // 🧠 FUNKSIONALITETI: Ngarkimi i historisë së sesionit
+            // 📍 VENDOSJA: Në këtë metodë
+            // 🔧 DETYRA: Implemento fetch për historinë e sesionit
+            // 📁 ENDPOINT: /api/chat/session-history/:sessionId
+            // ================================================================
+            // const history = await this.fetchSessionHistory();
+            // if (history.length > 0) {
+            //     this.displayHistory(history);
+            // }
+            
         } catch (error) {
             console.log('📂 Duke filluar sesion të ri...');
         }
     }
     
-    // ✅ METODA PËR DEBUG
+    // ======================================================
+    // 🛠️ METODA: DEBUG DHE TESTIM
+    // ======================================================
     debugPlatform() {
         console.log('🔍 DEBUG I PLATFORMËS RRUFEJE:');
         console.log('- Sesioni:', this.modules.session);
@@ -93,20 +156,20 @@ class RrufePlatform {
     }
 }
 
-// ✅ INICIALIZO PLATFORMËN
+// ======================================================
+// 🚀 INICIALIZIMI I PLATFORMËS
+// ======================================================
 let rrufePlatform;
 
 try {
     rrufePlatform = new RrufePlatform();
     window.rrufePlatform = rrufePlatform;
     
-    // ✅ SHTO BUTON DEBUG NË CONSOLE
     console.log('💡 Shkruaj: rrufePlatform.debugPlatform() për të parë statusin');
     
 } catch (error) {
     console.error('❌ Gabim në ngarkimin e platformës:', error);
 }
 
-// ✅ EKSPORTO PËR PËRDORIM NË MODULE TË TJERA
 export { RrufePlatform };
 export default rrufePlatform;
