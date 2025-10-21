@@ -136,6 +136,56 @@ class ContextMemory {
         return commonWords.length / Math.max(keywords1.length, keywords2.length);
     }
     
+    // ======================= RRUFE-INTEGRIM-001 =======================
+    // 🔗 METODA: integrateWithChatSystem
+    // 📍 VENDOSJA: Brenda klasës ContextMemory
+    // 🔧 DETYRA: Integro automatikisht me sendMessage ekzistues
+    // ================================================================
+    integrateWithChatSystem() {
+        console.log('🔗 Duke integruar ContextMemory me sistemin e chat-it...');
+        
+        if (typeof window.sendMessage === 'undefined') {
+            console.log('⏳ sendMessage nuk ekziston ende, pres...');
+            setTimeout(() => this.integrateWithChatSystem(), 1000);
+            return;
+        }
+
+        const originalSendMessage = window.sendMessage;
+        
+        window.sendMessage = async function() {
+            const input = document.getElementById('user-input');
+            const message = input.value.trim();
+            
+            if (!message) return;
+
+            // ✅ SHTO MESAZHIN E PËRDORUESIT NË KONTEKST
+            if (window.rrufePlatform && window.rrufePlatform.modules.contextMemory) {
+                window.rrufePlatform.modules.contextMemory.addToContext(message, 'user');
+            }
+            
+            // ✅ THIRRE FUNKSIONIN ORIGJINAL
+            await originalSendMessage.call(this);
+            
+            // ✅ PAS PËRGJIGJES, SHTO PËRGJIGJEN E BOTIT NË KONTEKST
+            setTimeout(() => {
+                const chat = document.getElementById('chat');
+                if (chat) {
+                    const messages = chat.querySelectorAll('.bot-message');
+                    const lastBotMessage = messages[messages.length - 1];
+                    if (lastBotMessage) {
+                        const response = lastBotMessage.querySelector('.message-content')?.textContent;
+                        if (response && window.rrufePlatform?.modules?.contextMemory) {
+                            window.rrufePlatform.modules.contextMemory.addToContext(response, 'bot');
+                            console.log('💾 Ruajta përgjigjen e botit në kontekst:', response.substring(0, 50));
+                        }
+                    }
+                }
+            }, 1000);
+        };
+        
+        console.log('✅ MODULI I KONTEKSTIT U INTEGRUAR ME sendMessage!');
+    }
+    
     // ✅ METODA DEBUG
     debugContext() {
         console.log('🔍 DEBUG I KONTEKSTIT:');
@@ -144,56 +194,5 @@ class ContextMemory {
         console.log('- Lidhje në memorie:', this.memoryConnections.size);
     }
 }
-
-// ======================= RRUFE-INTEGRIM-001 =======================
-// 🔗 INTEGRIMI: Me sistemin ekzistues të chat-it
-// 📍 VENDOSJA: Në fund të ContextMemory.js
-// 🔧 DETYRA: Integro automatikisht me sendMessage
-// ================================================================
-
-// ✅ MBISHTRO sendMessage PËR TË RUAJTUR KONTEKST
-function integrateWithChatSystem() {
-    if (typeof window.sendMessage === 'undefined') {
-        console.log('⏳ sendMessage nuk ekziston ende, pres...');
-        setTimeout(integrateWithChatSystem, 1000);
-        return;
-    }
-
-    const originalSendMessage = window.sendMessage;
-    
-    window.sendMessage = async function() {
-        const input = document.getElementById('user-input');
-        const message = input.value.trim();
-        
-        if (!message) return;
-
-        // ✅ SHTO MESAZHIN E PËRDORUESIT NË KONTEKST
-        if (window.rrufePlatform && window.rrufePlatform.modules.contextMemory) {
-            window.rrufePlatform.modules.contextMemory.addToContext(message, 'user');
-        }
-        
-        // ✅ THIRRE FUNKSIONIN ORIGJINAL
-        await originalSendMessage.call(this);
-        
-        // ✅ PAS PËRGJIGJES, SHTO NË KONTEKST
-        setTimeout(() => {
-            const chat = document.getElementById('chat');
-            if (chat) {
-                const lastMessage = chat.lastElementChild;
-                if (lastMessage && lastMessage.classList.contains('bot-message')) {
-                    const response = lastMessage.querySelector('.message-content')?.textContent;
-                    if (response && window.rrufePlatform?.modules?.contextMemory) {
-                        window.rrufePlatform.modules.contextMemory.addToContext(response, 'bot');
-                    }
-                }
-            }
-        }, 500);
-    };
-    
-    console.log('🔗 MODULI I KONTEKSTIT U INTEGRUAR ME sendMessage!');
-}
-
-// ✅ AUTO-INTEGRIM PAS NGARKIMIT
-setTimeout(integrateWithChatSystem, 2000);
 
 export default ContextMemory;
