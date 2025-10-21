@@ -12,6 +12,14 @@ console.log('🔍 Duke ngarkuar Modulin Principal RRUFEJE...');
 // ================================================================
 import SessionManager from './modules/sessionManager.js';
 
+// ======================= RRUFE-IMPORT-002 =======================
+// 🧠 MODULI: ContextMemory
+// 📍 VENDOSJA: Në fillim të main.js  
+// 🔧 DETYRA: Importo modulin e ri të kontekstit
+// 📁 SKEDARI: ./modules/contextMemory.js
+// ================================================================
+import ContextMemory from './modules/contextMemory.js';
+
 class RrufePlatform {
     constructor() {
         this.modules = {};
@@ -52,7 +60,16 @@ class RrufePlatform {
         // ================================================================
         this.modules.session = new SessionManager();
         
-        console.log('🎯 MODULI I SESIONIT U INTEGRUAR:', this.modules.session.sessionId);
+        // ======================= RRUFE-MODULE-002 =======================
+        // 🧠 MODULI: ContextMemory
+        // 📍 VENDOSJA: Pas SessionManager
+        // 🔧 DETYRA: Krijo instancën e ContextMemory
+        // ================================================================
+        this.modules.contextMemory = new ContextMemory(this.modules.session);
+        
+        console.log('🎯 MODULET U INICIALIZUAN:');
+        console.log('- Session:', this.modules.session.sessionId);
+        console.log('- Context Memory:', '✅ AKTIV');
     }
     
     // ======================================================
@@ -63,13 +80,14 @@ class RrufePlatform {
             if (typeof window.addMessage !== 'undefined') {
                 const sessionInfo = this.modules.session.getSessionInfo();
                 const welcomeMsg = `
-👑 **PLATFORMA RRUFEJE ME MODULE TË REJA!** 
+👑 **PLATFORMA RRUFEJE ME 2 MODULE TË REJA!** 
 
 🎯 **Sesioni:** ${sessionInfo.id.substring(0, 15)}...
 🕒 **Koha:** ${new Date().toLocaleTimeString('sq-AL')}
-🔧 **Status:** 🟢 **MODULI I SESIONIT AKTIV**
+🧠 **Module të ngarkuara:** SessionManager + ContextMemory
+🔧 **Status:** 🟢 **SISTEMI I KONTEKSTIT AKTIV**
 
-💡 *Sistemi i ri i moduleve është integruar me sukses!*
+💡 *Tani kemi memorie kontekstuale!*
                 `;
                 window.addMessage(welcomeMsg, 'system', false);
             }
@@ -82,8 +100,12 @@ class RrufePlatform {
     debugPlatform() {
         console.log('🔍 DEBUG I PLATFORMËS RRUFEJE:');
         console.log('- Sesioni:', this.modules.session.getSessionInfo());
+        console.log('- Context Memory:', '✅ AKTIV (' + this.modules.contextMemory.conversationContext.length + ' mesazhe)');
         console.log('- Inicializuar:', this.isInitialized);
         console.log('- Modulet:', Object.keys(this.modules));
+        
+        // Testo Context Memory
+        this.modules.contextMemory.debugContext();
     }
 }
 
@@ -96,7 +118,7 @@ try {
     rrufePlatform = new RrufePlatform();
     window.rrufePlatform = rrufePlatform;
     
-    console.log('💡 Shkruaj: rrufePlatform.debugPlatform() për të testuar modulin e ri!');
+    console.log('💡 Shkruaj: rrufePlatform.debugPlatform() për të testuar të dy modulet!');
     
 } catch (error) {
     console.error('❌ Gabim në ngarkimin e platformës:', error);
