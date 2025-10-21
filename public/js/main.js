@@ -5,20 +5,13 @@
 console.log('🔍 Duke ngarkuar Modulin Principal RRUFEJE...');
 
 // ======================= RRUFE-IMPORT-001 =======================
-// 🧠 MODULI: SessionManager
-// 📍 VENDOSJA: Në fillim të main.js  
-// 🔧 DETYRA: Importo modulin e ri të sesionit
-// 📁 SKEDARI: ./modules/sessionManager.js
-// ================================================================
 import SessionManager from './modules/sessionManager.js';
 
 // ======================= RRUFE-IMPORT-002 =======================
-// 🧠 MODULI: ContextMemory
-// 📍 VENDOSJA: Në fillim të main.js  
-// 🔧 DETYRA: Importo modulin e ri të kontekstit
-// 📁 SKEDARI: ./modules/contextMemory.js
-// ================================================================
 import ContextMemory from './modules/contextMemory.js';
+
+// ======================= RRUFE-IMPORT-003 =======================
+import ChatObserver from './modules/chatObserver.js';
 
 class RrufePlatform {
     constructor() {
@@ -42,7 +35,7 @@ class RrufePlatform {
             this.showWelcomeMessage();
             
             this.isInitialized = true;
-            console.log('✅ PLATFORMA RRUFEJE ME MODULE U INICIALIZUA!');
+            console.log('✅ PLATFORMA RRUFEJE ME 3 MODULE U INICIALIZUA!');
             
         } catch (error) {
             console.error('❌ Gabim në inicializimin e platformës:', error);
@@ -54,29 +47,22 @@ class RrufePlatform {
     // ======================================================
     async initializeModules() {
         // ======================= RRUFE-MODULE-001 =======================
-        // 🧠 MODULI: SessionManager
-        // 📍 VENDOSJA: Zëvendëso objektin session me klasën
-        // 🔧 DETYRA: Përdor modulin e ri të sesionit
-        // ================================================================
         this.modules.session = new SessionManager();
         
         // ======================= RRUFE-MODULE-002 =======================
-        // 🧠 MODULI: ContextMemory
-        // 📍 VENDOSJA: Pas SessionManager
-        // 🔧 DETYRA: Krijo instancën e ContextMemory
-        // ================================================================
         this.modules.contextMemory = new ContextMemory(this.modules.session);
         
+        // ======================= RRUFE-MODULE-003 =======================
+        this.modules.chatObserver = new ChatObserver(this.modules.contextMemory);
+        this.modules.chatObserver.startObserving();
+        
         // ======================= RRUFE-INTEGRIM-001 =======================
-        // 🔗 INTEGRIMI: Aktivizo integrimin me chat system
-        // 📍 VENDOSJA: Pas inicializimit të të dy moduleve
-        // 🔧 DETYRA: Aktivizo ruajtjen automatike të mesazheve
-        // ================================================================
         this.modules.contextMemory.integrateWithChatSystem();
         
-        console.log('🎯 MODULET U INICIALIZUAN:');
+        console.log('🎯 3 MODULET U INICIALIZUAN:');
         console.log('- Session:', this.modules.session.sessionId);
         console.log('- Context Memory:', '✅ AKTIV');
+        console.log('- Chat Observer:', '✅ AKTIV');
         console.log('- Integrimi me Chat:', '✅ AKTIV');
     }
     
@@ -88,15 +74,18 @@ class RrufePlatform {
             if (typeof window.addMessage !== 'undefined') {
                 const sessionInfo = this.modules.session.getSessionInfo();
                 const welcomeMsg = `
-👑 **PLATFORMA RRUFEJE ME SISTEM TË RI I KONTEKSTIT!** 
+👑 **PLATFORMA RRUFEJE ME 3 MODULE TË REJA!** 
 
 🎯 **Sesioni:** ${sessionInfo.id.substring(0, 15)}...
 🕒 **Koha:** ${new Date().toLocaleTimeString('sq-AL')}
-🧠 **Module të ngarkuara:** SessionManager + ContextMemory
+🧠 **Module të ngarkuara:** 
+   • SessionManager ✅
+   • ContextMemory ✅  
+   • ChatObserver ✅
 🔗 **Integrimi:** 🟢 **AKTIV me Chat System**
-🔧 **Status:** 🟢 **KONTEKSTI AUTOMATIK AKTIV**
+🔧 **Status:** 🟢 **SISTEMI I VËZHGIMIT AKTIV**
 
-💡 *Tani çdo mesazh ruhet automatikisht në memorie!*
+💡 *Tani çdo mesazh vëzhgohet automatikisht!*
                 `;
                 window.addMessage(welcomeMsg, 'system', false);
             }
@@ -110,12 +99,14 @@ class RrufePlatform {
         console.log('🔍 DEBUG I PLATFORMËS RRUFEJE:');
         console.log('- Sesioni:', this.modules.session.getSessionInfo());
         console.log('- Context Memory:', '✅ AKTIV (' + this.modules.contextMemory.conversationContext.length + ' mesazhe)');
+        console.log('- Chat Observer:', this.modules.chatObserver ? '✅ AKTIV' : '❌ JO');
         console.log('- Inicializuar:', this.isInitialized);
         console.log('- Modulet:', Object.keys(this.modules));
         console.log('- Integrimi me Chat:', '✅ AKTIV');
         
-        // Testo Context Memory
+        // Testo të gjitha modulet
         this.modules.contextMemory.debugContext();
+        if (this.modules.chatObserver) this.modules.chatObserver.debugObserver();
     }
     
     // ======================================================
@@ -149,7 +140,7 @@ try {
     rrufePlatform = new RrufePlatform();
     window.rrufePlatform = rrufePlatform;
     
-    console.log('💡 Shkruaj: rrufePlatform.debugPlatform() për të testuar të dy modulet!');
+    console.log('💡 Shkruaj: rrufePlatform.debugPlatform() për të testuar 3 modulet!');
     console.log('💡 Shkruaj: rrufePlatform.testContextMemory() për testim të shpejtë!');
     
 } catch (error) {
