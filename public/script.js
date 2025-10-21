@@ -1539,12 +1539,10 @@ async function showAllUsers() {
 
 // =============================== FUKSIONI I URES TESTIMIT TE SISTEMIT ==========================================
 // 📄 script.js - Shto në FUND, para përfundimit
-const ScriptBridge = require('../bridges/script-bridge');
+// const ScriptBridge = require('../bridges/script-bridge');
 
 // ✅ INICIALIZO URËN E SCRIPT-IT (NUK NDRYSHON FUNKSIONIMIN)
-ScriptBridge.initialize();
-
-// ========================== Shfaq statistikat e sistemit =============================================
+// ScriptBridge.initialize();
 
 // ==================== ✅ KOMANDAT E REJA PËR SERVER ====================
 
