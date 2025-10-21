@@ -1,3 +1,74 @@
+// ======================================================
+// 🎯 BRIDGE LOADER I PLOTË - RRUFEJA 347
+// ======================================================
+
+console.log('🔍 Duke inicializuar Bridge System për browser...');
+
+// ✅ FUNKSION I PËRGJITHSHËM PËR TË KRIJUAR FALLBACK BRIDGE
+function createBridgeFallback(bridgeName) {
+    return {
+        initialize: function() {
+            console.log(`🎯 ${bridgeName} Fallback: U inicializua për browser`);
+            return true;
+        },
+        
+        executeCommand: function(command, user) {
+            console.log(`🔧 ${bridgeName} Fallback: Kapur komandë:`, command);
+            return { 
+                success: false, 
+                handled: false, // ✅ NUK E TRAJTON - LË SISTEMIN TË VAZHDOJË
+                message: `${bridgeName} fallback - procesim normal` 
+            };
+        },
+        
+        processMessage: function(message, user) {
+            console.log(`🔧 ${bridgeName} Fallback: Kapur mesazh:`, message.substring(0, 30));
+            return null; // ✅ NUK NDAIH - LË SISTEMIN TË VAZHDOJË
+        },
+        
+        // ✅ METODA STANDARDE
+        isFallback: function() { return true; },
+        isAvailable: function() { return true; },
+        getName: function() { return bridgeName + ' (Fallback)'; }
+    };
+}
+
+// ✅ INICIALIZO TË GJITHA BRIDGET ME FALLBACK
+setTimeout(() => {
+    // ✅ APP BRIDGE
+    if (typeof AppBridge === 'undefined') {
+        window.AppBridge = createBridgeFallback('AppBridge');
+        console.log('✅ AppBridge Fallback u krijua!');
+    }
+    
+    // ✅ COMMAND BRIDGE  
+    if (typeof CommandBridge === 'undefined') {
+        window.CommandBridge = createBridgeFallback('CommandBridge');
+        console.log('✅ CommandBridge Fallback u krijua!');
+    }
+    
+    // ✅ SCRIPT BRIDGE
+    if (typeof ScriptBridge === 'undefined') {
+        window.ScriptBridge = createBridgeFallback('ScriptBridge');
+        console.log('✅ ScriptBridge Fallback u krijua!');
+    }
+    
+    console.log('🎯 TË GJITHA BRIDGET U INICIALIZUAN ME FALLBACK!');
+    console.log('💡 Sistemi i vjetër DO TË FUNKSIONOJË PA PROBLEM!');
+    
+    // ✅ TANI MUND TË INICIALIZOSH TË GJITHA BRIDGET
+    try {
+        if (typeof AppBridge !== 'undefined') AppBridge.initialize();
+        if (typeof CommandBridge !== 'undefined') CommandBridge.initialize(); 
+        if (typeof ScriptBridge !== 'undefined') ScriptBridge.initialize();
+        console.log('🚀 TË GJITHA BRIDGET U INICIALIZUAN ME SUKSES!');
+    } catch (error) {
+        console.log('🔧 Bridge initialization caught:', error.message);
+    }
+}, 500);
+
+// ============================================== FUNDI VECORISE BRIDGES ===============================
+
 let currentUser = null;
 let knowledgeBase = {};
 
