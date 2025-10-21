@@ -7,7 +7,9 @@
 
 class ChatObserver {
     constructor(contextMemory) {
+        // ✅ KJO LINJË MUNGON - SHTOJE!
         this.contextMemory = contextMemory;
+        
         this.isObserving = false;
         this.observer = null;
         this.lastMessageCount = 0;
