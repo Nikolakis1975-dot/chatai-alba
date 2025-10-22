@@ -8,6 +8,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const cookieParser = require('cookie-parser');
+const database = require('./database');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -26,6 +27,12 @@ app.use(cors({
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
 }));
+
+// ✅ MIDDLEWARE për database access në të gjitha routes
+app.use((req, res, next) => {
+    req.db = database.getDb();
+    next();
+});
 
 // ✅ COOKIE & BODY parsers
 app.use(cookieParser());
