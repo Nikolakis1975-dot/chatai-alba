@@ -7,7 +7,7 @@
 
 class ChatObserver {
     constructor(contextMemory) {
-        // =============================== ✅ KJO LINJË MUNGON - SHTOJE! ===============================
+        // =============================== ✅ LINJA KRITIKE E SHTUAR ===============================
         this.contextMemory = contextMemory;
         
         this.isObserving = false;
@@ -116,7 +116,11 @@ class ChatObserver {
             console.log('🔍 CHAT OBSERVER: Kapur mesazh:', sender, text.substring(0, 50));
 
             // ✅ RUAJ NË KONTEKST
-            this.contextMemory.addToContext(text, sender);
+            if (this.contextMemory && this.contextMemory.addToContext) {
+                this.contextMemory.addToContext(text, sender);
+            } else {
+                console.log('❌ CHAT OBSERVER: ContextMemory nuk është i disponueshëm');
+            }
 
         } catch (error) {
             console.log('🔧 CHAT OBSERVER: Gabim në procesim:', error);
@@ -151,6 +155,7 @@ class ChatObserver {
         console.log('- Mesazhe të kapura:', this.lastMessageCount);
         console.log('- Observer aktiv:', this.observer ? '✅ PO' : '❌ JO');
         console.log('- Interval aktiv:', this.intervalId ? '✅ PO' : '❌ JO');
+        console.log('- ContextMemory i disponueshëm:', this.contextMemory ? '✅ PO' : '❌ JO');
     }
 }
 
