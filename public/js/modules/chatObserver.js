@@ -1,57 +1,65 @@
 // ======================= RRUFE-MODULE-003 =======================
-// 🧠 MODULI: ChatObserver (Client)
-// 📍 VENDOSJA: /public/js/modules/chatObserver.js
-// 🔧 DETYRA: Vëzhgim i çdo mesazhi pa ndërhyrë në sistemin ekzistues
-// 🎯 INTEGRIM: Observon chat-in pa modifikuar kodin ekzistues
+// 🧠 MODULI: ChatObserver (Client) - VERSION TEST I THJESHTË
 // ================================================================
 
 class ChatObserver {
     constructor(contextMemory) {
-        // =============================== ✅ LINJA KRITIKE E SHTUAR ===============================
-        this.contextMemory = contextMemory;
+        console.log('🎯 CHAT OBSERVER TEST: Konstruktori u thirr!');
+        console.log('🔍 ContextMemory në konstruktor:', contextMemory ? '✅ EKZISTON' : '❌ MUNGON');
+        
+        // Test: Shko direkt në window object
+        this.contextMemory = contextMemory || (window.rrufePlatform && window.rrufePlatform.modules && window.rrufePlatform.modules.contextMemory);
+        console.log('🔍 ContextMemory pas caktimit:', this.contextMemory ? '✅ EKZISTON' : '❌ MUNGON');
         
         this.isObserving = false;
         this.observer = null;
         this.lastMessageCount = 0;
-        console.log('🎯 CHAT OBSERVER: Sistemi u ngarkua');
     }
 
-    // =====================✅ START OBSERVING - NUK NDAIH NË FUNKSIONIMIN EKZISTUES ==========================
     startObserving() {
+        console.log('🎯 CHAT OBSERVER TEST: StartObserving u thirr!');
+        
         if (this.isObserving) {
-            console.log('🔍 CHAT OBSERVER: Tashmë është duke vëzhguar');
+            console.log('🔍 Tashmë po vëzhgoj');
             return;
         }
 
-        console.log('🎯 CHAT OBSERVER: Duke filluar vëzhgimin...');
+        // Test: Kontrollo përsëri contextMemory
+        if (!this.contextMemory) {
+            this.contextMemory = window.rrufePlatform?.modules?.contextMemory;
+            console.log('🔍 ContextMemory në startObserving:', this.contextMemory ? '✅ EKZISTON' : '❌ MUNGON');
+        }
 
-        // ✅ STRATEGJIA 1: OBSERVER API (MODERNE)
+        // STRATEGJIA 1: Mutation Observer
         this.setupMutationObserver();
         
-        // ✅ STRATEGJIA 2: INTERVAL CHECK (FALLBACK)
+        // STRATEGJIA 2: Interval Check
         this.setupIntervalObserver();
         
-        // ✅ STRATEGJIA 3: EVENT LISTENERS (DIRECT)
-        this.setupEventListeners();
-
         this.isObserving = true;
-        console.log('✅ CHAT OBSERVER: Vëzhgimi filloi me sukses!');
+        console.log('✅ CHAT OBSERVER TEST: Vëzhgimi filloi!');
     }
 
-    // ============================== ✅ STRATEGJIA 1: MUTATION OBSERVER (MË E MIRA) ===========================
     setupMutationObserver() {
+        console.log('🔍 TEST: Duke u përpjekur të gjej chat container...');
         const chatContainer = document.getElementById('chat');
+        
         if (!chatContainer) {
-            console.log('⏳ CHAT OBSERVER: Chat container nuk u gjet, provoj përsëri...');
+            console.log('❌ TEST: Chat container nuk u gjet');
             setTimeout(() => this.setupMutationObserver(), 1000);
             return;
         }
 
+        console.log('✅ TEST: Chat container u gjet!');
+        
         this.observer = new MutationObserver((mutations) => {
+            console.log('🔍 TEST: Mutation u kap! Numri i mutations:', mutations.length);
+            
             mutations.forEach((mutation) => {
                 if (mutation.type === 'childList') {
                     mutation.addedNodes.forEach((node) => {
                         if (node.nodeType === 1 && node.classList.contains('message')) {
+                            console.log('🎯 TEST: Mesazh i ri u gjet!');
                             this.processNewMessage(node);
                         }
                     });
@@ -64,99 +72,71 @@ class ChatObserver {
             subtree: true
         });
 
-        console.log('🔍 CHAT OBSERVER: Mutation Observer u aktivizua');
+        console.log('✅ TEST: Mutation Observer u aktivizua!');
     }
 
-    // ✅ STRATEGJIA 2: INTERVAL CHECK (FALLBACK)
     setupIntervalObserver() {
+        console.log('🔍 TEST: Interval Observer u aktivizua!');
+        
         this.intervalId = setInterval(() => {
             const messages = document.querySelectorAll('.message');
             if (messages.length > this.lastMessageCount) {
+                console.log('🎯 TEST: Mesazhe të reja nga interval:', messages.length - this.lastMessageCount);
                 const newMessages = Array.from(messages).slice(this.lastMessageCount);
                 newMessages.forEach(message => this.processNewMessage(message));
                 this.lastMessageCount = messages.length;
             }
-        }, 500);
+        }, 1000);
     }
 
-    // ======================================= ✅ STRATEGJIA 3: EVENT LISTENERS ========================================
-    setupEventListeners() {
-        // Monitoro butonin send
-        const sendButton = document.querySelector('#send-button, button[onclick*="send"]');
-        if (sendButton) {
-            sendButton.addEventListener('click', () => {
-                setTimeout(() => this.captureUserMessage(), 100);
-            });
-        }
-
-        // Monitoro input enter
-        const userInput = document.getElementById('user-input');
-        if (userInput) {
-            userInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    setTimeout(() => this.captureUserMessage(), 100);
-                }
-            });
-        }
-    }
-
-    // ✅ PROCESO MESAZHIN E RI
     processNewMessage(messageElement) {
+        console.log('🔍 TEST: ProcessNewMessage u thirr!');
+        
         try {
             const messageContent = messageElement.querySelector('.message-content');
-            if (!messageContent) return;
+            if (!messageContent) {
+                console.log('❌ TEST: Nuk ka message content');
+                return;
+            }
 
             const text = messageContent.textContent || messageContent.innerText;
             const sender = messageElement.classList.contains('user-message') ? 'user' : 
                           messageElement.classList.contains('bot-message') ? 'bot' : 'system';
 
-            // ✅ MOS RUAJ MESAZHE SISTEMI OSE TË ZBRAZËTA
-            if (sender === 'system' || !text.trim()) return;
+            console.log('🔍 TEST: Kapur mesazh - Sender:', sender, 'Text:', text.substring(0, 30));
 
-            console.log('🔍 CHAT OBSERVER: Kapur mesazh:', sender, text.substring(0, 50));
+            // MOS RUAJ MESAZHE SISTEMI
+            if (sender === 'system' || !text.trim()) {
+                console.log('⏭️ TEST: Mesazh sistem - skip');
+                return;
+            }
 
-            // ✅ RUAJ NË KONTEKST
+            // TEST: Provo të shtosh në kontekst
             if (this.contextMemory && this.contextMemory.addToContext) {
+                console.log('💾 TEST: Duke shtuar në kontekst...');
                 this.contextMemory.addToContext(text, sender);
+                console.log('✅ TEST: Mesazh u shtua në kontekst!');
             } else {
-                console.log('❌ CHAT OBSERVER: ContextMemory nuk është i disponueshëm');
+                console.log('❌ TEST: ContextMemory nuk është i disponueshëm për të shtuar mesazh!');
             }
 
         } catch (error) {
-            console.log('🔧 CHAT OBSERVER: Gabim në procesim:', error);
+            console.log('❌ TEST: Gabim në processNewMessage:', error);
         }
     }
 
-    // ✅ KAP MESAZHIN E PËRDORUESIT PARAPRAKISHT
-    captureUserMessage() {
-        const userInput = document.getElementById('user-input');
-        if (userInput && userInput.value.trim()) {
-            // Këtu mund të bësh diçka me mesazhin e përdoruesit para se të dërgohet
-            console.log('🔍 CHAT OBSERVER: Përgatitem për mesazh:', userInput.value.substring(0, 30));
-        }
-    }
-
-    // ✅ NDALO VËZHGIMIN
-    stopObserving() {
-        if (this.observer) {
-            this.observer.disconnect();
-        }
-        if (this.intervalId) {
-            clearInterval(this.intervalId);
-        }
-        this.isObserving = false;
-        console.log('🛑 CHAT OBSERVER: Vëzhgimi u ndal');
-    }
-
-    // ✅ METODA DEBUG
     debugObserver() {
-        console.log('🔍 DEBUG CHAT OBSERVER:');
+        console.log('🔍 DEBUG TEST CHAT OBSERVER:');
         console.log('- Është duke vëzhguar:', this.isObserving);
         console.log('- Mesazhe të kapura:', this.lastMessageCount);
+        console.log('- ContextMemory:', this.contextMemory ? '✅ EKZISTON' : '❌ MUNGON');
         console.log('- Observer aktiv:', this.observer ? '✅ PO' : '❌ JO');
-        console.log('- Interval aktiv:', this.intervalId ? '✅ PO' : '❌ JO');
-        console.log('- ContextMemory i disponueshëm:', this.contextMemory ? '✅ PO' : '❌ JO');
     }
 }
 
-export default ChatObserver;
+// ✅ EKSPORTIMI I THJESHTË
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = ChatObserver;
+} else {
+    window.ChatObserver = ChatObserver;
+}
