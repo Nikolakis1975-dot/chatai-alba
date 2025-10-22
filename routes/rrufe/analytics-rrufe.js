@@ -1,15 +1,17 @@
 // ======================= RRUFE-API-002 =======================
 // 📍 routes/rrufe/analytics-rrufe.js
-// 🎯 Analytics RRUFE pa prekur sistemin ekzistues
+// 🎯 Analytics RRUFE me database access të saktë
 // =============================================================
 
 const express = require('express');
 const router = express.Router();
+const database = require('../../database'); // ✅ IMPORT DATABASE
 
 // ✅ RRUFE API - Statistika
 router.get('/analytics/overview', async (req, res) => {
     try {
-        const stats = await req.db.all(`
+        const db = database.getDb(); // ✅ MER DATABASE
+        const stats = await db.all(`
             SELECT 
                 COUNT(*) as total_messages,
                 COUNT(DISTINCT user_id) as total_users,
@@ -26,7 +28,8 @@ router.get('/analytics/overview', async (req, res) => {
 // ✅ RRUFE API - Aktiviteti i përdoruesve
 router.get('/analytics/user-activity', async (req, res) => {
     try {
-        const activity = await req.db.all(`
+        const db = database.getDb(); // ✅ MER DATABASE
+        const activity = await db.all(`
             SELECT 
                 u.username,
                 COUNT(m.id) as message_count,
