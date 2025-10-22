@@ -50,6 +50,8 @@ const apiRoutes = require('./routes/api');
 const geminiRoutes = require('./routes/gemini');
 const adminRoutes = require('./routes/admin');
 const geminiSimpleRoutes = require('./routes/gemini-simple');
+const apiRrufeRoutes = require('./routes/rrufe/api-rrufe');
+const analyticsRrufeRoutes = require('./routes/rrufe/analytics-rrufe');
 
 // Regjistro të gjitha rutat
 app.use('/api/auth', authRoutes);
@@ -61,6 +63,8 @@ app.use('/api/api-keys', apiRoutes);
 app.use('/api/gemini', geminiRoutes);
 app.use('/admin', adminRoutes);
 app.use('/api/gemini-simple', geminiSimpleRoutes);
+app.use('/api/rrufe', apiRrufeRoutes);
+app.use('/api/rrufe', analyticsRrufeRoutes);
 
 // ======================================================
 // 4️⃣ Static files (Frontend)
