@@ -1,15 +1,17 @@
 // ======================= RRUFE-API-001 =======================
 // 📍 routes/rrufe/api-rrufe.js
-// 🎯 API të reja RRUFE pa prekur sistemin ekzistues
+// 🎯 API të reja RRUFE me database access të saktë
 // =============================================================
 
 const express = require('express');
 const router = express.Router();
+const database = require('../../database'); // ✅ IMPORT DATABASE
 
 // ✅ RRUFE API - Historiku i mesazheve
 router.get('/messages/history', async (req, res) => {
     try {
-        const messages = await req.db.all(`
+        const db = database.getDb(); // ✅ MER DATABASE
+        const messages = await db.all(`
             SELECT m.*, u.username 
             FROM messages m 
             LEFT JOIN users u ON m.user_id = u.id 
@@ -27,7 +29,8 @@ router.get('/messages/history', async (req, res) => {
 router.get('/messages/user/:userId', async (req, res) => {
     try {
         const { userId } = req.params;
-        const messages = await req.db.all(
+        const db = database.getDb(); // ✅ MER DATABASE
+        const messages = await db.all(
             'SELECT * FROM messages WHERE user_id = ? ORDER BY timestamp DESC LIMIT 20',
             [userId]
         );
