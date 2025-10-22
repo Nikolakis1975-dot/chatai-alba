@@ -1,5 +1,5 @@
 // ======================= RRUFE-MODULE-002 =======================
-// 🧠 MODULI: ContextMemory (Client) - VERSION I PËRMBLDSHUR
+// 🧠 MODULI: ContextMemory (Client) - VERSION I PËRMBLDSHUR & I OPTIMIZUAR
 // 📍 VENDOSJA: /public/js/modules/contextMemory.js
 // 🔧 DETYRA: Menaxhim memorie kontekstuale inteligjente në browser
 // 🎯 INTEGRIM: Me SessionManager dhe sistemin ekzistues
@@ -17,6 +17,10 @@ class ContextMemory {
         this.cache = new Map();
         this.cleanupInterval = setInterval(() => this.cleanupOldEntries(), 30000); // 30 sekonda
         this.compressionEnabled = true;
+        
+        // ✅ OPTIMIZIM I RI: SISTEM SUMMARY
+        this.contextSummary = "";
+        this.summaryUpdateInterval = setInterval(() => this.updateSummary(), 60000); // 1 minutë
         
         console.log('🎯 MODULI I KONTEKSTIT U NGARKUA ME MEMORY MANAGEMENT TË AVANCUAR');
     }
@@ -37,6 +41,12 @@ class ContextMemory {
     
     // ============================= ✅ SHTO MESAZH NË KONTEKST (I PËRMBLDSHUR) ===============================
     addToContext(message, sender, response = null) {
+        // ✅ OPTIMIZIM I RI: FILTRIM I MESAZHEVE
+        if (this.shouldSkipMessage(message, sender)) {
+            console.log('⏭️ Mesazh u filtrua:', message.substring(0, 20));
+            return null;
+        }
+
         const contextEntry = {
             id: this.generateMessageId(), // ✅ ID unik
             message: message,
@@ -62,11 +72,29 @@ class ContextMemory {
         
         // ✅ MEMORY CONNECTIONS: Krijo lidhje inteligjente
         this.createMemoryConnections(contextEntry);
+
+        // ✅ OPTIMIZIM I RI: UPDATE SUMMARY
+        this.updateSummary();
         
         console.log('💾 Shtova në kontekst:', message.substring(0, 30));
         this.sessionManager.incrementMessageCount();
         
         return contextEntry.id; // ✅ Kthe ID për referencë
+    }
+
+    // ✅ OPTIMIZIM I RI: FILTRIM I MESAZHEVE
+    shouldSkipMessage(message, sender) {
+        const skipPatterns = [
+            /^❌ ❌ Komande e panjohur:/, // Mesazhe error
+            /^E kuptoj! 😊 Përdorni \/ndihmo/, // Mesazhe sistemi
+            /^po\s*$/, /^jo\s*$/, /^ok\s*$/i, // Përgjigje të shkurtra
+            /^\s*$/, // Bosh
+            /^[❤️😊👍]+$/, // Vetëm emoji
+        ];
+        
+        return skipPatterns.some(pattern => pattern.test(message)) || 
+               sender === 'system' || 
+               message.trim().length < 2;
     }
 
     // ✅ METODA E RE: GENERATE MESSAGE ID
@@ -154,6 +182,36 @@ class ContextMemory {
                 keywords: commonKeywords
             });
         }
+    }
+
+    // ✅ OPTIMIZIM I RI: UPDATE SUMMARY
+    updateSummary() {
+        if (this.conversationContext.length < 3) {
+            this.contextSummary = "Bisedë e filluar së fundmi";
+            return;
+        }
+
+        // Krijo përmbledhje bazë nga mesazhet më të rëndësishme
+        const importantMessages = this.conversationContext
+            .filter(entry => entry.importance >= 6)
+            .slice(0, 5)
+            .map(entry => `${entry.sender}: ${entry.message.substring(0, 50)}`)
+            .join(' | ');
+
+        this.contextSummary = importantMessages || "Bisedë e përgjithshme";
+        console.log('📝 Përmbledhja u përditësua:', this.contextSummary);
+    }
+
+    // ✅ OPTIMIZIM I RI: GET ENHANCED CONTEXT
+    getEnhancedContext() {
+        return {
+            recent: this.conversationContext.slice(0, 5), // 5 mesazhet e fundit
+            summary: this.contextSummary,
+            important: this.conversationContext
+                .filter(entry => entry.importance >= 7)
+                .slice(0, 3),
+            stats: this.getContextStats()
+        };
     }
 
     // ✅ METODA E RE: SMART CONTEXT GENERATION
@@ -274,7 +332,8 @@ class ContextMemory {
             memoryConnections: this.memoryConnections.size,
             averageImportance: this.conversationContext.reduce((sum, entry) => sum + entry.importance, 0) / this.conversationContext.length || 0,
             oldestMessage: this.conversationContext.length > 0 ? this.conversationContext[this.conversationContext.length - 1].timestamp : null,
-            newestMessage: this.conversationContext.length > 0 ? this.conversationContext[0].timestamp : null
+            newestMessage: this.conversationContext.length > 0 ? this.conversationContext[0].timestamp : null,
+            contextSummary: this.contextSummary
         };
     }
     
@@ -397,6 +456,7 @@ class ContextMemory {
         console.log('- Madhësia e cache:', stats.cacheSize);
         console.log('- Lidhje në memorie:', stats.memoryConnections);
         console.log('- Rëndësia mesatare:', stats.averageImportance.toFixed(2));
+        console.log('- Përmbledhja:', stats.contextSummary);
         console.log('- Konteksti i zgjeruar:', this.generateSmartContext().substring(0, 100) + '...');
         
         // Shfaq 3 mesazhet më të rëndësishme
@@ -408,6 +468,9 @@ class ContextMemory {
         topMessages.forEach((msg, index) => {
             console.log(`  ${index + 1}. [${msg.importance}] ${msg.message.substring(0, 40)}`);
         });
+
+        // ✅ OPTIMIZIM I RI: SHFAQ ENHANCED CONTEXT
+        console.log('- Konteksti i përmirësuar:', this.getEnhancedContext());
     }
 }
 
