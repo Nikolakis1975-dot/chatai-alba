@@ -79,7 +79,7 @@ class ChatObserver {
         }, 500);
     }
 
-    // ✅ STRATEGJIA 3: EVENT LISTENERS (DIRECT)
+    // ======================================= ✅ STRATEGJIA 3: EVENT LISTENERS ========================================
     setupEventListeners() {
         // Monitoro butonin send
         const sendButton = document.querySelector('#send-button, button[onclick*="send"]');
