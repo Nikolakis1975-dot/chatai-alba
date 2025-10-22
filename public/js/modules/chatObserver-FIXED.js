@@ -89,41 +89,44 @@ class ChatObserver {
         }, 1000);
     }
 
-    processNewMessage(messageElement) {
-        console.log('🔍 TEST: ProcessNewMessage u thirr!');
+   processNewMessage(messageElement) {
+    console.log('🔍 TEST: ProcessNewMessage u thirr!');
+    
+    try {
+        // ✅ STRUKTURA E THJESHTË - TEKSTI ËSHTË DIREKT NË ELEMENT
+        const text = messageElement.textContent || messageElement.innerText || '';
+        console.log('🔍 TEST: Teksti i gjetur:', text.substring(0, 50));
+
+        // ✅ GJENI SENDER-IN NGA KLASAT
+        let sender = 'unknown';
+        if (messageElement.classList.contains('user-message')) sender = 'user';
+        else if (messageElement.classList.contains('bot-message')) sender = 'bot'; 
+        else if (messageElement.classList.contains('system-message')) sender = 'system';
         
-        try {
-            const messageContent = messageElement.querySelector('.message-content');
-            if (!messageContent) {
-                console.log('❌ TEST: Nuk ka message content');
-                return;
-            }
+        console.log('🔍 TEST: Sender i gjetur:', sender);
 
-            const text = messageContent.textContent || messageContent.innerText;
-            const sender = messageElement.classList.contains('user-message') ? 'user' : 
-                          messageElement.classList.contains('bot-message') ? 'bot' : 'system';
-
-            console.log('🔍 TEST: Kapur mesazh - Sender:', sender, 'Text:', text.substring(0, 30));
-
-            // MOS RUAJ MESAZHE SISTEMI
-            if (sender === 'system' || !text.trim()) {
-                console.log('⏭️ TEST: Mesazh sistem - skip');
-                return;
-            }
-
-            // TEST: Provo të shtosh në kontekst
-            if (this.contextMemory && this.contextMemory.addToContext) {
-                console.log('💾 TEST: Duke shtuar në kontekst...');
-                this.contextMemory.addToContext(text, sender);
-                console.log('✅ TEST: Mesazh u shtua në kontekst!');
-            } else {
-                console.log('❌ TEST: ContextMemory nuk është i disponueshëm për të shtuar mesazh!');
-            }
-
-        } catch (error) {
-            console.log('❌ TEST: Gabim në processNewMessage:', error);
+        // ✅ MOS RUAJ MESAZHE SISTEMI OSE TË ZBRAZËTA
+        if (sender === 'system' || !text.trim()) {
+            console.log('⏭️ TEST: Mesazh sistem ose bosh - skip');
+            return;
         }
+
+        // ✅ SHTO NË KONTEKST
+        if (this.contextMemory && this.contextMemory.addToContext) {
+            console.log('💾 TEST: Duke shtuar në kontekst...');
+            this.contextMemory.addToContext(text, sender);
+            console.log('✅ TEST: Mesazh u shtua në kontekst!');
+            
+            // ✅ KONTROLLO NËSE PO RRIET NUMRI I MESAZHEVE
+            console.log('📊 Mesazhe në kontekst:', this.contextMemory.conversationContext.length);
+        } else {
+            console.log('❌ TEST: ContextMemory nuk është i disponueshëm!');
+        }
+
+    } catch (error) {
+        console.log('❌ TEST: Gabim në processNewMessage:', error);
     }
+}
 
     debugObserver() {
         console.log('🔍 DEBUG TEST CHAT OBSERVER:');
