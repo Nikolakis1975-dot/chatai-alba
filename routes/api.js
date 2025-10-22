@@ -554,49 +554,5 @@ async function tryGeminiFallback(apiKey, message, userId, res) {
     }
 }
 
-// ======================= RRUFE-API-001 =======================
-// ✅ RRUFE API - Shto në fund të routes/api.js EKZISTUES
-// =============================================================
-
-// ✅ RRUFE API - Historiku i mesazheve
-app.get('/api/rrufe/messages/history', async (req, res) => {
-    try {
-        console.log('🔍 RRUFE API: Duke marrë historinë...');
-        
-        const messages = await req.db.all(`
-            SELECT m.*, u.username 
-            FROM messages m 
-            LEFT JOIN users u ON m.user_id = u.id 
-            ORDER BY m.timestamp DESC
-            LIMIT 20
-        `);
-        
-        res.json({ success: true, messages });
-        
-    } catch (error) {
-        console.error('❌ RRUFE API: Gabim:', error);
-        res.status(500).json({ success: false, error: error.message });
-    }
-});
-
-// =================================== ✅ RRUFE API - Statistika ===============================================
-app.get('/api/rrufe/analytics/overview', async (req, res) => {
-    try {
-        console.log('🔍 RRUFE ANALYTICS: Duke gjeneruar...');
-        
-        const stats = await req.db.all(`
-            SELECT 
-                COUNT(*) as total_messages,
-                COUNT(DISTINCT user_id) as total_users
-            FROM messages
-        `);
-        
-        res.json({ success: true, stats: stats[0] });
-        
-    } catch (error) {
-        console.error('❌ RRUFE ANALYTICS: Gabim:', error);
-        res.status(500).json({ success: false, error: error.message });
-    }
-});
 
 module.exports = router;
