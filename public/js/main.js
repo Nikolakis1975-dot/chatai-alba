@@ -216,9 +216,47 @@ class RrufePlatform {
     }
 }
 
-// ✅ KRIJO INSTANCËN GLOBALE
-window.rrufePlatform = new RrufePlatform();
+// ✅ KRIJO INSTANCËN GLOBALE - ME ERROR HANDLING
+console.log('🔧 Duke krijuar instancën globale të RrufePlatform...');
 
-console.log('💡 Shkruaj: rrufePlatform.debugPlatform() për të testuar 3 modulet!');
-console.log('💡 Shkruaj: rrufePlatform.testContextMemory() për testim të shpejtë!');
+try {
+    const platformInstance = new RrufePlatform();
+    window.rrufePlatform = platformInstance;
+    console.log('✅ rrufePlatform u krijua me sukses!');
+    console.log('🔍 Instance details:', {
+        isInitialized: platformInstance.isInitialized,
+        modules: Object.keys(platformInstance.modules || {})
+    });
+} catch (error) {
+    console.error('❌ GABIM I MADH në krijimin e rrufePlatform:', error);
+    console.error('❌ Stack trace:', error.stack);
+    
+    // Krijo një fallback
+    window.rrufePlatform = {
+        isInitialized: false,
+        modules: {},
+        debugPlatform: function() {
+            console.log('🔧 Fallback debug - Platforma nuk u inicializua!');
+        },
+        testContextMemory: function() {
+            console.log('🔧 Fallback test - Platforma nuk u inicializua!');
+        }
+    };
+    console.log('🔧 Krijuam fallback të rrufePlatform');
+}
+
+// ✅ VERIFIKIMI I DETYRUAR
+setTimeout(() => {
+    console.log('🔍 VERIFIKIM FINAL:');
+    console.log('- window.rrufePlatform:', typeof window.rrufePlatform);
+    console.log('- rrufePlatform global:', typeof rrufePlatform);
+    console.log('- isInitialized:', window.rrufePlatform ? window.rrufePlatform.isInitialized : 'NUK EKZISTON');
+    
+    if (window.rrufePlatform && window.rrufePlatform.debugPlatform) {
+        console.log('💡 Shkruaj: rrufePlatform.debugPlatform()');
+    } else {
+        console.log('❌ rrufePlatform nuk ka metodën debugPlatform');
+    }
+}, 2000);
+
 console.log('🎉🎉🎉 RRUFE PLATFORM ËSHTË GATI PËR PËRDORIM! 🎉🎉🎉');
