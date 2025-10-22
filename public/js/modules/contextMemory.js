@@ -15,7 +15,7 @@ class ContextMemory {
         console.log('🎯 MODULI I KONTEKSTIT U NGARKUA');
     }
     
-    // ✅ ANALIZO KONTEKSTIN E BISEDËS
+    // =================== ✅ ANALIZO KONTEKSTIN E BISEDËS ===================================
     analyzeContext(message) {
         const context = {
             message: message,
@@ -29,7 +29,7 @@ class ContextMemory {
         return context;
     }
     
-    // ✅ SHTO MESAZH NË KONTEKST
+    // ============================= ✅ SHTO MESAZH NË KONTEKST ===============================
     addToContext(message, sender, response = null) {
         const contextEntry = {
             message: message,
@@ -51,7 +51,7 @@ class ContextMemory {
         this.sessionManager.incrementMessageCount();
     }
     
-    // ✅ GJENERO KONTEKST PËR PËRGJIGJE
+    // ================================== ✅ GJENERO KONTEKST PËR PËRGJIGJE ===============================
     generateContextForResponse() {
         if (this.conversationContext.length === 0) {
             return "Bisedë e re. Përshëndetje!";
@@ -67,7 +67,7 @@ class ContextMemory {
         return context;
     }
     
-    // ✅ KËRKO NË MEMORIE
+    // ======================================✅ KËRKO NË MEMORIE ==================================
     searchInMemory(query) {
         const results = [];
         const queryKeywords = this.extractKeywords(query);
