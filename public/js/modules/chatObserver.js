@@ -7,7 +7,7 @@
 
 class ChatObserver {
     constructor(contextMemory) {
-        // ✅ KJO LINJË MUNGON - SHTOJE!
+        // =============================== ✅ KJO LINJË MUNGON - SHTOJE! ===============================
         this.contextMemory = contextMemory;
         
         this.isObserving = false;
@@ -16,7 +16,7 @@ class ChatObserver {
         console.log('🎯 CHAT OBSERVER: Sistemi u ngarkua');
     }
 
-    // ✅ START OBSERVING - NUK NDAIH NË FUNKSIONIMIN EKZISTUES
+    // =====================✅ START OBSERVING - NUK NDAIH NË FUNKSIONIMIN EKZISTUES ==========================
     startObserving() {
         if (this.isObserving) {
             console.log('🔍 CHAT OBSERVER: Tashmë është duke vëzhguar');
@@ -38,7 +38,7 @@ class ChatObserver {
         console.log('✅ CHAT OBSERVER: Vëzhgimi filloi me sukses!');
     }
 
-    // ✅ STRATEGJIA 1: MUTATION OBSERVER (MË E MIRA)
+    // ============================== ✅ STRATEGJIA 1: MUTATION OBSERVER (MË E MIRA) ===========================
     setupMutationObserver() {
         const chatContainer = document.getElementById('chat');
         if (!chatContainer) {
