@@ -57,6 +57,10 @@ const apiRoutes = require('./routes/api');
 const geminiRoutes = require('./routes/gemini');
 const adminRoutes = require('./routes/admin');
 const geminiSimpleRoutes = require('./routes/gemini-simple');
+
+// ✅ RRUFE ROUTES - SHTESË E RE
+const contextRoutes = require('./routes/context-routes');
+const sessionRoutes = require('./routes/session-routes');
 const apiRrufeRoutes = require('./routes/rrufe/api-rrufe');
 const analyticsRrufeRoutes = require('./routes/rrufe/analytics-rrufe');
 
@@ -70,54 +74,52 @@ app.use('/api/api-keys', apiRoutes);
 app.use('/api/gemini', geminiRoutes);
 app.use('/admin', adminRoutes);
 app.use('/api/gemini-simple', geminiSimpleRoutes);
+
+// ✅ RRUFE ROUTES - SHTESË E RE
+app.use('/api/context', contextRoutes);
+app.use('/api/session', sessionRoutes);
 app.use('/api/rrufe', apiRrufeRoutes);
 app.use('/api/rrufe', analyticsRrufeRoutes);
 
 // ======================================================
-// 4️⃣ Static files (Frontend)
+// 4️⃣ Ruta për frontend dhe skedarë statikë
+// ======================================================
+
+// ✅ Ruta për skedarët statikë (CSS, JS, imazhe)
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ======================================================
-// 5️⃣ Default route — për SPA frontend
-app.get('/', (req, res) => {
+// ✅ Ruta për frontend (SPA)
+app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // ======================================================
-// 6️⃣ Error & 404 Handlers
-app.use((err, req, res, next) => {
-    console.error('❌ Gabim në server:', err);
-    res.status(500).json({
-        success: false,
-        message: 'Gabim i brendshëm i serverit.'
-    });
-});
-
-app.use((req, res) => {
-    res.status(404).json({
-        success: false,
-        message: 'Ruta nuk u gjet.'
-    });
-});
-
+// 5️⃣ Nisja e serverit
 // ======================================================
-// 7️⃣ Test enkriptimi
-const encryption = require('./utils/encryption');
-setTimeout(() => {
-    console.log('🛡️ Testi i enkriptimit AES-256-CBC:');
-    encryption.testEncryption();
-}, 2000);
 
-// ======================================================
-// 8️⃣ Ura (Bridge System)
-const AppBridge = require('./bridges/app-bridge');
-AppBridge.initializeSafeBridge(app);
-
-// ======================================================
-// 9️⃣ Start server
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, () => {
     console.log(`🚀 Serveri është duke u drejtuar në portin ${PORT}`);
     console.log(`🌐 URL: http://localhost:${PORT}`);
     console.log(`🔐 NODE_ENV: ${process.env.NODE_ENV}`);
-    console.log(`🎤 Voice Routes u regjistruan: /api/voice/transcribe`);
+});
+
+// ======================================================
+// 6️⃣ Ruta testuese për shëndetin e serverit
+// ======================================================
+
+app.get('/api/health', (req, res) => {
+    res.json({ 
+        status: '✅ Serveri është aktiv', 
+        timestamp: new Date().toISOString(),
+        version: '3.0'
+    });
+});
+
+// ✅ RRUFE HEALTH CHECK - SHTESË E RE
+app.get('/api/rrufe/health', (req, res) => {
+    res.json({ 
+        status: '✅ RRUFE API është aktiv', 
+        timestamp: new Date().toISOString(),
+        features: ['messages/history', 'analytics/overview', 'messages/user/:id']
+    });
 });
