@@ -1,5 +1,5 @@
 // ======================================================
-// 🚀 MODULI PRINCIPAL RRUFEJE - main.js (VERSION FINAL)
+// 🚀 MODULI PRINCIPAL RRUFEJE - main.js (VERSION RRUFE-TESLA)
 // ======================================================
 
 // Custom logger që funksionon edhe me console të bllokuar
@@ -28,6 +28,12 @@ class RrufePlatform {
         rlog('🚀 RrufePlatform u krijua!');
         this.modules = {};
         this.isInitialized = false;
+ 
+        // ✅ MODULET E REJA RRUFE-TESLA
+        this.modules.quantumMemory = null;
+        this.modules.bioNeuralNetwork = null;
+        this.modules.temporalContext = null;
+        
         this.init();
     }
     
@@ -40,20 +46,32 @@ class RrufePlatform {
             // ======================================================
             
             // ✅ MODULI 1: SessionManager
-            this.modules.session = {
+            this.modules.sessionManager = {
                 sessionId: 'rrufe_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
                 sessionStart: new Date(),
                 messageCount: 0,
+                currentUser: 'guest',
+                userRole: 'guest',
                 
-                getSessionInfo: function() {
+                getSessionId: function() {
+                    return this.sessionId;
+                },
+                
+                getSessionDuration: function() {
                     const duration = Math.floor((new Date() - this.sessionStart) / 1000);
                     const minutes = Math.floor(duration / 60);
                     const seconds = duration % 60;
+                    return (minutes > 0 ? minutes + 'm ' : '') + seconds + 's';
+                },
+                
+                getSessionInfo: function() {
                     return {
                         id: this.sessionId,
                         start: this.sessionStart,
-                        duration: (minutes > 0 ? minutes + 'm ' : '') + seconds + 's',
-                        messageCount: this.messageCount
+                        duration: this.getSessionDuration(),
+                        messageCount: this.messageCount,
+                        user: this.currentUser,
+                        role: this.userRole
                     };
                 },
                 
@@ -61,26 +79,44 @@ class RrufePlatform {
                     this.messageCount++;
                 },
                 
+                isSessionActive: function() {
+                    const duration = (new Date() - this.sessionStart) / 1000 / 60; // në minuta
+                    return duration < 120; // Sesion aktiv për 2 orë
+                },
+                
                 renewSession: function() {
                     this.sessionId = 'rrufe_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
                     this.sessionStart = new Date();
                     this.messageCount = 0;
+                    rlog('🔄 Sesioni u rinovua: ' + this.sessionId);
                     return this.sessionId;
+                },
+                
+                getSessionStats: function() {
+                    return {
+                        sessionId: this.sessionId,
+                        duration: this.getSessionDuration(),
+                        messageCount: this.messageCount,
+                        isActive: this.isSessionActive(),
+                        user: this.currentUser
+                    };
                 }
             };
             
             // ✅ MODULI 2: ContextMemory
             this.modules.contextMemory = {
                 conversationContext: [],
-                maxContextLength: 10,
+                maxContextLength: 15,
                 
                 addToContext: function(message, sender, response = null) {
                     const contextEntry = {
+                        id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
                         message: message,
                         sender: sender,
                         response: response,
                         timestamp: new Date(),
-                        keywords: this.extractKeywords(message)
+                        keywords: this.extractKeywords(message),
+                        importance: this.calculateImportance(message, sender)
                     };
                     
                     // Shto në fillim të array (mesazhet e reja së pari)
@@ -94,11 +130,27 @@ class RrufePlatform {
                     rlog('💾 Shtova në kontekst: ' + message.substring(0, 30));
                     
                     // Increment message count
-                    if (window.rrufePlatform && window.rrufePlatform.modules.session) {
-                        window.rrufePlatform.modules.session.incrementMessageCount();
+                    if (window.rrufePlatform && window.rrufePlatform.modules.sessionManager) {
+                        window.rrufePlatform.modules.sessionManager.incrementMessageCount();
                     }
+                    
+                    return contextEntry.id;
                 },
                 
+                calculateImportance: function(message, sender) {
+                    let score = 0;
+                    if (sender === 'user') score += 2;
+                    if (message.includes('?') || message.includes('si ') || message.includes('ku ') || message.includes('kur ')) {
+                        score += 3;
+                    }
+                    if (message.length > 50) score += 1;
+                    const importantKeywords = ['rëndësi', 'dëshiroj', 'dua', 'mëso', 'ndihmo', 'urgjent'];
+                    if (importantKeywords.some(keyword => message.toLowerCase().includes(keyword))) {
+                        score += 2;
+                    }
+                    return Math.min(score, 10);
+                },
+
                 generateContextForResponse: function() {
                     if (this.conversationContext.length === 0) {
                         return "Bisedë e re. Përshëndetje!";
@@ -148,14 +200,25 @@ class RrufePlatform {
                     return commonWords.length / Math.max(keywords1.length, keywords2.length);
                 },
                 
+                getContextStats: function() {
+                    return {
+                        totalMessages: this.conversationContext.length,
+                        averageImportance: this.conversationContext.reduce((sum, entry) => sum + entry.importance, 0) / this.conversationContext.length || 0,
+                        oldestMessage: this.conversationContext.length > 0 ? this.conversationContext[this.conversationContext.length - 1].timestamp : null,
+                        newestMessage: this.conversationContext.length > 0 ? this.conversationContext[0].timestamp : null
+                    };
+                },
+                
                 debugContext: function() {
-                    rlog('🔍 DEBUG KONTEKSTI: ' + this.conversationContext.length + ' mesazhe');
+                    const stats = this.getContextStats();
+                    rlog('🔍 DEBUG KONTEKSTI: ' + stats.totalMessages + ' mesazhe');
+                    rlog('📊 Rëndësia mesatare: ' + stats.averageImportance.toFixed(2));
                     if (this.conversationContext.length > 0) {
                         rlog('📝 Konteksti i fundit: ' + this.generateContextForResponse().substring(0, 50) + '...');
                     }
                 }
             };
-            
+
             // ✅ MODULI 3: ChatObserver
             this.modules.chatObserver = {
                 isObserving: false,
@@ -172,10 +235,7 @@ class RrufePlatform {
                     rlog('🎯 CHAT OBSERVER: Duke filluar vëzhgimin...');
                     this.isObserving = true;
                     
-                    // ✅ STRATEGJIA 1: MUTATION OBSERVER
                     this.setupMutationObserver();
-                    
-                    // ✅ STRATEGJIA 2: INTERVAL CHECK (FALLBACK)
                     this.setupIntervalObserver();
                     
                     rlog('✅ CHAT OBSERVER: Vëzhgimi filloi me sukses!');
@@ -193,7 +253,8 @@ class RrufePlatform {
                         mutations.forEach((mutation) => {
                             if (mutation.type === 'childList') {
                                 mutation.addedNodes.forEach((node) => {
-                                    if (node.nodeType === 1 && node.classList && node.classList.contains('message')) {
+                                    if (node.nodeType === 1 && node.classList && 
+                                        (node.classList.contains('message') || node.querySelector('.message'))) {
                                         this.processNewMessage(node);
                                     }
                                 });
@@ -211,7 +272,7 @@ class RrufePlatform {
                 
                 setupIntervalObserver: function() {
                     this.intervalId = setInterval(() => {
-                        const messages = document.querySelectorAll('.message');
+                        const messages = document.querySelectorAll('.message, [class*="message"]');
                         if (messages.length > this.lastMessageCount) {
                             const newMessages = Array.from(messages).slice(this.lastMessageCount);
                             newMessages.forEach(message => this.processNewMessage(message));
@@ -222,15 +283,12 @@ class RrufePlatform {
                 
                 processNewMessage: function(messageElement) {
                     try {
-                        const messageContent = messageElement.querySelector('.message-content');
-                        if (!messageContent) return;
+                        const messageContent = messageElement.querySelector('.message-content') || messageElement;
+                        const text = messageContent.textContent || messageContent.innerText || '';
                         
-                        const text = messageContent.textContent || messageContent.innerText;
                         const sender = messageElement.classList.contains('user-message') ? 'user' : 
-                                      messageElement.classList.contains('bot-message') ? 'bot' : 'system';
-                        
-                        // Mos ruaj mesazhe sistemi ose të zbrazëta
-                        if (sender === 'system' || !text.trim()) return;
+                                      messageElement.classList.contains('bot-message') ? 'bot' : 
+                                      messageElement.classList.contains('system-message') ? 'system' : 'unknown';
                         
                         rlog('🔍 CHAT OBSERVER: Kapur mesazh - ' + sender + ': ' + text.substring(0, 50));
                         
@@ -240,7 +298,7 @@ class RrufePlatform {
                         }
                         
                     } catch (error) {
-                        rlog('🔧 CHAT OBSERVER: Gabim në procesim');
+                        rlog('❌ CHAT OBSERVER: Gabim në processNewMessage: ' + error);
                     }
                 },
                 
@@ -261,7 +319,35 @@ class RrufePlatform {
                     rlog('- Mesazhe të kapura: ' + this.lastMessageCount);
                 }
             };
+
+            // ======================================================
+            // 🚀 INICIALIZIMI I MODULEVE RRUFE-TESLA
+            // ======================================================
             
+            // ✅ MODULI 4: Quantum Memory
+            if (typeof QuantumMemory !== 'undefined') {
+                this.modules.quantumMemory = new QuantumMemory(this.modules.contextMemory);
+                rlog('⚛️ QUANTUM MEMORY u integrua!');
+            } else {
+                rlog('⚠️ QuantumMemory nuk u gjet - kontrollo skedarin');
+            }
+            
+            // ✅ MODULI 5: Bio-Neural Network
+            if (typeof BioNeuralNetwork !== 'undefined') {
+                this.modules.bioNeuralNetwork = new BioNeuralNetwork(this.modules.contextMemory);
+                rlog('🧬 BIO-NEURAL NETWORK u integrua!');
+            } else {
+                rlog('⚠️ BioNeuralNetwork nuk u gjet - kontrollo skedarin');
+            }
+            
+            // ✅ MODULI 6: Temporal Context
+            if (typeof TemporalContext !== 'undefined') {
+                this.modules.temporalContext = new TemporalContext(this.modules.contextMemory);
+                rlog('⏳ TEMPORAL CONTEXT u integrua!');
+            } else {
+                rlog('⚠️ TemporalContext nuk u gjet - kontrollo skedarin');
+            }
+
             // ======================================================
             // 🚀 INICIALIZIMI I SISTEMIT
             // ======================================================
@@ -269,8 +355,11 @@ class RrufePlatform {
             // Fillo vëzhgimin e chat-it
             this.modules.chatObserver.startObserving();
             
+            // Integro me sistemin ekzistues
+            this.integrateWithExisting();
+            
             this.isInitialized = true;
-            rlog('✅ PLATFORMA RRUFEJE U INICIALIZUA ME 3 MODULE!');
+            rlog('✅ PLATFORMA RRUFEJE U INICIALIZUA ME 6 MODULE!');
             
             // Shfaq mesazhin e mirëseardhjes
             this.showWelcomeMessage();
@@ -281,14 +370,60 @@ class RrufePlatform {
     }
     
     // ======================================================
+    // 🔗 METODA: INTEGRIMI ME SISTEMIN EKZISTUES
+    // ======================================================
+    integrateWithExisting() {
+        rlog('🔗 Duke integruar me sistemin ekzistues...');
+        
+        // ✅ INTEGRIMI ME sendMessage EKZISTUES
+        if (typeof window.sendMessage !== 'undefined') {
+            const originalSendMessage = window.sendMessage;
+            
+            window.sendMessage = async function() {
+                const input = document.getElementById('user-input');
+                const message = input ? input.value.trim() : '';
+                
+                if (!message) return;
+
+                // ✅ SHTO MESAZHIN E PËRDORUESIT NË KONTEKST
+                if (window.rrufePlatform && window.rrufePlatform.modules.contextMemory) {
+                    window.rrufePlatform.modules.contextMemory.addToContext(message, 'user');
+                }
+                
+                // ✅ THIRRE FUNKSIONIN ORIGJINAL
+                await originalSendMessage.call(this);
+                
+                // ✅ PAS PËRGJIGJES, SHTO PËRGJIGJEN E BOTIT NË KONTEKST
+                setTimeout(() => {
+                    const chat = document.getElementById('chat');
+                    if (chat) {
+                        const messages = chat.querySelectorAll('.bot-message');
+                        const lastBotMessage = messages[messages.length - 1];
+                        if (lastBotMessage) {
+                            const response = lastBotMessage.querySelector('.message-content')?.textContent;
+                            if (response && window.rrufePlatform?.modules?.contextMemory) {
+                                window.rrufePlatform.modules.contextMemory.addToContext(response, 'bot');
+                                rlog('💾 Ruajta përgjigjen e botit në kontekst: ' + response.substring(0, 50));
+                            }
+                        }
+                    }
+                }, 1000);
+            };
+            
+            rlog('✅ MODULI I KONTEKSTIT U INTEGRUAR ME sendMessage!');
+        }
+    }
+    
+    // ======================================================
     // 💬 METODA: SHFAQJA E MIRËSEARDHJES
     // ======================================================
     showWelcomeMessage() {
         setTimeout(() => {
-            if (typeof window.addMessage !== 'undefined' && this.modules.session) {
-                const sessionInfo = this.modules.session.getSessionInfo();
+            if (typeof window.addMessage !== 'undefined' && this.modules.sessionManager) {
+                const sessionInfo = this.modules.sessionManager.getSessionInfo();
+                
                 const welcomeMsg = `
-👑 **PLATFORMA RRUFEJE ME 3 MODULE TË REJA!** 
+👑 **PLATFORMA RRUFEJE ME 6 MODULE TË AVANCUARA!** 
 
 🎯 **Sesioni:** ${sessionInfo.id.substring(0, 15)}...
 🕒 **Koha:** ${new Date().toLocaleTimeString('sq-AL')}
@@ -296,9 +431,12 @@ class RrufePlatform {
    • SessionManager ✅
    • ContextMemory ✅  
    • ChatObserver ✅
-🔧 **Status:** 🟢 **SISTEMI I VËZHGIMIT AKTIV**
+   • QuantumMemory ${this.modules.quantumMemory ? '✅' : '❌'}
+   • BioNeuralNetwork ${this.modules.bioNeuralNetwork ? '✅' : '❌'} 
+   • TemporalContext ${this.modules.temporalContext ? '✅' : '❌'}
+🔧 **Status:** 🟢 **SISTEMI RRUFE-TESLA AKTIV**
 
-💡 *Tani çdo mesazh vëzhgohet automatikisht!*`;
+💡 *Tani çdo mesazh procesohet me inteligjencë kuantike dhe nervore!*`;
                 window.addMessage(welcomeMsg, 'system', false);
             }
         }, 2000);
@@ -308,13 +446,98 @@ class RrufePlatform {
     // 🛠️ METODA: DEBUG DHE TESTIM
     // ======================================================
     debugPlatform() {
-        const sessionInfo = this.modules.session.getSessionInfo();
+        const sessionInfo = this.modules.sessionManager.getSessionInfo();
+        const contextStats = this.modules.contextMemory.getContextStats();
+        
         rlog('🔍 DEBUG I PLATFORMËS RRUFEJE:\n\n' +
              '🎯 **Sesioni:** ' + sessionInfo.id + '\n' +
              '🕒 **Koha:** ' + sessionInfo.duration + '\n' +
-             '💾 **Context Memory:** ' + this.modules.contextMemory.conversationContext.length + ' mesazhe\n' +
+             '💾 **Context Memory:** ' + contextStats.totalMessages + ' mesazhe\n' +
+             '🧠 **Rëndësia mesatare:** ' + contextStats.averageImportance.toFixed(2) + '\n' +
              '👁️ **Chat Observer:** ' + (this.modules.chatObserver.isObserving ? '🟢 AKTIV' : '🔴 JO AKTIV') + '\n' +
              '🔧 **Status:** 🟢 **SISTEMI I PLOTË AKTIV**');
+    }
+
+    // ======================================================
+    // 🌟 METODA E RE: RRUFE-TESLA DEBUG
+    // ======================================================
+    
+    debugRrufeTesla() {
+        console.log('🚀 DEBUG RRUFE-TESLA PLATFORM:');
+        console.log('================================');
+        
+        // Modulet bazë
+        console.log('🧩 MODULET BAZË:');
+        console.log('- SessionManager:', this.modules.sessionManager ? '✅' : '❌');
+        console.log('- ContextMemory:', this.modules.contextMemory ? '✅' : '❌');
+        console.log('- ChatObserver:', this.modules.chatObserver ? '✅' : '❌');
+        
+        // Modulet e reja RRUFE-TESLA
+        console.log('🌟 MODULET RRUFE-TESLA:');
+        console.log('- QuantumMemory:', this.modules.quantumMemory ? '✅' : '❌');
+        console.log('- BioNeuralNetwork:', this.modules.bioNeuralNetwork ? '✅' : '❌');
+        console.log('- TemporalContext:', this.modules.temporalContext ? '✅' : '❌');
+        
+        // Statistikat e kontekstit
+        if (this.modules.contextMemory) {
+            const stats = this.modules.contextMemory.getContextStats();
+            console.log('📊 STATISTIKA:');
+            console.log('- Mesazhe totale:', stats.totalMessages);
+            console.log('- Rëndësia mesatare:', stats.averageImportance.toFixed(2));
+        }
+        
+        console.log('🎯 STATUS: RRUFE-TESLA PLATFORM ' + 
+                   (this.modules.quantumMemory && this.modules.bioNeuralNetwork && this.modules.temporalContext ? 
+                    '🟢 OPERATIONAL' : '🟡 PARTIAL'));
+    }
+    
+    // ======================================================
+    // 🔬 METODA TË REJA PËR TESTIM
+    // ======================================================
+    
+    testAdvancedModules() {
+        console.log('🧪 TESTIM I MODULEVE TË AVANCUARA RRUFE-TESLA:');
+        
+        // Testo Quantum Memory
+        if (this.modules.quantumMemory) {
+            console.log('🔮 TEST QUANTUM MEMORY:');
+            this.modules.quantumMemory.debugQuantumMemory();
+            
+            // Krijo disa entanglements test
+            if (this.modules.contextMemory.conversationContext.length >= 2) {
+                const msg1 = this.modules.contextMemory.conversationContext[0];
+                const msg2 = this.modules.contextMemory.conversationContext[1];
+                this.modules.quantumMemory.createQuantumEntanglement(msg1, msg2);
+            }
+        } else {
+            console.log('❌ QuantumMemory nuk është inicializuar');
+        }
+        
+        // Testo Bio-Neural Network
+        if (this.modules.bioNeuralNetwork) {
+            console.log('🧠 TEST BIO-NEURAL NETWORK:');
+            this.modules.bioNeuralNetwork.debugNeuralNetwork();
+            
+            // Proceso mesazh test
+            this.modules.bioNeuralNetwork.processMessageThroughNetwork("Test mesazh për rrjetin nervor");
+        } else {
+            console.log('❌ BioNeuralNetwork nuk është inicializuar');
+        }
+        
+        // Testo Temporal Context
+        if (this.modules.temporalContext) {
+            console.log('⏳ TEST TEMPORAL CONTEXT:');
+            this.modules.temporalContext.debugTemporalContext();
+            
+            // Krijo hartë kohore
+            if (this.modules.contextMemory.conversationContext.length > 0) {
+                this.modules.temporalContext.createTemporalMap(this.modules.contextMemory.conversationContext);
+            }
+        } else {
+            console.log('❌ TemporalContext nuk është inicializuar');
+        }
+        
+        console.log('🎉 TESTIMI I MODULEVE TË AVANCUARA U KOMPLETUA!');
     }
     
     // ======================================================
@@ -344,10 +567,26 @@ class RrufePlatform {
     restartPlatform() {
         rlog('🔄 Duke rifilluar Platformën RRUFEJE...');
         this.modules.chatObserver.stopObserving();
-        this.modules.session.renewSession();
+        this.modules.sessionManager.renewSession();
         this.modules.contextMemory.conversationContext = [];
+        
+        // Rifillo modulet RRUFE-TESLA
+        if (this.modules.quantumMemory) {
+            this.modules.quantumMemory.entangledPairs.clear();
+            this.modules.quantumMemory.superpositionStates.clear();
+        }
+        if (this.modules.bioNeuralNetwork) {
+            this.modules.bioNeuralNetwork.neurons.clear();
+            this.modules.bioNeuralNetwork.synapses.clear();
+            this.modules.bioNeuralNetwork.initializeBaseNeurons();
+        }
+        if (this.modules.temporalContext) {
+            this.modules.temporalContext.temporalLayers.clear();
+            this.modules.temporalContext.causalChains.clear();
+        }
+        
         this.modules.chatObserver.startObserving();
-        rlog('✅ Platforma u rifillua me sukses!');
+        rlog('✅ Platforma RRUFE-TESLA u rifillua me sukses!');
     }
 }
 
@@ -366,10 +605,12 @@ try {
 // 💡 UDHËZIME PËR PËRDORIM
 // ======================================================
 
-rlog('💡 Shkruaj: rrufePlatform.debugPlatform() për të testuar 3 modulet!');
+rlog('💡 Shkruaj: rrufePlatform.debugPlatform() për të testuar modulet bazë!');
+rlog('💡 Shkruaj: rrufePlatform.debugRrufeTesla() për të testuar të gjitha modulet!');
+rlog('💡 Shkruaj: rrufePlatform.testAdvancedModules() për testim të avancuar!');
 rlog('💡 Shkruaj: rrufePlatform.testContextMemory() për testim të shpejtë!');
 rlog('💡 Shkruaj: rrufePlatform.restartPlatform() për të rifilluar sistemin!');
-rlog('🎉🎉🎉 RRUFE PLATFORM ËSHTË GATI PËR PËRDORIM! 🎉🎉🎉');
+rlog('🎉🎉🎉 RRUFE-TESLA PLATFORM ËSHTË GATI! 🎉🎉🎉');
 
 // ======================================================
 // 🌐 EKSPORTIMI PËR PËRDORIM GLOBAL
