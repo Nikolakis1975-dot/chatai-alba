@@ -200,24 +200,38 @@ class RrufePlatform {
                     return commonWords.length / Math.max(keywords1.length, keywords2.length);
                 },
                 
-                getContextStats: function() {
-                    return {
-                        totalMessages: this.conversationContext.length,
-                        averageImportance: this.conversationContext.reduce((sum, entry) => sum + entry.importance, 0) / this.conversationContext.length || 0,
-                        oldestMessage: this.conversationContext.length > 0 ? this.conversationContext[this.conversationContext.length - 1].timestamp : null,
-                        newestMessage: this.conversationContext.length > 0 ? this.conversationContext[0].timestamp : null
-                    };
-                },
-                
-                debugContext: function() {
-                    const stats = this.getContextStats();
-                    rlog('🔍 DEBUG KONTEKSTI: ' + stats.totalMessages + ' mesazhe');
-                    rlog('📊 Rëndësia mesatare: ' + stats.averageImportance.toFixed(2));
-                    if (this.conversationContext.length > 0) {
-                        rlog('📝 Konteksti i fundit: ' + this.generateContextForResponse().substring(0, 50) + '...');
-                    }
-                }
-            };
+        getContextStats: function() {
+          if (this.conversationContext.length === 0) {
+           return {
+            totalMessages: 0,
+            averageImportance: 0,
+            oldestMessage: null,
+            newestMessage: null
+        };
+    }
+    
+    const totalImportance = this.conversationContext.reduce((sum, entry) => {
+        return sum + (entry.importance || 5); // Default importance 5 nëse mungon
+    }, 0);
+    
+    const averageImportance = totalImportance / this.conversationContext.length;
+    
+    return {
+        totalMessages: this.conversationContext.length,
+        averageImportance: parseFloat(averageImportance.toFixed(2)),
+        oldestMessage: this.conversationContext[this.conversationContext.length - 1]?.timestamp,
+        newestMessage: this.conversationContext[0]?.timestamp
+    };
+},
+
+    debugContext: function() {
+    const stats = this.getContextStats();
+    rlog('🔍 DEBUG KONTEKSTI: ' + stats.totalMessages + ' mesazhe');
+    rlog('📊 Rëndësia mesatare: ' + stats.averageImportance.toFixed(2));
+    if (this.conversationContext.length > 0) {
+        rlog('📝 Konteksti i fundit: ' + this.generateContextForResponse().substring(0, 50) + '...');
+    }
+}
 
             // ✅ MODULI 3: ChatObserver
             this.modules.chatObserver = {
