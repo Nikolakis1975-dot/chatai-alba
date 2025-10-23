@@ -268,7 +268,6 @@ class RrufePlatform {
             
             // Fillo vëzhgimin e chat-it
             this.modules.chatObserver.startObserving();
-            this.modules.chatObserver = new window.ChatObserver(this.modules.contextMemory);
             
             this.isInitialized = true;
             rlog('✅ PLATFORMA RRUFEJE U INICIALIZUA ME 3 MODULE!');
