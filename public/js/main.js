@@ -305,10 +305,9 @@ this.modules.contextMemory = {
         });
         
         rlog('🧹 Pastrim i memories: ' + this.conversationContext.length + ' mesazhe të mbetura');
-    };
+    },
 
-    // ... (MBETJA E METODAVE MERRET NGA KODI I MËPARSHËM - TË GJITHA DUHEN TË KENË "function" PARA)
-    // ... (Vazhdo me të gjitha metodat e tjera të ContextMemory)
+
 
 
                 // ✅ METODA E RE: GET CONTEXT STATS
