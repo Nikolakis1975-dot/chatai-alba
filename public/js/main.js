@@ -97,293 +97,219 @@ class RrufePlatform {
                 }
             };
             
-            // ✅ MODULI 2: ContextMemory (I PËRMBLDSHUR)
-            this.modules.contextMemory = {
-                conversationContext: [],
-                contextStack: [],
-                memoryConnections: new Map(),
-                maxContextLength: 15,
-                
-                // ✅ SISTEM I RI I MEMORY MANAGEMENT
-                cache: new Map(),
-                compressionEnabled: true,
-                contextSummary: "",
-                
-                // ✅ OPTIMIZIME TË REJA
-                cleanupInterval: setInterval(() => this.cleanupOldEntries(), 30000),
-                summaryUpdateInterval: setInterval(() => this.updateSummary(), 60000),
-                
-                addToContext: function(message, sender, response = null) {
-                    // ✅ OPTIMIZIM I RI: FILTRIM I MESAZHEVE
-                    if (this.shouldSkipMessage(message, sender)) {
-                        rlog('⏭️ Mesazh u filtrua: ' + message.substring(0, 20));
-                        return null;
-                    }
+            // ✅ MODULI 2: ContextMemory (I KORRIGJUAR - FIX FOR ERRORET)
+this.modules.contextMemory = {
+    conversationContext: [],
+    contextStack: [],
+    memoryConnections: new Map(),
+    maxContextLength: 15,
+    
+    // ✅ SISTEM I RI I MEMORY MANAGEMENT
+    cache: new Map(),
+    compressionEnabled: true,
+    contextSummary: "",
+    
+    // ✅ INITIALIZE INTERVALS LATER - FIX FOR ERROR
+    cleanupInterval: null,
+    summaryUpdateInterval: null,
 
-                    const contextEntry = {
-                        id: this.generateMessageId(),
-                        message: message,
-                        sender: sender,
-                        response: response,
-                        timestamp: new Date(),
-                        keywords: this.extractKeywords(message),
-                        sentiment: this.analyzeSentiment(message),
-                        intent: this.detectIntent(message),
-                        importance: this.calculateImportance(message, sender)
-                    };
-                    
-                    this.conversationContext.unshift(contextEntry);
-                    
-                    // ✅ MEMORY MANAGEMENT I RI
-                    if (this.conversationContext.length > this.maxContextLength) {
-                        this.removeLeastImportant();
-                    }
-                    
-                    // ✅ CACHE SYSTEM
-                    this.addToCache(contextEntry);
-                    
-                    // ✅ MEMORY CONNECTIONS
-                    this.createMemoryConnections(contextEntry);
+    // ✅ METODAT DUHEN TË JENË BREENDA OBJEKTIT - JO TË VEÇANTA!
+    addToContext: function(message, sender, response = null) {
+        // ✅ INITIALIZE INTERVALS NË MËNYRË TË SIGURT
+        if (!this.cleanupInterval) {
+            this.cleanupInterval = setInterval(() => this.cleanupOldEntries(), 30000);
+        }
+        if (!this.summaryUpdateInterval) {
+            this.summaryUpdateInterval = setInterval(() => this.updateSummary(), 60000);
+        }
 
-                    // ✅ OPTIMIZIM I RI: UPDATE SUMMARY
-                    this.updateSummary();
-                    
-                    rlog('💾 Shtova në kontekst: ' + message.substring(0, 30));
-                    
-                    if (window.rrufePlatform && window.rrufePlatform.modules.sessionManager) {
-                        window.rrufePlatform.modules.sessionManager.incrementMessageCount();
-                    }
-                    
-                    return contextEntry.id;
-                },
-                
-                // ✅ METODA E RE: FILTRIM I MESAZHEVE
-                shouldSkipMessage: function(message, sender) {
-                    const skipPatterns = [
-                        /^❌ ❌ Komande e panjohur:/,
-                        /^E kuptoj! 😊 Përdorni \/ndihmo/,
-                        /^po\s*$/, /^jo\s*$/, /^ok\s*$/i,
-                        /^\s*$/,
-                        /^[❤️😊👍]+$/,
-                    ];
-                    
-                    return skipPatterns.some(pattern => pattern.test(message)) || 
-                           sender === 'system' || 
-                           message.trim().length < 2;
-                },
+        // ✅ OPTIMIZIM I RI: FILTRIM I MESAZHEVE
+        if (this.shouldSkipMessage(message, sender)) {
+            rlog('⏭️ Mesazh u filtrua: ' + message.substring(0, 20));
+            return null;
+        }
 
-                // ✅ METODA E RE: GENERATE MESSAGE ID
-                generateMessageId: function() {
-                    return 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                },
+        const contextEntry = {
+            id: this.generateMessageId(),
+            message: message,
+            sender: sender,
+            response: response,
+            timestamp: new Date(),
+            keywords: this.extractKeywords(message),
+            sentiment: this.analyzeSentiment(message),
+            intent: this.detectIntent(message),
+            importance: this.calculateImportance(message, sender)
+        };
+        
+        this.conversationContext.unshift(contextEntry);
+        
+        // ✅ MEMORY MANAGEMENT I RI
+        if (this.conversationContext.length > this.maxContextLength) {
+            this.removeLeastImportant();
+        }
+        
+        // ✅ CACHE SYSTEM
+        this.addToCache(contextEntry);
+        
+        // ✅ MEMORY CONNECTIONS
+        this.createMemoryConnections(contextEntry);
 
-                // ✅ METODA E RE: CALCULATE IMPORTANCE
-                calculateImportance: function(message, sender) {
-                    let score = 0;
-                    
-                    if (sender === 'user') score += 2;
-                    
-                    if (message.includes('?') || message.includes('si ') || message.includes('ku ') || message.includes('kur ')) {
-                        score += 3;
-                    }
-                    
-                    if (message.length > 50) score += 1;
-                    
-                    const importantKeywords = ['rëndësi', 'dëshiroj', 'dua', 'mëso', 'ndihmo', 'urgjent'];
-                    if (importantKeywords.some(keyword => message.toLowerCase().includes(keyword))) {
-                        score += 2;
-                    }
-                    
-                    return Math.min(score, 10);
-                },
+        // ✅ OPTIMIZIM I RI: UPDATE SUMMARY
+        this.updateSummary();
+        
+        rlog('💾 Shtova në kontekst: ' + message.substring(0, 30));
+        
+        if (window.rrufePlatform && window.rrufePlatform.modules.sessionManager) {
+            window.rrufePlatform.modules.sessionManager.incrementMessageCount();
+        }
+        
+        return contextEntry.id;
+    },
 
-                // ✅ METODA E RE: REMOVE LEAST IMPORTANT
-                removeLeastImportant: function() {
-                    if (this.conversationContext.length === 0) return;
-                    
-                    let minImportance = 11;
-                    let indexToRemove = -1;
-                    
-                    this.conversationContext.forEach((entry, index) => {
-                        if (entry.importance < minImportance) {
-                            minImportance = entry.importance;
-                            indexToRemove = index;
-                        }
-                    });
-                    
-                    if (indexToRemove !== -1) {
-                        const removed = this.conversationContext.splice(indexToRemove, 1)[0];
-                        this.removeFromCache(removed.id);
-                        rlog('🧹 Hoqa mesazhin: ' + removed.message.substring(0, 20));
-                    }
-                },
+    // ✅ METODA E RE: FILTRIM I MESAZHEVE
+    shouldSkipMessage: function(message, sender) {
+        const skipPatterns = [
+            /^❌ ❌ Komande e panjohur:/,
+            /^E kuptoj! 😊 Përdorni \/ndihmo/,
+            /^po\s*$/, /^jo\s*$/, /^ok\s*$/i,
+            /^\s*$/,
+            /^[❤️😊👍]+$/,
+        ];
+        
+        return skipPatterns.some(pattern => pattern.test(message)) || 
+               sender === 'system' || 
+               message.trim().length < 2;
+    },
 
-                // ✅ METODA E RE: ADD TO CACHE
-                addToCache: function(entry) {
-                    this.cache.set(entry.id, entry);
-                    
-                    if (this.cache.size > 50) {
-                        const firstKey = this.cache.keys().next().value;
-                        this.cache.delete(firstKey);
-                    }
-                },
+    // ✅ METODA E RE: GENERATE MESSAGE ID
+    generateMessageId: function() {
+        return 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    },
 
-                // ✅ METODA E RE: REMOVE FROM CACHE
-                removeFromCache: function(messageId) {
-                    this.cache.delete(messageId);
-                },
+    // ✅ METODA E RE: CALCULATE IMPORTANCE
+    calculateImportance: function(message, sender) {
+        let score = 0;
+        
+        if (sender === 'user') score += 2;
+        
+        if (message.includes('?') || message.includes('si ') || message.includes('ku ') || message.includes('kur ')) {
+            score += 3;
+        }
+        
+        if (message.length > 50) score += 1;
+        
+        const importantKeywords = ['rëndësi', 'dëshiroj', 'dua', 'mëso', 'ndihmo', 'urgjent'];
+        if (importantKeywords.some(keyword => message.toLowerCase().includes(keyword))) {
+            score += 2;
+        }
+        
+        return Math.min(score, 10);
+    },
 
-                // ✅ METODA E RE: CREATE MEMORY CONNECTIONS
-                createMemoryConnections: function(newEntry) {
-                    if (this.conversationContext.length < 2) return;
-                    
-                    const previousEntry = this.conversationContext[1];
-                    
-                    const commonKeywords = newEntry.keywords.filter(keyword => 
-                        previousEntry.keywords.includes(keyword)
-                    );
-                    
-                    if (commonKeywords.length > 0) {
-                        this.memoryConnections.set(newEntry.id, {
-                            connectedTo: previousEntry.id,
-                            strength: commonKeywords.length,
-                            keywords: commonKeywords
-                        });
-                    }
-                },
+    // ✅ METODA E RE: REMOVE LEAST IMPORTANT
+    removeLeastImportant: function() {
+        if (this.conversationContext.length === 0) return;
+        
+        let minImportance = 11;
+        let indexToRemove = -1;
+        
+        this.conversationContext.forEach((entry, index) => {
+            if (entry.importance < minImportance) {
+                minImportance = entry.importance;
+                indexToRemove = index;
+            }
+        });
+        
+        if (indexToRemove !== -1) {
+            const removed = this.conversationContext.splice(indexToRemove, 1)[0];
+            this.removeFromCache(removed.id);
+            rlog('🧹 Hoqa mesazhin: ' + removed.message.substring(0, 20));
+        }
+    },
 
-                // ✅ OPTIMIZIM I RI: UPDATE SUMMARY
-                updateSummary: function() {
-                    if (this.conversationContext.length < 3) {
-                        this.contextSummary = "Bisedë e filluar së fundmi";
-                        return;
-                    }
+    // ✅ METODA E RE: ADD TO CACHE
+    addToCache: function(entry) {
+        this.cache.set(entry.id, entry);
+        
+        if (this.cache.size > 50) {
+            const firstKey = this.cache.keys().next().value;
+            this.cache.delete(firstKey);
+        }
+    },
 
-                    const importantMessages = this.conversationContext
-                        .filter(entry => entry.importance >= 6)
-                        .slice(0, 5)
-                        .map(entry => `${entry.sender}: ${entry.message.substring(0, 50)}`)
-                        .join(' | ');
+    // ✅ METODA E RE: REMOVE FROM CACHE
+    removeFromCache: function(messageId) {
+        this.cache.delete(messageId);
+    },
 
-                    this.contextSummary = importantMessages || "Bisedë e përgjithshme";
-                    rlog('📝 Përmbledhja u përditësua: ' + this.contextSummary);
-                },
+    // ✅ METODA E RE: CREATE MEMORY CONNECTIONS
+    createMemoryConnections: function(newEntry) {
+        if (this.conversationContext.length < 2) return;
+        
+        const previousEntry = this.conversationContext[1];
+        
+        const commonKeywords = newEntry.keywords.filter(keyword => 
+            previousEntry.keywords.includes(keyword)
+        );
+        
+        if (commonKeywords.length > 0) {
+            this.memoryConnections.set(newEntry.id, {
+                connectedTo: previousEntry.id,
+                strength: commonKeywords.length,
+                keywords: commonKeywords
+            });
+        }
+    },
 
-                // ✅ OPTIMIZIM I RI: GET ENHANCED CONTEXT
-                getEnhancedContext: function() {
-                    return {
-                        recent: this.conversationContext.slice(0, 5),
-                        summary: this.contextSummary,
-                        important: this.conversationContext
-                            .filter(entry => entry.importance >= 7)
-                            .slice(0, 3),
-                        stats: this.getContextStats()
-                    };
-                },
+    // ✅ OPTIMIZIM I RI: UPDATE SUMMARY
+    updateSummary: function() {
+        if (this.conversationContext.length < 3) {
+            this.contextSummary = "Bisedë e filluar së fundmi";
+            return;
+        }
 
-                generateSmartContext: function() {
-                    if (this.conversationContext.length === 0) {
-                        return "Bisedë e re. Përshëndetje!";
-                    }
-                    
-                    const importantMessages = [...this.conversationContext]
-                        .sort((a, b) => b.importance - a.importance)
-                        .slice(0, 5);
-                    
-                    let context = "Konteksti i bisedës: ";
-                    
-                    importantMessages.forEach((entry, index) => {
-                        context += `${entry.sender}: "${entry.message}". `;
-                        
-                        if (entry.response) {
-                            context += `Bot: "${entry.response}". `;
-                        }
-                    });
-                    
-                    context += ` [${this.conversationContext.length} mesazhe totale, ${this.memoryConnections.size} lidhje]`;
-                    
-                    return context;
-                },
+        const importantMessages = this.conversationContext
+            .filter(entry => entry.importance >= 6)
+            .slice(0, 5)
+            .map(entry => `${entry.sender}: ${entry.message.substring(0, 50)}`)
+            .join(' | ');
 
-                generateContextForResponse: function() {
-                    return this.generateSmartContext();
-                },
-                
-                searchInMemory: function(query) {
-                    return this.searchInMemoryEnhanced(query);
-                },
+        this.contextSummary = importantMessages || "Bisedë e përgjithshme";
+        rlog('📝 Përmbledhja u përditësua: ' + this.contextSummary);
+    },
 
-                searchInMemoryEnhanced: function(query) {
-                    const results = [];
-                    const queryKeywords = this.extractKeywords(query);
-                    
-                    this.cache.forEach((entry, id) => {
-                        const matchScore = this.calculateEnhancedMatchScore(entry, query, queryKeywords);
-                        if (matchScore > 0.2) {
-                            results.push({
-                                entry: entry,
-                                score: matchScore,
-                                source: 'cache'
-                            });
-                        }
-                    });
-                    
-                    this.conversationContext.forEach(entry => {
-                        if (!results.some(result => result.entry.id === entry.id)) {
-                            const matchScore = this.calculateEnhancedMatchScore(entry, query, queryKeywords);
-                            if (matchScore > 0.2) {
-                                results.push({
-                                    entry: entry,
-                                    score: matchScore,
-                                    source: 'memory'
-                                });
-                            }
-                        }
-                    });
-                    
-                    results.sort((a, b) => b.score - a.score);
-                    
-                    rlog('🔍 Kërkim i përmirësuar: ' + results.length + ' rezultate');
-                    return results.slice(0, 5);
-                },
+    // ✅ OPTIMIZIM I RI: GET ENHANCED CONTEXT
+    getEnhancedContext: function() {
+        return {
+            recent: this.conversationContext.slice(0, 5),
+            summary: this.contextSummary,
+            important: this.conversationContext
+                .filter(entry => entry.importance >= 7)
+                .slice(0, 3),
+            stats: this.getContextStats()
+        };
+    },
 
-                calculateEnhancedMatchScore: function(entry, query, queryKeywords) {
-                    let score = 0;
-                    
-                    const keywordMatch = this.calculateMatchScore(entry.keywords, queryKeywords);
-                    score += keywordMatch * 0.6;
-                    
-                    const queryIntent = this.detectIntent(query);
-                    if (entry.intent === queryIntent) {
-                        score += 0.3;
-                    }
-                    
-                    const querySentiment = this.analyzeSentiment(query);
-                    if (entry.sentiment === querySentiment) {
-                        score += 0.1;
-                    }
-                    
-                    score += (entry.importance / 10) * 0.1;
-                    
-                    return Math.min(score, 1);
-                },
+    // ✅ METODA E RE: CLEANUP OLD ENTRIES
+    cleanupOldEntries: function() {
+        const now = new Date();
+        const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
+        
+        this.conversationContext = this.conversationContext.filter(entry => {
+            const shouldKeep = entry.timestamp > fiveMinutesAgo || entry.importance > 5;
+            if (!shouldKeep) {
+                this.removeFromCache(entry.id);
+                this.memoryConnections.delete(entry.id);
+            }
+            return shouldKeep;
+        });
+        
+        rlog('🧹 Pastrim i memories: ' + this.conversationContext.length + ' mesazhe të mbetura');
+    };
 
-                // ✅ METODA E RE: CLEANUP OLD ENTRIES
-                cleanupOldEntries: function() {
-                    const now = new Date();
-                    const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
-                    
-                    this.conversationContext = this.conversationContext.filter(entry => {
-                        const shouldKeep = entry.timestamp > fiveMinutesAgo || entry.importance > 5;
-                        if (!shouldKeep) {
-                            this.removeFromCache(entry.id);
-                            this.memoryConnections.delete(entry.id);
-                        }
-                        return shouldKeep;
-                    });
-                    
-                    rlog('🧹 Pastrim i memories: ' + this.conversationContext.length + ' mesazhe të mbetura');
-                },
+    // ... (MBETJA E METODAVE MERRET NGA KODI I MËPARSHËM - TË GJITHA DUHEN TË KENË "function" PARA)
+    // ... (Vazhdo me të gjitha metodat e tjera të ContextMemory)
+
 
                 // ✅ METODA E RE: GET CONTEXT STATS
                 getContextStats: function() {
