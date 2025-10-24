@@ -1,5 +1,5 @@
 // ======================================================
-// 🚀 MODULI PRINCIPAL RRUFEJE - main.js (VERSION RRUFE-TESLA)
+// 🚀 MODULI PRINCIPAL RRUFEJE - main.js (VERSION RRUFE-TESLA 8.0)
 // ======================================================
 
 // Custom logger që funksionon edhe me console të bllokuar
@@ -33,6 +33,8 @@ class RrufePlatform {
         this.modules.quantumMemory = null;
         this.modules.bioNeuralNetwork = null;
         this.modules.temporalContext = null;
+        this.modules.cognitiveAwareness = null;        
+        this.modules.geminiKnowledgeAccelerator = null; 
         
         this.init();
     }
@@ -349,6 +351,38 @@ class RrufePlatform {
             }
 
             // ======================================================
+            // 🚀 RRUFE 4.0 - COGNITIVE AWARENESS LAYER
+            // ======================================================
+            
+            // ✅ MODULI 7: Cognitive Awareness
+            if (typeof CognitiveAwareness !== 'undefined') {
+                this.modules.cognitiveAwareness = new CognitiveAwareness(
+                    this.modules.temporalContext,
+                    this.modules.bioNeuralNetwork, 
+                    this.modules.contextMemory
+                );
+                rlog('🎭 COGNITIVE AWARENESS LAYER u integrua!');
+            } else {
+                rlog('⚠️ CognitiveAwareness nuk u gjet');
+            }
+            
+            // ======================================================
+            // 🚀 RRUFE 6.0 - GEMINI KNOWLEDGE ACCELERATOR
+            // ======================================================
+            
+            // ✅ MODULI 8: Gemini Knowledge Accelerator
+            if (typeof GeminiKnowledgeAccelerator !== 'undefined') {
+                this.modules.geminiKnowledgeAccelerator = new GeminiKnowledgeAccelerator(
+                    this.modules.contextMemory,
+                    this.modules.quantumMemory,
+                    this.modules.temporalContext
+                );
+                rlog('🚀 GEMINI KNOWLEDGE ACCELERATOR u integrua!');
+            } else {
+                rlog('⚠️ GeminiKnowledgeAccelerator nuk u gjet');
+            }
+
+            // ======================================================
             // 🚀 INICIALIZIMI I SISTEMIT
             // ======================================================
             
@@ -359,7 +393,7 @@ class RrufePlatform {
             this.integrateWithExisting();
             
             this.isInitialized = true;
-            rlog('✅ PLATFORMA RRUFEJE U INICIALIZUA ME 6 MODULE!');
+            rlog('✅ PLATFORMA RRUFEJE U INICIALIZUA ME 8 MODULE!');
             
             // Shfaq mesazhin e mirëseardhjes
             this.showWelcomeMessage();
@@ -423,7 +457,7 @@ class RrufePlatform {
                 const sessionInfo = this.modules.sessionManager.getSessionInfo();
                 
                 const welcomeMsg = `
-👑 **PLATFORMA RRUFEJE ME 6 MODULE TË AVANCUARA!** 
+👑 **PLATFORMA RRUFEJE ME 8 MODULE TË AVANCUARA!** 
 
 🎯 **Sesioni:** ${sessionInfo.id.substring(0, 15)}...
 🕒 **Koha:** ${new Date().toLocaleTimeString('sq-AL')}
@@ -434,9 +468,11 @@ class RrufePlatform {
    • QuantumMemory ${this.modules.quantumMemory ? '✅' : '❌'}
    • BioNeuralNetwork ${this.modules.bioNeuralNetwork ? '✅' : '❌'} 
    • TemporalContext ${this.modules.temporalContext ? '✅' : '❌'}
-🔧 **Status:** 🟢 **SISTEMI RRUFE-TESLA AKTIV**
+   • CognitiveAwareness ${this.modules.cognitiveAwareness ? '✅' : '❌'}
+   • GeminiKnowledgeAccelerator ${this.modules.geminiKnowledgeAccelerator ? '✅' : '❌'}
+🔧 **Status:** 🟢 **SISTEMI RRUFE-TESLA 8.0 AKTIV**
 
-💡 *Tani çdo mesazh procesohet me inteligjencë kuantike dhe nervore!*`;
+💡 *Tani çdo mesazh procesohet me inteligjencë kuantike, nervore dhe kognitive!*`;
                 window.addMessage(welcomeMsg, 'system', false);
             }
         }, 2000);
@@ -459,11 +495,11 @@ class RrufePlatform {
     }
 
     // ======================================================
-    // 🌟 METODA E RE: RRUFE-TESLA DEBUG
+    // 🌟 METODA E RE: RRUFE-TESLA DEBUG 8.0
     // ======================================================
     
     debugRrufeTesla() {
-        console.log('🚀 DEBUG RRUFE-TESLA PLATFORM:');
+        console.log('🚀 DEBUG RRUFE-TESLA PLATFORM 8.0:');
         console.log('================================');
         
         // Modulet bazë
@@ -477,6 +513,8 @@ class RrufePlatform {
         console.log('- QuantumMemory:', this.modules.quantumMemory ? '✅' : '❌');
         console.log('- BioNeuralNetwork:', this.modules.bioNeuralNetwork ? '✅' : '❌');
         console.log('- TemporalContext:', this.modules.temporalContext ? '✅' : '❌');
+        console.log('- CognitiveAwareness:', this.modules.cognitiveAwareness ? '✅' : '❌');
+        console.log('- GeminiKnowledgeAccelerator:', this.modules.geminiKnowledgeAccelerator ? '✅' : '❌');
         
         // Statistikat e kontekstit
         if (this.modules.contextMemory) {
@@ -486,8 +524,9 @@ class RrufePlatform {
             console.log('- Rëndësia mesatare:', stats.averageImportance.toFixed(2));
         }
         
-        console.log('🎯 STATUS: RRUFE-TESLA PLATFORM ' + 
-                   (this.modules.quantumMemory && this.modules.bioNeuralNetwork && this.modules.temporalContext ? 
+        console.log('🎯 STATUS: RRUFE-TESLA PLATFORM 8.0 ' + 
+                   (this.modules.quantumMemory && this.modules.bioNeuralNetwork && this.modules.temporalContext && 
+                    this.modules.cognitiveAwareness && this.modules.geminiKnowledgeAccelerator ? 
                     '🟢 OPERATIONAL' : '🟡 PARTIAL'));
     }
     
@@ -496,7 +535,7 @@ class RrufePlatform {
     // ======================================================
     
     testAdvancedModules() {
-        console.log('🧪 TESTIM I MODULEVE TË AVANCUARA RRUFE-TESLA:');
+        console.log('🧪 TESTIM I MODULEVE TË AVANCUARA RRUFE-TESLA 8.0:');
         
         // Testo Quantum Memory
         if (this.modules.quantumMemory) {
@@ -535,6 +574,38 @@ class RrufePlatform {
             }
         } else {
             console.log('❌ TemporalContext nuk është inicializuar');
+        }
+        
+        // Testo Cognitive Awareness
+        if (this.modules.cognitiveAwareness) {
+            console.log('🎭 TEST COGNITIVE AWARENESS:');
+            this.modules.cognitiveAwareness.debugCognitiveAwareness();
+            
+            // Testo procesimin kognitiv
+            const cognitiveData = this.modules.cognitiveAwareness.processCognitiveLayer(
+                "Test mesazh për shtresën kognitive",
+                "user",
+                "test_user"
+            );
+            console.log('🧠 Rezultati kognitiv:', cognitiveData.emotionalState);
+        } else {
+            console.log('❌ CognitiveAwareness nuk është inicializuar');
+        }
+        
+        // Testo Gemini Knowledge Accelerator
+        if (this.modules.geminiKnowledgeAccelerator) {
+            console.log('🚀 TEST GEMINI KNOWLEDGE ACCELERATOR:');
+            this.modules.geminiKnowledgeAccelerator.debugKnowledgeAccelerator();
+            
+            // Testo kapjen e njohurive
+            const knowledgeId = this.modules.geminiKnowledgeAccelerator.captureGeminiKnowledge(
+                "Kjo është një përgjigje test nga Gemini",
+                "Test pyetje",
+                this.modules.contextMemory.conversationContext
+            );
+            console.log('💎 Njohuria u kap me ID:', knowledgeId);
+        } else {
+            console.log('❌ GeminiKnowledgeAccelerator nuk është inicializuar');
         }
         
         console.log('🎉 TESTIMI I MODULEVE TË AVANCUARA U KOMPLETUA!');
@@ -584,9 +655,85 @@ class RrufePlatform {
             this.modules.temporalContext.temporalLayers.clear();
             this.modules.temporalContext.causalChains.clear();
         }
+        if (this.modules.cognitiveAwareness) {
+            this.modules.cognitiveAwareness.behavioralModels.clear();
+            this.modules.cognitiveAwareness.selfOptimization.clear();
+        }
+        if (this.modules.geminiKnowledgeAccelerator) {
+            this.modules.geminiKnowledgeAccelerator.geminiKnowledgeBase.clear();
+            this.modules.geminiKnowledgeAccelerator.knowledgeConnections.clear();
+        }
         
         this.modules.chatObserver.startObserving();
-        rlog('✅ Platforma RRUFE-TESLA u rifillua me sukses!');
+        rlog('✅ Platforma RRUFE-TESLA 8.0 u rifillua me sukses!');
+    }
+    
+    // ======================================================
+    // 🚀 METODA TË REJA RRUFE 8.0
+    // ======================================================
+    
+    // ✅ KAPJA AUTOMATIKE E NJOHURIVE NGA GEMINI
+    captureGeminiKnowledgeAutomatically(geminiResponse, userQuery) {
+        if (this.modules.geminiKnowledgeAccelerator) {
+            const knowledgeId = this.modules.geminiKnowledgeAccelerator.captureGeminiKnowledge(
+                geminiResponse,
+                userQuery,
+                this.modules.contextMemory.conversationContext
+            );
+            
+            rlog('💎 Kapja automatike e njohurive: ' + knowledgeId);
+            return knowledgeId;
+        }
+        return null;
+    }
+    
+    // ✅ KËRKIM I NJOHURIVE TË AKKUMULUARA
+    searchGeminiKnowledge(query) {
+        if (this.modules.geminiKnowledgeAccelerator) {
+            return this.modules.geminiKnowledgeAccelerator.searchAccumulatedKnowledge(query);
+        }
+        return [];
+    }
+    
+    // ✅ TEST I GEMINI KNOWLEDGE ACCELERATOR
+    testKnowledgeAccelerator() {
+        console.log('🧠 TEST I GEMINI KNOWLEDGE ACCELERATOR:');
+        
+        if (this.modules.geminiKnowledgeAccelerator) {
+            // Testo me disa përgjigje simuluese të Gemini
+            const testResponses = [
+                {
+                    query: "Si të optimizoj performancën e JavaScript?",
+                    response: "Për të optimizuar JavaScript, përdor requestAnimationFrame për animacione, debounce për event listeners, dhe Web Workers për operacione të rënda. Gjithashtu, minimizo DOM manipulations dhe përdor memoization për funksione të shtrenjta."
+                },
+                {
+                    query: "Cilat janë parimet e UX design?",
+                    response: "Parimet kryesore të UX design përfshijnë: 1. Qëndrueshmëria 2. Qasja e përdoruesit 3. Hierarkia vizuale 4. Kontrolli i përdoruesit 5. Konsistenca 6. Aksesibiliteti 7. Feedback i menjëherëshëm"
+                }
+            ];
+            
+            testResponses.forEach((test, index) => {
+                setTimeout(() => {
+                    console.log(`💎 Test ${index + 1}: Kapja e njohurive...`);
+                    const knowledgeId = this.captureGeminiKnowledgeAutomatically(
+                        test.response,
+                        test.query
+                    );
+                    console.log(`   - U kap me ID: ${knowledgeId}`);
+                }, index * 1000);
+            });
+            
+            // Debug pas 3 sekondash
+            setTimeout(() => {
+                this.modules.geminiKnowledgeAccelerator.debugKnowledgeAccelerator();
+                
+                // Testo kërkimin e njohurive
+                const searchResults = this.searchGeminiKnowledge("optimizim JavaScript");
+                console.log('🔍 Rezultatet e kërkimit:', searchResults.length);
+            }, 3000);
+        } else {
+            console.log('❌ GeminiKnowledgeAccelerator nuk është inicializuar');
+        }
     }
 }
 
@@ -606,11 +753,12 @@ try {
 // ======================================================
 
 rlog('💡 Shkruaj: rrufePlatform.debugPlatform() për të testuar modulet bazë!');
-rlog('💡 Shkruaj: rrufePlatform.debugRrufeTesla() për të testuar të gjitha modulet!');
+rlog('💡 Shkruaj: rrufePlatform.debugRrufeTesla() për të testuar të gjitha 8 modulet!');
 rlog('💡 Shkruaj: rrufePlatform.testAdvancedModules() për testim të avancuar!');
 rlog('💡 Shkruaj: rrufePlatform.testContextMemory() për testim të shpejtë!');
+rlog('💡 Shkruaj: rrufePlatform.testKnowledgeAccelerator() për testim të Gemini Knowledge!');
 rlog('💡 Shkruaj: rrufePlatform.restartPlatform() për të rifilluar sistemin!');
-rlog('🎉🎉🎉 RRUFE-TESLA PLATFORM ËSHTË GATI! 🎉🎉🎉');
+rlog('🎉🎉🎉 RRUFE-TESLA PLATFORM 8.0 ËSHTË GATI! 🎉🎉🎉');
 
 // ======================================================
 // 🌐 EKSPORTIMI PËR PËRDORIM GLOBAL
