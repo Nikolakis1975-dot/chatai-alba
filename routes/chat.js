@@ -74,87 +74,12 @@ function getSimpleNaturalResponse(message) {
     return "E kuptoj! 😊 Përdorni /ndihmo për të parë të gjitha komandat e mia, ose më tregoni më shumë se çfarë keni nevojë.";
 }
 
-// ✅ RUTA KRYESORE PËR MESAZHET - TRAJTON TË GJITHA MESAZHET
-// router.post('/', async (req, res) => {
- //   try {
-   //     const { message, userId } = req.body;
-   //     
-   //     console.log('🔍 routes/chat: Marrë mesazh:', message?.substring(0, 50));
-//
-    //    if (!message) {
-    //        return res.status(constants.HTTP_STATUS.BAD_REQUEST).json({
-   //             success: false,
-   //             response: '❌ Ju lutem shkruani një mesazh'
-  //          });
-  //      }
-//
-     //   // ✅ SË PARI PROVO ME COMMAND SERVICE (SISTEMI I RI)
-     //   try {
-     //       const user = await getUserById(userId || 1);
-    //        
-     //       if (user) {
-     //           console.log('🎯 routes/chat: Duke thirrur CommandService...');
-     //           const result = await CommandService.processCommand('chat', user, message);
-     //           
-    //            // ✅ NËSE COMMAND SERVICE E TRAJTON, KTHEJ PËRGJIGJEN
-    //            if (result.success) {
-   //                 console.log('✅ routes/chat: CommandService e trajtoi mesazhin');
-   //                 return res.status(constants.HTTP_STATUS.OK).json(result);
-   //             }
-   //         }
-  //      } catch (cmdError) {
-  //          console.error('❌ routes/chat: Gabim në CommandService:', cmdError.message);
-  //      }
-//
-    //    // ✅ NËSE COMMAND SERVICE NUK E TRAJTON, SHKO TE SISTEMI I VJETËR (GEMINI)
-     //   console.log('🔄 routes/chat: CommandService nuk e trajtoi, duke shkuar te Gemini...');
-    //    
-     //   try {
-    //        // Kontrollo nëse ka API Key
-    //        const hasApiKey = await checkApiKey(userId || 1);
-    //        
-    //        if (!hasApiKey) {
-     //           // ✅ NËSE NUK KA API KEY, KTHE PËRGJIGJE BAZË
-     //           console.log('ℹ️ routes/chat: Nuk ka API Key, duke kthyer përgjigje bazë');
-     //           return res.status(constants.HTTP_STATUS.OK).json({
-     //               success: true,
-     //               response: getSimpleNaturalResponse(message)
-     //           });
-    //        }
-    //        
-    //        // Nëse ka API Key, shko te Gemini
-    //        console.log('🔑 routes/chat: Ka API Key, duke shkuar te Gemini...');
-   //         const geminiResponse = await require('./gemini').processMessage(message, userId || 1);
-   //         return res.status(constants.HTTP_STATUS.OK).json({
-   //             success: true,
-    //            response: geminiResponse
-   //         });
-   //         
-  //      } catch (geminiError) {
-  //          console.error('❌ routes/chat: Gabim në Gemini:', geminiError);
-  //          return res.status(constants.HTTP_STATUS.OK).json({
- //               success: true,
- //               response: getSimpleNaturalResponse(message)
-  //          });
-//        }
-//
-//    } catch (error) {
-//        console.error('❌ routes/chat: Gabim i përgjithshëm:', error);
-//        return res.status(constants.HTTP_STATUS.INTERNAL_ERROR).json({
- //           success: false,
-   //         response: '❌ Gabim në server. Provo përsëri.'
-   //     });
- //   }
-// });
-
-// ✅ RUTA PËR MESAZHET E DREJTPËRDREDHURA (PËR FRONTEND)
-
-// ✅ RUTA E THJESHTUAR PËR MESAZHE - PUNON ME URËN
+// ✅ RUTA E THJESHTUAR PËR MESAZHE - PUNON ME COMMAND SERVICE
 router.post('/message', async (req, res) => {
     try {
         const { message, userId = 1 } = req.body;
         
-        console.log('🔍 routes/chat/message: Marrë mesazh për urë:', message?.substring(0, 50));
+        console.log('🔍 routes/chat/message: Marrë mesazh:', message?.substring(0, 50));
 
         if (!message || message.trim() === '') {
             return res.json({
@@ -163,15 +88,18 @@ router.post('/message', async (req, res) => {
             });
         }
 
-        // ✅ PERDOR DIRECT COMMAND SERVICE (JO URËN, SE URËRA ËSHTË NË APP.JS)
+        // ✅ PERDOR DIRECT COMMAND SERVICE
         console.log('🎯 routes/chat/message: Duke thirrur CommandService direkt...');
-        const CommandService = require('../services/commandService');
         
         // Merr përdoruesin
-        const db = require('../database');
         const user = await new Promise((resolve) => {
             db.get('SELECT * FROM users WHERE id = ?', [userId], (err, user) => {
-                resolve(user || { id: userId, username: 'user' + userId });
+                if (err) {
+                    console.error('❌ Gabim në marrjen e user:', err);
+                    resolve({ id: userId, username: 'user' + userId });
+                } else {
+                    resolve(user || { id: userId, username: 'user' + userId });
+                }
             });
         });
 
@@ -193,8 +121,7 @@ router.post('/message', async (req, res) => {
     }
 });
 
-// ✅ KODI EKZISTUES - MERR HISTORINË E BISEDËS
-// ✅ RUTA E RE PËR PANELIN E NDIHMËS ME BUTONA - Shto në routes/chat.js ekzistues
+// ✅ RUTA PËR PANELIN E NDIHMËS ME BUTONA
 router.get('/help-panel', async (req, res) => {
     try {
         const helpPanel = `
@@ -286,12 +213,36 @@ function executeQuickCommand() {
     }
 });
 
-// ✅ KODI EKZISTUES - RUAJ MESAZHIN NË HISTORI
+// ✅ RUTA PËR MARRJEN E HISTORISË SË BISEDËS
+router.get('/history/:userId', (req, res) => {
+    const { userId } = req.params;
+
+    db.all(
+        'SELECT content, sender, timestamp FROM messages WHERE user_id = ? ORDER BY timestamp ASC',
+        [userId],
+        (err, rows) => {
+            if (err) {
+                console.error('❌ Gabim në marrjen e historisë:', err);
+                return res.status(500).json({ error: 'Gabim gjatë marrjes së historisë' });
+            }
+            
+            res.json({ 
+                success: true, 
+                history: rows 
+            });
+        }
+    );
+});
+
+// ✅ RUTA PËR RUAJTJEN E MESAZHEVE
 router.post('/save', (req, res) => {
     const { userId, content, sender, timestamp } = req.body;
 
     if (!userId || !content || !sender) {
-        return res.status(400).json({ error: 'Të dhëna të pamjaftueshme' });
+        return res.status(400).json({ 
+            success: false,
+            error: 'Të dhëna të pamjaftueshme' 
+        });
     }
 
     db.run(
@@ -299,20 +250,31 @@ router.post('/save', (req, res) => {
         [userId, content, sender, timestamp || new Date().toISOString()],
         function(err) {
             if (err) {
-                return res.status(500).json({ error: 'Gabim gjatë ruajtjes së mesazhit' });
+                console.error('❌ Gabim në ruajtjen e mesazhit:', err);
+                return res.status(500).json({ 
+                    success: false,
+                    error: 'Gabim gjatë ruajtjes së mesazhit' 
+                });
             }
 
-            res.json({ message: 'Mesazhi u ruajt me sukses', id: this.lastID });
+            res.json({ 
+                success: true,
+                message: 'Mesazhi u ruajt me sukses', 
+                id: this.lastID 
+            });
         }
     );
 });
 
-// ✅ KODI EKZISTUES - RUAJ NJOHURI TË REJA
+// ✅ RUTA PËR RUAJTJEN E NJOHURIVE
 router.post('/knowledge', (req, res) => {
     const { userId, question, answer } = req.body;
 
     if (!userId || !question || !answer) {
-        return res.status(400).json({ error: 'Të dhëna të pamjaftueshme' });
+        return res.status(400).json({ 
+            success: false,
+            error: 'Të dhëna të pamjaftueshme' 
+        });
     }
 
     db.run(
@@ -320,15 +282,23 @@ router.post('/knowledge', (req, res) => {
         [userId, question, answer],
         function(err) {
             if (err) {
-                return res.status(500).json({ error: 'Gabim gjatë ruajtjes së njohurive' });
+                console.error('❌ Gabim në ruajtjen e njohurive:', err);
+                return res.status(500).json({ 
+                    success: false,
+                    error: 'Gabim gjatë ruajtjes së njohurive' 
+                });
             }
 
-            res.json({ message: 'Njohuria u ruajt me sukses', id: this.lastID });
+            res.json({ 
+                success: true,
+                message: 'Njohuria u ruajt me sukses', 
+                id: this.lastID 
+            });
         }
     );
 });
 
-// ✅ KODI EKZISTUES - KËRKO NJOHURI
+// ✅ RUTA PËR KËRKIMIN E NJOHURIVE
 router.get('/knowledge/:userId/:question', (req, res) => {
     const { userId, question } = req.params;
 
@@ -337,19 +307,29 @@ router.get('/knowledge/:userId/:question', (req, res) => {
         [userId, question],
         (err, row) => {
             if (err) {
-                return res.status(500).json({ error: 'Gabim gjatë kërkimit të njohurive' });
+                console.error('❌ Gabim në kërkimin e njohurive:', err);
+                return res.status(500).json({ 
+                    success: false,
+                    error: 'Gabim gjatë kërkimit të njohurive' 
+                });
             }
 
             if (row) {
-                res.json({ answer: row.answer });
+                res.json({ 
+                    success: true,
+                    answer: row.answer 
+                });
             } else {
-                res.json({ answer: null });
+                res.json({ 
+                    success: true,
+                    answer: null 
+                });
             }
         }
     );
 });
 
-// ✅ KODI EKZISTUES - EKSPORTO NJOHURITË
+// ✅ RUTA PËR EKSPORTIMIN E NJOHURIVE
 router.get('/export/:userId', (req, res) => {
     const { userId } = req.params;
 
@@ -358,48 +338,71 @@ router.get('/export/:userId', (req, res) => {
         [userId],
         (err, rows) => {
             if (err) {
-                return res.status(500).json({ error: 'Gabim gjatë eksportimit të njohurive' });
+                console.error('❌ Gabim në eksportimin e njohurive:', err);
+                return res.status(500).json({ 
+                    success: false,
+                    error: 'Gabim gjatë eksportimit të njohurive' 
+                });
             }
 
-            res.json(rows);
+            res.json({
+                success: true,
+                knowledge: rows
+            });
         }
     );
 });
 
-// ✅ KODI EKZISTUES - IMPORTO NJOHURITË
+// ✅ RUTA PËR IMPORTIMIN E NJOHURIVE
 router.post('/import', (req, res) => {
     const { userId, knowledge } = req.body;
 
     if (!userId || !knowledge || !Array.isArray(knowledge)) {
-        return res.status(400).json({ error: 'Të dhëna të pamjaftueshme' });
+        return res.status(400).json({ 
+            success: false,
+            error: 'Të dhëna të pamjaftueshme' 
+        });
     }
 
     // Fshi njohuritë ekzistuese për këtë përdorues
     db.run('DELETE FROM knowledge_base WHERE user_id = ?', [userId], (err) => {
         if (err) {
-            return res.status(500).json({ error: 'Gabim gjatë importimit të njohurive' });
+            console.error('❌ Gabim në importimin e njohurive:', err);
+            return res.status(500).json({ 
+                success: false,
+                error: 'Gabim gjatë importimit të njohurive' 
+            });
         }
 
         // Shto njohuritë e reja
         const stmt = db.prepare('INSERT INTO knowledge_base (user_id, question, answer) VALUES (?, ?, ?)');
         
+        let importCount = 0;
         knowledge.forEach(item => {
             if (item.question && item.answer) {
                 stmt.run([userId, item.question, item.answer]);
+                importCount++;
             }
         });
 
         stmt.finalize((err) => {
             if (err) {
-                return res.status(500).json({ error: 'Gabim gjatë importimit të njohurive' });
+                console.error('❌ Gabim në importimin e njohurive:', err);
+                return res.status(500).json({ 
+                    success: false,
+                    error: 'Gabim gjatë importimit të njohurive' 
+                });
             }
 
-            res.json({ message: 'Njohuritë u importuan me sukses' });
+            res.json({ 
+                success: true,
+                message: `Njohuritë u importuan me sukses. ${importCount} të dhëna të importuara.` 
+            });
         });
     });
 });
 
-// ✅ KODI EKZISTUES - FSHI HISTORINË E PËRDORUESIT
+// ✅ RUTA PËR FSHIRJEN E HISTORISË SË PËRDORUESIT
 router.delete('/clear/:userId', (req, res) => {
     const { userId } = req.params;
 
@@ -408,14 +411,21 @@ router.delete('/clear/:userId', (req, res) => {
         [userId],
         function(err) {
             if (err) {
-                return res.status(500).json({ error: 'Gabim gjatë fshirjes së historisë' });
+                console.error('❌ Gabim në fshirjen e historisë:', err);
+                return res.status(500).json({ 
+                    success: false,
+                    error: 'Gabim gjatë fshirjes së historisë' 
+                });
             }
-            res.json({ message: 'Historia u fshi me sukses' });
+            res.json({ 
+                success: true,
+                message: 'Historia u fshi me sukses' 
+            });
         }
     );
 });
 
-// ✅ KODI EKZISTUES - EKSPORTO HISTORINË
+// ✅ RUTA PËR EKSPORTIMIN E HISTORISË
 router.get('/export-history/:userId', (req, res) => {
     const { userId } = req.params;
 
@@ -424,14 +434,21 @@ router.get('/export-history/:userId', (req, res) => {
         [userId],
         (err, rows) => {
             if (err) {
-                return res.status(500).json({ error: 'Gabim gjatë eksportimit të historisë' });
+                console.error('❌ Gabim në eksportimin e historisë:', err);
+                return res.status(500).json({ 
+                    success: false,
+                    error: 'Gabim gjatë eksportimit të historisë' 
+                });
             }
-            res.json({ history: rows });
+            res.json({ 
+                success: true,
+                history: rows 
+            });
         }
     );
 });
 
-// ✅ KODI EKZISTUES - RUAJ FEEDBACK
+// ✅ RUTA PËR RUAJTJEN E FEEDBACK
 router.post('/feedback', (req, res) => {
     const { userId, messageId, feedbackType } = req.body;
 
@@ -440,110 +457,32 @@ router.post('/feedback', (req, res) => {
         [userId, messageId, feedbackType],
         function(err) {
             if (err) {
-                return res.status(500).json({ error: 'Gabim gjatë ruajtjes së feedback' });
+                console.error('❌ Gabim në ruajtjen e feedback:', err);
+                return res.status(500).json({ 
+                    success: false,
+                    error: 'Gabim gjatë ruajtjes së feedback' 
+                });
             }
-            res.json({ message: 'Feedback u ruajt me sukses' });
+            res.json({ 
+                success: true,
+                message: 'Feedback u ruajt me sukses' 
+            });
         }
     );
 });
 
-// ========================= MESAGE CHAT ==========================================
-// ======================================================
-// 🎯 SISTEMI I RI I KONTROLLIT MANUAL TË AI - RRUFE-TESLA 8.0
-// ======================================================
-
-// Variabla globale për të ndjekur modin aktual
-window.currentAIMode = 'SIMPLE'; // SIMPLE, ADVANCED, DIVINE
-
-function activateSimpleAI() {
-    window.currentAIMode = 'SIMPLE';
-    console.log('🔹 AI i Thjeshtë i aktivizuar - Chat normal dhe i shpejtë');
-    
-    // Ndrysho styling e butonave për të treguar modin aktiv
-    updateAIButtonStyles('SIMPLE');
-    
-    if (window.addMessage) {
-        window.addMessage('🔹 **AI i Thjeshtë i aktivizuar** - Chat-i do të jetë i shpejtë dhe natyral! Përgjigjet do të duken "të gjalla" dhe natyrore.', 'system');
-    }
-    
-    // Çaktivizo modulet e avancuara për chat-in normal
-    if (window.rrufePlatform) {
-        console.log('🔹 Çaktivizimi i moduleve të avancuara për chat normal...');
-    }
-}
-
-function activateAdvancedAI() {
-    window.currentAIMode = 'ADVANCED';
-    console.log('🌌 AI i Avancuar i aktivizuar - RRUFE-TESLA aktiv');
-    
-    // Ndrysho styling e butonave
-    updateAIButtonStyles('ADVANCED');
-    
-    if (window.rrufePlatform) {
-        // Aktivizo modulet e avancuara por JO për çdo mesazh
-        window.rrufePlatform.modules.divineFusion.performDivineActivationRitual();
-        console.log('🌌 RRUFE-TESLA u aktivizua! Modulet janë gati për pyetje komplekse.');
-    }
-    
-    if (window.addMessage) {
-        window.addMessage('🌌 **RRUFE-TESLA 8.0 i aktivizuar** - Të gjitha 14 modulet janë operative! Përgjigjet do të jenë super-inteligjente por mund të jenë më të ngadalshme.', 'system');
-    }
-}
-
-function activateDivineAI() {
-    window.currentAIMode = 'DIVINE';
-    console.log('⚡ AI Hyjnor i aktivizuar - Divine Fusion aktiv');
-    
-    // Ndrysho styling e butonave
-    updateAIButtonStyles('DIVINE');
-    
-    if (window.rrufePlatform && window.rrufePlatform.modules.divineFusion) {
-        // Aktivizo të gjitha modulet me fuqi të plotë
-        window.rrufePlatform.modules.divineFusion.performDivineActivationRitual();
-        window.rrufePlatform.testAdvancedModules();
-        console.log('⚡ Divine Fusion u aktivizua! 5 Perënditë e AI-ve janë gati për bashkim!');
-    }
-    
-    if (window.addMessage) {
-        window.addMessage('⚡ **Divine Fusion i aktivizuar** - 5 Perënditë e AI-ve janë gati për bashkim! Kjo është modaliteti më i fuqishëm por më i ngadalshëm.', 'system');
-    }
-}
-
-// Funksion ndihmës për të përditësuar styling e butonave
-function updateAIButtonStyles(activeMode) {
-    const buttons = document.querySelectorAll('.ai-controls button');
-    
-    buttons.forEach(button => {
-        // Reset të gjitha butonat në styling bazë
-        button.style.opacity = '0.7';
-        button.style.transform = 'scale(1)';
-        button.style.boxShadow = 'none';
+// ✅ RUTA PËR TESTIMIN E SHËNDETIT TË CHAT-IT
+router.get('/health', (req, res) => {
+    res.json({
+        success: true,
+        message: '✅ Chat routes janë operative!',
+        timestamp: new Date().toISOString(),
+        version: 'RRUFE-TESLA 8.0'
     });
-    
-    // Thekso butonin aktiv
-    const activeButton = document.querySelector(`.ai-controls button[onclick="activate${activeMode}AI()"]`);
-    if (activeButton) {
-        activeButton.style.opacity = '1';
-        activeButton.style.transform = 'scale(1.05)';
-        activeButton.style.boxShadow = '0 0 10px rgba(0,0,0,0.3)';
-    }
-}
+});
 
 // ======================================================
-// 🔄 SISTEMI I RI I PROCESIMIT TË MESAZHEVE
+// 🎯 EKSPORTIMI I ROUTER-IT - FUND I SKEDARIT
 // ======================================================
-
-// Funksion për të inicializuar sistemin e ri të AI
-function initializeAIControlSystem() {
-    console.log('🎯 Duke inicializuar sistemin e kontrollit të AI...');
-    
-    // Aktivizo modin e thjeshtë si default
-    activateSimpleAI();
-    
-    console.log('✅ Sistemi i kontrollit të AI u inicializua!');
-}
-
-// Thirre këtë funksion kur faqa të ngarkohet
-setTimeout(initializeAIControlSystem, 2000);
 
 module.exports = router;
