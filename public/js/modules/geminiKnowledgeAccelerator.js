@@ -1,9 +1,6 @@
-// ======================= GEMINI KNOWLEDGE ACCELERATOR =======================
-// 🧠 MODULI: GeminiKnowledgeAccelerator - Përshpejtuesi i Njohurive nga Gemini
-// 📍 INTEGRIM ME ContextMemory + QuantumMemory + TemporalContext
-// ============================================================================
-
-console.log('🚀 GEMINI KNOWLEDGE ACCELERATOR u ngarkua!');
+// ======================================================
+// 🚀 GEMINI KNOWLEDGE ACCELERATOR MODULE - RRUFE-TESLA
+// ======================================================
 
 class GeminiKnowledgeAccelerator {
     constructor(contextMemory, quantumMemory, temporalContext) {
@@ -11,262 +8,466 @@ class GeminiKnowledgeAccelerator {
         this.quantumMemory = quantumMemory;
         this.temporalContext = temporalContext;
         
-        this.geminiKnowledgeBase = new Map();     // 💎 Baza e njohurive nga Gemini
-        this.learningPatterns = new Map();        // 📚 Modelet e mësimit
-        this.knowledgeConnections = new Map();    // 🔗 Lidhjet e njohurive
-        this.optimizationMetrics = new Map();     // 📊 Metrikat e optimizimit
+        this.geminiKnowledgeBase = new Map();
+        this.knowledgeConnections = new Map();
+        this.learningPatterns = new Map();
+        this.optimizationMetrics = new Map();
         
-        console.log('🚀 GeminiKnowledgeAccelerator u inicializua!');
+        console.log('🚀 GEMINI KNOWLEDGE ACCELERATOR u inicializua!');
+        this.initializeKnowledgeSystem();
     }
 
-    // ✅ KAPJA DHE RUAJTJA E NJOHURIVE NGA GEMINI
-    captureGeminiKnowledge(geminiResponse, userQuery, context) {
+    initializeKnowledgeSystem() {
+        // Struktura bazë e njohurive
+        this.knowledgeCategories = {
+            technical: 'Teknologji dhe Programim',
+            conceptual: 'Koncepte dhe Teori',
+            practical: 'Zbatime Praktike',
+            innovative: 'Ide Inovative'
+        };
+        
+        this.learningRates = {
+            technical: 0.9,
+            conceptual: 0.8,
+            practical: 0.85,
+            innovative: 0.95
+        };
+
+        console.log('💎 Sistemi i njohurive u inicializua me 4 kategori');
+    }
+
+    captureGeminiKnowledge(geminiResponse, userQuery, conversationContext) {
+        const knowledgeId = `knowledge_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        // Analizo dhe kategorizo përgjigjen
+        const knowledgeAnalysis = this.analyzeKnowledgeContent(geminiResponse, userQuery);
+        
         const knowledgeEntry = {
-            id: `gemini_knowledge_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            id: knowledgeId,
             query: userQuery,
             response: geminiResponse,
-            context: context,
+            category: knowledgeAnalysis.category,
+            confidence: knowledgeAnalysis.confidence,
+            keyInsights: knowledgeAnalysis.keyInsights,
+            complexity: knowledgeAnalysis.complexity,
             timestamp: new Date(),
-            confidence: this.calculateResponseConfidence(geminiResponse),
-            keywords: this.extractKnowledgeKeywords(geminiResponse),
-            category: this.categorizeKnowledge(geminiResponse),
-            importance: this.calculateKnowledgeImportance(geminiResponse, userQuery)
+            context: conversationContext ? conversationContext.slice(0, 3).map(msg => msg.id) : [],
+            usageCount: 0,
+            relevanceScore: 0.8
         };
-
-        // Ruaj në bazën e njohurive
-        this.geminiKnowledgeBase.set(knowledgeEntry.id, knowledgeEntry);
         
-        // Krijo lidhje kuantike me kontekstin ekzistues
-        this.createKnowledgeConnections(knowledgeEntry);
+        // Ruaj njohurinë
+        this.geminiKnowledgeBase.set(knowledgeId, knowledgeEntry);
         
-        // Optimizo kontekst memory me njohuri të reja
-        this.optimizeContextWithNewKnowledge(knowledgeEntry);
+        // Krijo lidhje njohurish
+        this.createKnowledgeConnections(knowledgeEntry, conversationContext);
         
-        console.log('💎 Kapja e njohurive nga Gemini:', knowledgeEntry.keywords.length + ' fjalë kyçe');
-        return knowledgeEntry.id;
+        // Optimizo bazën e njohurive
+        this.optimizeKnowledgeBase();
+        
+        console.log(`💎 Kapja e njohurive: ${knowledgeId} (${knowledgeAnalysis.category})`);
+        return knowledgeId;
     }
 
-    // ✅ EKSTRAKTIM I FJALËVE KYÇE TË NJOHURIVE
-    extractKnowledgeKeywords(response) {
-        // Përdor ContextMemory për ekstraktim të avancuar
-        const keywords = this.contextMemory.extractKeywords(response);
+    analyzeKnowledgeContent(response, query) {
+        // Analizo përmbajtjen e njohurive
+        const complexity = this.assessComplexity(response);
+        const category = this.categorizeKnowledge(response, query);
+        const keyInsights = this.extractKeyInsights(response);
         
-        // Shto fjalë kyçe specifike për njohuri
-        const knowledgeKeywords = [
-            'dije', 'informacion', 'këshillë', 'udhëzim', 'shpjegim',
-            'koncept', 'parim', 'rregull', 'strategji', 'metodë',
-            'teknikë', 'proces', 'sistem', 'model', 'teori'
+        return {
+            category: category,
+            complexity: complexity,
+            keyInsights: keyInsights,
+            confidence: this.calculateConfidence(response, query),
+            semanticDensity: this.measureSemanticDensity(response)
+        };
+    }
+
+    assessComplexity(text) {
+        const factors = {
+            length: Math.min(text.length / 1000, 1.0),
+            technicalTerms: (text.match(/\b(algorithm|quantum|neural|API|framework)\b/gi) || []).length * 0.1,
+            sentenceComplexity: (text.match(/[.;:]\s/g) || []).length * 0.05,
+            conceptualDepth: (text.match(/\b(concept|theory|principle|framework)\b/gi) || []).length * 0.15
+        };
+        
+        const total = Object.values(factors).reduce((sum, factor) => sum + factor, 0);
+        return Math.min(total, 1.0);
+    }
+
+    categorizeKnowledge(response, query) {
+        const categoryScores = {
+            technical: this.scoreTechnicalContent(response, query),
+            conceptual: this.scoreConceptualContent(response),
+            practical: this.scorePracticalContent(response),
+            innovative: this.scoreInnovativeContent(response)
+        };
+        
+        return Object.entries(categoryScores)
+            .sort(([,a], [,b]) => b - a)[0][0];
+    }
+
+    scoreTechnicalContent(response, query) {
+        let score = 0;
+        const techKeywords = ['code', 'function', 'algorithm', 'API', 'database', 'server', 'client'];
+        
+        techKeywords.forEach(keyword => {
+            if (response.toLowerCase().includes(keyword) || query.toLowerCase().includes(keyword)) {
+                score += 0.2;
+            }
+        });
+        
+        return Math.min(score, 1.0);
+    }
+
+    scoreConceptualContent(response) {
+        const conceptKeywords = ['concept', 'theory', 'principle', 'framework', 'model', 'paradigm'];
+        const matches = conceptKeywords.filter(keyword => 
+            response.toLowerCase().includes(keyword)
+        ).length;
+        
+        return Math.min(matches * 0.3, 1.0);
+    }
+
+    scorePracticalContent(response) {
+        const practicalIndicators = ['step by step', 'how to', 'example', 'tutorial', 'practice'];
+        const matches = practicalIndicators.filter(indicator => 
+            response.toLowerCase().includes(indicator)
+        ).length;
+        
+        return Math.min(matches * 0.25, 1.0);
+    }
+
+    scoreInnovativeContent(response) {
+        const innovationKeywords = ['innovative', 'revolutionary', 'breakthrough', 'cutting-edge', 'future'];
+        const matches = innovationKeywords.filter(keyword => 
+            response.toLowerCase().includes(keyword)
+        ).length;
+        
+        return Math.min(matches * 0.4, 1.0);
+    }
+
+    extractKeyInsights(response) {
+        const sentences = response.split(/[.!?]+/).filter(s => s.trim().length > 10);
+        const insights = [];
+        
+        // Ekstrago fjali kyçe
+        sentences.forEach(sentence => {
+            if (this.isKeyInsight(sentence)) {
+                insights.push(sentence.trim());
+            }
+        });
+        
+        return insights.slice(0, 3); // Kthe vetëm 3 më të rëndësishmet
+    }
+
+    isKeyInsight(sentence) {
+        const insightIndicators = [
+            'the key is', 'most important', 'crucial', 'essential', 
+            'fundamental', 'core concept', 'main point'
         ];
         
-        return [...new Set([...keywords, ...knowledgeKeywords.filter(kw => 
-            response.toLowerCase().includes(kw)
-        )])];
+        return insightIndicators.some(indicator => 
+            sentence.toLowerCase().includes(indicator)
+        ) || sentence.length > 50; // Ose fjali të gjata
     }
 
-    // ✅ KLASIFIKIM I NJOHURIVE
-    categorizeKnowledge(response) {
-        const categories = {
-            technical: ['kod', 'programim', 'teknologji', 'software', 'hardware', 'algorithm'],
-            educational: ['mëso', 'shkollë', 'universitet', 'trajnim', 'edukim', 'kurs'],
-            practical: ['udhëzim', 'tutorial', 'hap pas hapi', 'praktik', 'implementim'],
-            creative: ['ide', 'kreativ', 'inovacion', 'shpikje', 'dizajn'],
-            analytical: ['analizë', 'krahasim', 'studim', 'hulumtim', 'statistikë']
-        };
+    calculateConfidence(response, query) {
+        let confidence = 0.7; // Besim bazë
+        
+        // Rrit besimin bazuar në faktorë
+        if (response.length > query.length * 2) confidence += 0.1;
+        if (this.containsExamples(response)) confidence += 0.1;
+        if (this.hasStructure(response)) confidence += 0.1;
+        
+        return Math.min(confidence, 1.0);
+    }
 
-        for (const [category, keywords] of Object.entries(categories)) {
-            if (keywords.some(keyword => response.toLowerCase().includes(keyword))) {
-                return category;
-            }
+    containsExamples(text) {
+        return text.toLowerCase().includes('example') || 
+               text.toLowerCase().includes('for instance') ||
+               text.includes('```'); // Kod example
+    }
+
+    hasStructure(text) {
+        return text.includes('\n') || 
+               text.includes('•') ||
+               text.includes('- ') ||
+               text.match(/\d+\./); // Lista me numra
+    }
+
+    measureSemanticDensity(text) {
+        const words = text.split(/\s+/).length;
+        const uniqueWords = new Set(text.toLowerCase().split(/\s+/)).size;
+        return words > 0 ? uniqueWords / words : 0;
+    }
+
+    createKnowledgeConnections(knowledgeEntry, context) {
+        // Krijo lidhje me kontekstin ekzistues
+        if (context && context.length > 0) {
+            context.forEach(contextMsg => {
+                const connectionId = `conn_${knowledgeEntry.id}_${contextMsg.id}`;
+                
+                this.knowledgeConnections.set(connectionId, {
+                    id: connectionId,
+                    knowledge: knowledgeEntry.id,
+                    context: contextMsg.id,
+                    strength: this.calculateConnectionStrength(knowledgeEntry, contextMsg),
+                    created: new Date()
+                });
+            });
         }
         
-        return 'general';
-    }
-
-    // ✅ KRIJIM I LIDHJEVE KUANTIKE ME NJOHURI TË REJA
-    createKnowledgeConnections(newKnowledge) {
-        // Gjej njohuri të ngjashme ekzistuese
-        const similarKnowledge = Array.from(this.geminiKnowledgeBase.values())
-            .filter(knowledge => 
-                knowledge.id !== newKnowledge.id &&
-                this.calculateKnowledgeSimilarity(knowledge, newKnowledge) > 0.6
-            );
-
-        // Krijo lidhje kuantike për çdo njohuri të ngjashme
-        similarKnowledge.forEach(existingKnowledge => {
-            const connectionId = this.quantumMemory.createQuantumEntanglement(
-                { id: newKnowledge.id, keywords: newKnowledge.keywords },
-                { id: existingKnowledge.id, keywords: existingKnowledge.keywords }
-            );
-            
-            this.knowledgeConnections.set(connectionId, {
-                knowledge1: newKnowledge.id,
-                knowledge2: existingKnowledge.id,
-                similarity: this.calculateKnowledgeSimilarity(existingKnowledge, newKnowledge),
-                strength: 0.8 // Forcë e lartë për lidhje njohurish
-            });
-        });
-
-        console.log('🔗 Krijuam', similarKnowledge.length, 'lidhje njohurish të reja');
-    }
-
-    // ✅ OPTIMIZIM I KONTEKSTIT ME NJOHURI TË REJA
-    optimizeContextWithNewKnowledge(knowledge) {
-        // Përditëso kontekst memory me njohuri të reja të rëndësishme
-        if (knowledge.importance >= 7) {
-            this.contextMemory.addToContext(
-                `💎 [GEMINI KNOWLEDGE] ${knowledge.response.substring(0, 100)}...`,
-                'gemini_knowledge',
-                knowledge.response
+        // Krijo lidhje kuantike
+        if (this.quantumMemory && context && context.length >= 2) {
+            this.quantumMemory.createQuantumEntanglement(
+                { id: knowledgeEntry.id, message: knowledgeEntry.query },
+                context[0]
             );
         }
-
-        // Përditëso Temporal Context me timeline të ri njohurish
-        this.temporalContext.createTemporalMap(
-            Array.from(this.geminiKnowledgeBase.values())
-                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-                .slice(0, 20)
-        );
     }
 
-    // ✅ KËRKIM I NJOHURIVE TË AKKUMULUARA
-    searchAccumulatedKnowledge(query, minConfidence = 0.7) {
-        const results = [];
-        const queryKeywords = this.contextMemory.extractKeywords(query);
+    calculateConnectionStrength(knowledge, contextMsg) {
+        let strength = 0;
+        
+        // Ngjashmëri semantike
+        const semanticSimilarity = this.calculateSemanticSimilarity(
+            knowledge.query, 
+            contextMsg.message
+        );
+        strength += semanticSimilarity * 0.6;
+        
+        // Lidhje kohore
+        const timeDiff = new Date(knowledge.timestamp) - new Date(contextMsg.timestamp);
+        const timeStrength = Math.max(0, 1 - (timeDiff / (1000 * 60 * 60))); // 1 orë
+        strength += timeStrength * 0.3;
+        
+        // Rëndësi
+        strength += (contextMsg.importance / 10) * 0.1;
+        
+        return Math.min(strength, 1.0);
+    }
 
-        this.geminiKnowledgeBase.forEach(knowledge => {
-            const similarity = this.calculateKnowledgeSimilarity(
-                { keywords: queryKeywords },
-                knowledge
-            );
+    calculateSemanticSimilarity(text1, text2) {
+        const words1 = new Set(text1.toLowerCase().split(/\s+/));
+        const words2 = new Set(text2.toLowerCase().split(/\s+/));
+        
+        const intersection = new Set([...words1].filter(x => words2.has(x)));
+        const union = new Set([...words1, ...words2]);
+        
+        return union.size > 0 ? intersection.size / union.size : 0;
+    }
+
+    optimizeKnowledgeBase() {
+        // Optimizo bazën e njohurive
+        if (this.geminiKnowledgeBase.size > 50) {
+            this.removeLowRelevanceKnowledge();
+        }
+        
+        this.updateRelevanceScores();
+        this.organizeKnowledgeByCategory();
+    }
+
+    removeLowRelevanceKnowledge() {
+        const toRemove = [];
+        
+        this.geminiKnowledgeBase.forEach((knowledge, id) => {
+            if (knowledge.relevanceScore < 0.3 && knowledge.usageCount === 0) {
+                toRemove.push(id);
+            }
+        });
+        
+        toRemove.forEach(id => {
+            this.geminiKnowledgeBase.delete(id);
+            console.log(`🧹 Fshiva njohuri me relevancë të ulët: ${id}`);
+        });
+    }
+
+    updateRelevanceScores() {
+        this.geminiKnowledgeBase.forEach((knowledge, id) => {
+            // Përditëso skorën e relevancës
+            const timeFactor = this.calculateTimeRelevance(knowledge.timestamp);
+            const usageFactor = Math.min(knowledge.usageCount * 0.1, 0.5);
+            const confidenceFactor = knowledge.confidence * 0.3;
             
-            if (similarity >= minConfidence) {
+            knowledge.relevanceScore = timeFactor + usageFactor + confidenceFactor;
+            this.geminiKnowledgeBase.set(id, knowledge);
+        });
+    }
+
+    calculateTimeRelevance(timestamp) {
+        const now = new Date();
+        const knowledgeTime = new Date(timestamp);
+        const hoursDiff = (now - knowledgeTime) / (1000 * 60 * 60);
+        
+        // Njohuritë e reja kanë relevancë më të lartë
+        return Math.max(0, 1 - (hoursDiff / 168)); // 1 javë = relevancë 0
+    }
+
+    organizeKnowledgeByCategory() {
+        this.knowledgeByCategory = {};
+        
+        Object.keys(this.knowledgeCategories).forEach(category => {
+            this.knowledgeByCategory[category] = [];
+        });
+        
+        this.geminiKnowledgeBase.forEach(knowledge => {
+            if (this.knowledgeByCategory[knowledge.category]) {
+                this.knowledgeByCategory[knowledge.category].push(knowledge);
+            }
+        });
+    }
+
+    // 🔍 METODA KËRKIMI
+    searchAccumulatedKnowledge(query, category = null) {
+        const results = [];
+        
+        this.geminiKnowledgeBase.forEach(knowledge => {
+            if (category && knowledge.category !== category) return;
+            
+            const relevance = this.calculateSearchRelevance(knowledge, query);
+            if (relevance > 0.3) {
                 results.push({
                     knowledge: knowledge,
-                    similarity: similarity,
-                    confidence: knowledge.confidence,
-                    category: knowledge.category
+                    relevance: relevance,
+                    matchType: this.determineMatchType(knowledge, query)
                 });
             }
         });
-
-        // Rendit sipas relevancës
-        results.sort((a, b) => (b.similarity * b.confidence) - (a.similarity * a.confidence));
         
-        return results.slice(0, 5); // Kthe 5 rezultatet më të mira
+        // Rendit sipas relevancës
+        return results.sort((a, b) => b.relevance - a.relevance).slice(0, 5);
     }
 
-    // ✅ LLOGARITJE E NGJASHMËRISË SË NJOHURIVE
-    calculateKnowledgeSimilarity(knowledge1, knowledge2) {
-        const keywords1 = Array.isArray(knowledge1.keywords) ? knowledge1.keywords : [];
-        const keywords2 = Array.isArray(knowledge2.keywords) ? knowledge2.keywords : [];
+    calculateSearchRelevance(knowledge, query) {
+        let relevance = 0;
         
-        if (keywords1.length === 0 || keywords2.length === 0) return 0;
+        // Kërko në query
+        relevance += this.textMatchScore(knowledge.query, query) * 0.4;
         
-        const commonKeywords = keywords1.filter(keyword => 
-            keywords2.includes(keyword)
+        // Kërko në përgjigje
+        relevance += this.textMatchScore(knowledge.response, query) * 0.3;
+        
+        // Kërko në key insights
+        relevance += knowledge.keyInsights.reduce((sum, insight) => 
+            sum + this.textMatchScore(insight, query), 0
+        ) * 0.2;
+        
+        // Relevancë e përgjithshme
+        relevance += knowledge.relevanceScore * 0.1;
+        
+        return Math.min(relevance, 1.0);
+    }
+
+    textMatchScore(text, query) {
+        const textWords = new Set(text.toLowerCase().split(/\s+/));
+        const queryWords = new Set(query.toLowerCase().split(/\s+/));
+        
+        const matches = [...queryWords].filter(word => textWords.has(word)).length;
+        return queryWords.size > 0 ? matches / queryWords.size : 0;
+    }
+
+    determineMatchType(knowledge, query) {
+        if (knowledge.query.toLowerCase().includes(query.toLowerCase())) {
+            return 'direct_query_match';
+        } else if (knowledge.response.toLowerCase().includes(query.toLowerCase())) {
+            return 'response_content_match';
+        } else {
+            return 'semantic_similarity';
+        }
+    }
+
+    // 📊 METODA ANALITIKE
+    getKnowledgeStats() {
+        const stats = {
+            totalKnowledge: this.geminiKnowledgeBase.size,
+            byCategory: {},
+            averageConfidence: 0,
+            mostUsed: null,
+            knowledgeGrowth: this.calculateGrowthRate()
+        };
+        
+        // Llogarit statistikat e kategorive
+        Object.keys(this.knowledgeCategories).forEach(category => {
+            const categoryKnowledge = [...this.geminiKnowledgeBase.values()]
+                .filter(k => k.category === category);
+            stats.byCategory[category] = categoryKnowledge.length;
+        });
+        
+        // Llogarit besimin mesatar
+        const totalConfidence = [...this.geminiKnowledgeBase.values()]
+            .reduce((sum, k) => sum + k.confidence, 0);
+        stats.averageConfidence = totalConfidence / this.geminiKnowledgeBase.size;
+        
+        // Gjej më të përdorurën
+        const mostUsed = [...this.geminiKnowledgeBase.values()]
+            .sort((a, b) => b.usageCount - a.usageCount)[0];
+        stats.mostUsed = mostUsed;
+        
+        return stats;
+    }
+
+    calculateGrowthRate() {
+        if (this.geminiKnowledgeBase.size < 2) return 0;
+        
+        const knowledgeEntries = [...this.geminiKnowledgeBase.values()];
+        const sortedByTime = knowledgeEntries.sort((a, b) => 
+            new Date(a.timestamp) - new Date(b.timestamp)
         );
         
-        return commonKeywords.length / Math.max(keywords1.length, keywords2.length);
+        const firstEntry = sortedByTime[0];
+        const lastEntry = sortedByTime[sortedByTime.length - 1];
+        
+        const timeDiff = (new Date(lastEntry.timestamp) - new Date(firstEntry.timestamp)) / (1000 * 60 * 60);
+        return timeDiff > 0 ? sortedByTime.length / timeDiff : 0;
     }
 
-    // ✅ LLOGARITJE E RËNDËSISË SË NJOHURIVE
-    calculateKnowledgeImportance(response, originalQuery) {
-        let importance = 5; // Default
-        
-        // Rrit rëndësinë për përgjigje të gjata dhe të detajuara
-        if (response.length > 200) importance += 2;
-        if (response.includes('rëndësi') || response.includes('kritike')) importance += 3;
-        
-        // Rrit rëndësinë për pyetje komplekse
-        const complexQueryKeywords = ['si', 'pse', 'kur', 'ku', 'kush', 'çfarë'];
-        if (complexQueryKeywords.some(keyword => originalQuery.includes(keyword))) {
-            importance += 2;
-        }
-        
-        // Rrit rëndësinë për përgjigje të strukturuara
-        if (response.includes('1.') || response.includes('- ') || response.includes('•')) {
-            importance += 1;
-        }
-        
-        return Math.min(importance, 10);
-    }
-
-    // ✅ LLOGARITJE E BESUESHMËRISË SË PËRGJIGJES
-    calculateResponseConfidence(response) {
-        let confidence = 0.7; // Default Gemini confidence
-        
-        // Rrit besueshmërinë për përgjigje të strukturuara
-        if (response.includes('1.') || response.includes('- ')) confidence += 0.1;
-        if (response.includes('http') || response.includes('www')) confidence += 0.1;
-        if (response.length > 100) confidence += 0.1;
-        if (response.includes('parim') || response.includes('rregull')) confidence += 0.1;
-        
-        return Math.min(confidence, 0.95);
-    }
-
-    // ✅ STATISTIKA E NJOHURIVE
-    getKnowledgeStats() {
-        const categories = {};
-        this.geminiKnowledgeBase.forEach(knowledge => {
-            categories[knowledge.category] = (categories[knowledge.category] || 0) + 1;
-        });
-
-        return {
-            totalKnowledge: this.geminiKnowledgeBase.size,
-            totalConnections: this.knowledgeConnections.size,
-            categories: categories,
-            averageConfidence: Array.from(this.geminiKnowledgeBase.values())
-                .reduce((sum, k) => sum + k.confidence, 0) / this.geminiKnowledgeBase.size || 0,
-            averageImportance: Array.from(this.geminiKnowledgeBase.values())
-                .reduce((sum, k) => sum + k.importance, 0) / this.geminiKnowledgeBase.size || 0
-        };
-    }
-
-    // ✅ PASTRIMM I NJOHURIVE TË VJETERA
-    cleanupOldKnowledge(maxAgeHours = 24) {
-        const cutoffTime = new Date(Date.now() - (maxAgeHours * 60 * 60 * 1000));
-        let cleanedCount = 0;
-
-        this.geminiKnowledgeBase.forEach((knowledge, id) => {
-            if (new Date(knowledge.timestamp) < cutoffTime && knowledge.importance < 6) {
-                this.geminiKnowledgeBase.delete(id);
-                cleanedCount++;
-            }
-        });
-
-        console.log('🧹 Pastruam', cleanedCount, 'njohuri të vjetra');
-        return cleanedCount;
-    }
-
-    // ✅ DEBUG GEMINI KNOWLEDGE ACCELERATOR
     debugKnowledgeAccelerator() {
+        console.log('🚀 DEBUG GEMINI KNOWLEDGE ACCELERATOR:');
+        console.log(`- Knowledge Base: ${this.geminiKnowledgeBase.size} entries`);
+        console.log(`- Knowledge Connections: ${this.knowledgeConnections.size}`);
+        console.log(`- Learning Patterns: ${this.learningPatterns.size}`);
+        
         const stats = this.getKnowledgeStats();
+        console.log('📊 Knowledge Statistics:');
+        console.log(`- By Category:`, stats.byCategory);
+        console.log(`- Average Confidence: ${stats.averageConfidence.toFixed(2)}`);
+        console.log(`- Growth Rate: ${stats.knowledgeGrowth.toFixed(2)} entries/hour`);
         
-        console.log('🔍 DEBUG GEMINI KNOWLEDGE ACCELERATOR:');
-        console.log('- Njohuri të akumuluara:', stats.totalKnowledge);
-        console.log('- Lidhje njohurish:', stats.totalConnections);
-        console.log('- Besueshmëri mesatare:', stats.averageConfidence.toFixed(2));
-        console.log('- Rëndësi mesatare:', stats.averageImportance.toFixed(2));
-        console.log('- Kategoritë:', stats.categories);
+        // Testo kërkimin
+        const testResults = this.searchAccumulatedKnowledge('technology');
+        console.log(`- Test Search Results: ${testResults.length} matches`);
+    }
+
+    // 🎯 METODA E RE: Knowledge Enhancement
+    enhanceResponseWithKnowledge(response, userQuery) {
+        const knowledgeResults = this.searchAccumulatedKnowledge(userQuery);
         
-        // Shfaq 3 njohuritë më të fundit
-        const recentKnowledge = Array.from(this.geminiKnowledgeBase.values())
-            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-            .slice(0, 3);
+        if (knowledgeResults.length > 0) {
+            const bestMatch = knowledgeResults[0];
+            
+            // Shto referencë nga njohuria ekzistuese
+            if (bestMatch.relevance > 0.7) {
+                return `${response}\n\n💡 *Bazuar në njohuri të mëparshme:* ${bestMatch.knowledge.keyInsights[0]}`;
+            }
+        }
         
-        console.log('- Njohuritë e fundit:');
-        recentKnowledge.forEach((knowledge, index) => {
-            console.log(`  ${index + 1}. [${knowledge.category}] "${knowledge.query.substring(0, 30)}..."`);
-            console.log(`     📊 Rëndësia: ${knowledge.importance} | Besueshmëria: ${knowledge.confidence.toFixed(2)}`);
-        });
+        return response;
+    }
+
+    // 🔄 METODA E RE: Continuous Learning
+    learnFromInteraction(userQuery, geminiResponse, userSatisfaction) {
+        const knowledgeId = this.captureGeminiKnowledge(geminiResponse, userQuery);
+        const knowledgeEntry = this.geminiKnowledgeBase.get(knowledgeId);
+        
+        if (knowledgeEntry && userSatisfaction !== undefined) {
+            // Përditëso bazuar në kënaqësinë e përdoruesit
+            knowledgeEntry.usageCount++;
+            knowledgeEntry.relevanceScore += userSatisfaction ? 0.1 : -0.1;
+            knowledgeEntry.relevanceScore = Math.max(0, Math.min(1, knowledgeEntry.relevanceScore));
+            
+            this.geminiKnowledgeBase.set(knowledgeId, knowledgeEntry);
+        }
     }
 }
-
-// Eksporto për përdorim global
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = GeminiKnowledgeAccelerator;
-} else {
-    window.GeminiKnowledgeAccelerator = GeminiKnowledgeAccelerator;
-}
-
-console.log('💎 GEMINI KNOWLEDGE ACCELERATOR u inicializua me sukses!');
