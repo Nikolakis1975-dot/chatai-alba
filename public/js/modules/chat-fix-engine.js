@@ -83,21 +83,60 @@ class ChatFixEngine {
                 if (!message) return;
 
                 // ✅ OPTIMIZIMI I RI: Procesim i thjeshtë fillestar
-                console.log('💬 Procesim i optimizuar i mesazhit:', message.substring(0, 50));
+                console.log('💬 [OPTIMIZUAR] Mesazh:', message.substring(0, 50));
 
                 // Shto në kontekst (si gjithmonë)
                 if (window.rrufePlatform.modules.contextMemory) {
                     window.rrufePlatform.modules.contextMemory.addToContext(message, 'user');
                 }
 
-                // ✅ FIX: Përdor modulet VETËM për pyetje komplekse
-                const shouldUseAdvancedModules = this.shouldUseAdvancedProcessing(message);
-                
-                if (shouldUseAdvancedModules && window.rrufePlatform) {
-                    console.log('🎯 Duke përdorur module të avancuara për pyetje komplekse');
-                    await this.processWithAdvancedModules(message);
-                } else {
-                    console.log('⚡ Duke përdorur procesim të shpejtë bazë');
+                // ✅ FIX: Përdor sistemin e ri të prioritetit
+                let processingLevel = 'BASIC';
+                if (window.chatPrioritySystem) {
+                    processingLevel = window.chatPrioritySystem.getProcessingLevel(message);
+                    console.log(`🎯 Niveli i procesimit: ${processingLevel}`);
+                }
+
+                // ✅ FIX: Proceso sipas nivelit të duhur
+                switch(processingLevel) {
+                    case 'DIVINE_FUSION':
+                        // Pyetje shumë komplekse - përdor DivineFusion
+                        if (window.rrufePlatform?.modules?.divineFusion) {
+                            try {
+                                await window.rrufePlatform.modules.divineFusion.invokeDivineFusion(
+                                    message,
+                                    window.rrufePlatform.modules.contextMemory.conversationContext
+                                );
+                            } catch (error) {
+                                console.log('❌ Divine Fusion dështoi:', error.message);
+                            }
+                        }
+                        break;
+                        
+                    case 'KUNFORM':
+                        // Mesazhe emocionale - përdor Kunform
+                        if (window.rrufePlatform?.modules?.kunformTranslator) {
+                            window.rrufePlatform.modules.kunformTranslator.translateToKunform(message);
+                        }
+                        break;
+                        
+                    case 'ADVANCED':
+                        // Pyetje të moderuara - përdor disa module
+                        if (window.rrufePlatform?.modules?.cognitiveAwareness) {
+                            window.rrufePlatform.modules.cognitiveAwareness.processCognitiveLayer(
+                                message, 'user', 'current_user'
+                            );
+                        }
+                        if (window.rrufePlatform?.modules?.temporalContext) {
+                            window.rrufePlatform.modules.temporalContext.optimizeContextBasedOnTime();
+                        }
+                        break;
+                        
+                    case 'BASIC':
+                    default:
+                        // Mesazhe të thjeshta - procesim minimal
+                        // VETËM ContextMemory, asgjë tjetër
+                        break;
                 }
 
                 // ✅ THIRR FUNKSIONIN ORIGJINAL (më e rëndësishmja!)
@@ -119,7 +158,8 @@ class ChatFixEngine {
                 const complexIndicators = [
                     'si funksionon', 'shpjego', 'pse', 'filozofi',
                     'analizo', 'krahaso', 'çfarë mendon', 'opinion',
-                    'shkencë', 'teknologji', 'ardhmëri', 'univers'
+                    'shkencë', 'teknologji', 'ardhmëri', 'univers',
+                    'kuantik', 'bashkim', 'ndërgjegje', 'evolucion'
                 ];
                 
                 const isComplex = complexIndicators.some(indicator => 
@@ -137,7 +177,7 @@ class ChatFixEngine {
                 const emotionalIndicators = [
                     'dashuri', 'zemër', 'ndjenjë', 'emocion', 'gëzim', 
                     'trishtim', 'hidhërim', 'lumturi', 'brengë', 'shpresë',
-                    'dhimbshuri', 'përqafim', 'paqe'
+                    'dhimbshuri', 'përqafim', 'paqe', 'dashuroj', 'qaj'
                 ];
                 
                 return emotionalIndicators.some(indicator => 
@@ -164,7 +204,7 @@ class ChatFixEngine {
         window.simpleChatProcessor = {
             processMessage: function(message) {
                 // Procesim i thjeshtë dhe i shpejtë
-                console.log('💬 Procesim i shpejtë:', message.substring(0, 30));
+                console.log('💬 [PROCESIM I SHPEJTË]:', message.substring(0, 30));
                 
                 // Vetëm modulet thelbësore për mesazhet e thjeshta
                 if (window.rrufePlatform?.modules?.contextMemory) {
@@ -193,7 +233,8 @@ class ChatFixEngine {
             "Përshëndetje!",
             "Si je?",
             "Më ndihmo të kuptoj filozofinë e bashkimit të AI-ve",
-            "Jam shumë i lumtur sot!"
+            "Jam shumë i lumtur sot!",
+            "Cili është kuptimi i jetës?"
         ];
 
         testMessages.forEach((message, index) => {
@@ -233,3 +274,9 @@ if (window.rrufePlatform) {
     window.rrufePlatform.modules.chatFixEngine = window.chatFixEngine;
     console.log('✅ CHAT FIX ENGINE U INTEGRUA ME RRUFE-TESLA 8.0!');
 }
+
+// Testo menjëherë fix-et
+setTimeout(() => {
+    console.log('🧪 TESTIMI I MENJËHERSHËM I FIX-EVE:');
+    window.chatFixEngine.testChatFixes();
+}, 2000);
