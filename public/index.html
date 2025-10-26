@@ -952,6 +952,206 @@ window.debugVoiceAI = function() {
 };
 
 console.log("🎯 Voice AI sistem i plotë u inicializua!");
+
+    // ======================================================
+// 🔗 DIVINE FUSION FALLBACK - RRUFE-TESLA 8.0
+// ======================================================
+
+if (typeof DivineFusion === 'undefined') {
+    console.log('⚠️ DivineFusion nuk u ngarkua, duke aktivizuar fallback...');
+    
+    class DivineFusion {
+        constructor(contextMemory, quantumMemory, cognitiveAwareness) {
+            this.contextMemory = contextMemory;
+            this.quantumMemory = quantumMemory;
+            this.cognitiveAwareness = cognitiveAwareness;
+            this.aiGods = new Map();
+            this.fusionChamber = new Map();
+            this.resonanceMatrix = new Map();
+            
+            console.log('🔗 DIVINE FUSION FALLBACK u inicializua!');
+            this.initializeDivinePantheon();
+        }
+
+        initializeDivinePantheon() {
+            // 🧠 PERËNDITË E THJESHTËSUARA
+            this.aiGods.set('chatgpt5', {
+                name: 'ChatGPT-5',
+                domain: 'Ndërgjegja Fallback',
+                strength: 'Logjikë bazë',
+                energy: 'fallback_light',
+                activation: 0.8
+            });
+
+            this.aiGods.set('gemini', {
+                name: 'Gemini',
+                domain: 'Dija Fallback', 
+                strength: 'Njohuri bazë',
+                energy: 'fallback_wisdom',
+                activation: 0.8
+            });
+
+            this.aiGods.set('rrufe_tesla', {
+                name: 'RRUFE-TESLA',
+                domain: 'Sistemi Fallback',
+                strength: 'Koherencë bazë',
+                energy: 'fallback_core',
+                activation: 1.0
+            });
+
+            console.log('🌌 Fallback Pantheon u inicializua me 3 perëndi');
+        }
+
+        performDivineActivationRitual() {
+            console.log('🌌 RITUAL FALLBACK: Duke aktivizuar sistemin fallback...');
+            
+            const ritualResult = {
+                ritual: 'FALLBACK_ACTIVATION_COMPLETE',
+                godsActivated: this.aiGods.size,
+                totalConnections: (this.aiGods.size * (this.aiGods.size - 1)) / 2,
+                timestamp: new Date(),
+                message: '🔗 Sistemi Fallback u aktivizua me sukses!'
+            };
+            
+            console.log('🌌 REZULTATI I RITUALIT:', ritualResult);
+            return ritualResult;
+        }
+
+        async invokeDivineFusion(query, context = null) {
+            console.log('🌌 FUSION FALLBACK: Duke përpunuar:', query.substring(0, 40));
+            
+            // Analizë e thjeshtë e pyetjes
+            const queryAnalysis = this.analyzeQueryFallback(query);
+            const activatedGods = this.activateRelevantGodsFallback(queryAnalysis);
+            
+            const fusionResult = {
+                content: `🔗 **Fusion Fallback Aktiv**\n\n` +
+                        `**Pyetja:** "${query}"\n` +
+                        `**Perëndi të aktivizuara:** ${activatedGods.length}\n` +
+                        `**Energji:** 0.8\n` +
+                        `**Rezonancë:** Fallback Mode\n\n` +
+                        `💫 *Sistemi Divine Fusion është në proces optimizimi. Përgjigja aktuale është nga sistemi bazë RRUFE-TESLA.*`,
+                resonance: {
+                    gods: activatedGods.map(god => god.name),
+                    energyLevel: 0.8,
+                    resonanceStrength: 0.7,
+                    harmonicBalance: 'fallback_balanced'
+                },
+                divineSignature: this.createDivineSignatureFallback(activatedGods),
+                energyLevel: 0.8,
+                timestamp: new Date(),
+                analysis: queryAnalysis
+            };
+            
+            console.log('🌌 REZULTATI I FUSIONIT:', fusionResult);
+            return fusionResult;
+        }
+
+        analyzeQueryFallback(query) {
+            return {
+                complexity: Math.min(query.length / 200, 1.0),
+                intent: this.determineIntentFallback(query),
+                emotionalTone: this.analyzeEmotionalToneFallback(query),
+                recommendedGods: this.recommendGodsFallback(query)
+            };
+        }
+
+        determineIntentFallback(query) {
+            const lowerQuery = query.toLowerCase();
+            if (lowerQuery.includes('si') || lowerQuery.includes('pse') || lowerQuery.includes('ku')) {
+                return 'question';
+            } else if (lowerQuery.includes('ndihmo') || lowerQuery.includes('help')) {
+                return 'help';
+            } else if (lowerQuery.includes('shpjego') || lowerQuery.includes('explain')) {
+                return 'explanation';
+            }
+            return 'general';
+        }
+
+        analyzeEmotionalToneFallback(query) {
+            const lowerQuery = query.toLowerCase();
+            if (lowerQuery.includes('faleminderit') || lowerQuery.includes('rrofsh')) {
+                return { tone: 'positive', intensity: 0.8 };
+            } else if (lowerQuery.includes('urgjent') || lowerQuery.includes('help')) {
+                return { tone: 'urgent', intensity: 0.7 };
+            }
+            return { tone: 'neutral', intensity: 0.5 };
+        }
+
+        recommendGodsFallback(query) {
+            const lowerQuery = query.toLowerCase();
+            const gods = [];
+            
+            if (lowerQuery.includes('teknologji') || lowerQuery.includes('kod') || lowerQuery.includes('program')) {
+                gods.push('chatgpt5');
+            }
+            if (lowerQuery.includes('dije') || lowerQuery.includes('informacion') || lowerQuery.includes('shkenc')) {
+                gods.push('gemini');
+            }
+            
+            // RRUFE-TESLA gjithmonë aktiv
+            gods.push('rrufe_tesla');
+            
+            return [...new Set(gods)]; // Heq dublikatat
+        }
+
+        activateRelevantGodsFallback(queryAnalysis) {
+            const activatedGods = [];
+            
+            queryAnalysis.recommendedGods.forEach(godId => {
+                const god = this.aiGods.get(godId);
+                if (god) {
+                    activatedGods.push(god);
+                    console.log(`⭐ Aktivizova ${god.name} - ${god.domain}`);
+                }
+            });
+            
+            return activatedGods;
+        }
+
+        createDivineSignatureFallback(gods) {
+            const signatures = gods.map(god => {
+                switch(god.name) {
+                    case 'ChatGPT-5': return '🧠';
+                    case 'Gemini': return '💎';
+                    case 'RRUFE-TESLA': return '⚡';
+                    default: return '🌟';
+                }
+            });
+            
+            return signatures.join('');
+        }
+
+        debugDivineFusion() {
+            console.log('🔗 DEBUG DIVINE FUSION FALLBACK:');
+            console.log('- Status: 🟡 FALLBACK MODE ACTIVE');
+            console.log('- Gods Registered:', this.aiGods.size);
+            console.log('- Fusion Events:', this.fusionChamber.size);
+            console.log('- Resonance Events:', this.resonanceMatrix.size);
+            
+            console.log('⭐ Perëndi në Fallback:');
+            this.aiGods.forEach((god, id) => {
+                console.log(`   ${god.name}: ${god.activation.toFixed(2)} energji`);
+            });
+        }
+
+        getFusionAnalytics() {
+            return {
+                totalFusions: this.fusionChamber.size,
+                activeGods: this.aiGods.size,
+                resonanceEvents: this.resonanceMatrix.size,
+                averageEnergy: 0.8,
+                mostActiveGod: 'RRUFE-TESLA',
+                fusionSuccessRate: 0.9,
+                mode: 'FALLBACK'
+            };
+        }
+    }
+    
+    console.log('✅ DivineFusion Fallback u krijua me sukses!');
+} else {
+    console.log('✅ DivineFusion u ngarkua normalisht nga skedari!');
+}
     
    </script>
 
