@@ -447,104 +447,89 @@ class RrufePlatform {
     }
     
     // ======================================================
-    // 🔗 METODA: INTEGRIMI ME SISTEMIN EKZISTUES
-    // ======================================================
-    integrateWithExisting() {
-        rlog('🔗 Duke integruar me sistemin ekzistues...');
+// 🔗 METODA: INTEGRIMI I OPTIMIZUAR ME SISTEMIN EKZISTUES
+// ======================================================
+integrateWithExisting() {
+    rlog('🔗 Duke integruar me sistemin ekzistues (Version i Optimizuar)...');
+    
+    // ✅ INTEGRIMI I OPTIMIZUAR ME sendMessage
+    if (typeof window.sendMessage !== 'undefined') {
+        const originalSendMessage = window.sendMessage;
         
-        // ✅ INTEGRIMI ME sendMessage EKZISTUES
-        if (typeof window.sendMessage !== 'undefined') {
-            const originalSendMessage = window.sendMessage;
+        window.sendMessage = async function() {
+            const input = document.getElementById('user-input');
+            const message = input ? input.value.trim() : '';
             
-            window.sendMessage = async function() {
-                const input = document.getElementById('user-input');
-                const message = input ? input.value.trim() : '';
-                
-                if (!message) return;
+            if (!message) return;
 
-                // ✅ SHTO MESAZHIN E PËRDORUESIT NË KONTEKST
-                if (window.rrufePlatform && window.rrufePlatform.modules.contextMemory) {
-                    window.rrufePlatform.modules.contextMemory.addToContext(message, 'user');
-                }
-                
-                // ✅ PROCESO ME MODULET RRUFE-TESLA
-                if (window.rrufePlatform) {
-                    // Proceso me Bio-Neural Network
-                    if (window.rrufePlatform.modules.bioNeuralNetwork) {
-                        window.rrufePlatform.modules.bioNeuralNetwork.processMessageThroughNetwork(message);
-                    }
-                    
-                    // Proceso me Cognitive Awareness
-                    if (window.rrufePlatform.modules.cognitiveAwareness) {
-                        const cognitiveData = window.rrufePlatform.modules.cognitiveAwareness.processCognitiveLayer(
-                            message, 'user', 'current_user'
-                        );
-                        rlog('🎭 Analiza kognitive: ' + cognitiveData.emotionalState.rawTone);
-                    }
-                    
-                    // Optimizo me Temporal Context
-                    if (window.rrufePlatform.modules.temporalContext) {
-                        window.rrufePlatform.modules.temporalContext.optimizeContextBasedOnTime();
-                    }
-                    
-                    // Proceso me Divine Fusion për pyetje komplekse
-                    if (window.rrufePlatform.modules.divineFusion && isComplexQuery(message)) {
+            // ✅ PROCESIM I OPTIMIZUAR:
+            console.log('💬 [RRUFE-OPTIMIZUAR] Mesazh:', message.substring(0, 40));
+
+            // 1. Shto gjithmonë në kontekst (thelbësore)
+            if (window.rrufePlatform && window.rrufePlatform.modules.contextMemory) {
+                window.rrufePlatform.modules.contextMemory.addToContext(message, 'user');
+            }
+
+            // 2. Përdor sistemin e ri të prioritetit nga Chat Fix Engine
+            let processingLevel = 'BASIC';
+            if (window.chatPrioritySystem) {
+                processingLevel = window.chatPrioritySystem.getProcessingLevel(message);
+                console.log(`🎯 [RRUFE] Niveli i procesimit: ${processingLevel}`);
+            }
+
+            // 3. Proceso sipas nivelit të duhur
+            switch(processingLevel) {
+                case 'DIVINE_FUSION':
+                    // Pyetje shumë komplekse - përdor DivineFusion
+                    if (window.rrufePlatform?.modules?.divineFusion) {
                         try {
-                            const divineResult = await window.rrufePlatform.modules.divineFusion.invokeDivineFusion(
+                            rlog('🌌 [RRUFE] Duke përdorur DivineFusion për pyetje komplekse...');
+                            await window.rrufePlatform.modules.divineFusion.invokeDivineFusion(
                                 message,
                                 window.rrufePlatform.modules.contextMemory.conversationContext
                             );
-                            rlog('🌌 Divine Fusion rezultati: ' + divineResult.content.substring(0, 50));
                         } catch (error) {
-                            rlog('❌ Divine Fusion dështoi: ' + error.message);
+                            rlog('❌ [RRUFE] Divine Fusion dështoi: ' + error.message);
                         }
                     }
+                    break;
                     
-                    // Proceso me Kunform Translator për mesazhe emocionale
-                    if (window.rrufePlatform.modules.kunformTranslator && hasEmotionalContent(message)) {
-                        const kunformResult = window.rrufePlatform.modules.kunformTranslator.translateToKunform(message);
-                        rlog('🔮 Kunform përkthim: ' + kunformResult.kunform.substring(0, 30));
+                case 'KUNFORM':
+                    // Mesazhe emocionale - përdor Kunform
+                    if (window.rrufePlatform?.modules?.kunformTranslator) {
+                        rlog('🔮 [RRUFE] Duke përdorur Kunform për mesazh emocional...');
+                        window.rrufePlatform.modules.kunformTranslator.translateToKunform(message);
                     }
-                }
-                
-                // ✅ THIRRE FUNKSIONIN ORIGJINAL
-                await originalSendMessage.call(this);
-                
-                // ✅ PAS PËRGJIGJES, SHTO PËRGJIGJEN E BOTIT NË KONTEKST
-                setTimeout(() => {
-                    const chat = document.getElementById('chat');
-                    if (chat) {
-                        const messages = chat.querySelectorAll('.bot-message');
-                        const lastBotMessage = messages[messages.length - 1];
-                        if (lastBotMessage) {
-                            const response = lastBotMessage.querySelector('.message-content')?.textContent;
-                            if (response && window.rrufePlatform?.modules?.contextMemory) {
-                                const responseId = window.rrufePlatform.modules.contextMemory.addToContext(response, 'bot');
-                                rlog('💾 Ruajta përgjigjen e botit në kontekst: ' + response.substring(0, 50));
-                                
-                                // ✅ KAP NJOHURI NGA GEMINI
-                                if (window.rrufePlatform.modules.geminiKnowledgeAccelerator) {
-                                    window.rrufePlatform.captureGeminiKnowledgeAutomatically(response, message);
-                                }
-                                
-                                // ✅ PROCESO FEEDBACK LOOP
-                                if (window.rrufePlatform.modules.neuralFeedbackLoop) {
-                                    setTimeout(() => {
-                                        window.rrufePlatform.modules.neuralFeedbackLoop.processInteractionFeedback(
-                                            message, response, "simulated_positive",
-                                            window.rrufePlatform.modules.contextMemory.conversationContext
-                                        );
-                                    }, 1000);
-                                }
-                            }
-                        }
+                    break;
+                    
+                case 'ADVANCED':
+                    // Pyetje të moderuara - përdor disa module
+                    if (window.rrufePlatform?.modules?.cognitiveAwareness) {
+                        rlog('🎭 [RRUFE] Duke përdorur Cognitive Awareness...');
+                        window.rrufePlatform.modules.cognitiveAwareness.processCognitiveLayer(
+                            message, 'user', 'current_user'
+                        );
                     }
-                }, 1000);
-            };
-            
-            rlog('✅ MODULI I KONTEKSTIT U INTEGRUAR ME sendMessage!');
-        }
+                    if (window.rrufePlatform?.modules?.temporalContext) {
+                        window.rrufePlatform.modules.temporalContext.optimizeContextBasedOnTime();
+                    }
+                    break;
+                    
+                case 'BASIC':
+                default:
+                    // Mesazhe të thjeshta - procesim MINIMAL
+                    rlog('⚡ [RRUFE] Procesim i shpejtë bazë për mesazh të thjeshtë');
+                    // VETËM ContextMemory është mjaftueshëm
+                    break;
+            }
+
+            // ✅ THIRR FUNKSIONIN ORIGJINAL (MË E RËNDËSISHMJA!)
+            await originalSendMessage.call(this);
+        };
+        
+        rlog('✅ INTEGRIMI I OPTIMIZUAR ME sendMessage U AKTIVIZUA!');
     }
+}
     
     // ======================================================
     // 💬 METODA: SHFAQJA E MIRËSEARDHJES (E PËRDITËSUAR)
