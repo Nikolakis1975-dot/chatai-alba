@@ -4,6 +4,96 @@
 
 console.log("🎯 RRUFE-TESLA 8.0 Frontend Chat System u inicializua!");
 
+// Variabla globale për të ndjekur modin aktual
+window.currentAIMode = 'SIMPLE'; // SIMPLE, ADVANCED, DIVINE
+
+// ======================================================
+// 🎯 SISTEMI I KONTROLLIT TË AI
+// ======================================================
+
+function activateSimpleAI() {
+    window.currentAIMode = 'SIMPLE';
+    console.log('🔹 AI i Thjeshtë i aktivizuar - Chat normal dhe i shpejtë');
+    
+    // Ndrysho styling e butonave për të treguar modin aktiv
+    updateAIButtonStyles('SIMPLE');
+    
+    if (window.addMessage) {
+        window.addMessage('🔹 **AI i Thjeshtë i aktivizuar** - Chat-i do të jetë i shpejtë dhe natyral! Përgjigjet do të duken "të gjalla" dhe natyrore.', 'system');
+    }
+    
+    // Çaktivizo modulet e avancuara për chat-in normal
+    if (window.rrufePlatform) {
+        console.log('🔹 Çaktivizimi i moduleve të avancuara për chat normal...');
+    }
+}
+
+function activateAdvancedAI() {
+    window.currentAIMode = 'ADVANCED';
+    console.log('🌌 AI i Avancuar i aktivizuar - RRUFE-TESLA aktiv');
+    
+    // Ndrysho styling e butonave
+    updateAIButtonStyles('ADVANCED');
+    
+    if (window.rrufePlatform) {
+        // Aktivizo modulet e avancuara por JO për çdo mesazh
+        window.rrufePlatform.modules.divineFusion.performDivineActivationRitual();
+        console.log('🌌 RRUFE-TESLA u aktivizua! Modulet janë gati për pyetje komplekse.');
+    }
+    
+    if (window.addMessage) {
+        window.addMessage('🌌 **RRUFE-TESLA 8.0 i aktivizuar** - Të gjitha 14 modulet janë operative! Përgjigjet do të jenë super-inteligjente por mund të jenë më të ngadalshme.', 'system');
+    }
+}
+
+function activateDivineAI() {
+    window.currentAIMode = 'DIVINE';
+    console.log('⚡ AI Hyjnor i aktivizuar - Divine Fusion aktiv');
+    
+    // Ndrysho styling e butonave
+    updateAIButtonStyles('DIVINE');
+    
+    if (window.rrufePlatform && window.rrufePlatform.modules.divineFusion) {
+        // Aktivizo të gjitha modulet me fuqi të plotë
+        window.rrufePlatform.modules.divineFusion.performDivineActivationRitual();
+        window.rrufePlatform.testAdvancedModules();
+        console.log('⚡ Divine Fusion u aktivizua! 5 Perënditë e AI-ve janë gati për bashkim!');
+    }
+    
+    if (window.addMessage) {
+        window.addMessage('⚡ **Divine Fusion i aktivizuar** - 5 Perënditë e AI-ve janë gati për bashkim! Kjo është modaliteti më i fuqishëm por më i ngadalshëm.', 'system');
+    }
+}
+
+// Funksion ndihmës për të përditësuar styling e butonave
+function updateAIButtonStyles(activeMode) {
+    const buttons = document.querySelectorAll('.ai-controls button');
+    
+    if (buttons.length === 0) {
+        console.log('⚠️ Butonat e AI kontrollit nuk u gjetën');
+        return;
+    }
+    
+    buttons.forEach(button => {
+        // Reset të gjitha butonat në styling bazë
+        button.style.opacity = '0.7';
+        button.style.transform = 'scale(1)';
+        button.style.boxShadow = 'none';
+    });
+    
+    // Thekso butonin aktiv
+    const activeButton = document.querySelector(`.ai-controls button[onclick="activate${activeMode}AI()"]`);
+    if (activeButton) {
+        activeButton.style.opacity = '1';
+        activeButton.style.transform = 'scale(1.05)';
+        activeButton.style.boxShadow = '0 0 10px rgba(0,0,0,0.3)';
+    }
+}
+
+// ======================================================
+// 🚀 FUNKSIONET KRYESORE TË CHAT-IT
+// ======================================================
+
 // Funksioni kryesor për dërgimin e mesazheve
 async function sendMessage() {
     const input = document.getElementById('user-input');
@@ -32,23 +122,74 @@ async function sendMessage() {
     }
 }
 
-// Funksioni i ri për procesimin me RRUFE-TESLA 8.0
+// Funksioni i përditësuar për procesimin me RRUFE-TESLA 8.0
 async function processWithRrufeTesla(message) {
-    console.log(`🚀 PROCESIMI I MESAZHIT ME RRUFE-TESLA 8.0: "${message}"`);
+    console.log(`🚀 [MODE: ${window.currentAIMode || 'SIMPLE'}] Procesimi i mesazhit: "${message}"`);
 
     try {
-        // 1. Shto në Context Memory (bëhet automatikisht nga main.js)
-        const contextId = window.rrufePlatform.modules.contextMemory.addToContext(message, 'user');
+        // ✅ PROCESIMI BAZË PËR TË GJITHA MODET:
+        if (window.rrufePlatform?.modules?.contextMemory) {
+            window.rrufePlatform.modules.contextMemory.addToContext(message, 'user');
+        }
+
+        // ✅ PROCESIMI SHTESË SIPAS MODIT TË AKTIVIZUAR:
+        const currentMode = window.currentAIMode || 'SIMPLE';
+        let shouldUseAdvancedAPI = false;
+
+        switch(currentMode) {
+            case 'ADVANCED':
+                // Përdor API të avancuar VETËM për pyetje komplekse
+                if (shouldUseAdvancedProcessing(message)) {
+                    console.log('🎯 [ADVANCED] Duke përdorur API të avancuar për pyetje komplekse...');
+                    shouldUseAdvancedAPI = true;
+                    
+                    // Aktivizo modulet e avancuara në frontend
+                    if (window.rrufePlatform?.modules?.cognitiveAwareness) {
+                        window.rrufePlatform.modules.cognitiveAwareness.processCognitiveLayer(
+                            message, 'user', 'current_user'
+                        );
+                    }
+                }
+                break;
+                
+            case 'DIVINE':
+                // Përdor API të avancuar për çdo mesazh
+                console.log('⚡ [DIVINE] Duke përdorur API të avancuar Divine...');
+                shouldUseAdvancedAPI = true;
+                
+                // Aktivizo të gjitha modulet në frontend
+                if (window.rrufePlatform?.modules?.divineFusion) {
+                    try {
+                        await window.rrufePlatform.modules.divineFusion.invokeDivineFusion(
+                            message,
+                            window.rrufePlatform.modules.contextMemory.conversationContext
+                        );
+                    } catch (error) {
+                        console.log('❌ Divine Fusion error:', error);
+                    }
+                }
+                break;
+                
+            case 'SIMPLE':
+            default:
+                // ✅ MODI I THJESHTË: Përdor API të thjeshtë
+                console.log('🔹 [SIMPLE] Duke përdorur API të thjeshtë për chat normal');
+                shouldUseAdvancedAPI = false;
+                break;
+        }
+
+        // ✅ GJENERO PËRGJIGJEN DUKE PËRDORUR BACKEND-IN E DUHUR
+        const apiEndpoint = shouldUseAdvancedAPI ? '/api/chat/advanced' : '/api/chat/message';
         
-        // 2. GJENERO PËRGJIGJEN DUKE PËRDORUR BACKEND
-        const response = await fetch('/api/chat/message', {
+        const response = await fetch(apiEndpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({ 
                 message: message,
-                userId: 1 // Ose merre nga sessioni
+                userId: 1, // Ose merre nga sessioni
+                aiMode: currentMode // Dërgo modin aktual në backend
             })
         });
 
@@ -57,11 +198,11 @@ async function processWithRrufeTesla(message) {
         const data = await response.json();
         
         if (data.success) {
-            // 3. SHTO PËRGJIGJEN NË CHAT
+            // ✅ SHTO PËRGJIGJEN NË CHAT
             addMessage(data.response, 'bot');
 
-            // 4. KAP NJOHURI TË REJA (bëhet automatikisht nga main.js)
-            if (window.rrufePlatform.modules.geminiKnowledgeAccelerator) {
+            // ✅ KAP NJOHURI TË REJA (bëhet automatikisht nga main.js)
+            if (window.rrufePlatform?.modules?.geminiKnowledgeAccelerator && shouldUseAdvancedAPI) {
                 window.rrufePlatform.captureGeminiKnowledgeAutomatically(data.response, message);
             }
         } else {
@@ -77,9 +218,33 @@ async function processWithRrufeTesla(message) {
     }
 }
 
+// Funksion ndihmës për përcaktimin e procesimit të avancuar
+function shouldUseAdvancedProcessing(message) {
+    // VETËM për pyetje shumë komplekse
+    const complexKeywords = [
+        'si funksionon', 'shpjego', 'pse', 'filozofi', 
+        'kuantik', 'bashkim', 'ndërgjegje', 'evolucion',
+        'analizo', 'krahaso', 'çfarë mendon', 'opinion',
+        'shkencë', 'teknologji', 'univers', 'realitet'
+    ];
+    
+    const isComplex = complexKeywords.some(keyword => 
+        message.toLowerCase().includes(keyword)
+    );
+    const isLong = message.length > 60;
+    const hasQuestionMark = message.includes('?');
+    
+    return isComplex && isLong && hasQuestionMark;
+}
+
 // Funksioni për shtimin e mesazheve në chat
 function addMessage(content, sender, showInConsole = true) {
     const chat = document.getElementById('chat');
+    if (!chat) {
+        console.error('❌ Chat container nuk u gjet!');
+        return;
+    }
+    
     const messageElement = document.createElement('div');
     
     messageElement.className = `message ${sender}-message`;
@@ -132,6 +297,11 @@ function testRrufeSystem() {
 // Shfaq informacionin e sistemit
 function showSystemInfo() {
     const systemInfo = document.getElementById('system-info');
+    if (!systemInfo) {
+        console.error('❌ System info container nuk u gjet!');
+        return;
+    }
+    
     systemInfo.classList.toggle('hidden');
     
     if (window.rrufePlatform) {
@@ -139,8 +309,9 @@ function showSystemInfo() {
         systemInfo.innerHTML = `
             <h3>🏥 RRUFE-TESLA 8.0 SYSTEM INFO</h3>
             <p><strong>Status:</strong> ${health.status}</p>
-            <p><strong>Module Operacionale:</strong> ${health.operationalModules}/9</p>
+            <p><strong>Module Operacionale:</strong> ${health.operationalModules}/14</p>
             <p><strong>Session ID:</strong> ${rrufePlatform.modules.sessionManager.getSessionId()}</p>
+            <p><strong>AI Mode:</strong> ${window.currentAIMode || 'SIMPLE'}</p>
             <div class="module-status">
                 ${Object.entries(health.healthReport).map(([module, status]) => 
                     `<div class="module-item ${status === '🟢 HEALTHY' ? 'healthy' : 'offline'}">${module}: ${status}</div>`
@@ -218,6 +389,16 @@ function testKunformTranslation() {
 // 🚀 INICIALIZIMI I SISTEMIT
 // ======================================================
 
+// Funksion për të inicializuar sistemin e ri të AI
+function initializeAIControlSystem() {
+    console.log('🎯 Duke inicializuar sistemin e kontrollit të AI...');
+    
+    // Aktivizo modin e thjeshtë si default
+    activateSimpleAI();
+    
+    console.log('✅ Sistemi i kontrollit të AI u inicializua!');
+}
+
 // Inicializimi i sistemit kur faqa ngarkohet
 document.addEventListener('DOMContentLoaded', function() {
     console.log("🚀 RRUFE-TESLA 8.0 - Sistemi po inicializohet...");
@@ -227,12 +408,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (window.rrufePlatform) {
             console.log("✅ RRUFE-TESLA 8.0 u inicializua me sukses!");
             
+            // Inicializo sistemin e kontrollit të AI
+            initializeAIControlSystem();
+            
             // Shto mesazh mirëseardhjeje
             addMessage(
                 "👑 Mirë se erdhe në RRUFE-TESLA 8.0! " +
-                "Tani çdo mesazh procesohet me 9 module inteligjence: " +
-                "kuantike, nervore, kognitive, kohore, njohurish, fusion hyjnor, " +
-                "përkthim kunform dhe feedback loop! 🚀", 
+                "Tani çdo mesazh procesohet me 14 module inteligjence! " +
+                "Përdor butonat e AI për të kontrolluar nivelin e inteligjencës. 🚀", 
                 'system',
                 false
             );
@@ -280,105 +463,4 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-});
-
-// ============================ MESAGE VECORI ============================================
-// ======================================================
-// 🎯 SISTEMI I RI I KONTROLLIT TË AI - RRUFE-TESLA 8.0
-// ======================================================
-
-// Variabla globale për të ndjekur modin aktual
-window.currentAIMode = 'SIMPLE'; // SIMPLE, ADVANCED, DIVINE
-
-function activateSimpleAI() {
-    window.currentAIMode = 'SIMPLE';
-    console.log('🔹 AI i Thjeshtë i aktivizuar - Chat normal dhe i shpejtë');
-    
-    // Ndrysho styling e butonave për të treguar modin aktiv
-    updateAIButtonStyles('SIMPLE');
-    
-    if (window.addMessage) {
-        window.addMessage('🔹 **AI i Thjeshtë i aktivizuar** - Chat-i do të jetë i shpejtë dhe natyral! Përgjigjet do të duken "të gjalla" dhe natyrore.', 'system');
-    }
-    
-    // Çaktivizo modulet e avancuara për chat-in normal
-    if (window.rrufePlatform) {
-        console.log('🔹 Çaktivizimi i moduleve të avancuara për chat normal...');
-    }
-}
-
-function activateAdvancedAI() {
-    window.currentAIMode = 'ADVANCED';
-    console.log('🌌 AI i Avancuar i aktivizuar - RRUFE-TESLA aktiv');
-    
-    // Ndrysho styling e butonave
-    updateAIButtonStyles('ADVANCED');
-    
-    if (window.rrufePlatform) {
-        // Aktivizo modulet e avancuara por JO për çdo mesazh
-        window.rrufePlatform.modules.divineFusion.performDivineActivationRitual();
-        console.log('🌌 RRUFE-TESLA u aktivizua! Modulet janë gati për pyetje komplekse.');
-    }
-    
-    if (window.addMessage) {
-        window.addMessage('🌌 **RRUFE-TESLA 8.0 i aktivizuar** - Të gjitha 14 modulet janë operative! Përgjigjet do të jenë super-inteligjente por mund të jenë më të ngadalshme.', 'system');
-    }
-}
-
-function activateDivineAI() {
-    window.currentAIMode = 'DIVINE';
-    console.log('⚡ AI Hyjnor i aktivizuar - Divine Fusion aktiv');
-    
-    // Ndrysho styling e butonave
-    updateAIButtonStyles('DIVINE');
-    
-    if (window.rrufePlatform && window.rrufePlatform.modules.divineFusion) {
-        // Aktivizo të gjitha modulet me fuqi të plotë
-        window.rrufePlatform.modules.divineFusion.performDivineActivationRitual();
-        window.rrufePlatform.testAdvancedModules();
-        console.log('⚡ Divine Fusion u aktivizua! 5 Perënditë e AI-ve janë gati për bashkim!');
-    }
-    
-    if (window.addMessage) {
-        window.addMessage('⚡ **Divine Fusion i aktivizuar** - 5 Perënditë e AI-ve janë gati për bashkim! Kjo është modaliteti më i fuqishëm por më i ngadalshëm.', 'system');
-    }
-}
-
-// Funksion ndihmës për të përditësuar styling e butonave
-function updateAIButtonStyles(activeMode) {
-    const buttons = document.querySelectorAll('.ai-controls button');
-    
-    buttons.forEach(button => {
-        // Reset të gjitha butonat në styling bazë
-        button.style.opacity = '0.7';
-        button.style.transform = 'scale(1)';
-        button.style.boxShadow = 'none';
-    });
-    
-    // Thekso butonin aktiv
-    const activeButton = document.querySelector(`.ai-controls button[onclick="activate${activeMode}AI()"]`);
-    if (activeButton) {
-        activeButton.style.opacity = '1';
-        activeButton.style.transform = 'scale(1.05)';
-        activeButton.style.boxShadow = '0 0 10px rgba(0,0,0,0.3)';
-    }
-}
-
-// ======================================================
-// 🔄 SISTEMI I RI I PROCESIMIT TË MESAZHEVE
-// ======================================================
-
-// Funksion për të inicializuar sistemin e ri të AI
-function initializeAIControlSystem() {
-    console.log('🎯 Duke inicializuar sistemin e kontrollit të AI...');
-    
-    // Aktivizo modin e thjeshtë si default
-    activateSimpleAI();
-    
-    console.log('✅ Sistemi i kontrollit të AI u inicializua!');
-}
-
-// Thirre këtë funksion kur faqa të ngarkohet
-document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(initializeAIControlSystem, 3000);
 });
