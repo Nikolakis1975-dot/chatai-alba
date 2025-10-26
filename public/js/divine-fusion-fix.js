@@ -1,35 +1,53 @@
 // divine-fusion-fix.js - Vendose në /public/js/divine-fusion-fix.js
-console.log('🔧 PATCH DIVINE FUSION - Duke rregulluar emrin e klasës...');
+console.log('🔧 DIVINE FUSION FIX - Duke rregulluar inicializimin...');
 
-if (typeof DivineFusionEngine !== 'undefined' && window.rrufePlatform) {
-    console.log('⚡ Duke rregulluar DivineFusion...');
-    
-    // Krijo alias për klasën
-    window.DivineFusion = DivineFusionEngine;
-    
-    // Inicializo DivineFusion me emrin e duhur
-    window.rrufePlatform.modules.divineFusion = new DivineFusion(
-        window.rrufePlatform.modules.contextMemory,
-        window.rrufePlatform.modules.quantumMemory,
-        window.rrufePlatform.modules.cognitiveAwareness
-    );
-    
-    console.log('✅ DivineFusion u rregullua dhe u inicializua!');
-    
-    // Verifikimi
-    setTimeout(() => {
-        console.log('🔍 VERIFIKIMI I RREGULLIMIT:');
-        console.log('- DivineFusionEngine:', typeof DivineFusionEngine);
-        console.log('- DivineFusion:', typeof DivineFusion);
-        console.log('- divineFusion në platformë:', !!window.rrufePlatform.modules.divineFusion);
+function initializeDivineFusion() {
+    if (typeof DivineFusionEngine !== 'undefined' && window.rrufePlatform) {
+        console.log('⚡ Duke inicializuar DivineFusion...');
         
-        if (window.rrufePlatform.modules.divineFusion) {
-            console.log('🎉 DivineFusion tani funksionon!');
+        try {
+            // Krijo alias global nëse nuk ekziston
+            if (typeof DivineFusion === 'undefined') {
+                window.DivineFusion = DivineFusionEngine;
+                console.log('✅ Krijuam DivineFusion alias');
+            }
             
-            // Testo DivineFusion
-            window.rrufePlatform.modules.divineFusion.debugDivineFusion();
+            // Inicializo DivineFusion në platformë
+            window.rrufePlatform.modules.divineFusion = new DivineFusion(
+                window.rrufePlatform.modules.contextMemory,
+                window.rrufePlatform.modules.quantumMemory,
+                window.rrufePlatform.modules.cognitiveAwareness
+            );
+            
+            console.log('✅ DivineFusion u inicializua me sukses!');
+            
+            // Verifikimi
+            console.log('🔍 VERIFIKIMI:');
+            console.log('- DivineFusionEngine:', typeof DivineFusionEngine);
+            console.log('- DivineFusion:', typeof DivineFusion);
+            console.log('- divineFusion në platformë:', !!window.rrufePlatform.modules.divineFusion);
+            
+            return true;
+            
+        } catch (error) {
+            console.log('❌ Gabim në inicializim:', error);
+            return false;
         }
-    }, 500);
-} else {
-    console.log('❌ DivineFusionEngine nuk u gjet ose rrufePlatform nuk është inicializuar');
+    } else {
+        console.log('⚠️ Duke pritur për DivineFusionEngine ose rrufePlatform...');
+        console.log('- DivineFusionEngine:', typeof DivineFusionEngine);
+        console.log('- rrufePlatform:', !!window.rrufePlatform);
+        return false;
+    }
+}
+
+// Provo të inicializosh menjëherë
+let initializationAttempt = initializeDivineFusion();
+
+// Nëse nuk funksionon menjëherë, provo përsëri pas 2 sekondash
+if (!initializationAttempt) {
+    setTimeout(() => {
+        console.log('🔄 Provoj përsëri inicializimin...');
+        initializeDivineFusion();
+    }, 2000);
 }
