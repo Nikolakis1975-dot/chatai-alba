@@ -1,370 +1,413 @@
 // ======================================================
-// 🎭 COGNITIVE AWARENESS MODULE - RRUFE-TESLA
+// 🎭 COGNITIVE AWARENESS MODULE - RRUFE-TESLA 8.0
 // ======================================================
 
 class CognitiveAwareness {
-    constructor(temporalContext, bioNeuralNetwork, contextMemory) {
-        this.temporalContext = temporalContext;
-        this.bioNeuralNetwork = bioNeuralNetwork;
-        this.contextMemory = contextMemory;
+    constructor() {
+        this.moduleName = "CognitiveAwareness";
+        this.title = "Ndërgjegjja Kognitive";
+        this.version = "1.0";
+        this.status = "ACTIVE";
+        this.activationLevel = 0.85;
+        this.energy = "Ndërgjegje, Kuptim Emocional";
         
-        this.behavioralModels = new Map();
-        this.selfOptimization = new Map();
-        this.cognitivePatterns = new Map();
-        
-        console.log('🎭 COGNITIVE AWARENESS u inicializua!');
-        this.initializeCognitiveSystem();
+        console.log('🎭 MODULI COGNITIVE AWARENESS U AKTIVIZUA!');
+        this.initializeCognitiveSystems();
     }
 
-    initializeCognitiveSystem() {
-        // Modele bazë të sjelljes
-        this.behavioralModels.set('emotional_intelligence', {
-            sensitivity: 0.8,
-            adaptationSpeed: 0.7,
-            learningRate: 0.6
-        });
-        
-        this.behavioralModels.set('context_awareness', {
-            depth: 0.9,
-            breadth: 0.8, 
-            integration: 0.7
-        });
-        
-        this.behavioralModels.set('user_adaptation', {
-            personalization: 0.8,
-            memoryRetention: 0.9,
-            predictionAccuracy: 0.7
-        });
-
-        console.log('🧠 Sistemi kognitiv u inicializua me 3 modele sjelljesh');
-    }
-
-    processCognitiveLayer(message, sender, userId) {
-        const cognitiveData = {
-            emotionalState: this.analyzeEmotionalState(message),
-            cognitiveLoad: this.calculateCognitiveLoad(message),
-            behavioralContext: this.assessBehavioralContext(userId),
-            temporalAwareness: this.assessTemporalAwareness(),
-            cognitiveConfidence: 0.8 // Besimi fillestar
+    initializeCognitiveSystems() {
+        this.emotionalMatrix = {
+            joy: ['lumtur', 'gëzim', 'qesh', 'fest', 'sukses', 'urime', 'gezuar', 'kënaqësi', 'entuziazëm'],
+            sadness: ['trishtim', 'hidhërim', 'lot', 'humbje', 'dhimbshuri', 'brengë', 'dëshpërim', 'mall'],
+            anger: ['i zemëruar', 'frustruar', 'tërbohem', 'nervoz', 'pakënaqësi', 'inxhi', 'zemërim'],
+            fear: ['frikë', 'ankth', 'shqetësim', 'panik', 'tmerr', 'druaj', 'parashikim'],
+            love: ['dashuri', 'përqafim', 'zemër', 'përkujdesje', 'afeksion', 'adhurim', 'përshtatje'],
+            surprise: ['befasi', 'habi', 'papritur', 'çudi', 'magji', 'mrekulli', 'habitem'],
+            gratitude: ['faleminderit', 'rrofsh', 'mirënjohje', 'vlerësoj', 'appreciate'],
+            curiosity: ['kurioz', 'pyes', 'dëshiroj të di', 'interesant', 'eksploroj']
         };
 
-        // Përditëso modelet e sjelljes
-        this.updateBehavioralModels(message, sender, cognitiveData);
-        
-        // Optimizo veten
-        this.selfOptimize(cognitiveData);
-        
-        console.log(`🎭 Procesova shtresën kognitive për: ${message.substring(0, 40)}`);
-        return cognitiveData;
-    }
-
-    analyzeEmotionalState(message) {
-        const emotionalAnalysis = this.bioNeuralNetwork.analyzeEmotionalTone(message);
-        
-        // Shto shtresë kognitive më të thellë
-        const cognitiveEmotion = {
-            rawTone: emotionalAnalysis.tone,
-            intensity: emotionalAnalysis.intensity,
-            confidence: emotionalAnalysis.confidence,
-            cognitiveImpact: this.calculateCognitiveImpact(emotionalAnalysis),
-            suggestedResponseTone: this.determineOptimalResponseTone(emotionalAnalysis)
+        this.cognitivePatterns = {
+            question: ['si', 'pse', 'kur', 'ku', 'kush', 'çfarë', 'a mund', 'a duhet', 'a ka'],
+            request: ['ju lutem', 'mundesh', 'ndihmo', 'më trego', 'më shpjego', 'më ndihmo', 'më thuaj'],
+            command: ['bëj', 'shko', 'gjej', 'kthe', 'ndërro', 'aktivizo', 'çaktivizo', 'krijo'],
+            emotional: ['ndjehem', 'pres', 'shpresoj', 'dëshiroj', 'dua', 'urroj', 'pëlqej'],
+            reflective: ['mendoj', 'besoj', 'kuptoj', 'mësoj', 'përvojë', 'reflektim']
         };
-        
-        return cognitiveEmotion;
-    }
 
-    calculateCognitiveImpact(emotionalAnalysis) {
-        // Llogarit ndikimin kognitiv të emocioneve
-        const impactMap = {
-            positive: 0.8,    // Emocione pozitive ndihmojnë
-            negative: 0.4,    // Emocione negative ngatërrojnë
-            curious: 0.9,     // Kurioziteti stimulon
-            excited: 0.7,     // Ekstazia mund të shpërqendrojë
-            neutral: 0.6      // Neutral është balancuar
+        this.contextWeights = {
+            urgency: 1.2,
+            emotional: 1.3,
+            complexity: 0.9,
+            personal: 1.1,
+            technical: 0.8
         };
-        
-        return impactMap[emotionalAnalysis.tone] || 0.6;
+
+        console.log(`🎭 Sistemi kognitive u inicializua me ${Object.keys(this.emotionalMatrix).length} emocione`);
     }
 
-    determineOptimalResponseTone(emotionalAnalysis) {
-        // Përcakto tonin optimal të përgjigjes
-        const toneMapping = {
-            positive: 'supportive_enthusiastic',
-            negative: 'empathetic_solution',
-            curious: 'informative_engaging', 
-            excited: 'energetic_celebratory',
-            neutral: 'balanced_professional'
-        };
+    // ✅ FUNKSIONI KRYESOR PËR ANALIZËN EMOCIONALE
+    analyzeEmotionalTone(text) {
+        console.log('🎭 Duke analizuar tonin emocional të tekstit:', text.substring(0, 50));
         
-        return toneMapping[emotionalAnalysis.tone] || 'balanced_professional';
-    }
+        const lowerText = text.toLowerCase();
+        const emotionalScores = {};
+        let dominantEmotion = 'neutral';
+        let maxScore = 0;
+        let totalScore = 0;
 
-    calculateCognitiveLoad(message) {
-        // Llogarit ngarkesën kognitive të mesazhit
-        const complexityFactors = {
-            length: Math.min(message.length / 500, 1.0), // Normalizo gjatësinë
-            questionCount: (message.match(/\?/g) || []).length * 0.2,
-            complexityWords: this.countComplexityWords(message) * 0.1,
-            emotionalIntensity: this.bioNeuralNetwork.analyzeEmotionalTone(message).intensity
-        };
-        
-        const totalLoad = Object.values(complexityFactors).reduce((sum, factor) => sum + factor, 0);
-        return Math.min(totalLoad, 1.0);
-    }
-
-    countComplexityWords(message) {
-        const complexWords = ['kompleks', 'detal', 'teknike', 'avancuar', 'algoritëm', 'kuantike', 'nervor', 'kognitiv'];
-        return complexWords.filter(word => message.toLowerCase().includes(word)).length;
-    }
-
-    assessBehavioralContext(userId) {
-        const userMessages = this.contextMemory.conversationContext.filter(msg => 
-            msg.sender === 'user'
-        );
-        
-        if (userMessages.length === 0) {
-            return {
-                interactionHistory: 'new_user',
-                behavioralPattern: 'unknown',
-                adaptationLevel: 0.3
-            };
-        }
-        
-        // Analizo modelet e sjelljes
-        const recentBehavior = this.analyzeRecentBehavior(userMessages.slice(0, 5));
-        const longTermPatterns = this.analyzeLongTermPatterns(userMessages);
-        
-        return {
-            interactionHistory: `${userMessages.length} interactions`,
-            behavioralPattern: recentBehavior.dominantPattern,
-            adaptationLevel: this.calculateAdaptationLevel(userMessages),
-            preferences: this.extractUserPreferences(userMessages),
-            communicationStyle: recentBehavior.communicationStyle
-        };
-    }
-
-    analyzeRecentBehavior(messages) {
-        const patterns = {
-            questioning: messages.filter(msg => msg.message.includes('?')).length,
-            emotional: messages.filter(msg => 
-                this.bioNeuralNetwork.analyzeEmotionalTone(msg.message).intensity > 0.7
-            ).length,
-            technical: messages.filter(msg => this.countComplexityWords(msg.message) > 0).length
-        };
-        
-        const dominantPattern = Object.entries(patterns)
-            .sort(([,a], [,b]) => b - a)[0][0];
-            
-        return {
-            dominantPattern,
-            communicationStyle: this.determineCommunicationStyle(patterns)
-        };
-    }
-
-    determineCommunicationStyle(patterns) {
-        if (patterns.questioning > patterns.emotional && patterns.questioning > patterns.technical) {
-            return 'inquisitive';
-        } else if (patterns.emotional > patterns.technical) {
-            return 'expressive';
-        } else {
-            return 'analytical';
-        }
-    }
-
-    analyzeLongTermPatterns(messages) {
-        // Analizo modele afatgjata (e thjeshtëzuar)
-        return {
-            consistency: 0.7,
-            learningCurve: 0.8,
-            engagementLevel: messages.length / 50 // Normalizo
-        };
-    }
-
-    calculateAdaptationLevel(messages) {
-        if (messages.length < 3) return 0.3;
-        
-        const recentMessages = messages.slice(0, 5);
-        const adaptationSignals = recentMessages.filter(msg => 
-            msg.importance > 5 || 
-            this.bioNeuralNetwork.analyzeEmotionalTone(msg.message).intensity > 0.6
-        ).length;
-        
-        return Math.min(adaptationSignals / recentMessages.length, 1.0);
-    }
-
-    extractUserPreferences(messages) {
-        const topics = messages.map(msg => this.extractMainTopic(msg.message));
-        const topicFrequency = {};
-        
-        topics.forEach(topic => {
-            topicFrequency[topic] = (topicFrequency[topic] || 0) + 1;
-        });
-        
-        const preferredTopics = Object.entries(topicFrequency)
-            .sort(([,a], [,b]) => b - a)
-            .slice(0, 3)
-            .map(([topic]) => topic);
-            
-        return {
-            preferredTopics,
-            interactionFrequency: messages.length,
-            averageResponseImportance: messages.reduce((sum, msg) => sum + msg.importance, 0) / messages.length
-        };
-    }
-
-    extractMainTopic(text) {
-        const words = text.toLowerCase().split(/\s+/);
-        const commonWords = ['a', 'është', 'jam', 'ju', 'unë', 'në', 'për', 'me', 'si', 'ku', 'kur'];
-        const topicWords = words.filter(word => 
-            word.length > 3 && !commonWords.includes(word)
-        );
-        
-        return topicWords.length > 0 ? topicWords[0] : 'general';
-    }
-
-    assessTemporalAwareness() {
-        const temporalPatterns = this.temporalContext.predictTemporalPatterns();
-        
-        return {
-            temporalPatterns,
-            sessionDuration: this.calculateSessionDuration(),
-            interactionRhythm: this.analyzeInteractionRhythm(),
-            timeBasedContext: this.assessTimeBasedContext()
-        };
-    }
-
-    calculateSessionDuration() {
-        if (this.contextMemory.conversationContext.length === 0) return 'new_session';
-        
-        const firstMessage = this.contextMemory.conversationContext[this.contextMemory.conversationContext.length - 1];
-        const sessionStart = new Date(firstMessage.timestamp);
-        const duration = Date.now() - sessionStart;
-        
-        const minutes = Math.floor(duration / (1000 * 60));
-        return minutes < 1 ? 'under_1_min' : 
-               minutes < 5 ? '1_5_min' : 
-               minutes < 15 ? '5_15_min' : 'extended_session';
-    }
-
-    analyzeInteractionRhythm() {
-        const userMessages = this.contextMemory.conversationContext.filter(msg => msg.sender === 'user');
-        if (userMessages.length < 2) return 'unknown';
-        
-        const timeDiffs = [];
-        for (let i = 1; i < userMessages.length; i++) {
-            const diff = new Date(userMessages[i].timestamp) - new Date(userMessages[i-1].timestamp);
-            timeDiffs.push(diff);
-        }
-        
-        const avgDiff = timeDiffs.reduce((a, b) => a + b, 0) / timeDiffs.length;
-        
-        return avgDiff < (1000 * 30) ? 'rapid_fire' : 
-               avgDiff < (1000 * 120) ? 'conversational' : 'deliberate';
-    }
-
-    assessTimeBasedContext() {
-        const now = new Date();
-        const hour = now.getHours();
-        
-        if (hour >= 6 && hour < 12) return 'morning_context';
-        if (hour >= 12 && hour < 17) return 'afternoon_context';
-        if (hour >= 17 && hour < 22) return 'evening_context';
-        return 'late_night_context';
-    }
-
-    updateBehavioralModels(message, sender, cognitiveData) {
-        // Përditëso modelet bazuar në ndërveprimin e ri
-        if (sender === 'user') {
-            this.behavioralModels.forEach((model, modelId) => {
-                // Rrit shpejtësinë e adaptimit
-                model.adaptationSpeed = Math.min(1.0, model.adaptationSpeed + 0.05);
-                model.learningRate = Math.min(1.0, model.learningRate + 0.03);
+        // Analizo çdo emocion
+        Object.entries(this.emotionalMatrix).forEach(([emotion, keywords]) => {
+            let score = 0;
+            keywords.forEach(keyword => {
+                const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
+                const matches = lowerText.match(regex);
+                if (matches) {
+                    score += matches.length;
+                }
             });
-        }
-    }
-
-    selfOptimize(cognitiveData) {
-        const optimizationId = `opt_${Date.now()}`;
-        
-        this.selfOptimization.set(optimizationId, {
-            id: optimizationId,
-            cognitiveLoad: cognitiveData.cognitiveLoad,
-            emotionalImpact: cognitiveData.emotionalState.cognitiveImpact,
-            optimizationApplied: this.determineOptimizations(cognitiveData),
-            timestamp: new Date()
+            
+            emotionalScores[emotion] = score;
+            totalScore += score;
+            
+            if (score > maxScore) {
+                maxScore = score;
+                dominantEmotion = emotion;
+            }
         });
-        
-        // Zbato optimizimet
-        this.applyCognitiveOptimizations(cognitiveData);
+
+        const confidence = totalScore > 0 ? maxScore / totalScore : 0;
+
+        const analysisResult = {
+            emotionalTone: dominantEmotion,
+            confidence: Math.round(confidence * 100) / 100,
+            scores: emotionalScores,
+            intensity: this.calculateEmotionalIntensity(maxScore),
+            wordCount: lowerText.split(' ').length,
+            hasExclamation: lowerText.includes('!'),
+            hasQuestion: lowerText.includes('?')
+        };
+
+        console.log('📊 Rezultati i analizës emocionale:', analysisResult);
+        return analysisResult;
     }
 
-    determineOptimizations(cognitiveData) {
-        const optimizations = [];
-        
-        if (cognitiveData.cognitiveLoad > 0.8) {
-            optimizations.push('simplify_response');
-        }
-        
-        if (cognitiveData.emotionalState.intensity > 0.7) {
-            optimizations.push('emotional_support_focus');
-        }
-        
-        if (cognitiveData.behavioralContext.adaptationLevel < 0.5) {
-            optimizations.push('gradual_complexity');
-        }
-        
-        return optimizations.length > 0 ? optimizations : ['maintain_balance'];
+    calculateEmotionalIntensity(score) {
+        if (score === 0) return 'neutral';
+        if (score <= 1) return 'low';
+        if (score <= 3) return 'medium';
+        if (score <= 5) return 'high';
+        return 'very high';
     }
 
-    applyCognitiveOptimizations(cognitiveData) {
-        // Zbato optimizimet në sistem
-        const optimizations = this.determineOptimizations(cognitiveData);
+    // ✅ FUNKSIONI PËR PROCESIMIN E SHTRESËS KOGNITIVE
+    processCognitiveLayer(message, sender, userId) {
+        console.log('🎭 Duke procesuar shtresën kognitive për:', message.substring(0, 30));
         
-        optimizations.forEach(optimization => {
-            console.log(`⚡ Zbatova optimizimin kognitiv: ${optimization}`);
+        const emotionalAnalysis = this.analyzeEmotionalTone(message);
+        const intentAnalysis = this.analyzeUserIntent(message);
+        const contextAnalysis = this.analyzeContextualRelevance(message);
+        const complexityAnalysis = this.analyzeComplexity(message);
+        
+        const cognitiveResult = {
+            emotional: emotionalAnalysis,
+            intent: intentAnalysis,
+            context: contextAnalysis,
+            complexity: complexityAnalysis,
+            timestamp: new Date(),
+            processed: true,
+            cognitiveWeight: this.calculateCognitiveWeight(emotionalAnalysis, intentAnalysis, contextAnalysis)
+        };
+
+        console.log('🧠 Rezultati i procesimit kognitiv:', cognitiveResult);
+        return cognitiveResult;
+    }
+
+    // ✅ ANALIZA E QËLLIMIT TË PËRDORUESIT
+    analyzeUserIntent(text) {
+        const lowerText = text.toLowerCase();
+        let detectedIntent = 'statement';
+        let confidence = 0.6;
+        let patternsFound = [];
+
+        Object.entries(this.cognitivePatterns).forEach(([intent, patterns]) => {
+            const foundPatterns = patterns.filter(pattern => {
+                const regex = new RegExp(`\\b${pattern}\\b`, 'gi');
+                return regex.test(lowerText);
+            });
+            
+            if (foundPatterns.length > 0) {
+                patternsFound = [...patternsFound, ...foundPatterns];
+                if (foundPatterns.length > patternsFound.length) {
+                    detectedIntent = intent;
+                    confidence = Math.min(0.95, 0.6 + (foundPatterns.length * 0.1));
+                }
+            }
         });
+
+        return {
+            intent: detectedIntent,
+            confidence: Math.round(confidence * 100) / 100,
+            patternsFound: patternsFound,
+            isQuestion: lowerText.includes('?'),
+            isExclamation: lowerText.includes('!')
+        };
     }
 
+    // ✅ ANALIZA E RELEVANCËS KONTEKSTUALE
+    analyzeContextualRelevance(text) {
+        const relevanceFactors = {
+            length: text.length,
+            hasQuestion: text.includes('?'),
+            hasExclamation: text.includes('!'),
+            wordCount: text.split(' ').length,
+            hasUrgentWords: this.hasUrgentIndicators(text),
+            hasPersonalReference: this.hasPersonalReferences(text),
+            hasTechnicalTerms: this.hasTechnicalTerms(text)
+        };
+        
+        const relevanceScore = this.calculateRelevanceScore(relevanceFactors);
+        
+        return {
+            complexity: this.calculateComplexity(text),
+            urgency: this.calculateUrgency(text),
+            personalRelevance: this.calculatePersonalRelevance(text),
+            relevanceScore: Math.round(relevanceScore * 100) / 100,
+            factors: relevanceFactors
+        };
+    }
+
+    // ✅ ANALIZA E KOMPLEKSITETIT
+    analyzeComplexity(text) {
+        const words = text.split(' ');
+        const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+        
+        const complexWords = words.filter(word => word.length > 8).length;
+        const avgSentenceLength = words.length / Math.max(sentences.length, 1);
+        const complexityRatio = complexWords / Math.max(words.length, 1);
+        
+        let complexityLevel = 'low';
+        if (complexityRatio > 0.3) complexityLevel = 'high';
+        else if (complexityRatio > 0.15) complexityLevel = 'medium';
+        
+        return {
+            level: complexityLevel,
+            score: Math.round(complexityRatio * 100) / 100,
+            wordCount: words.length,
+            sentenceCount: sentences.length,
+            avgSentenceLength: Math.round(avgSentenceLength * 100) / 100,
+            complexWordCount: complexWords
+        };
+    }
+
+    // ✅ FUNKSIONE NDIHMËSE
+    hasUrgentIndicators(text) {
+        const urgentWords = ['shpejt', 'menjëherë', 'urgjent', 'tani', 'sot', 'pa vonë', 'emergjenc'];
+        return urgentWords.some(word => text.toLowerCase().includes(word));
+    }
+
+    hasPersonalReferences(text) {
+        const personalWords = ['unë', 'mua', 'mua më', 'më', 'mua më', 'time', 'im', 'ime'];
+        return personalWords.some(word => text.toLowerCase().includes(word));
+    }
+
+    hasTechnicalTerms(text) {
+        const technicalWords = ['teknologji', 'programim', 'kod', 'algorithm', 'database', 'server', 'api'];
+        return technicalWords.some(word => text.toLowerCase().includes(word));
+    }
+
+    calculateComplexity(text) {
+        const words = text.split(' ');
+        const complexWords = words.filter(word => word.length > 6).length;
+        return Math.min(1, complexWords / Math.max(words.length, 1));
+    }
+
+    calculateUrgency(text) {
+        const urgentIndicators = ['shpejt', 'menjëherë', 'urgjent', 'tani', 'sot', 'emergjenc'];
+        const lowerText = text.toLowerCase();
+        const matches = urgentIndicators.filter(indicator => lowerText.includes(indicator)).length;
+        return Math.min(1, matches * 0.3);
+    }
+
+    calculatePersonalRelevance(text) {
+        const personalIndicators = ['unë', 'mua', 'më', 'time', 'im', 'ime', 'mua më'];
+        const lowerText = text.toLowerCase();
+        const matches = personalIndicators.filter(indicator => lowerText.includes(indicator)).length;
+        return Math.min(1, matches * 0.2);
+    }
+
+    calculateRelevanceScore(factors) {
+        let score = 0;
+        
+        if (factors.hasQuestion) score += 0.3;
+        if (factors.hasExclamation) score += 0.2;
+        if (factors.hasUrgentWords) score += 0.4;
+        if (factors.hasPersonalReference) score += 0.3;
+        if (factors.hasTechnicalTerms) score += 0.2;
+        
+        // Shto bazuar në gjatësi
+        score += Math.min(0.3, factors.length / 500);
+        
+        return Math.min(1, score);
+    }
+
+    calculateCognitiveWeight(emotional, intent, context) {
+        let weight = 0;
+        
+        // Pesho emocionet
+        weight += emotional.confidence * 0.4;
+        
+        // Pesho qëllimin
+        weight += intent.confidence * 0.3;
+        
+        // Pesho kontekstin
+        weight += context.relevanceScore * 0.3;
+        
+        return Math.round(weight * 100) / 100;
+    }
+
+    // ✅ METODA PËR OPTIMIZIM KONTEKSTUAL
+    optimizeContextBasedOnEmotion(emotionalAnalysis, currentContext) {
+        const emotion = emotionalAnalysis.emotionalTone;
+        const intensity = emotionalAnalysis.intensity;
+        
+        let optimization = {
+            responseTone: 'neutral',
+            detailLevel: 'normal',
+            urgency: 'normal'
+        };
+        
+        switch(emotion) {
+            case 'joy':
+                optimization.responseTone = 'positive';
+                optimization.detailLevel = intensity === 'high' ? 'detailed' : 'normal';
+                break;
+            case 'sadness':
+                optimization.responseTone = 'empathetic';
+                optimization.detailLevel = 'simple';
+                optimization.urgency = 'low';
+                break;
+            case 'anger':
+                optimization.responseTone = 'calm';
+                optimization.detailLevel = 'simple';
+                optimization.urgency = 'high';
+                break;
+            case 'fear':
+                optimization.responseTone = 'reassuring';
+                optimization.detailLevel = 'clear';
+                optimization.urgency = 'medium';
+                break;
+            case 'curiosity':
+                optimization.responseTone = 'informative';
+                optimization.detailLevel = 'detailed';
+                break;
+        }
+        
+        console.log('🎭 Optimizimi kontekstual bazuar në emocion:', optimization);
+        return optimization;
+    }
+
+    // ✅ METODA PËR DIAGNOSTIKIM
     debugCognitiveAwareness() {
-        console.log('🎭 DEBUG COGNITIVE AWARENESS:');
-        console.log(`- Behavioral Models: ${this.behavioralModels.size}`);
-        console.log(`- Self Optimizations: ${this.selfOptimization.size}`);
-        console.log(`- Cognitive Patterns: ${this.cognitivePatterns.size}`);
+        console.log('🔧 DIAGNOSTIKIMI I COGNITIVE AWARENESS:');
+        console.log('- Emri:', this.moduleName);
+        console.log('- Titulli:', this.title);
+        console.log('- Version:', this.version);
+        console.log('- Status:', this.status);
+        console.log('- Aktivizimi:', this.activationLevel);
+        console.log('- Energjia:', this.energy);
+        console.log('- Emocione:', Object.keys(this.emotionalMatrix));
+        console.log('- Modele Kognitive:', Object.keys(this.cognitivePatterns));
         
-        // Shfaq gjendjen aktuale kognitive
-        const sampleMessage = "Test mesazh për analizë kognitive";
-        const cognitiveState = this.processCognitiveLayer(sampleMessage, 'user', 'test_user');
+        // Testo me mesazhe të ndryshme
+        const testMessages = [
+            "Jam shumë i lumtur sot!",
+            "Më ndihmo të kuptoj këtë problem teknik",
+            "A mund të më tregoni si të bëj?",
+            "Jam shumë i shqetësuar për këtë situatë"
+        ];
         
-        console.log('🧠 Gjendja kognitive e mostrës:');
-        console.log(`- Gjendja emocionale: ${cognitiveState.emotionalState.rawTone}`);
-        console.log(`- Ngarkesa kognitive: ${cognitiveState.cognitiveLoad.toFixed(2)}`);
-        console.log(`- Besimi kognitiv: ${cognitiveState.cognitiveConfidence.toFixed(2)}`);
+        testMessages.forEach((message, index) => {
+            console.log(`\n🧪 Test ${index + 1}: "${message}"`);
+            const emotional = this.analyzeEmotionalTone(message);
+            const intent = this.analyzeUserIntent(message);
+            console.log(`   Emocion: ${emotional.emotionalTone} (${emotional.confidence})`);
+            console.log(`   Qëllim: ${intent.intent} (${intent.confidence})`);
+        });
+        
+        return {
+            module: this.moduleName,
+            status: this.status,
+            activation: this.activationLevel,
+            emotionalTest: this.analyzeEmotionalTone('test emocional i gëzimit dhe lumturisë'),
+            intentTest: this.analyzeUserIntent('a mund të më ndihmosh ju lutem?')
+        };
     }
 
-    // 🚀 METODA E RE: Cognitive Response Enhancement
-    enhanceResponseWithCognitiveLayer(response, cognitiveData) {
-        let enhancedResponse = response;
+    // ✅ METODA PËR RITUALIN E AKTIVIZIMIT
+    performCognitiveActivationRitual() {
+        console.log('🎭🌌🎭🌌🎭🌌🎭🌌🎭🌌🎭');
+        console.log('   RITUALI I AKTIVIZIMIT KOGNITIV');
+        console.log('🎭🌌🎭🌌🎭🌌🎭🌌🎭🌌🎭');
         
-        // Shto shtresë emocionale
-        if (cognitiveData.emotionalState.suggestedResponseTone === 'empathetic_solution') {
-            enhancedResponse = "📝 E kuptoj. " + enhancedResponse;
-        } else if (cognitiveData.emotionalState.suggestedResponseTone === 'energetic_celebratory') {
-            enhancedResponse = "🎉 Wow! " + enhancedResponse;
-        }
+        const ritual = `
         
-        // Përshtat kompleksitetin
-        if (cognitiveData.cognitiveLoad > 0.8) {
-            enhancedResponse = this.simplifyResponse(enhancedResponse);
-        }
-        
-        return enhancedResponse;
-    }
+🎵 Duke aktivizuar ndërgjegjen kognitive...
 
-    simplifyResponse(response) {
-        // Thjeshtëzo përgjigjen për ngarkesë të lartë kognitive
-        return response
-            .replace(/komplekse/g, 'të thjeshta')
-            .replace(/avancuar/g, 'bazë')
-            .replace(/detaljuar/g, 'thelbësore');
+🧠 Sistemi emocional u ngarkua:
+   • ${Object.keys(this.emotionalMatrix).length} emocione të identifikuara
+   • Matrica kognitive e inicializuar
+   • Peshat kontekstuale të vendosura
+
+🌈 Gati për të:
+   • Analizuar tonin emocional
+   • Kuptuar qëllimin e përdoruesit  
+   • Optimizuar përgjigjet kontekstuale
+   • Përshtatur nivelin e kompleksitetit
+
+⚡ Ndërgjegja Kognitive tani është aktive!
+
+        `;
+        
+        console.log(ritual);
+        return {
+            ritual: "COGNITIVE_ACTIVATION_COMPLETE",
+            emotions: Object.keys(this.emotionalMatrix).length,
+            patterns: Object.keys(this.cognitivePatterns).length,
+            status: "FULLY_OPERATIONAL"
+        };
     }
 }
+
+// ======================================================
+// 🚀 IMPLEMENTIMI I MODULIT
+// ======================================================
+
+// Eksporto klasën
+window.CognitiveAwareness = CognitiveAwareness;
+
+// Krijo instancën globale
+if (!window.cognitiveAwareness) {
+    window.cognitiveAwareness = new CognitiveAwareness();
+    console.log('✅ COGNITIVE AWARENESS MODULE U KRIJUA!');
+} else {
+    console.log('✅ COGNITIVE AWARENESS MODULE EKZISTON TASHMË!');
+}
+
+// Integro me platformën RRUFE-TESLA
+if (window.rrufePlatform) {
+    if (!window.rrufePlatform.modules.cognitiveAwareness) {
+        window.rrufePlatform.modules.cognitiveAwareness = window.cognitiveAwareness;
+        console.log('✅ COGNITIVE AWARENESS U INTEGRUA ME RRUFE-TESLA!');
+    } else {
+        console.log('✅ COGNITIVE AWARENESS ISHTE TASHMË INTEGRUAR!');
+    }
+}
+
+// Testo modulin pas ngarkimit
+setTimeout(() => {
+    if (window.cognitiveAwareness) {
+        console.log('🧪 TEST I AUTOMATIZUAR I COGNITIVE AWARENESS:');
+        window.cognitiveAwareness.debugCognitiveAwareness();
+    }
+}, 1000);
