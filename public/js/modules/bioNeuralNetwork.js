@@ -1,181 +1,218 @@
-// ======================= BIO-NEURAL NETWORK =======================
-// 🧬 MODULI: BioNeuralNetwork - Rrjet Biologjik Nervor
-// 📍 /public/js/modules/bioNeuralNetwork.js
-// ===============================================================
-
-console.log('🧬 BIO-NEURAL NETWORK u ngarkua!');
+// ======================================================
+// 🧬 BIO-NEURAL NETWORK MODULE - RRUFE-TESLA
+// ======================================================
 
 class BioNeuralNetwork {
     constructor(contextMemory) {
         this.contextMemory = contextMemory;
         this.neurons = new Map();
         this.synapses = new Map();
-        this.neuralActivity = 0.7;
+        this.neuralPathways = new Map();
         
-        console.log('🧠 BioNeuralNetwork u inicializua!');
-        
-        // Krijo neuronet fillestare
+        console.log('🧬 BIO-NEURAL NETWORK u inicializua!');
         this.initializeBaseNeurons();
     }
 
-    // ✅ INICIALIZO NEURONET BAZË
     initializeBaseNeurons() {
-        const baseNeurons = [
-            { id: 'neuron_greeting', type: 'input', keywords: ['përshëndetje', 'si', 'jeni'] },
-            { id: 'neuron_question', type: 'input', keywords: ['si', 'ku', 'kur', 'pse', 'kush'] },
-            { id: 'neuron_location', type: 'concept', keywords: ['tiranë', 'shqipëri', 'qytet', 'vend'] },
-            { id: 'neuron_weather', type: 'concept', keywords: ['mot', 'temperaturë', 'shi', 'diell'] }
-        ];
-
-        baseNeurons.forEach(neuronConfig => {
-            this.createNeuron(neuronConfig.id, neuronConfig.type, neuronConfig.keywords);
-        });
-
-        console.log('🔄 Inicializuam', baseNeurons.length, 'neurone bazë');
-    }
-
-    // ✅ KRIJO NEURON
-    createNeuron(neuronId, neuronType = 'pyramidal', keywords = []) {
-        const neuron = {
-            id: neuronId,
-            type: neuronType,
-            membranePotential: -70, // mV
-            threshold: -55, // mV
-            fired: false,
-            lastFired: null,
-            keywords: keywords,
-            connections: new Set()
+        // Neurona bazë për proceset kognitive
+        const baseNeurons = {
+            language_processing: {
+                type: 'sensory',
+                activation: 0.8,
+                connections: ['semantic_understanding', 'emotional_processing']
+            },
+            semantic_understanding: {
+                type: 'processing', 
+                activation: 0.7,
+                connections: ['context_integration', 'memory_recall']
+            },
+            emotional_processing: {
+                type: 'emotional',
+                activation: 0.6,
+                connections: ['empathy_response', 'tone_adjustment']
+            },
+            memory_recall: {
+                type: 'memory',
+                activation: 0.75,
+                connections: ['context_integration', 'pattern_recognition']
+            },
+            context_integration: {
+                type: 'executive',
+                activation: 0.9,
+                connections: ['response_generation']
+            }
         };
 
-        this.neurons.set(neuronId, neuron);
-        console.log('🧠 Krijuam neuron:', neuronId, 'Tipi:', neuronType);
-        return neuron;
-    }
-
-    // ✅ KRIJO SINAPSË
-    createSynapse(preNeuronId, postNeuronId, weight = 0.5) {
-        const synapseId = `synapse_${preNeuronId}_${postNeuronId}`;
-        
-        this.synapses.set(synapseId, {
-            preNeuron: preNeuronId,
-            postNeuron: postNeuronId,
-            weight: weight,
-            strength: this.calculateSynapticStrength(preNeuronId, postNeuronId),
-            lastActivated: null
-        });
-
-        // Lidh neuronet
-        this.neurons.get(preNeuronId)?.connections.add(postNeuronId);
-        this.neurons.get(postNeuronId)?.connections.add(preNeuronId);
-
-        console.log('🔄 Krijuam sinapsë:', synapseId);
-        return synapseId;
-    }
-
-    // ✅ LLOGARIT FORCË SINAPSE
-    calculateSynapticStrength(neuronA, neuronB) {
-        const neuron1 = this.neurons.get(neuronA);
-        const neuron2 = this.neurons.get(neuronB);
-        
-        if (!neuron1 || !neuron2) return 0;
-
-        const sharedKeywords = neuron1.keywords.filter(keyword => 
-            neuron2.keywords.includes(keyword)
-        );
-        
-        return sharedKeywords.length / Math.max(neuron1.keywords.length, neuron2.keywords.length);
-    }
-
-    // ✅ SIMULO GJUAJTJE NEURONI
-    stimulateNeuron(neuronId, inputStrength) {
-        const neuron = this.neurons.get(neuronId);
-        if (!neuron) return false;
-
-        // Rrit potencialin e membranës
-        neuron.membranePotential += inputStrength;
-
-        // Kontrollo nëse neuroni gjuaj
-        if (neuron.membranePotential >= neuron.threshold) {
-            neuron.fired = true;
-            neuron.lastFired = new Date();
-            neuron.membranePotential = -70; // Reset
-            
-            console.log('⚡ Neuroni u aktivizua:', neuronId);
-            
-            // Aktivizo neuronët e lidhur
-            this.activateConnectedNeurons(neuronId);
-            return true;
-        }
-
-        return false;
-    }
-
-    // ✅ AKTIVIZO NEURONËT E LIDHUR
-    activateConnectedNeurons(sourceNeuronId) {
-        const sourceNeuron = this.neurons.get(sourceNeuronId);
-        if (!sourceNeuron) return;
-
-        sourceNeuron.connections.forEach(targetNeuronId => {
-            const synapseId = `synapse_${sourceNeuronId}_${targetNeuronId}`;
-            const synapse = this.synapses.get(synapseId);
-            
-            if (synapse) {
-                // Aktivizo neuronin e synuar me forcë të sinapsës
-                this.stimulateNeuron(targetNeuronId, synapse.strength * 10);
-                
-                // Forco sinapsën (neuroplasticitet)
-                synapse.strength += 0.05;
-                synapse.lastActivated = new Date();
-            }
-        });
-    }
-
-    // ✅ PROÇESO MESAZH NËPËR RRJET
-    processMessageThroughNetwork(message) {
-        const keywords = this.contextMemory.extractKeywords(message);
-        
-        console.log('🔄 Duke procesuar mesazh nëpër rrjet:', message.substring(0, 30));
-        
-        // Gjuaj neuronet e input-it bazuar në fjalët kyçe
-        keywords.forEach(keyword => {
-            this.neurons.forEach((neuron, neuronId) => {
-                if (neuron.keywords.includes(keyword)) {
-                    this.stimulateNeuron(neuronId, 15); // Stimul i fortë
-                }
+        Object.entries(baseNeurons).forEach(([neuronId, data]) => {
+            this.neurons.set(neuronId, {
+                id: neuronId,
+                ...data,
+                created: new Date(),
+                lastActivated: new Date()
             });
         });
 
-        // Kthe neuronët më aktivë
-        const activeNeurons = Array.from(this.neurons.values())
-            .filter(neuron => neuron.fired)
-            .sort((a, b) => b.membranePotential - a.membranePotential)
-            .slice(0, 3);
-
-        return activeNeurons;
+        console.log(`🧠 Inicializova ${this.neurons.size} neurona bazë`);
     }
 
-    // ✅ DEBUG BIO-NEURAL NETWORK
-    debugNeuralNetwork() {
-        console.log('🔍 DEBUG BIO-NEURAL NETWORK:');
-        console.log('- Neuronet total:', this.neurons.size);
-        console.log('- Sinapsa total:', this.synapses.size);
-        console.log('- Aktivitet nervor:', this.neuralActivity);
+    processMessageThroughNetwork(message) {
+        const messageId = `msg_${Date.now()}`;
         
-        // Shfaq neuronët më aktivë
-        const activeNeurons = Array.from(this.neurons.values())
-            .filter(neuron => neuron.fired)
-            .slice(0, 5);
+        // Aktivizo neurona sensoriale
+        this.activateNeuron('language_processing', 0.8);
+        this.activateNeuron('semantic_understanding', 0.7);
         
-        console.log('- Neuronët aktivë:', activeNeurons.length);
-        activeNeurons.forEach((neuron, index) => {
-            console.log(`  ${index + 1}. ${neuron.id} - Potencial: ${neuron.membranePotential}`);
+        // Proceso emocionet
+        const emotionalTone = this.analyzeEmotionalTone(message);
+        this.activateNeuron('emotional_processing', emotionalTone.intensity);
+        
+        // Kërko në memorie
+        const memoryResults = this.contextMemory.searchInMemory(message);
+        if (memoryResults.length > 0) {
+            this.activateNeuron('memory_recall', 0.8);
+        }
+        
+        // Integro kontekstin
+        this.activateNeuron('context_integration', 0.9);
+        
+        // Krijo pathway të ri neural
+        const pathwayId = this.createNeuralPathway([
+            'language_processing',
+            'semantic_understanding', 
+            'emotional_processing',
+            'context_integration'
+        ], messageId);
+        
+        console.log(`🧠 Procesova mesazhin përmes rrjetit nervor: ${message.substring(0, 50)}`);
+        return {
+            pathwayId,
+            emotionalTone,
+            memoryActivation: memoryResults.length
+        };
+    }
+
+    analyzeEmotionalTone(message) {
+        const emotionalKeywords = {
+            positive: ['faleminderit', 'bukur', 'mrekullueshëm', 'sukses', 'gezuar', 'lumtur'],
+            negative: ['problem', ' Gabim', 'mërzitur', 'urgjent', 'nuk funksionon', 'help'],
+            curious: ['si', 'ku', 'kur', 'pse', 'a mund', 'mundesh', 'ndihmo'],
+            excited: ['wow', 'o zot', 'mahnitës', 'fantastike', 'extraordinary']
+        };
+
+        let dominantTone = 'neutral';
+        let maxIntensity = 0;
+
+        Object.entries(emotionalKeywords).forEach(([tone, keywords]) => {
+            const intensity = keywords.filter(keyword => 
+                message.toLowerCase().includes(keyword)
+            ).length / Math.max(1, keywords.length);
+            
+            if (intensity > maxIntensity) {
+                maxIntensity = intensity;
+                dominantTone = tone;
+            }
         });
-    }
-}
 
-// Eksporto për përdorim global
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = BioNeuralNetwork;
-} else {
-    window.BioNeuralNetwork = BioNeuralNetwork;
+        return {
+            tone: dominantTone,
+            intensity: Math.min(maxIntensity * 2, 1.0), // Normalizo
+            confidence: maxIntensity
+        };
+    }
+
+    activateNeuron(neuronId, activationLevel) {
+        const neuron = this.neurons.get(neuronId);
+        if (!neuron) return;
+
+        // Përditëso aktivizimin
+        neuron.activation = Math.min(1.0, (neuron.activation + activationLevel) / 2);
+        neuron.lastActivated = new Date();
+
+        // Propagoj aktivizimin te neuronat e lidhur
+        neuron.connections.forEach(connectedNeuronId => {
+            const connectedNeuron = this.neurons.get(connectedNeuronId);
+            if (connectedNeuron) {
+                const propagatedActivation = activationLevel * 0.3; // Zvogëlohet
+                this.activateNeuron(connectedNeuronId, propagatedActivation);
+            }
+        });
+
+        this.neurons.set(neuronId, neuron);
+    }
+
+    createNeuralPathway(neuronSequence, messageId) {
+        const pathwayId = `pathway_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+        
+        const pathway = {
+            id: pathwayId,
+            neurons: neuronSequence,
+            messageId: messageId,
+            strength: 0.7,
+            created: new Date(),
+            activatedCount: 1
+        };
+        
+        this.neuralPathways.set(pathwayId, pathway);
+        
+        // Krijo sinapsa midis neuroneve
+        for (let i = 0; i < neuronSequence.length - 1; i++) {
+            this.createSynapse(neuronSequence[i], neuronSequence[i + 1], pathwayId);
+        }
+        
+        return pathwayId;
+    }
+
+    createSynapse(sourceNeuron, targetNeuron, pathwayId) {
+        const synapseId = `synapse_${sourceNeuron}_${targetNeuron}`;
+        
+        const synapse = {
+            id: synapseId,
+            source: sourceNeuron,
+            target: targetNeuron,
+            pathway: pathwayId,
+            strength: 0.5,
+            created: new Date(),
+            activatedCount: 0
+        };
+        
+        this.synapses.set(synapseId, synapse);
+        return synapseId;
+    }
+
+    debugNeuralNetwork() {
+        console.log('🧠 DEBUG BIO-NEURAL NETWORK:');
+        console.log(`- Neurons: ${this.neurons.size}`);
+        console.log(`- Synapses: ${this.synapses.size}`);
+        console.log(`- Neural Pathways: ${this.neuralPathways.size}`);
+        
+        // Shfaq disa neurona të aktivizuar
+        console.log('⚡ Neurona më të aktivizuar:');
+        Array.from(this.neurons.values())
+            .sort((a, b) => b.activation - a.activation)
+            .slice(0, 3)
+            .forEach(neuron => {
+                console.log(`   ${neuron.id}: ${neuron.activation.toFixed(2)}`);
+            });
+    }
+
+    // 🚀 METODA E RE: Neural Learning
+    reinforceSuccessfulPathway(pathwayId) {
+        const pathway = this.neuralPathways.get(pathwayId);
+        if (pathway) {
+            pathway.strength = Math.min(1.0, pathway.strength + 0.1);
+            pathway.activatedCount++;
+            this.neuralPathways.set(pathwayId, pathway);
+            
+            // Forco sinapsat përkatëse
+            for (let i = 0; i < pathway.neurons.length - 1; i++) {
+                const synapseId = `synapse_${pathway.neurons[i]}_${pathway.neurons[i + 1]}`;
+                const synapse = this.synapses.get(synapseId);
+                if (synapse) {
+                    synapse.strength = Math.min(1.0, synapse.strength + 0.05);
+                    synapse.activatedCount++;
+                    this.synapses.set(synapseId, synapse);
+                }
+            }
+        }
+    }
 }
