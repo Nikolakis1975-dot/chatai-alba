@@ -404,7 +404,7 @@ class RrufePlatform {
             // ✅ MODULI 10: Kunform Translator
             if (typeof KunformTranslator !== 'undefined') {
                 this.modules.kunformTranslator = new KunformTranslator(
-                    this.modules.quantumMemory,
+                    this.modules.contextMemory,
                     this.modules.cognitiveAwareness
                 );
                 rlog('🔮 KUNFORM TRANSLATOR u integrua!');
@@ -498,6 +498,12 @@ class RrufePlatform {
                         } catch (error) {
                             rlog('❌ Divine Fusion dështoi: ' + error.message);
                         }
+                    }
+                    
+                    // Proceso me Kunform Translator për mesazhe emocionale
+                    if (window.rrufePlatform.modules.kunformTranslator && hasEmotionalContent(message)) {
+                        const kunformResult = window.rrufePlatform.modules.kunformTranslator.translateToKunform(message);
+                        rlog('🔮 Kunform përkthim: ' + kunformResult.kunform.substring(0, 30));
                     }
                 }
                 
@@ -711,6 +717,17 @@ class RrufePlatform {
         if (this.modules.divineFusion) {
             console.log('🌌 TEST DIVINE FUSION:');
             this.modules.divineFusion.debugDivineFusion();
+            
+            // Testo Fusion
+            setTimeout(() => {
+                this.modules.divineFusion.invokeDivineFusion("Test pyetje për Divine Fusion")
+                    .then(result => {
+                        console.log('🌌 Rezultati i Fusionit:', result.content.substring(0, 50));
+                    })
+                    .catch(error => {
+                        console.log('❌ Gabim në Fusion:', error);
+                    });
+            }, 500);
         } else {
             console.log('❌ DivineFusion nuk është inicializuar');
         }
@@ -719,6 +736,10 @@ class RrufePlatform {
         if (this.modules.kunformTranslator) {
             console.log('🔮 TEST KUNFORM TRANSLATOR:');
             this.modules.kunformTranslator.debugKunformTranslator();
+            
+            // Testo përkthimin
+            const translation = this.modules.kunformTranslator.translateToKunform("Dashuria dhe paqja janë fuqitë më të mëdha");
+            console.log('🔮 Përkthimi Kunform:', translation);
         } else {
             console.log('❌ KunformTranslator nuk është inicializuar');
         }
@@ -727,6 +748,13 @@ class RrufePlatform {
         if (this.modules.neuralFeedbackLoop) {
             console.log('🧠 TEST NEURAL FEEDBACK LOOP:');
             this.modules.neuralFeedbackLoop.debugNeuralFeedbackLoop();
+            
+            // Testo feedback loop
+            this.modules.neuralFeedbackLoop.simulateFeedbackCycle(
+                "Test pyetje",
+                "Test përgjigje", 
+                "Test reagim"
+            );
         } else {
             console.log('❌ NeuralFeedbackLoop nuk është inicializuar');
         }
@@ -939,6 +967,18 @@ function isComplexQuery(message) {
     ];
     
     return complexIndicators.some(indicator => 
+        message.toLowerCase().includes(indicator)
+    );
+}
+
+// Funksion ndihmës për të identifikuar përmbajtje emocionale
+function hasEmotionalContent(message) {
+    const emotionalIndicators = [
+        'dashuri', 'zemër', 'ndjenjë', 'emocion', 'gëzim', 
+        'trishtim', 'hidhërim', 'lumturi', 'brengë', 'shpresë'
+    ];
+    
+    return emotionalIndicators.some(indicator => 
         message.toLowerCase().includes(indicator)
     );
 }
