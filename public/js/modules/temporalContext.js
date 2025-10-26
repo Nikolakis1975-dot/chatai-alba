@@ -1,206 +1,263 @@
-// ======================= TEMPORAL CONTEXT =======================
-// ⏳ MODULI: TemporalContext - Kontekst Kohor 4-Dimensional
-// 📍 /public/js/modules/temporalContext.js
-// ===============================================================
-
-console.log('⏳ TEMPORAL CONTEXT u ngarkua!');
+// ======================================================
+// ⏳ TEMPORAL CONTEXT MODULE - RRUFE-TESLA
+// ======================================================
 
 class TemporalContext {
     constructor(contextMemory) {
         this.contextMemory = contextMemory;
         this.temporalLayers = new Map();
-        this.eventHorizons = new Map();
         this.causalChains = new Map();
+        this.timeAnchors = new Map();
         
-        console.log('🕰️ TemporalContext u inicializua!');
+        console.log('⏳ TEMPORAL CONTEXT u inicializua!');
+        this.initializeTemporalSystem();
     }
 
-    // ✅ KRIJO HARTË KOHORE
-    createTemporalMap(conversation) {
+    initializeTemporalSystem() {
+        // Shtresa kohore bazë
+        this.temporalLayers.set('present', {
+            depth: 0,
+            timespan: 'current_session',
+            priority: 1.0
+        });
+        
+        this.temporalLayers.set('recent', {
+            depth: 1, 
+            timespan: 'last_hour',
+            priority: 0.8
+        });
+        
+        this.temporalLayers.set('session', {
+            depth: 2,
+            timespan: 'entire_session',
+            priority: 0.6
+        });
+
+        console.log('🕒 Sistemi kohor u inicializua me 3 shtresa');
+    }
+
+    createTemporalMap(messages) {
+        const temporalMapId = `temporal_map_${Date.now()}`;
+        
         const temporalMap = {
-            startTime: conversation[conversation.length - 1]?.timestamp,
-            endTime: conversation[0]?.timestamp,
-            duration: this.calculateConversationDuration(conversation),
-            events: conversation.map((entry, index) => ({
-                sequence: index,
-                timestamp: entry.timestamp,
-                type: entry.sender,
-                content: entry.message.substring(0, 50),
-                importance: entry.importance || 5
+            id: temporalMapId,
+            messages: messages.map(msg => ({
+                id: msg.id,
+                timestamp: msg.timestamp,
+                importance: msg.importance,
+                temporalWeight: this.calculateTemporalWeight(msg)
             })),
-            patterns: this.detectTemporalPatterns(conversation)
+            created: new Date(),
+            timeRange: this.calculateTimeRange(messages),
+            causalDensity: this.analyzeCausalDensity(messages)
         };
-
-        const mapId = `temporal_${Date.now()}`;
-        this.temporalLayers.set(mapId, temporalMap);
         
-        console.log('🗺️ Krijuam hartë kohore:', mapId);
-        return mapId;
+        this.temporalLayers.set(temporalMapId, temporalMap);
+        
+        // Krijo zinxhirë shkakësorë
+        this.extractCausalChains(messages, temporalMapId);
+        
+        console.log(`🗺️ Krijuara Temporal Map me ${messages.length} mesazhe`);
+        return temporalMapId;
     }
 
-    // ✅ LLOGARIT KOHËZGJATJEN E BISEDËS
-    calculateConversationDuration(conversation) {
-        if (conversation.length < 2) return "0s";
+    calculateTemporalWeight(message) {
+        const now = new Date();
+        const messageTime = new Date(message.timestamp);
+        const timeDiff = now - messageTime;
         
-        const start = new Date(conversation[conversation.length - 1].timestamp);
-        const end = new Date(conversation[0].timestamp);
-        const durationMs = end - start;
+        // Pesha kohore - mesazhet e fundit kanë më shumë peshë
+        const recencyWeight = Math.max(0, 1 - (timeDiff / (1000 * 60 * 30))); // 30 minuta
         
-        const minutes = Math.floor(durationMs / 60000);
-        const seconds = Math.floor((durationMs % 60000) / 1000);
+        // Kombino me rëndësinë
+        const importanceWeight = message.importance / 10;
         
-        return minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+        return (recencyWeight * 0.7) + (importanceWeight * 0.3);
     }
 
-    // ✅ ZBULO MODELE KOHORE
-    detectTemporalPatterns(conversation) {
-        const patterns = {
-            questionResponsePairs: 0,
-            userBotAlternation: 0,
-            rapidFireMessages: 0,
-            timeGaps: []
-        };
+    calculateTimeRange(messages) {
+        if (messages.length === 0) return { start: null, end: null, duration: 0 };
+        
+        const timestamps = messages.map(msg => new Date(msg.timestamp));
+        const start = new Date(Math.min(...timestamps));
+        const end = new Date(Math.max(...timestamps));
+        const duration = end - start;
+        
+        return { start, end, duration };
+    }
 
-        for (let i = 1; i < conversation.length; i++) {
-            const current = conversation[i];
-            const previous = conversation[i - 1];
-            
-            // Kontrollo çiftet pyetje-përgjigje
-            if (previous.sender === 'user' && current.sender === 'bot') {
-                patterns.questionResponsePairs++;
+    analyzeCausalDensity(messages) {
+        if (messages.length < 2) return 0;
+        
+        let causalLinks = 0;
+        
+        for (let i = 1; i < messages.length; i++) {
+            if (this.isCausallyRelated(messages[i-1], messages[i])) {
+                causalLinks++;
             }
-            
-            // Kontrollo alternimin user-bot
-            if (previous.sender !== current.sender) {
-                patterns.userBotAlternation++;
-            }
-            
-            // Kontrollo mesazhe të shpejta (< 10 sekonda)
-            const timeDiff = new Date(current.timestamp) - new Date(previous.timestamp);
-            if (timeDiff < 10000) { // 10 sekonda
-                patterns.rapidFireMessages++;
-            }
-            
-            // Regjistro boshllëqe kohore
-            patterns.timeGaps.push(timeDiff);
         }
+        
+        return causalLinks / (messages.length - 1);
+    }
 
+    isCausallyRelated(msg1, msg2) {
+        // Kontrollo nëse mesazhet janë të lidhura shkakësorisht
+        const timeDiff = new Date(msg2.timestamp) - new Date(msg1.timestamp);
+        const semanticSimilarity = this.calculateSemanticOverlap(msg1.message, msg2.message);
+        
+        return timeDiff < (1000 * 60 * 5) && semanticSimilarity > 0.3; // 5 minuta dhe ngjashmëri
+    }
+
+    calculateSemanticOverlap(text1, text2) {
+        const words1 = new Set(text1.toLowerCase().split(/\s+/));
+        const words2 = new Set(text2.toLowerCase().split(/\s+/));
+        
+        const intersection = new Set([...words1].filter(x => words2.has(x)));
+        const union = new Set([...words1, ...words2]);
+        
+        return union.size > 0 ? intersection.size / union.size : 0;
+    }
+
+    extractCausalChains(messages, temporalMapId) {
+        const chains = [];
+        let currentChain = [];
+        
+        for (let i = 0; i < messages.length; i++) {
+            if (currentChain.length === 0) {
+                currentChain.push(messages[i]);
+            } else {
+                const lastMessage = currentChain[currentChain.length - 1];
+                if (this.isCausallyRelated(lastMessage, messages[i])) {
+                    currentChain.push(messages[i]);
+                } else {
+                    if (currentChain.length > 1) {
+                        chains.push([...currentChain]);
+                    }
+                    currentChain = [messages[i]];
+                }
+            }
+        }
+        
+        // Shto zinxhirin e fundit
+        if (currentChain.length > 1) {
+            chains.push(currentChain);
+        }
+        
+        // Ruaj zinxhirët
+        chains.forEach((chain, index) => {
+            const chainId = `causal_chain_${temporalMapId}_${index}`;
+            this.causalChains.set(chainId, {
+                id: chainId,
+                messages: chain.map(msg => msg.id),
+                temporalMap: temporalMapId,
+                strength: chain.length / messages.length,
+                created: new Date()
+            });
+        });
+        
+        console.log(`⛓️ Ekstraktova ${chains.length} zinxhirë shkakësorë`);
+    }
+
+    // 🧠 METODA TË REJA RRUFE-TESLA
+    predictTemporalPatterns() {
+        const patterns = [];
+        const recentMessages = this.contextMemory.conversationContext.slice(0, 10);
+        
+        if (recentMessages.length >= 3) {
+            // Analizo modele kohore
+            const timePattern = this.analyzeTimePattern(recentMessages);
+            const topicPattern = this.analyzeTopicEvolution(recentMessages);
+            
+            patterns.push({
+                type: 'temporal_rhythm',
+                confidence: timePattern.confidence,
+                prediction: timePattern.nextExpected
+            });
+            
+            patterns.push({
+                type: 'topic_progression', 
+                confidence: topicPattern.confidence,
+                prediction: topicPattern.likelyNextTopic
+            });
+        }
+        
         return patterns;
     }
 
-    // ✅ NXJERR MARRËDHËNIE SHAK-PASOJË
-    inferCausalRelations(events) {
-        const causalRelations = [];
-        
-        for (let i = 1; i < events.length; i++) {
-            const cause = events[i - 1];
-            const effect = events[i];
-            
-            // Kontrollo nëse ka lidhje shkak-pasojë
-            if (this.isCausalRelation(cause, effect)) {
-                causalRelations.push({
-                    cause: cause.message.substring(0, 30),
-                    effect: effect.message.substring(0, 30),
-                    confidence: this.calculateCausalConfidence(cause, effect),
-                    timestamp: effect.timestamp
-                });
-            }
+    analyzeTimePattern(messages) {
+        const timeDiffs = [];
+        for (let i = 1; i < messages.length; i++) {
+            const diff = new Date(messages[i].timestamp) - new Date(messages[i-1].timestamp);
+            timeDiffs.push(diff);
         }
-
-        const chainId = `causal_${Date.now()}`;
-        this.causalChains.set(chainId, causalRelations);
         
-        console.log('⛓️ Zbuluam', causalRelations.length, 'marrëdhënie shkak-pasojë');
-        return chainId;
+        const avgDiff = timeDiffs.reduce((a, b) => a + b, 0) / timeDiffs.length;
+        const nextExpected = new Date(Date.now() + avgDiff);
+        
+        return {
+            averageInterval: avgDiff,
+            nextExpected: nextExpected,
+            confidence: Math.min(1.0, 0.3 + (timeDiffs.length * 0.1))
+        };
     }
 
-    // ✅ KONTROLLO NËSE KA LIDHJE SHAK-PASOJË
-    isCausalRelation(cause, effect) {
-        // Pyetje → Përgjigje
-        if (cause.sender === 'user' && effect.sender === 'bot') {
-            return true;
+    analyzeTopicEvolution(messages) {
+        const topics = messages.map(msg => this.extractMainTopic(msg.message));
+        const topicTransitions = {};
+        
+        for (let i = 1; i < topics.length; i++) {
+            const transition = `${topics[i-1]}->${topics[i]}`;
+            topicTransitions[transition] = (topicTransitions[transition] || 0) + 1;
         }
         
-        // Përgjigje → Pyetje e re
-        if (cause.sender === 'bot' && effect.sender === 'user') {
-            return true;
-        }
+        const currentTopic = topics[topics.length - 1];
+        const likelyNext = Object.entries(topicTransitions)
+            .filter(([transition]) => transition.startsWith(currentTopic + '->'))
+            .sort(([,a], [,b]) => b - a)[0];
         
-        // Kontrollo përpasje temash
-        const causeKeywords = this.contextMemory.extractKeywords(cause.message);
-        const effectKeywords = this.contextMemory.extractKeywords(effect.message);
-        const commonKeywords = causeKeywords.filter(kw => effectKeywords.includes(kw));
-        
-        return commonKeywords.length > 0;
+        return {
+            currentTopic: currentTopic,
+            likelyNextTopic: likelyNext ? likelyNext[0].split('->')[1] : 'unknown',
+            confidence: likelyNext ? Math.min(1.0, likelyNext[1] / topics.length) : 0.3
+        };
     }
 
-    // ✅ LLOGARIT BESUESHMËRI SHAK-PASOJË
-    calculateCausalConfidence(cause, effect) {
-        let confidence = 0.5; // Default
+    extractMainTopic(text) {
+        const words = text.toLowerCase().split(/\s+/);
+        const commonWords = ['a', 'është', 'jam', 'ju', 'unë', 'në', 'për', 'me'];
+        const topicWords = words.filter(word => 
+            word.length > 3 && !commonWords.includes(word)
+        );
         
-        // Bonus për pyetje-përgjigje
-        if (cause.sender === 'user' && effect.sender === 'bot') {
-            confidence += 0.3;
-        }
-        
-        // Bonus për fjalë kyçe të përbashkëta
-        const causeKeywords = this.contextMemory.extractKeywords(cause.message);
-        const effectKeywords = this.contextMemory.extractKeywords(effect.message);
-        const commonKeywords = causeKeywords.filter(kw => effectKeywords.includes(kw));
-        
-        confidence += commonKeywords.length * 0.1;
-        
-        return Math.min(confidence, 1.0);
+        return topicWords.length > 0 ? topicWords[0] : 'general';
     }
 
-    // ✅ PARASHIKO NGJARJET E ARDHSHME
-    predictFutureEvents(currentContext, lookAhead = 3) {
-        const predictions = [];
-        const recentEvents = currentContext.slice(0, 5);
-        
-        // Analizo modelet e fundit
-        const recentPatterns = this.detectTemporalPatterns(recentEvents);
-        
-        // Parashiko bazuar në modele
-        if (recentPatterns.questionResponsePairs > 0) {
-            predictions.push({
-                type: 'question_response',
-                confidence: 0.7,
-                description: 'Përdoruesi ka shanse të larta për të bërë pyetje të reja'
-            });
-        }
-        
-        if (recentPatterns.rapidFireMessages > 2) {
-            predictions.push({
-                type: 'continued_engagement',
-                confidence: 0.8,
-                description: 'Përdoruesi është i angazhuar, pritet vazhdim i bisedës'
-            });
-        }
-
-        console.log('🔮 Parashikuam', predictions.length, 'ngjarje të ardhshme');
-        return predictions;
-    }
-
-    // ✅ DEBUG TEMPORAL CONTEXT
     debugTemporalContext() {
-        console.log('🔍 DEBUG TEMPORAL CONTEXT:');
-        console.log('- Hartë kohore:', this.temporalLayers.size);
-        console.log('- Zinxhirë shkak-pasojë:', this.causalChains.size);
+        console.log('⏳ DEBUG TEMPORAL CONTEXT:');
+        console.log(`- Temporal Layers: ${this.temporalLayers.size}`);
+        console.log(`- Causal Chains: ${this.causalChains.size}`);
+        console.log(`- Time Anchors: ${this.timeAnchors.size}`);
         
-        // Shfaq hartën kohore më të re
-        const latestMap = Array.from(this.temporalLayers.values()).pop();
-        if (latestMap) {
-            console.log('- Biseda e fundit:', latestMap.duration);
-            console.log('- Ngjarje total:', latestMap.events.length);
-            console.log('- Modele:', latestMap.patterns);
+        // Shfaq parashikimet
+        const predictions = this.predictTemporalPatterns();
+        if (predictions.length > 0) {
+            console.log('🔮 Parashikime kohore:');
+            predictions.forEach(pred => {
+                console.log(`   ${pred.type}: ${pred.prediction} (besim: ${pred.confidence.toFixed(2)})`);
+            });
         }
     }
-}
 
-// Eksporto për përdorim global
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = TemporalContext;
-} else {
-    window.TemporalContext = TemporalContext;
+    // 🚀 METODA E RE: Temporal Optimization
+    optimizeContextBasedOnTime() {
+        const now = new Date();
+        const recentMessages = this.contextMemory.conversationContext.filter(msg => {
+            const msgTime = new Date(msg.timestamp);
+            return (now - msgTime) < (1000 * 60 * 60); // Mesazhet e fundit 1 orë
+        });
+        
+        if (recentMessages.length > 0) {
+            this.createTemporalMap(recentMessages);
+        }
+    }
 }
