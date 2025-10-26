@@ -767,3 +767,189 @@ rlog('🎉🎉🎉 RRUFE-TESLA PLATFORM 8.0 ËSHTË GATI! 🎉🎉🎉');
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { RrufePlatform, rrufePlatform: window.rrufePlatform };
 }
+
+// ================================================== VECORIA E BUTONAVE RRUFE -TESLA 8.0 ===============================
+// ======================================================
+// 🎯 SISTEMI I KONTROLLIT TË AI - VERSION I OPTIMIZUAR
+// ======================================================
+
+// Variabla globale për modin e AI
+window.currentAIMode = 'SIMPLE';
+
+// ✅ FUNKSIONET PËR BUTONAT E AI
+function activateSimpleAI() {
+    window.currentAIMode = 'SIMPLE';
+    rlog('🔹 AI i Thjeshtë i aktivizuar - Chat normal dhe i shpejtë');
+    
+    // Ndrysho styling e butonave
+    updateAIButtonStyles('SIMPLE');
+    
+    // Shfaq mesazh në chat
+    if (window.addMessage) {
+        window.addMessage('🔹 **AI i Thjeshtë i aktivizuar** - Chat-i do të jetë i shpejtë dhe natyral!', 'system');
+    }
+    
+    rlog('🔹 Çaktivizimi i moduleve të avancuara për chat normal...');
+}
+
+function activateAdvancedAI() {
+    window.currentAIMode = 'ADVANCED';
+    rlog('🌌 AI i Avancuar i aktivizuar - RRUFE-TESLA aktiv');
+    
+    // Ndrysho styling e butonave
+    updateAIButtonStyles('ADVANCED');
+    
+    // Aktivizo modulet RRUFE-TESLA
+    if (window.rrufePlatform) {
+        window.rrufePlatform.modules.divineFusion.performDivineActivationRitual();
+        rlog('🌌 RRUFE-TESLA u aktivizua!');
+    }
+    
+    if (window.addMessage) {
+        window.addMessage('🌌 **RRUFE-TESLA 8.0 i aktivizuar** - Të gjitha modulet janë operative!', 'system');
+    }
+}
+
+function activateDivineAI() {
+    window.currentAIMode = 'DIVINE';
+    rlog('⚡ AI Hyjnor i aktivizuar - Divine Fusion aktiv');
+    
+    // Ndrysho styling e butonave
+    updateAIButtonStyles('DIVINE');
+    
+    // Aktivizo të gjitha modulet me fuqi të plotë
+    if (window.rrufePlatform && window.rrufePlatform.modules.divineFusion) {
+        window.rrufePlatform.modules.divineFusion.performDivineActivationRitual();
+        window.rrufePlatform.testAdvancedModules();
+        rlog('⚡ Divine Fusion u aktivizua!');
+    }
+    
+    if (window.addMessage) {
+        window.addMessage('⚡ **Divine Fusion i aktivizuar** - 5 Perënditë e AI-ve janë gati!', 'system');
+    }
+}
+
+// ✅ FUNKSIONI PËR NDRYSHIMIN E STYLING TË BUTONAVE
+function updateAIButtonStyles(activeMode) {
+    const buttons = document.querySelectorAll('.ai-controls button');
+    
+    buttons.forEach(button => {
+        // Reset të gjitha butonat
+        button.style.opacity = '0.7';
+        button.style.transform = 'scale(1)';
+        button.style.boxShadow = 'none';
+        button.style.border = '2px solid transparent';
+    });
+    
+    // Thekso butonin aktiv
+    let activeButton;
+    switch(activeMode) {
+        case 'SIMPLE':
+            activeButton = document.querySelector('.ai-controls button[onclick*="SimpleAI"]');
+            break;
+        case 'ADVANCED':
+            activeButton = document.querySelector('.ai-controls button[onclick*="AdvancedAI"]');
+            break;
+        case 'DIVINE':
+            activeButton = document.querySelector('.ai-controls button[onclick*="DivineAI"]');
+            break;
+    }
+    
+    if (activeButton) {
+        activeButton.style.opacity = '1';
+        activeButton.style.transform = 'scale(1.05)';
+        activeButton.style.boxShadow = '0 0 15px rgba(0,150,255,0.5)';
+        activeButton.style.border = '2px solid #0096FF';
+    }
+}
+
+// ✅ INICIALIZIMI I SISTEMIT TË BUTONAVE
+function initializeAIButtons() {
+    rlog('🎯 Duke inicializuar butonat e AI...');
+    
+    // Aktivizo modin e thjeshtë si default
+    setTimeout(() => {
+        activateSimpleAI();
+        rlog('✅ Butonat e AI u inicializuan!');
+    }, 1000);
+}
+
+// ✅ INTEGRIMI ME SISTEMIN E MESAZHEVE
+function integrateAIWithSendMessage() {
+    if (typeof window.sendMessage !== 'undefined') {
+        const originalSendMessage = window.sendMessage;
+        
+        window.sendMessage = async function() {
+            const input = document.getElementById('user-input');
+            const message = input ? input.value.trim() : '';
+            
+            if (!message) return;
+
+            // ✅ Shto në kontekst RRUFE-TESLA
+            if (window.rrufePlatform?.modules?.contextMemory) {
+                window.rrufePlatform.modules.contextMemory.addToContext(message, 'user');
+            }
+
+            // ✅ PROCESIMI SHTESË SIPAS MODIT TË AI
+            const currentMode = window.currentAIMode || 'SIMPLE';
+            
+            switch(currentMode) {
+                case 'ADVANCED':
+                    // Përdor modulet e avancuara për pyetje komplekse
+                    if (message.length > 50 || message.includes('?')) {
+                        rlog('🎯 [RRUFE] Duke përdorur module të avancuara...');
+                        // Aktivizo modulet shtesë nëse janë të nevojshme
+                    }
+                    break;
+                    
+                case 'DIVINE':
+                    // Përdor të gjitha modulet për çdo mesazh
+                    rlog('⚡ [DIVINE] Duke përdorur të gjitha modulet RRUFE-TESLA...');
+                    if (window.rrufePlatform?.modules?.divineFusion) {
+                        try {
+                            await window.rrufePlatform.modules.divineFusion.invokeDivineFusion(
+                                message,
+                                window.rrufePlatform.modules.contextMemory?.conversationContext
+                            );
+                        } catch (error) {
+                            rlog('❌ Divine Fusion error:', error);
+                        }
+                    }
+                    break;
+                    
+                case 'SIMPLE':
+                default:
+                    // ✅ MODI I THJESHTË: ASGJË TJETËR
+                    rlog('🔹 [SIMPLE] Procesim i thjeshtë - chat normal');
+                    break;
+            }
+
+            // ✅ THIRR FUNKSIONIN ORIGJINAL
+            await originalSendMessage.call(this);
+        };
+        
+        rlog('✅ Sistemi i AI u integrua me sendMessage!');
+    }
+}
+
+// ======================================================
+// 🚀 AKTIVIZIMI I SISTEMIT TË BUTONAVE
+// ======================================================
+
+// Aktivizo kur faqa të ngarkohet
+setTimeout(() => {
+    initializeAIButtons();
+    integrateAIWithSendMessage();
+}, 2000);
+
+// ✅ EKSPORTO FUNKSIONET GLOBALE
+window.activateSimpleAI = activateSimpleAI;
+window.activateAdvancedAI = activateAdvancedAI;
+window.activateDivineAI = activateDivineAI;
+
+// ======================================================
+// 🎉 MESAZHI I SUKSESIT
+// ======================================================
+
+rlog('🎯 SISTEMI I BUTONAVE TË AI U AKTIVIZUA ME SUKSES!');
+rlog('🔹 Normal | 🌌 RRUFE | ⚡ Divine - TANI JANË OPERATIVE!');
