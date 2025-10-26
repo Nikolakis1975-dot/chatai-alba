@@ -447,12 +447,12 @@ class RrufePlatform {
     }
     
   // ======================================================
-// 🔗 METODA: INTEGRIMI I RI I OPTIMIZUAR
+// 🔗 METODA: INTEGRIMI I THJESHTË - PA NDHIKIM NË CHAT
 // ======================================================
 integrateWithExisting() {
-    rlog('🔗 Duke integruar me sistemin ekzistues (VERSION I RI I OPTIMIZUAR)...');
+    rlog('🔗 Duke integruar me sistemin ekzistues (VERSION I THJESHTË - PA NDHIKIM)...');
     
-    // ✅ INTEGRIMI I OPTIMIZUAR ME sendMessage
+    // ✅ INTEGRIMI I THJESHTË: VETËM ContextMemory, ASGJË TJETËR
     if (typeof window.sendMessage !== 'undefined') {
         const originalSendMessage = window.sendMessage;
         
@@ -462,86 +462,20 @@ integrateWithExisting() {
             
             if (!message) return;
 
-            // ✅ FILLIMI I RI: Procesim minimal fillestar
-            console.log('💬 [RRUFE-NEW] Mesazh i marrë:', message);
-
-            // 1. Shto në kontekst (VETËM kjo për mesazhet e thjeshta)
+            // ✅ VETËM KJO: Shto mesazhin në kontekst
             if (window.rrufePlatform && window.rrufePlatform.modules.contextMemory) {
                 window.rrufePlatform.modules.contextMemory.addToContext(message, 'user');
+                console.log('💾 [RRUFE-SIMPLE] Mesazh u shtua në kontekst');
             }
 
-            // 2. Përcakto nëse duhen modulet e avancuara
-            let shouldUseAdvanced = false;
-            
-            // ✅ KRITERET E REJA PËR MODULET E AVANCUARA:
-            // - Pyetje shumë komplekse (më shumë se 5 fjalë dhe përmban fjalë kyçe)
-            // - Pyetje filozofike/teknologjike
-            // - Mesazhe shumë emocionale
-            
-            const isComplex = message.length > 80 && (
-                message.includes('?') || 
-                message.toLowerCase().includes('si funksionon') ||
-                message.toLowerCase().includes('shpjego') ||
-                message.toLowerCase().includes('pse') ||
-                message.toLowerCase().includes('filozofi') ||
-                message.toLowerCase().includes('kuantik') ||
-                message.toLowerCase().includes('bashkim')
-            );
-            
-            const isEmotional = [
-                'dashuri', 'zemër', 'ndjenjë', 'emocion', 'gëzim', 
-                'trishtim', 'hidhërim', 'lumturi', 'brengë'
-            ].some(word => message.toLowerCase().includes(word));
-            
-            shouldUseAdvanced = isComplex || isEmotional;
-            
-            console.log(`🎯 [RRUFE-NEW] Advanced processing: ${shouldUseAdvanced}`);
-            console.log(`📊 [RRUFE-NEW] Gjatësia: ${message.length}, Kompleks: ${isComplex}, Emocional: ${isEmotional}`);
-
-            // 3. Përdor modulet e avancuara VETËM nëse është e nevojshme
-            if (shouldUseAdvanced && window.rrufePlatform) {
-                console.log('🚀 [RRUFE-NEW] Duke përdorur module të avancuara...');
-                
-                // DivineFusion VETËM për pyetje shumë komplekse
-                if (isComplex && window.rrufePlatform.modules.divineFusion) {
-                    try {
-                        rlog('🌌 [RRUFE-NEW] Duke aktivizuar DivineFusion...');
-                        await window.rrufePlatform.modules.divineFusion.invokeDivineFusion(
-                            message,
-                            window.rrufePlatform.modules.contextMemory.conversationContext
-                        );
-                    } catch (error) {
-                        rlog('❌ [RRUFE-NEW] Divine Fusion dështoi: ' + error.message);
-                    }
-                }
-                
-                // Kunform VETËM për mesazhe shumë emocionale
-                if (isEmotional && window.rrufePlatform.modules.kunformTranslator) {
-                    rlog('🔮 [RRUFE-NEW] Duke përdorur Kunform...');
-                    window.rrufePlatform.modules.kunformTranslator.translateToKunform(message);
-                }
-                
-                // Cognitive Awareness për mesazhe të moderuara
-                if (window.rrufePlatform.modules.cognitiveAwareness) {
-                    rlog('🎭 [RRUFE-NEW] Duke përdorur Cognitive Awareness...');
-                    window.rrufePlatform.modules.cognitiveAwareness.processCognitiveLayer(
-                        message, 'user', 'current_user'
-                    );
-                }
-            } else {
-                // ✅ MESAZHE TË THJESHTA: Procesim minimal
-                console.log('⚡ [RRUFE-NEW] Procesim i shpejtë bazë');
-                // VETËM ContextMemory është mjaftueshëm - asgjë tjetër!
-            }
-
-            // ✅ THIRR FUNKSIONIN ORIGJINAL (MË E RËNDËSISHMJA!)
-            console.log('🔄 [RRUFE-NEW] Duke thirrur funksionin origjinal sendMessage...');
+            // ✅ ASGJË TJETËR! Lëre chat-in origjinal të funksionojë plotësisht normal
+            console.log('🔄 [RRUFE-SIMPLE] Duke thirrur sendMessage origjinal...');
             await originalSendMessage.call(this);
             
-            console.log('✅ [RRUFE-NEW] Procesimi i mesazhit u kompletuua!');
+            console.log('✅ [RRUFE-SIMPLE] Procesimi i thjeshtë u kompletuua!');
         };
         
-        rlog('✅ INTEGRIMI I RI I OPTIMIZUAR ME sendMessage U AKTIVIZUA!');
+        rlog('✅ INTEGRIMI I THJESHTË U AKTIVIZUA! Chat-i do të jetë plotësisht normal dhe i shpejtë!');
     }
 }
     
