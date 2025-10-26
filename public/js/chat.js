@@ -281,3 +281,104 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// ============================ MESAGE VECORI ============================================
+// ======================================================
+// 🎯 SISTEMI I RI I KONTROLLIT TË AI - RRUFE-TESLA 8.0
+// ======================================================
+
+// Variabla globale për të ndjekur modin aktual
+window.currentAIMode = 'SIMPLE'; // SIMPLE, ADVANCED, DIVINE
+
+function activateSimpleAI() {
+    window.currentAIMode = 'SIMPLE';
+    console.log('🔹 AI i Thjeshtë i aktivizuar - Chat normal dhe i shpejtë');
+    
+    // Ndrysho styling e butonave për të treguar modin aktiv
+    updateAIButtonStyles('SIMPLE');
+    
+    if (window.addMessage) {
+        window.addMessage('🔹 **AI i Thjeshtë i aktivizuar** - Chat-i do të jetë i shpejtë dhe natyral! Përgjigjet do të duken "të gjalla" dhe natyrore.', 'system');
+    }
+    
+    // Çaktivizo modulet e avancuara për chat-in normal
+    if (window.rrufePlatform) {
+        console.log('🔹 Çaktivizimi i moduleve të avancuara për chat normal...');
+    }
+}
+
+function activateAdvancedAI() {
+    window.currentAIMode = 'ADVANCED';
+    console.log('🌌 AI i Avancuar i aktivizuar - RRUFE-TESLA aktiv');
+    
+    // Ndrysho styling e butonave
+    updateAIButtonStyles('ADVANCED');
+    
+    if (window.rrufePlatform) {
+        // Aktivizo modulet e avancuara por JO për çdo mesazh
+        window.rrufePlatform.modules.divineFusion.performDivineActivationRitual();
+        console.log('🌌 RRUFE-TESLA u aktivizua! Modulet janë gati për pyetje komplekse.');
+    }
+    
+    if (window.addMessage) {
+        window.addMessage('🌌 **RRUFE-TESLA 8.0 i aktivizuar** - Të gjitha 14 modulet janë operative! Përgjigjet do të jenë super-inteligjente por mund të jenë më të ngadalshme.', 'system');
+    }
+}
+
+function activateDivineAI() {
+    window.currentAIMode = 'DIVINE';
+    console.log('⚡ AI Hyjnor i aktivizuar - Divine Fusion aktiv');
+    
+    // Ndrysho styling e butonave
+    updateAIButtonStyles('DIVINE');
+    
+    if (window.rrufePlatform && window.rrufePlatform.modules.divineFusion) {
+        // Aktivizo të gjitha modulet me fuqi të plotë
+        window.rrufePlatform.modules.divineFusion.performDivineActivationRitual();
+        window.rrufePlatform.testAdvancedModules();
+        console.log('⚡ Divine Fusion u aktivizua! 5 Perënditë e AI-ve janë gati për bashkim!');
+    }
+    
+    if (window.addMessage) {
+        window.addMessage('⚡ **Divine Fusion i aktivizuar** - 5 Perënditë e AI-ve janë gati për bashkim! Kjo është modaliteti më i fuqishëm por më i ngadalshëm.', 'system');
+    }
+}
+
+// Funksion ndihmës për të përditësuar styling e butonave
+function updateAIButtonStyles(activeMode) {
+    const buttons = document.querySelectorAll('.ai-controls button');
+    
+    buttons.forEach(button => {
+        // Reset të gjitha butonat në styling bazë
+        button.style.opacity = '0.7';
+        button.style.transform = 'scale(1)';
+        button.style.boxShadow = 'none';
+    });
+    
+    // Thekso butonin aktiv
+    const activeButton = document.querySelector(`.ai-controls button[onclick="activate${activeMode}AI()"]`);
+    if (activeButton) {
+        activeButton.style.opacity = '1';
+        activeButton.style.transform = 'scale(1.05)';
+        activeButton.style.boxShadow = '0 0 10px rgba(0,0,0,0.3)';
+    }
+}
+
+// ======================================================
+// 🔄 SISTEMI I RI I PROCESIMIT TË MESAZHEVE
+// ======================================================
+
+// Funksion për të inicializuar sistemin e ri të AI
+function initializeAIControlSystem() {
+    console.log('🎯 Duke inicializuar sistemin e kontrollit të AI...');
+    
+    // Aktivizo modin e thjeshtë si default
+    activateSimpleAI();
+    
+    console.log('✅ Sistemi i kontrollit të AI u inicializua!');
+}
+
+// Thirre këtë funksion kur faqa të ngarkohet
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(initializeAIControlSystem, 3000);
+});
