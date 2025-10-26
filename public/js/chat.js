@@ -93,6 +93,53 @@ async function sendToBackend(message) {
     }
 }
 
+// ======================================================
+// 🔐 SISTEMI I RI I AUTHENTICATION PËR API REQUESTS
+// ======================================================
+
+function getAuthHeaders() {
+    const token = localStorage.getItem('authToken');
+    const headers = {
+        'Content-Type': 'application/json'
+    };
+    
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    return headers;
+}
+
+async function makeAuthenticatedRequest(url, options = {}) {
+    try {
+        const response = await fetch(url, {
+            ...options,
+            headers: {
+                ...getAuthHeaders(),
+                ...options.headers
+            }
+        });
+
+        if (response.status === 401) {
+            console.log('🔐 Session ka skaduar, duke ridrejtuar në login...');
+            window.location.href = '/login';
+            return null;
+        }
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('❌ Gabim në request:', error);
+        return {
+            success: false,
+            response: `Gabim në lidhje: ${error.message}`
+        };
+    }
+}
+
 // Funksion për shtimin e mesazheve në chat
 function addMessage(content, sender) {
     const chat = document.getElementById('chat');
