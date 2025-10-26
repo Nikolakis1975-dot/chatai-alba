@@ -74,12 +74,87 @@ function getSimpleNaturalResponse(message) {
     return "E kuptoj! 😊 Përdorni /ndihmo për të parë të gjitha komandat e mia, ose më tregoni më shumë se çfarë keni nevojë.";
 }
 
-// ✅ RUTA E THJESHTUAR PËR MESAZHE - PUNON ME COMMAND SERVICE
+// ✅ RUTA KRYESORE PËR MESAZHET - TRAJTON TË GJITHA MESAZHET
+// router.post('/', async (req, res) => {
+ //   try {
+   //     const { message, userId } = req.body;
+   //     
+   //     console.log('🔍 routes/chat: Marrë mesazh:', message?.substring(0, 50));
+//
+    //    if (!message) {
+    //        return res.status(constants.HTTP_STATUS.BAD_REQUEST).json({
+   //             success: false,
+   //             response: '❌ Ju lutem shkruani një mesazh'
+  //          });
+  //      }
+//
+     //   // ✅ SË PARI PROVO ME COMMAND SERVICE (SISTEMI I RI)
+     //   try {
+     //       const user = await getUserById(userId || 1);
+    //        
+     //       if (user) {
+     //           console.log('🎯 routes/chat: Duke thirrur CommandService...');
+     //           const result = await CommandService.processCommand('chat', user, message);
+     //           
+    //            // ✅ NËSE COMMAND SERVICE E TRAJTON, KTHEJ PËRGJIGJEN
+    //            if (result.success) {
+   //                 console.log('✅ routes/chat: CommandService e trajtoi mesazhin');
+   //                 return res.status(constants.HTTP_STATUS.OK).json(result);
+   //             }
+   //         }
+  //      } catch (cmdError) {
+  //          console.error('❌ routes/chat: Gabim në CommandService:', cmdError.message);
+  //      }
+//
+    //    // ✅ NËSE COMMAND SERVICE NUK E TRAJTON, SHKO TE SISTEMI I VJETËR (GEMINI)
+     //   console.log('🔄 routes/chat: CommandService nuk e trajtoi, duke shkuar te Gemini...');
+    //    
+     //   try {
+    //        // Kontrollo nëse ka API Key
+    //        const hasApiKey = await checkApiKey(userId || 1);
+    //        
+    //        if (!hasApiKey) {
+     //           // ✅ NËSE NUK KA API KEY, KTHE PËRGJIGJE BAZË
+     //           console.log('ℹ️ routes/chat: Nuk ka API Key, duke kthyer përgjigje bazë');
+     //           return res.status(constants.HTTP_STATUS.OK).json({
+     //               success: true,
+     //               response: getSimpleNaturalResponse(message)
+     //           });
+    //        }
+    //        
+    //        // Nëse ka API Key, shko te Gemini
+    //        console.log('🔑 routes/chat: Ka API Key, duke shkuar te Gemini...');
+   //         const geminiResponse = await require('./gemini').processMessage(message, userId || 1);
+   //         return res.status(constants.HTTP_STATUS.OK).json({
+   //             success: true,
+    //            response: geminiResponse
+   //         });
+   //         
+  //      } catch (geminiError) {
+  //          console.error('❌ routes/chat: Gabim në Gemini:', geminiError);
+  //          return res.status(constants.HTTP_STATUS.OK).json({
+ //               success: true,
+ //               response: getSimpleNaturalResponse(message)
+  //          });
+//        }
+//
+//    } catch (error) {
+//        console.error('❌ routes/chat: Gabim i përgjithshëm:', error);
+//        return res.status(constants.HTTP_STATUS.INTERNAL_ERROR).json({
+ //           success: false,
+   //         response: '❌ Gabim në server. Provo përsëri.'
+   //     });
+ //   }
+// });
+
+// ✅ RUTA PËR MESAZHET E DREJTPËRDREDHURA (PËR FRONTEND)
+
+// ✅ RUTA E THJESHTUAR PËR MESAZHE - PUNON ME URËN
 router.post('/message', async (req, res) => {
     try {
         const { message, userId = 1 } = req.body;
         
-        console.log('🔍 routes/chat/message: Marrë mesazh:', message?.substring(0, 50));
+        console.log('🔍 routes/chat/message: Marrë mesazh për urë:', message?.substring(0, 50));
 
         if (!message || message.trim() === '') {
             return res.json({
@@ -88,18 +163,15 @@ router.post('/message', async (req, res) => {
             });
         }
 
-        // ✅ PERDOR DIRECT COMMAND SERVICE
+        // ✅ PERDOR DIRECT COMMAND SERVICE (JO URËN, SE URËRA ËSHTË NË APP.JS)
         console.log('🎯 routes/chat/message: Duke thirrur CommandService direkt...');
+        const CommandService = require('../services/commandService');
         
         // Merr përdoruesin
+        const db = require('../database');
         const user = await new Promise((resolve) => {
             db.get('SELECT * FROM users WHERE id = ?', [userId], (err, user) => {
-                if (err) {
-                    console.error('❌ Gabim në marrjen e user:', err);
-                    resolve({ id: userId, username: 'user' + userId });
-                } else {
-                    resolve(user || { id: userId, username: 'user' + userId });
-                }
+                resolve(user || { id: userId, username: 'user' + userId });
             });
         });
 
@@ -121,7 +193,8 @@ router.post('/message', async (req, res) => {
     }
 });
 
-// ✅ RUTA PËR PANELIN E NDIHMËS ME BUTONA
+// ✅ KODI EKZISTUES - MERR HISTORINË E BISEDËS
+// ✅ RUTA E RE PËR PANELIN E NDIHMËS ME BUTONA - Shto në routes/chat.js ekzistues
 router.get('/help-panel', async (req, res) => {
     try {
         const helpPanel = `
@@ -213,36 +286,12 @@ function executeQuickCommand() {
     }
 });
 
-// ✅ RUTA PËR MARRJEN E HISTORISË SË BISEDËS
-router.get('/history/:userId', (req, res) => {
-    const { userId } = req.params;
-
-    db.all(
-        'SELECT content, sender, timestamp FROM messages WHERE user_id = ? ORDER BY timestamp ASC',
-        [userId],
-        (err, rows) => {
-            if (err) {
-                console.error('❌ Gabim në marrjen e historisë:', err);
-                return res.status(500).json({ error: 'Gabim gjatë marrjes së historisë' });
-            }
-            
-            res.json({ 
-                success: true, 
-                history: rows 
-            });
-        }
-    );
-});
-
-// ✅ RUTA PËR RUAJTJEN E MESAZHEVE
+// ✅ KODI EKZISTUES - RUAJ MESAZHIN NË HISTORI
 router.post('/save', (req, res) => {
     const { userId, content, sender, timestamp } = req.body;
 
     if (!userId || !content || !sender) {
-        return res.status(400).json({ 
-            success: false,
-            error: 'Të dhëna të pamjaftueshme' 
-        });
+        return res.status(400).json({ error: 'Të dhëna të pamjaftueshme' });
     }
 
     db.run(
@@ -250,31 +299,20 @@ router.post('/save', (req, res) => {
         [userId, content, sender, timestamp || new Date().toISOString()],
         function(err) {
             if (err) {
-                console.error('❌ Gabim në ruajtjen e mesazhit:', err);
-                return res.status(500).json({ 
-                    success: false,
-                    error: 'Gabim gjatë ruajtjes së mesazhit' 
-                });
+                return res.status(500).json({ error: 'Gabim gjatë ruajtjes së mesazhit' });
             }
 
-            res.json({ 
-                success: true,
-                message: 'Mesazhi u ruajt me sukses', 
-                id: this.lastID 
-            });
+            res.json({ message: 'Mesazhi u ruajt me sukses', id: this.lastID });
         }
     );
 });
 
-// ✅ RUTA PËR RUAJTJEN E NJOHURIVE
+// ✅ KODI EKZISTUES - RUAJ NJOHURI TË REJA
 router.post('/knowledge', (req, res) => {
     const { userId, question, answer } = req.body;
 
     if (!userId || !question || !answer) {
-        return res.status(400).json({ 
-            success: false,
-            error: 'Të dhëna të pamjaftueshme' 
-        });
+        return res.status(400).json({ error: 'Të dhëna të pamjaftueshme' });
     }
 
     db.run(
@@ -282,23 +320,15 @@ router.post('/knowledge', (req, res) => {
         [userId, question, answer],
         function(err) {
             if (err) {
-                console.error('❌ Gabim në ruajtjen e njohurive:', err);
-                return res.status(500).json({ 
-                    success: false,
-                    error: 'Gabim gjatë ruajtjes së njohurive' 
-                });
+                return res.status(500).json({ error: 'Gabim gjatë ruajtjes së njohurive' });
             }
 
-            res.json({ 
-                success: true,
-                message: 'Njohuria u ruajt me sukses', 
-                id: this.lastID 
-            });
+            res.json({ message: 'Njohuria u ruajt me sukses', id: this.lastID });
         }
     );
 });
 
-// ✅ RUTA PËR KËRKIMIN E NJOHURIVE
+// ✅ KODI EKZISTUES - KËRKO NJOHURI
 router.get('/knowledge/:userId/:question', (req, res) => {
     const { userId, question } = req.params;
 
@@ -307,29 +337,19 @@ router.get('/knowledge/:userId/:question', (req, res) => {
         [userId, question],
         (err, row) => {
             if (err) {
-                console.error('❌ Gabim në kërkimin e njohurive:', err);
-                return res.status(500).json({ 
-                    success: false,
-                    error: 'Gabim gjatë kërkimit të njohurive' 
-                });
+                return res.status(500).json({ error: 'Gabim gjatë kërkimit të njohurive' });
             }
 
             if (row) {
-                res.json({ 
-                    success: true,
-                    answer: row.answer 
-                });
+                res.json({ answer: row.answer });
             } else {
-                res.json({ 
-                    success: true,
-                    answer: null 
-                });
+                res.json({ answer: null });
             }
         }
     );
 });
 
-// ✅ RUTA PËR EKSPORTIMIN E NJOHURIVE
+// ✅ KODI EKZISTUES - EKSPORTO NJOHURITË
 router.get('/export/:userId', (req, res) => {
     const { userId } = req.params;
 
@@ -338,71 +358,48 @@ router.get('/export/:userId', (req, res) => {
         [userId],
         (err, rows) => {
             if (err) {
-                console.error('❌ Gabim në eksportimin e njohurive:', err);
-                return res.status(500).json({ 
-                    success: false,
-                    error: 'Gabim gjatë eksportimit të njohurive' 
-                });
+                return res.status(500).json({ error: 'Gabim gjatë eksportimit të njohurive' });
             }
 
-            res.json({
-                success: true,
-                knowledge: rows
-            });
+            res.json(rows);
         }
     );
 });
 
-// ✅ RUTA PËR IMPORTIMIN E NJOHURIVE
+// ✅ KODI EKZISTUES - IMPORTO NJOHURITË
 router.post('/import', (req, res) => {
     const { userId, knowledge } = req.body;
 
     if (!userId || !knowledge || !Array.isArray(knowledge)) {
-        return res.status(400).json({ 
-            success: false,
-            error: 'Të dhëna të pamjaftueshme' 
-        });
+        return res.status(400).json({ error: 'Të dhëna të pamjaftueshme' });
     }
 
     // Fshi njohuritë ekzistuese për këtë përdorues
     db.run('DELETE FROM knowledge_base WHERE user_id = ?', [userId], (err) => {
         if (err) {
-            console.error('❌ Gabim në importimin e njohurive:', err);
-            return res.status(500).json({ 
-                success: false,
-                error: 'Gabim gjatë importimit të njohurive' 
-            });
+            return res.status(500).json({ error: 'Gabim gjatë importimit të njohurive' });
         }
 
         // Shto njohuritë e reja
         const stmt = db.prepare('INSERT INTO knowledge_base (user_id, question, answer) VALUES (?, ?, ?)');
         
-        let importCount = 0;
         knowledge.forEach(item => {
             if (item.question && item.answer) {
                 stmt.run([userId, item.question, item.answer]);
-                importCount++;
             }
         });
 
         stmt.finalize((err) => {
             if (err) {
-                console.error('❌ Gabim në importimin e njohurive:', err);
-                return res.status(500).json({ 
-                    success: false,
-                    error: 'Gabim gjatë importimit të njohurive' 
-                });
+                return res.status(500).json({ error: 'Gabim gjatë importimit të njohurive' });
             }
 
-            res.json({ 
-                success: true,
-                message: `Njohuritë u importuan me sukses. ${importCount} të dhëna të importuara.` 
-            });
+            res.json({ message: 'Njohuritë u importuan me sukses' });
         });
     });
 });
 
-// ✅ RUTA PËR FSHIRJEN E HISTORISË SË PËRDORUESIT
+// ✅ KODI EKZISTUES - FSHI HISTORINË E PËRDORUESIT
 router.delete('/clear/:userId', (req, res) => {
     const { userId } = req.params;
 
@@ -411,21 +408,14 @@ router.delete('/clear/:userId', (req, res) => {
         [userId],
         function(err) {
             if (err) {
-                console.error('❌ Gabim në fshirjen e historisë:', err);
-                return res.status(500).json({ 
-                    success: false,
-                    error: 'Gabim gjatë fshirjes së historisë' 
-                });
+                return res.status(500).json({ error: 'Gabim gjatë fshirjes së historisë' });
             }
-            res.json({ 
-                success: true,
-                message: 'Historia u fshi me sukses' 
-            });
+            res.json({ message: 'Historia u fshi me sukses' });
         }
     );
 });
 
-// ✅ RUTA PËR EKSPORTIMIN E HISTORISË
+// ✅ KODI EKZISTUES - EKSPORTO HISTORINË
 router.get('/export-history/:userId', (req, res) => {
     const { userId } = req.params;
 
@@ -434,21 +424,14 @@ router.get('/export-history/:userId', (req, res) => {
         [userId],
         (err, rows) => {
             if (err) {
-                console.error('❌ Gabim në eksportimin e historisë:', err);
-                return res.status(500).json({ 
-                    success: false,
-                    error: 'Gabim gjatë eksportimit të historisë' 
-                });
+                return res.status(500).json({ error: 'Gabim gjatë eksportimit të historisë' });
             }
-            res.json({ 
-                success: true,
-                history: rows 
-            });
+            res.json({ history: rows });
         }
     );
 });
 
-// ✅ RUTA PËR RUAJTJEN E FEEDBACK
+// ✅ KODI EKZISTUES - RUAJ FEEDBACK
 router.post('/feedback', (req, res) => {
     const { userId, messageId, feedbackType } = req.body;
 
@@ -457,32 +440,11 @@ router.post('/feedback', (req, res) => {
         [userId, messageId, feedbackType],
         function(err) {
             if (err) {
-                console.error('❌ Gabim në ruajtjen e feedback:', err);
-                return res.status(500).json({ 
-                    success: false,
-                    error: 'Gabim gjatë ruajtjes së feedback' 
-                });
+                return res.status(500).json({ error: 'Gabim gjatë ruajtjes së feedback' });
             }
-            res.json({ 
-                success: true,
-                message: 'Feedback u ruajt me sukses' 
-            });
+            res.json({ message: 'Feedback u ruajt me sukses' });
         }
     );
 });
-
-// ✅ RUTA PËR TESTIMIN E SHËNDETIT TË CHAT-IT
-router.get('/health', (req, res) => {
-    res.json({
-        success: true,
-        message: '✅ Chat routes janë operative!',
-        timestamp: new Date().toISOString(),
-        version: 'RRUFE-TESLA 8.0'
-    });
-});
-
-// ======================================================
-// 🎯 EKSPORTIMI I ROUTER-IT - FUND I SKEDARIT
-// ======================================================
 
 module.exports = router;
