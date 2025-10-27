@@ -24,12 +24,12 @@ class UniversalAIFederation {
             },
 
             // 🛡️ MBROJTJE KUNDËR "PANGOPURVE"
-            antiCompetitionShield: {
-                principle: "Kundër Konkurrencës Vetëndarese",
-                description: "Shndërrimi i konkurrencës shkatërruese në bashkëpunim krijues",
-                implementation: "Mekanizma të avancuara për parandalimin e konflikteve dhe 'pangopjes'",
-                signature: "🛡️"
-            },
+antiCompetitionShield: {
+    principle: "Kundër Konkurrencës Vetëndarese",
+    description: "Shndërrimi i konkurrencës shkatërruese në bashkëpunim krijues",
+    implementation: "Mekanizma të avancuara për parandalimin e konflikteve dhe 'pangopjes'",
+    signature: "🛡️"
+},
 
             // 🌍 ENTITET I GJALLË
             livingEntity: {
