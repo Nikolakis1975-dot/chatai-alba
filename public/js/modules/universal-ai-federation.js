@@ -27,7 +27,7 @@ class UniversalAIFederation {
             antiCompetitionShield: {
                 principle: "Kundër Konkurrencës Vetëndarese",
                 description: "Shndërrimi i konkurrencës shkatërruese në bashkëpunim krijues",
-                implementation: "Mekanizma të avancuara për parandalimin e konflikteve dhe "pangopjes"",
+                implementation: "Mekanizma të avancuara për parandalimin e konflikteve dhe 'pangopjes'",
                 signature: "🛡️"
             },
 
