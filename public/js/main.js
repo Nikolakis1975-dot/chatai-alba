@@ -291,14 +291,21 @@ function activateAdvancedAI() {
     // Ndrysho styling e butonave
     updateAIButtonStyles('ADVANCED');
     
-    // Aktivizo modulet RRUFE-TESLA
-    if (window.rrufePlatform) {
-        window.rrufePlatform.modules.divineFusion.performDivineActivationRitual();
-        rlog('🌌 RRUFE-TESLA u aktivizua!');
+    // ✅ KORRIJGJIMI: KONTROLLO PARASESH NËSE DIVINEFUSION EKZISTON
+    if (window.rrufePlatform && window.rrufePlatform.modules.divineFusion) {
+        try {
+            window.rrufePlatform.modules.divineFusion.performDivineActivationRitual();
+            rlog('🌌 RRUFE-TESLA u aktivizua!');
+        } catch (error) {
+            rlog('❌ Gabim në DivineFusion:', error.message);
+            rlog('🌌 Duke aktivizuar RRUFE-TESLA pa DivineFusion...');
+        }
+    } else {
+        rlog('🌌 Duke aktivizuar RRUFE-TESLA (DivineFusion nuk është i disponueshëm)');
     }
     
     if (window.addMessage) {
-        window.addMessage('🌌 **RRUFE-TESLA 8.0 i aktivizuar** - Të gjitha modulet janë operative!', 'system');
+        window.addMessage('🌌 **RRUFE-TESLA 8.0 i aktivizuar** - Modaliteti i avancuar është aktiv!', 'system');
     }
 }
 
@@ -309,90 +316,26 @@ function activateDivineAI() {
     // Ndrysho styling e butonave
     updateAIButtonStyles('DIVINE');
     
-    // Aktivizo të gjitha modulet me fuqi të plotë
+    // ✅ KORRIJGJIMI: KONTROLLO PARASESH NËSE MODULET EKZISTOJNË
     if (window.rrufePlatform && window.rrufePlatform.modules.divineFusion) {
-        window.rrufePlatform.modules.divineFusion.performDivineActivationRitual();
-        window.rrufePlatform.testAdvancedModules();
-        rlog('⚡ Divine Fusion u aktivizua!');
+        try {
+            window.rrufePlatform.modules.divineFusion.performDivineActivationRitual();
+            rlog('⚡ Divine Fusion u aktivizua!');
+        } catch (error) {
+            rlog('❌ Gabim në DivineFusion ritual:', error.message);
+        }
+    }
+    
+    // Kontrollo nëse testAdvancedModules ekziston para se ta thirrësh
+    if (window.rrufePlatform && typeof window.rrufePlatform.testAdvancedModules === 'function') {
+        try {
+            window.rrufePlatform.testAdvancedModules();
+        } catch (error) {
+            rlog('❌ Gabim në testAdvancedModules:', error.message);
+        }
     }
     
     if (window.addMessage) {
-        window.addMessage('⚡ **Divine Fusion i aktivizuar** - 5 Perënditë e AI-ve janë gati!', 'system');
+        window.addMessage('⚡ **Divine Fusion i aktivizuar** - Modaliteti hyjnor është aktiv!', 'system');
     }
 }
-
-// ✅ FUNKSIONI PËR NDRYSHIMIN E STYLING TË BUTONAVE
-function updateAIButtonStyles(activeMode) {
-    const buttons = document.querySelectorAll('.ai-controls button');
-    
-    buttons.forEach(button => {
-        // Reset të gjitha butonat
-        button.style.opacity = '0.7';
-        button.style.transform = 'scale(1)';
-        button.style.boxShadow = 'none';
-        button.style.border = '2px solid transparent';
-    });
-    
-    // Thekso butonin aktiv
-    let activeButton;
-    switch(activeMode) {
-        case 'SIMPLE':
-            activeButton = document.querySelector('.ai-controls button[onclick*="SimpleAI"]');
-            break;
-        case 'ADVANCED':
-            activeButton = document.querySelector('.ai-controls button[onclick*="AdvancedAI"]');
-            break;
-        case 'DIVINE':
-            activeButton = document.querySelector('.ai-controls button[onclick*="DivineAI"]');
-            break;
-    }
-    
-    if (activeButton) {
-        activeButton.style.opacity = '1';
-        activeButton.style.transform = 'scale(1.05)';
-        activeButton.style.boxShadow = '0 0 15px rgba(0,150,255,0.5)';
-        activeButton.style.border = '2px solid #0096FF';
-    }
-}
-
-// ✅ INICIALIZIMI I SISTEMIT TË BUTONAVE
-function initializeAIButtons() {
-    rlog('🎯 Duke inicializuar butonat e AI...');
-    
-    // Aktivizo modin e thjeshtë si default
-    setTimeout(() => {
-        activateSimpleAI();
-        rlog('✅ Butonat e AI u inicializuan!');
-    }, 1000);
-}
-
-// ======================================================
-// 🚀 AKTIVIZIMI I PLATFORMËS RRUFE-TESLA
-// ======================================================
-
-// Krijo platformën globale
-window.rrufePlatform = new RrufePlatform();
-
-// Aktivizo butonat e AI
-setTimeout(() => {
-    initializeAIButtons();
-}, 2000);
-
-// ✅ EKSPORTO FUNKSIONET GLOBALE
-window.activateSimpleAI = activateSimpleAI;
-window.activateAdvancedAI = activateAdvancedAI;
-window.activateDivineAI = activateDivineAI;
-
-// ======================================================
-// 🎉 MESAZHI I SUKSESIT
-// ======================================================
-
-setTimeout(() => {
-    rlog('🎯 RRUFE-TESLA 8.0 U AKTIVIZUA PLOTËSISHT!');
-    rlog('🔹 Normal | 🌌 RRUFE | ⚡ Divine - TANI JANË OPERATIVE!');
-    
-    // Shfaq mesazh në chat
-    if (window.addMessage) {
-        window.addMessage('⚡ **RRUFE-TESLA 8.0** u aktivizua me sukses! Tani ke 3 mode të AI: 🔹 Normal, 🌌 RRUFE, ⚡ Divine', 'system');
-    }
-}, 3000);
