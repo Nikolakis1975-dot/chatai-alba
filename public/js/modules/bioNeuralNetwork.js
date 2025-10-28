@@ -216,3 +216,93 @@ class BioNeuralNetwork {
         }
     }
 }
+
+// 📝 KOPJO DHE SHTO NË FUND TË bioNeuralNetwork.js:
+
+// ======================================================
+// 🚀 INICIALIZIMI AUTOMATIK - RRUFE-TESLA 8.0
+// ======================================================
+
+// ✅ INICIALIZIMI I BIO NEURAL NETWORK
+function initializeBioNeuralNetwork() {
+    console.log('🧠 INICIALIZIMI I BIO NEURAL NETWORK...');
+    
+    try {
+        // KRIJO CONTEXT MEMORY NËSE NUK EKZISTON
+        if (!window.contextMemory) {
+            console.log('🔧 Duke krijuar Context Memory...');
+            window.contextMemory = {
+                searchInMemory: function(query) {
+                    console.log('🔍 Kërkim në memorie:', query);
+                    return [
+                        { 
+                            match: 'memory_simulation', 
+                            relevance: 0.8,
+                            data: { query: query, timestamp: new Date().toISOString() }
+                        }
+                    ];
+                },
+                storeInMemory: function(data) {
+                    console.log('💾 Ruajtje në memorie:', data);
+                    return { 
+                        success: true, 
+                        id: 'memory_' + Date.now(),
+                        timestamp: new Date().toISOString()
+                    };
+                },
+                connectToQuantum: function() {
+                    if (window.quantumMemory) {
+                        console.log('⚡ Lidhja me Quantum Memory u detektua!');
+                        return { connected: true, quantum: true };
+                    }
+                    return { connected: false, quantum: false };
+                }
+            };
+        }
+
+        // ============================= KRIJO INSTANCËN E BIO NEURAL NETWORK ===================================
+        console.log('🏗️  Duke krijuar instancën e BioNeuralNetwork...');
+        window.bioNeuralNetwork = new BioNeuralNetwork(window.contextMemory);
+        
+        console.log('✅ BIO NEURAL NETWORK U INICIALIZUA ME SUKSES!');
+        console.log('🎯 Metodat e disponueshme:');
+        console.log('   • processMessageThroughNetwork()');
+        console.log('   • debugNeuralNetwork()'); 
+        console.log('   • reinforceSuccessfulPathway()');
+        console.log('   • analyzeEmotionalTone()');
+        
+        // TEST I SHPEJTË I FUNKSIONALITETIT
+        setTimeout(() => {
+            console.log('\n🧪 TESTIM AUTOMATIK I FUNKSIONALITETIT:');
+            try {
+                const testResult = window.bioNeuralNetwork.processMessageThroughNetwork(
+                    'Përshëndetje RRUFE-TESLA 8.0!'
+                );
+                console.log('✅ Testi i procesimit:', testResult);
+                
+                // TREGO DEBUG INFO
+                window.bioNeuralNetwork.debugNeuralNetwork();
+                
+            } catch (testError) {
+                console.log('⚠️ Testi dështoi:', testError.message);
+            }
+        }, 1000);
+        
+        return { success: true, instance: window.bioNeuralNetwork };
+        
+    } catch (error) {
+        console.error('❌ GABIM NË INICIALIZIM:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+// 🎯 EKZEKUTIMI I INICIALIZIMIT AUTOMATIK
+if (typeof window !== 'undefined') {
+    // PRIT 3 SEKONDA PËR TË GJITHA MODULET TË NGARKOHEN
+    setTimeout(() => {
+        console.log('⏳ RRUFE-TESLA: Duke inicializuar BioNeuralNetwork...');
+        initializeBioNeuralNetwork();
+    }, 3000);
+}
+
+console.log('🔧 BioNeuralNetwork.js u ngarkua - Inicializimi automatik i aktivizuar!');
