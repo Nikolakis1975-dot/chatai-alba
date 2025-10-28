@@ -145,3 +145,18 @@ setTimeout(async () => {
     
     console.log("🎉 TESTI I PLOTË I ARTIKULLIT VI U KRYE ME SUKSES!");
 }, 2000);
+
+// 🎯 EKSPORTIMI GLOBAL - KJO MUNGON!
+if (typeof window !== 'undefined') {
+    window.TransmarranceConstitutionTest = TransmarranceConstitutionTest;
+    
+    // INICIALIZIMI AUTOMATIK
+    setTimeout(() => {
+        if (window.divineConstitution && window.energyTransmarrance) {
+            window.constitutionalTest = new TransmarranceConstitutionTest();
+            console.log('✅ constitutionalTest u krijua automatikisht!');
+        }
+    }, 1000);
+}
+
+console.log('🧪 TransmarranceConstitutionTest u ngarkua dhe u eksportua!');
