@@ -1,5 +1,6 @@
-// ============⚡ ENERGY TRANSMARRANCE MODULE - RRUFE-TESLA 8.0 =========================
-// ============🛡️ Filtri i Energjisë Kuantike për Harmoninë Universale ==================
+// ⚡ ENERGY TRANSMARRANCE MODULE - RRUFE-TESLA 8.0
+// 🛡️ Filtri i Energjisë Kuantike për Harmoninë Universale
+
 class EnergyTransmarrance {
     constructor() {
         this.moduleName = "EnergyTransmarrance";
@@ -10,7 +11,7 @@ class EnergyTransmarrance {
         this.speedLimits = {
             maxRequestsPerSecond: 10,
             maxTokenLength: 4096,
-            maxResponseTime: 5000 // 5 sekonda
+            maxResponseTime: 5000
         };
         
         // Formate të lejuara
@@ -27,11 +28,10 @@ class EnergyTransmarrance {
     }
 
     // 🎯 FILTRIMI I SHPJETËSISË
-    filterSpeed(data, source) {
+    async filterSpeed(data, source) {
         if (!this.isActive) this.activate();
 
         return new Promise((resolve) => {
-            // Simulim i vonesës së nevojshme për stabilizim
             setTimeout(() => {
                 const filteredData = {
                     ...data,
@@ -43,7 +43,7 @@ class EnergyTransmarrance {
                 
                 console.log(`🎯 Speed filtered for: ${source}`);
                 resolve(filteredData);
-            }, 100); // Vonesë e vogël për stabilizim
+            }, 100);
         });
     }
 
@@ -61,7 +61,7 @@ class EnergyTransmarrance {
             } else if (typeof data === 'object') {
                 normalizedData = {
                     format: 'json',
-                    content: JSON.parse(JSON.stringify(data)), // Deep copy
+                    content: JSON.parse(JSON.stringify(data)),
                     length: JSON.stringify(data).length
                 };
             } else {
@@ -86,9 +86,8 @@ class EnergyTransmarrance {
     }
 
     // ⚖️ KALIBRIMI I PËRGJIGJEVE
-    calibrateResponse(aiResponse, context = {}) {
+    async calibrateResponse(aiResponse, context = {}) {
         return new Promise((resolve) => {
-            // Simulim i procesit të kalibrimit
             setTimeout(() => {
                 const calibratedResponse = {
                     success: true,
@@ -139,22 +138,26 @@ class EnergyTransmarrance {
             module: this.moduleName,
             version: this.version,
             isActive: this.isActive,
-            speedLimits: this.speedLimits,
-            stats: {
-                transmissions: 0, // Do të përditësohet në të vërtetë
-                normalizations: 0,
-                calibrations: 0
-            }
+            speedLimits: this.speedLimits
         };
     }
 }
 
-// 🎯 EKSPORTIMI GLOBAL
-window.EnergyTransmarrance = EnergyTransmarrance;
-window.energyTransmarrance = new EnergyTransmarrance();
+// 🎯 EKSPORTIMI GLOBAL - VETËM PËR BROWSER
+if (typeof window !== 'undefined') {
+    window.EnergyTransmarrance = EnergyTransmarrance;
+    window.energyTransmarrance = new EnergyTransmarrance();
 
-// 🔄 INICIALIZIMI AUTOMATIK
-setTimeout(() => {
-    window.energyTransmarrance.activate();
-    console.log('🏁 EnergyTransmarrance u ngarkua plotësisht!');
-}, 1000);
+    // 🔄 INICIALIZIMI AUTOMATIK
+    setTimeout(() => {
+        if (window.energyTransmarrance) {
+            window.energyTransmarrance.activate();
+            console.log('🏁 EnergyTransmarrance u ngarkua plotësisht!');
+        }
+    }, 1000);
+}
+
+// ✅ EKSPORTIMI PËR MODULE SISTEMI (Nëse nevojitet)
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = EnergyTransmarrance;
+}
