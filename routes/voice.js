@@ -7,7 +7,7 @@ const fs = require("fs");
 
 // ✅ IMPORTI I SHRËBIMEVE TË REJA
 const { transcribeAudio } = require("../services/voiceService");
-const voiceContextService = require("../services/voiceContextService");
+// const voiceContextService = require("../services/voiceContextService");
 const { analyzeEmotionalTone } = require("../services/nluService");
 
 // ✅ KRIJO TEMP FOLDER NËSE NUK EKZISTON
