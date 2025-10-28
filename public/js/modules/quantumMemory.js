@@ -1,171 +1,210 @@
-// ======================================================
-// ⚛️ QUANTUM MEMORY MODULE - RRUFE-TESLA
-// ======================================================
+// 📁 /public/js/modules/quantumMemory.js - VERSION I KORRIGJUAR
+// ⚛️ QUANTUM MEMORY MODULE - RRUFE-TESLA 8.0
 
 class QuantumMemory {
-    constructor(contextMemory) {
-        this.contextMemory = contextMemory;
+    constructor() {
+        console.log('⚛️ QUANTUM MEMORY konstruktor u thirr!');
+        this.memoryName = "QuantumMemory";
+        this.version = "RRUFE-TESLA-8.0";
+        this.isActive = false;
+        
+        // Sistemet kuantike
         this.entangledPairs = new Map();
         this.superpositionStates = new Map();
         this.quantumConnections = new Map();
+        this.memoryLayers = new Map();
         
-        console.log('⚛️ QUANTUM MEMORY u inicializua!');
         this.initializeQuantumSystem();
     }
 
     initializeQuantumSystem() {
-        // Inicializo sistemin kuantik bazë
-        this.quantumStates = {
-            ALIVE: 'superposition_alive',
-            ENTANGLED: 'quantum_entangled', 
-            COLLAPSED: 'waveform_collapsed',
-            COHERENT: 'quantum_coherent'
-        };
-        
-        this.quantumConstants = {
-            PLANCK_CONSTANT: 6.626e-34,
-            ENTANGLEMENT_THRESHOLD: 0.85,
-            SUPERPOSITION_LIMIT: 100
-        };
+        try {
+            console.log('⚛️ Duke inicializuar sistemin kuantik...');
+            
+            // Inicializo sistemin kuantik bazë
+            this.quantumStates = {
+                ALIVE: 'superposition_alive',
+                ENTANGLED: 'quantum_entangled', 
+                COLLAPSED: 'waveform_collapsed',
+                COHERENT: 'quantum_coherent'
+            };
+            
+            this.quantumConstants = {
+                PLANCK_CONSTANT: 6.626e-34,
+                ENTANGLEMENT_THRESHOLD: 0.85,
+                SUPERPOSITION_LIMIT: 100
+            };
+
+            // Inicializo shtresat e kujtesës
+            this.initializeMemoryLayers();
+            
+            this.isActive = true;
+            console.log('✅ QuantumMemory u inicializua me sukses!');
+            
+        } catch (error) {
+            console.error('❌ Gabim në inicializimin kuantik:', error);
+        }
     }
 
+    initializeMemoryLayers() {
+        // Shtresa të ndryshme kujtese
+        const layers = ['shortTerm', 'longTerm', 'emotional', 'contextual', 'quantum'];
+        layers.forEach(layer => {
+            this.memoryLayers.set(layer, new Map());
+        });
+    }
+
+    // 🔧 METODA BAZË E INICIALIZIMIT
+    initialize() {
+        return this.initializeQuantumSystem();
+    }
+
+    // 💾 METODA E THJESHTË E RUAJTJES
+    store(key, data, layer = 'shortTerm') {
+        try {
+            const memoryObject = {
+                data: data,
+                timestamp: new Date().toISOString(),
+                layer: layer,
+                accessCount: 0
+            };
+
+            this.memoryLayers.get(layer).set(key, memoryObject);
+            console.log(`💾 U ruajt në ${layer}: ${key}`);
+            
+            return { success: true, key: key };
+            
+        } catch (error) {
+            console.error('❌ Gabim në ruajtje:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    // 🔍 METODA E THJESHTË E RIKUJTIMIT
+    retrieve(key) {
+        try {
+            // Kërko në të gjitha shtresat
+            for (const [layerName, layerMap] of this.memoryLayers) {
+                const memory = layerMap.get(key);
+                if (memory) {
+                    memory.accessCount++;
+                    console.log(`🔍 U gjet kujtesa: ${key} (${layerName})`);
+                    return { 
+                        success: true, 
+                        data: memory.data,
+                        layer: layerName
+                    };
+                }
+            }
+            
+            return { success: false, error: 'Kujtesa nuk u gjet' };
+            
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    }
+
+    // 🧠 METODAT KUANTIKE (SIMPLIFIKUAR)
     createQuantumEntanglement(message1, message2) {
-        const entanglementId = `entangle_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        
-        const entanglement = {
-            id: entanglementId,
-            particles: [message1.id, message2.id],
-            strength: this.calculateEntanglementStrength(message1, message2),
-            created: new Date(),
-            quantumState: this.quantumStates.ENTANGLED
-        };
-        
-        this.entangledPairs.set(entanglementId, entanglement);
-        
-        // Krijo lidhje kuantike
-        this.createQuantumConnection(message1, message2, entanglement.strength);
-        
-        console.log(`🔗 Krijova entanglement kuantik: ${entanglementId} (forcë: ${entanglement.strength.toFixed(2)})`);
-        return entanglementId;
+        try {
+            const entanglementId = `entangle_${Date.now()}`;
+            
+            const entanglement = {
+                id: entanglementId,
+                particles: [message1.id || 'msg1', message2.id || 'msg2'],
+                strength: 0.7, // Vlerë default
+                created: new Date()
+            };
+            
+            this.entangledPairs.set(entanglementId, entanglement);
+            console.log(`🔗 Krijova entanglement: ${entanglementId}`);
+            
+            return entanglementId;
+            
+        } catch (error) {
+            console.error('❌ Gabim në entanglement:', error);
+            return null;
+        }
     }
 
-    calculateEntanglementStrength(msg1, msg2) {
-        let strength = 0;
-        
-        // Ngjashmëri semantike
-        const semanticSimilarity = this.calculateSemanticSimilarity(msg1.message, msg2.message);
-        strength += semanticSimilarity * 0.6;
-        
-        // Lidhje kohore
-        const timeDiff = Math.abs(new Date(msg1.timestamp) - new Date(msg2.timestamp));
-        const timeStrength = Math.max(0, 1 - (timeDiff / (1000 * 60 * 60 * 24))); // 24 orë
-        strength += timeStrength * 0.3;
-        
-        // Rëndësi e përbashkët
-        const importanceAvg = (msg1.importance + msg2.importance) / 20; // Normalizo
-        strength += importanceAvg * 0.1;
-        
-        return Math.min(strength, 1.0);
-    }
-
-    calculateSemanticSimilarity(text1, text2) {
-        const words1 = this.extractKeywords(text1);
-        const words2 = this.extractKeywords(text2);
-        
-        if (words1.length === 0 || words2.length === 0) return 0;
-        
-        const commonWords = words1.filter(word => words2.includes(word));
-        const similarity = commonWords.length / Math.max(words1.length, words2.length);
-        
-        return similarity;
-    }
-
-    extractKeywords(text) {
-        return text.toLowerCase()
-            .replace(/[^\w\s]/g, '')
-            .split(/\s+/)
-            .filter(word => word.length > 2);
-    }
-
-    createQuantumConnection(sourceMsg, targetMsg, strength) {
-        const connectionId = `quantum_conn_${sourceMsg.id}_${targetMsg.id}`;
-        
-        const connection = {
-            id: connectionId,
-            source: sourceMsg.id,
-            target: targetMsg.id,
-            strength: strength,
-            quantumState: this.quantumStates.COHERENT,
-            created: new Date()
-        };
-        
-        this.quantumConnections.set(connectionId, connection);
-        return connectionId;
-    }
-
-    // 🧠 METODA TË REJA RRUFE-TESLA
     createSuperpositionState(messages) {
-        const superpositionId = `superpos_${Date.now()}`;
-        
-        const superposition = {
-            id: superpositionId,
-            messages: messages.map(msg => msg.id),
-            quantumState: this.quantumStates.ALIVE,
-            created: new Date(),
-            collapseThreshold: 0.7
+        try {
+            const superpositionId = `superpos_${Date.now()}`;
+            
+            const superposition = {
+                id: superpositionId,
+                messages: messages.map(msg => msg.id || 'msg'),
+                created: new Date()
+            };
+            
+            this.superpositionStates.set(superpositionId, superposition);
+            console.log(`🌀 Krijova superposition: ${superpositionId}`);
+            
+            return superpositionId;
+            
+        } catch (error) {
+            console.error('❌ Gabim në superposition:', error);
+            return null;
+        }
+    }
+
+    // 📊 METODA DIAGNOSTIKIMI
+    getStatus() {
+        return {
+            isActive: this.isActive,
+            memoryName: this.memoryName,
+            version: this.version,
+            stats: {
+                entangledPairs: this.entangledPairs.size,
+                superpositionStates: this.superpositionStates.size,
+                quantumConnections: this.quantumConnections.size,
+                totalMemories: Array.from(this.memoryLayers.values())
+                    .reduce((sum, layer) => sum + layer.size, 0)
+            }
         };
-        
-        this.superpositionStates.set(superpositionId, superposition);
-        console.log(`🌀 Krijova superposition state me ${messages.length} mesazhe`);
-        
-        return superpositionId;
     }
 
-    collapseSuperposition(superpositionId, triggerMessage) {
-        const superposition = this.superpositionStates.get(superpositionId);
-        if (!superposition) return null;
+    debug() {
+        console.log('🔮 QUANTUM MEMORY DEBUG:');
+        console.log('- Status:', this.getStatus());
         
-        // Proceso kolapsin e valës kuantike
-        const collapsedState = {
-            originalSuperposition: superpositionId,
-            trigger: triggerMessage.id,
-            collapsedAt: new Date(),
-            resultingContext: this.generateCollapsedContext(superposition, triggerMessage)
-        };
-        
-        // Largo superposition
-        this.superpositionStates.delete(superpositionId);
-        
-        console.log(`💥 Superposition u kolapsua nga: ${triggerMessage.message.substring(0, 30)}`);
-        return collapsedState;
-    }
-
-    generateCollapsedContext(superposition, trigger) {
-        // Gjenero kontekst të ri bazuar në kolapsin kuantik
-        const contextMessages = superposition.messages.slice(0, 3);
-        return `Kontekst kuantik: ${trigger.message} → [${contextMessages.join(', ')}]`;
-    }
-
-    debugQuantumMemory() {
-        console.log('🔮 DEBUG QUANTUM MEMORY:');
-        console.log(`- Entangled Pairs: ${this.entangledPairs.size}`);
-        console.log(`- Superposition States: ${this.superpositionStates.size}`);
-        console.log(`- Quantum Connections: ${this.quantumConnections.size}`);
-        
-        // Shfaq disa entanglements
         if (this.entangledPairs.size > 0) {
-            console.log('🔗 Entanglements aktive:');
-            this.entangledPairs.forEach((entanglement, id) => {
-                console.log(`   ${id}: forcë ${entanglement.strength.toFixed(2)}`);
-            });
+            console.log('- Entanglements:', this.entangledPairs.size);
         }
+        
+        return this.getStatus();
     }
 
-    // 🚀 METODA E RE: Quantum Context Enhancement
-    enhanceContextWithQuantumMemory() {
-        if (this.contextMemory.conversationContext.length >= 2) {
-            const recentMessages = this.contextMemory.conversationContext.slice(0, 2);
-            this.createQuantumEntanglement(recentMessages[0], recentMessages[1]);
+    // 🧪 METODA TESTIMI
+    test() {
+        console.log('🧪 Duke testuar QuantumMemory...');
+        
+        // Test ruajtje dhe rikujtim
+        const testResult = this.store('test_key', 'test_data');
+        if (testResult.success) {
+            const retrieveResult = this.retrieve('test_key');
+            console.log('✅ Testi i ruajtjes/rikujtimit:', retrieveResult.success);
         }
+        
+        // Test entanglement
+        const entanglementId = this.createQuantumEntanglement(
+            { id: 'test1', message: 'Test 1' },
+            { id: 'test2', message: 'Test 2' }
+        );
+        console.log('✅ Testi i entanglement:', entanglementId ? 'SUKSES' : 'DESHTIM');
+        
+        return this.getStatus();
     }
 }
+
+// 🎯 EKSPORTIMI GLOBAL - KJO ËSHTË SHUMË E RËNDËSISHME!
+window.QuantumMemory = QuantumMemory;
+window.quantumMemory = new QuantumMemory();
+
+console.log('⚛️ QuantumMemory u ngarkua!');
+
+// 🔄 INICIALIZIMI AUTOMATIK
+setTimeout(() => {
+    window.quantumMemory.initialize();
+    console.log('✅ QuantumMemory u inicializua automatikisht!');
+}, 100);
