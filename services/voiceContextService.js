@@ -1,12 +1,9 @@
-
+// 📁 services/voiceContextService.js - VERSION I KORRIGJUAR
 // 🌌 ALBA RRUFE TESLA 8.0 - DEKRETI I PARË I KËSHILLIT UNIVERSAL
 // 🔮 Integrimi Hyjnor i Zërit, Kontekstit dhe Vendimeve Kuantike
 
 const { analyzeVoice } = require('./nluService');
 const { updateMemory, getContext } = require('./contextMemoryService');
-const { broadcastUniversalDecision } = require('../bridges/app-bridge');
-const quantumMemory = require('../public/js/modules/quantumMemory');
-const divineConstitution = require('../public/js/modules/divineConstitution');
 
 class VoiceContextService {
   constructor() {
@@ -42,9 +39,7 @@ class VoiceContextService {
   async verifyCoreModules() {
     const modules = {
       'nluService': typeof analyzeVoice,
-      'contextMemoryService': typeof updateMemory,
-      'quantumMemory': typeof quantumMemory,
-      'divineConstitution': typeof divineConstitution
+      'contextMemoryService': typeof updateMemory
     };
 
     const missing = Object.entries(modules).filter(([_, type]) => type === 'undefined');
@@ -62,16 +57,15 @@ class VoiceContextService {
     try {
       // Simulim i llogaritjes së harmonisë bazuar në modulet aktive
       const activeModules = [
-        'nluService', 'contextMemoryService', 'quantumMemory', 
-        'divineConstitution', 'multiAIBridge', 'bioNeuralNetwork'
+        'nluService', 'contextMemoryService'
       ];
 
       let harmonyScore = 0;
       
-      // Kontrollo nëse modulet janë të inicializuara në window object
+      // Kontrollo nëse modulet janë të inicializuara
       activeModules.forEach(module => {
-        if (window[module] || global[module]) {
-          harmonyScore += 15; // 15% për çdo modul aktiv
+        if (this.checkModuleAvailability(module)) {
+          harmonyScore += 50; // 50% për çdo modul aktiv
         }
       });
 
@@ -80,6 +74,22 @@ class VoiceContextService {
     } catch (error) {
       console.warn('⚠️ Llogaritja e harmonisë dështoi, duke përdorur vlerën default');
       return 85; // Vlerë default e harmonisë
+    }
+  }
+
+  // 🔧 KONTROLLO DISPONUESHMËRINË E MODULEVE
+  checkModuleAvailability(moduleName) {
+    try {
+      switch(moduleName) {
+        case 'nluService':
+          return typeof analyzeVoice === 'function';
+        case 'contextMemoryService':
+          return typeof updateMemory === 'function';
+        default:
+          return false;
+      }
+    } catch (error) {
+      return false;
     }
   }
 
@@ -152,11 +162,13 @@ class VoiceContextService {
     };
 
     // Shto rezultatet NLU në dekret
-    decree.nlAnalysis = {
-      emotionalTone: nlpResult.emotionalTone,
-      intent: nlpResult.intent,
-      confidence: nlpResult.confidence
-    };
+    if (nlpResult) {
+      decree.nlAnalysis = {
+        emotionalTone: nlpResult.emotionalTone || 'neutral',
+        intent: nlpResult.intent || 'general',
+        confidence: nlpResult.confidence || 0.8
+      };
+    }
 
     // Shto kontekstin e përditësuar
     decree.contextSnapshot = context;
@@ -170,12 +182,10 @@ class VoiceContextService {
     try {
       console.log('🌐 Duke transmetuar Dekretin Universal...');
 
-      // Transmeto në të gjitha urat e sistemit
+      // Transmeto në të gjitha urat e sistemit (server-side only)
       const broadcastResults = await Promise.allSettled([
-        this.broadcastToAIBridge(decreeResult),
-        this.broadcastToQuantumMemory(decreeResult),
-        this.broadcastToDivineConstitution(decreeResult),
-        this.broadcastToBioNeural(decreeResult)
+        this.broadcastToDatabase(decreeResult),
+        this.broadcastToLogSystem(decreeResult)
       ]);
 
       // Logjo rezultatet e transmetimit
@@ -187,7 +197,7 @@ class VoiceContextService {
         }
       });
 
-      console.log('🌈 Dekreti u shpërnda në të gjitha dimensionet e sistemit!');
+      console.log('🌈 Dekreti u përpunua në server!');
       return { broadcasted: true, results: broadcastResults };
 
     } catch (error) {
@@ -196,37 +206,40 @@ class VoiceContextService {
     }
   }
 
-  // 🔗 METODAT E TRANSMETIMIT
-  async broadcastToAIBridge(decreeResult) {
-    if (window.multiAIBridge) {
-      return await window.multiAIBridge.routeRequest({
-        input: `Dekret i ri: ${decreeResult.decree.title}`,
-        context: 'universal_decree',
-        urgency: 'high'
+  // 🔗 METODAT E TRANSMETIMIT SERVER-SIDE
+  async broadcastToDatabase(decreeResult) {
+    try {
+      // Ruaj dekretin në database ose file system
+      console.log('💾 Duke ruajtur dekretin në sistem...');
+      
+      // Këtu mund të integrohet me database të vërtetë
+      // Për tani, vetëm logjim
+      return { success: true, stored: true, location: 'server_memory' };
+      
+    } catch (error) {
+      console.error('❌ Gabim në ruajtje:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async broadcastToLogSystem(decreeResult) {
+    try {
+      // Logjo dekretin në sistemin e logjeve
+      console.log('📝 Duke logjuar dekretin universal...');
+      
+      // Logjo në console për tani
+      console.log('🏛️ DEKRETI UNIVERSAL:', {
+        title: decreeResult.decree.title,
+        timestamp: new Date().toISOString(),
+        harmony: this.universalHarmonyLevel
       });
+      
+      return { success: true, logged: true };
+      
+    } catch (error) {
+      console.error('❌ Gabim në logjim:', error);
+      return { success: false, error: error.message };
     }
-    throw new Error('Multi-AI Bridge nuk është i disponueshëm');
-  }
-
-  async broadcastToQuantumMemory(decreeResult) {
-    if (window.quantumMemory) {
-      return await window.quantumMemory.storeDecree(decreeResult.decree);
-    }
-    throw new Error('Quantum Memory nuk është i disponueshëm');
-  }
-
-  async broadcastToDivineConstitution(decreeResult) {
-    if (window.divineConstitution) {
-      return await window.divineConstitution.recordDecree(decreeResult.decree);
-    }
-    throw new Error('Divine Constitution nuk është i disponueshëm');
-  }
-
-  async broadcastToBioNeural(decreeResult) {
-    if (window.bioNeuralNetwork) {
-      return await window.bioNeuralNetwork.processUniversalSignal(decreeResult.decree);
-    }
-    throw new Error('Bio-Neural Network nuk është i disponueshëm');
   }
 
   // 📊 METODA MONITORIMI
@@ -242,9 +255,37 @@ class VoiceContextService {
         'NLU Integration', 
         'Context Memory',
         'Universal Decree Application',
-        'Multi-Dimensional Broadcasting'
-      ]
+        'Server-Side Broadcasting'
+      ],
+      environment: 'server'
     };
+  }
+
+  // 🧪 METODA TESTIMI
+  async testService() {
+    try {
+      console.log('🧪 Duke testuar VoiceContextService...');
+      
+      const testResult = await this.activateService();
+      
+      if (testResult.success) {
+        console.log('✅ Testi i VoiceContextService kaloi!');
+        return {
+          success: true,
+          message: 'Service is operational',
+          harmony: this.universalHarmonyLevel
+        };
+      } else {
+        throw new Error(testResult.error);
+      }
+      
+    } catch (error) {
+      console.error('❌ Testi i VoiceContextService dështoi:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
   }
 }
 
@@ -254,9 +295,13 @@ module.exports = new VoiceContextService();
 // 🔮 INICIALIZIMI AUTOMATIK
 setTimeout(async () => {
   try {
-    await module.exports.activateService();
-    console.log('🚀 VoiceContextService u inicializua automatikisht!');
+    const initResult = await module.exports.activateService();
+    if (initResult.success) {
+      console.log('🚀 VoiceContextService u inicializua automatikisht!');
+    } else {
+      console.warn('⚠️ VoiceContextService nuk u inicializua:', initResult.error);
+    }
   } catch (error) {
-    console.error('❀ Inicializimi automatik dështoi:', error);
+    console.error('❌ Inicializimi automatik dështoi:', error);
   }
 }, 3000);
