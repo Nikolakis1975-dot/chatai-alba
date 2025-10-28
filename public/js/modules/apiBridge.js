@@ -1,8 +1,7 @@
-// 🌉 URA E KOMUNIKIMIT ME SERVERIN RRUFE-TESLA
-
+// ================================= 🌉 URA E KOMUNIKIMIT ME SERVERIN RRUFE-TESLA ======================================
 class ApiBridge {
     constructor() {
-        this.baseURL = window.location.origin; // URL aktual i aplikacionit
+        this.baseURL = window.location.origin;
         this.endpoints = {
             voice: '/api/voice/transcribe',
             universalDecree: '/api/voice/universal-decree',
@@ -13,10 +12,9 @@ class ApiBridge {
         };
         this.isOnline = true;
         this.retryAttempts = 3;
-        this.retryDelay = 1000; // 1 sekondë
+        this.retryDelay = 1000;
     }
 
-    // 🔧 METODA BAZË E API CALL
     async callAPI(endpoint, data = {}, options = {}) {
         const url = this.baseURL + endpoint;
         const config = {
@@ -30,7 +28,6 @@ class ApiBridge {
             ...options
         };
 
-        // Shto të dhënat në body nëse është POST/PUT
         if (['POST', 'PUT', 'PATCH'].includes(config.method)) {
             config.body = JSON.stringify({
                 ...data,
@@ -45,7 +42,6 @@ class ApiBridge {
             const response = await this.fetchWithRetry(url, config);
             const result = await response.json();
 
-            // Verifikoj përgjigjen
             if (!response.ok) {
                 throw new Error(result.message || `HTTP ${response.status}`);
             }
@@ -59,12 +55,10 @@ class ApiBridge {
         }
     }
 
-    // 🔄 FETCH ME RITRY AUTOMATIK
     async fetchWithRetry(url, config, attempt = 1) {
         try {
             const response = await fetch(url, config);
             
-            // Nëse është server error, provo përsëri
             if (response.status >= 500 && attempt < this.retryAttempts) {
                 console.warn(`⚠️ Retry attempt ${attempt} for ${url}`);
                 await this.delay(this.retryDelay * attempt);
@@ -83,7 +77,6 @@ class ApiBridge {
         }
     }
 
-    // 🎤 METODA SPECIFIKE PËR VOICE
     async processVoice(audioBlob, context = {}) {
         const formData = new FormData();
         formData.append('audio', audioBlob);
@@ -106,7 +99,6 @@ class ApiBridge {
                 throw new Error(result.message || 'Voice processing failed');
             }
 
-            // Aktivizo Dekretin Universal nëse ekziston
             if (result.decree) {
                 this.activateUniversalDecree(result.decree);
             }
@@ -119,7 +111,6 @@ class ApiBridge {
         }
     }
 
-    // 📜 METODA PËR DEKRET UNIVERSAL
     async sendUniversalDecree(audioBlob, decreeContext = {}) {
         const formData = new FormData();
         formData.append('audio', audioBlob);
@@ -152,7 +143,6 @@ class ApiBridge {
         }
     }
 
-    // 🌐 METODA PËR MULTI-AI BRIDGE
     async routeToAI(message, context = {}) {
         return this.callAPI(this.endpoints.multiAI, {
             input: message,
@@ -161,7 +151,6 @@ class ApiBridge {
         });
     }
 
-    // 💾 METODA PËR CONTEXT MEMORY
     async updateContext(contextUpdate) {
         return this.callAPI(this.endpoints.context, {
             action: 'update',
@@ -170,28 +159,22 @@ class ApiBridge {
         });
     }
 
-    // 📊 METODA PËR STATUS
     async getServiceStatus() {
         return this.callAPI(this.endpoints.status, {}, { method: 'GET' });
     }
 
-    // 🔮 AKTIVIZIMI I DEKRETIT UNIVERSAL
     activateUniversalDecree(decree) {
         console.log('📜 DEKRETI UNIVERSAL U AKTIVIZUA:', decree.title);
         
-        // Transmeto në të gjitha modulet
         this.broadcastDecreeToModules(decree);
         
-        // Shfaq në UI nëse ekziston funksioni
         if (window.showUniversalMessage) {
             window.showUniversalMessage(decree.message.shqip);
         }
 
-        // Ruaj në historinë lokale
         this.saveDecreeToHistory(decree);
     }
 
-    // 📢 TRANSMETIMI I DEKRETIT NË MODULET
     broadcastDecreeToModules(decree) {
         const modules = [
             'multiAIBridge',
@@ -214,7 +197,6 @@ class ApiBridge {
         });
     }
 
-    // 💾 RUAJTJA E DEKRETIT NË HISTORI
     saveDecreeToHistory(decree) {
         try {
             const history = JSON.parse(localStorage.getItem('rrufe_decrees') || '[]');
@@ -224,20 +206,14 @@ class ApiBridge {
                 harmony: this.getHarmonyLevel()
             });
             
-            // Mbaj vetëm 50 dekretet e fundit
-            if (history.length > 50) {
-                history.pop();
-            }
-            
+            if (history.length > 50) history.pop();
             localStorage.setItem('rrufe_decrees', JSON.stringify(history));
         } catch (error) {
             console.warn('⚠️ Nuk u ruajt dekreti në histori:', error);
         }
     }
 
-    // 🛠️ METODA NDIHMËSE
     getHarmonyLevel() {
-        // Llogarit nivelin e harmonisë bazuar në modulet aktive
         const activeModules = [
             'multiAIBridge', 'quantumMemory', 'divineConstitution',
             'cognitiveAwareness', 'voiceIntegration'
@@ -281,7 +257,6 @@ class ApiBridge {
             harmony: this.getHarmonyLevel()
         };
 
-        // Nëse jemi offline, trego mesazh përkatës
         if (!navigator.onLine) {
             errorResponse.offline = true;
             errorResponse.message = 'Jeni offline. Kontrolloni lidhjen me internet.';
@@ -301,7 +276,6 @@ class ApiBridge {
         };
     }
 
-    // 📡 VERIFIKIMI I KONEKTIVITETIT
     async checkConnectivity() {
         try {
             const response = await fetch(this.baseURL + this.endpoints.status, {
@@ -317,18 +291,15 @@ class ApiBridge {
     }
 }
 
-// 🎯 EKSPORTIMI GLOBAL
 window.ApiBridge = ApiBridge;
 window.apiBridge = new ApiBridge();
 
 console.log('🌉 ApiBridge u ngarkua! Harmonia:', window.apiBridge.getHarmonyLevel() + '%');
 
-// 🔄 VERIFIKO KONEKTIVITETIN ÇDO 30 SEKONDA
 setInterval(() => {
     window.apiBridge.checkConnectivity();
 }, 30000);
 
-// 🎉 INICIALIZO MENJËHERË
 window.apiBridge.checkConnectivity().then(online => {
     console.log(online ? '✅ Online' : '❌ Offline');
 });
