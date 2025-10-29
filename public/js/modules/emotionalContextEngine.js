@@ -83,8 +83,8 @@ class EmotionalContextEngine {
         let baseResonance = emotionalData.confidence || 0.5;
         
         if (context && context.urgency === 'high') baseResonance *= 1.3;
-        if (context.creative === true) baseResonance *= 1.2;
-        if (context.personal === true) baseResonance *= 1.1;
+        if (context && context.creative === true) baseResonance *= 1.2;
+        if (context && context.personal === true) baseResonance *= 1.1;
         
         return Math.min(1.0, baseResonance);
     }
