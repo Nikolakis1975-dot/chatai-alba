@@ -82,7 +82,7 @@ class EmotionalContextEngine {
         // LLOGARIT REZONANCËN EMOCIONALE KUANTIKE
         let baseResonance = emotionalData.confidence || 0.5;
         
-        if (context.urgency === 'high') baseResonance *= 1.3;
+        if (context && context.urgency === 'high') baseResonance *= 1.3;
         if (context.creative === true) baseResonance *= 1.2;
         if (context.personal === true) baseResonance *= 1.1;
         
