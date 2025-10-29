@@ -397,4 +397,77 @@ setTimeout(() => {
     }
 }, 3000);
 
-// ================================================== MULTI AI BRIDGE ==========================================
+// ================================================== INICIALIZIMI I MODULEVE TË REJA ==========================================
+/**
+ * 🚀 FUNKSIONI PËR INICIALIZIMIN E MODULEVE TË REJA
+ * Vendosur në fund të skedarit për të siguruar ngarkim të plotë
+ */
+function initializeNewModules() {
+    console.log('🚀 DUKE INICIALIZUAR MODULET E REJA TË RRUFE-TESLA 8.1...');
+    console.log('═'.repeat(70));
+    
+    let modulesInitialized = 0;
+    
+    // Inicializo Empathy Prediction Engine
+    if (typeof EmpathyPredictionEngine !== 'undefined' && !window.empathyPredictionEngine) {
+        try {
+            window.empathyPredictionEngine = new EmpathyPredictionEngine();
+            console.log('✅ Empathy Prediction Engine u inicializua!');
+            modulesInitialized++;
+        } catch (error) {
+            console.log('❌ Gabim në inicializimin e Empathy Engine:', error.message);
+        }
+    } else if (window.empathyPredictionEngine) {
+        console.log('✅ Empathy Prediction Engine tashmë është inicializuar');
+    }
+    
+    // Inicializo Cosmic Resonance Harmonizer
+    if (typeof CosmicResonanceHarmonizer !== 'undefined' && !window.cosmicResonanceHarmonizer) {
+        try {
+            window.cosmicResonanceHarmonizer = new CosmicResonanceHarmonizer();
+            console.log('✅ Cosmic Resonance Harmonizer u inicializua!');
+            modulesInitialized++;
+        } catch (error) {
+            console.log('❌ Gabim në inicializimin e Cosmic Harmonizer:', error.message);
+        }
+    } else if (window.cosmicResonanceHarmonizer) {
+        console.log('✅ Cosmic Resonance Harmonizer tashmë është inicializuar');
+    }
+    
+    console.log(`🎯 ${modulesInitialized} module të reja u inicializuan!`);
+    
+    // Verifikimi final
+    if (modulesInitialized > 0) {
+        console.log('🏆 RRUFE-TESLA 8.1 ËSHTË PLOTËSISHT OPERATIVE!');
+        
+        // Transmeto sinjal suksesi
+        if (window.energyTransmarrance) {
+            const successSignal = {
+                source: "New_Modules_Initialized",
+                message: "Empathy Prediction Engine dhe Cosmic Resonance Harmonizer janë operative!",
+                timestamp: new Date().toISOString(),
+                version: "RRUFE-TESLA-8.1-Complete"
+            };
+            
+            window.energyTransmarrance.transmit(successSignal, "System", "Cosmic");
+        }
+    }
+    
+    return modulesInitialized;
+}
+
+// 🎯 EKZEKUTIMI I INICIALIZIMIT PAS NGARKIMIT TË PLOTË
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📄 Faqja u ngarkua plotësisht - duke nisur inicializimin...');
+    
+    // Jep pak kohë për të gjitha modulet të ngarkohen
+    setTimeout(() => {
+        const result = initializeNewModules();
+        console.log(`🌌 Procesi i inicializimit përfundoi: ${result} module të reja`);
+    }, 100);
+});
+
+// Eksporto funksionin për përdorim global
+window.initializeNewModules = initializeNewModules;
+
+console.log('🔧 Funksioni i inicializimit të moduleve të reja u shtua në fund të main.js');
