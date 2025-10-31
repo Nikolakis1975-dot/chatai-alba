@@ -233,4 +233,4 @@ class NOUS_CORE {
 }
 
 // 🚀 EKSPORTIMI PËR PËRDORIM NË SISTEMIN KRYESOR
-module.exports = NOUS_CORE;
+// module.exports = NOUS_CORE;
