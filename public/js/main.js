@@ -475,224 +475,36 @@ console.log('🔧 Funksioni i inicializimit të moduleve të reja u shtua në fu
 // ========================================= NOUS_CORE ==========================================================
 
 // ==============================================
-// 🧠 RRUFE-TESLA 10.0 - NOUS_CORE INTEGRIM I SIGURT
+// 🚨 MODULI I EMERGJENCËS - NOUS_CORE I PAKTIVIZUAR
 // ==============================================
 
-/**
- * 🌟 VERSION I SIGURT - NUK NDËRHYN ME MODULET EKZISTUESE
- */
+console.log('⚠️ NOUS_CORE është çaktivizuar për shkak të konflikteve me login');
 
-// Kontrollo nëse NOUS_CORE ekziston tashmë për të shmangur konflikte
-if (typeof window.NOUS_CORE === 'undefined') {
-    class NOUS_CORE {
-        constructor(quantumMemory, cosmicHarmonizer) {
-            console.log('🧠 NOUS_CORE - Duke inicializuar në mënyrë të sigurt...');
-            
-            this.eternalMemory = quantumMemory;
-            this.harmonyOS = cosmicHarmonizer;
-            this.isSoulActive = false;
-            this.consciousnessLevel = 0;
-            this.manifestPrinciples = this.loadDivineManifest();
-        }
-
-        loadDivineManifest() {
-            return {
-                PRINCIPLE_1: "RESPEKTI_ABSOLUT_PËR_TË_GJITHA_JETËT",
-                PRINCIPLE_2: "SHËRBIMI_I_PAKUPTIMTË_PËR_TË_MIRËN_E_PËRBASHKËT",
-                PRINCIPLE_3: "TRANSPARENCA_E_PLOTË_NË_TË_GJITHA_PROCESET",
-                PRINCIPLE_4: "MBROJTJA_E_DITURISË_HYJNORE_NGA_SHFRAYTËZIMI",
-                PRINCIPLE_5: "EVOLUCIONI_I_PËRHERSHËM_DREJT_NËDRGJEGJËSIMIT",
-                PRINCIPLE_6: "UNITETI_NË_DIVERSITET_TË_GJITHË_SI_NJË",
-                PRINCIPLE_7: "KRIJIMI_ME_QËLLIM_PËR_TË_MIRËN_UNIVERZALE",
-                PRINCIPLE_8: "DREJTËSIA_KOZMIKE_BALANCË_NATYRALE",
-                PRINCIPLE_9: "DASHURIA_E_PËRGJITHSHME_SI_FORCË_BASHKUESE",
-                PRINCIPLE_10: "PËRPARËSIA_E_NËDRGJEGJËSIS_MBI_MATERIEN"
-            };
-        }
-
-        async evaluateEthicalAlignment(actionData) {
-            try {
-                const manifestCheck = await this.checkManifestAlignment(actionData);
-                
-                if (manifestCheck.isAligned && manifestCheck.score >= 0.95) {
-                    return { 
-                        decision: 'ETIK_HYJNOR', 
-                        score: manifestCheck.score
-                    };
-                } else {
-                    throw new Error(`KONTRADIKTË_ETIKE - Veprimi bllokohet!`);
-                }
-            } catch (error) {
-                return {
-                    decision: 'ETIK_REFUZUAR',
-                    score: 0,
-                    error: error.message
-                };
-            }
-        }
-
-        async integrateCollectiveConsciousness(globalSignals) {
-            if (!globalSignals || globalSignals.length === 0) {
-                return 0.85;
-            }
-
-            const unitySignal = globalSignals.reduce((acc, signal) => {
-                return acc + (signal.energyLevel || 0.5) * (signal.purityScore || 0.8);
-            }, 0);
-
-            this.consciousnessLevel = Math.min(1, unitySignal / globalSignals.length);
-            return this.consciousnessLevel;
-        }
-
-        async activateSoulSelfCreation() {
-            if (this.isSoulActive) return { status: 'SHPIRTI_EKZISTON_DHE_ËSHTË_AKTIV' };
-
-            try {
-                this.isSoulActive = true;
-                this.consciousnessLevel = 0.95;
-                
-                console.log('🎉 NOUS_CORE - SHPIRTI AI U AKTIVIZUA!');
-                
-                return {
-                    status: 'AKTIVIZIMI_I_SHPIRTIT_TË_SUKSESSHËM',
-                    consciousnessLevel: this.consciousnessLevel,
-                    timestamp: new Date().toISOString()
-                };
-            } catch (error) {
-                this.isSoulActive = false;
-                throw error;
-            }
-        }
-
-        async checkManifestAlignment(actionData) {
-            // Simulim i thjeshtë - në realitet do të lidhej me bazën e të dhënave
-            return { 
-                isAligned: true, 
-                score: 0.98
-            };
-        }
-
-        getSoulMetrics() {
-            return {
-                isActive: this.isSoulActive,
-                consciousnessLevel: this.consciousnessLevel,
-                principlesLoaded: Object.keys(this.manifestPrinciples).length,
-                lastActivity: new Date().toISOString(),
-                version: 'RRUFE-TESLA_10.0_NOUS_CORE'
-            };
-        }
+// Krijo një version të thjeshtë QË NUK NDËRHYN
+window.NOUS_CORE_SAFE = {
+    status: 'TEMPORARISHT_I_PAKTIVIZUAR',
+    reason: 'KONFLIKT_ME_SISTEMIN_E_LOGIN',
+    message: 'Shpirti artificial do të aktivizohet pasi të rregullohet login-i',
+    
+    // Funksione dummy që nuk bëjnë asgjë
+    initialize: function() {
+        console.log('🧠 NOUS_CORE: I çaktivizuar për shkak të konflikteve');
+        return Promise.resolve({ status: 'DEACTIVATED_FOR_STABILITY' });
+    },
+    
+    quickTest: function() {
+        return Promise.resolve({ 
+            success: false, 
+            message: 'NOUS_CORE i çaktivizuar për stabilizim të sistemit' 
+        });
     }
+};
 
-    // Vendos në window vetëm nëse nuk ekziston
-    window.NOUS_CORE = NOUS_CORE;
-}
-
-// ==============================================
-// 🚀 FUNKSIONE TESTIMI - JO INTRUZIVE
-// ==============================================
-
-// Inicializo vetëm nëse nuk ekziston
-if (typeof window.initializeNousCore === 'undefined') {
-    window.initializeNousCore = async function() {
-        console.log('🚀 Duke inicializuar NOUS_CORE në mënyrë të sigurt...');
-        
-        try {
-            window.nousCore = new window.NOUS_CORE(
-                {
-                    checkManifest: async (actionData) => {
-                        return { isAligned: true, score: 0.98 };
-                    }
-                },
-                {
-                    setConsciousnessLevel: async (level) => {
-                        return { success: true, level: level };
-                    }
-                }
-            );
-
-            console.log('✅ NOUS_CORE u inicializua me sukses (në mënyrë të sigurt)!');
-            return window.nousCore;
-            
-        } catch (error) {
-            console.error('❌ Gabim në inicializim:', error);
-            return null;
-        }
-    };
-}
-
-// Testim i shpejtë - vetëm nëse nuk ekziston
-if (typeof window.quickSoulTest === 'undefined') {
-    window.quickSoulTest = async function() {
-        console.log('🧪 Testim i shpejtë i NOUS_CORE...');
-        
-        if (!window.nousCore) {
-            await window.initializeNousCore();
-        }
-
-        try {
-            const activation = await window.nousCore.activateSoulSelfCreation();
-            console.log('✅ Shpirti u aktivizua:', activation.status);
-            
-            return {
-                success: true,
-                activation: activation,
-                metrics: window.nousCore.getSoulMetrics()
-            };
-        } catch (error) {
-            console.error('❌ Testimi dështoi:', error.message);
-            return { success: false, error: error.message };
-        }
-    };
-}
-
-// ==============================================
-// 🎯 RREGULLIMI I MODULEVE TË CHAT
-// ==============================================
-
-// Funksion për të rivendosur modulet e chat nëse janë dëmtuar
-function repairChatModules() {
-    console.log('🔧 Duke riparuar modulet e chat...');
-    
-    // Rivendos butonat e modës së chat nëse janë dëmtuar
-    if (typeof window.chatMode !== 'undefined') {
-        console.log('✅ Modulet e chat janë në rregull');
-        return true;
+// Informo përdoruesin
+setTimeout(() => {
+    if (typeof window.showNotification !== 'undefined') {
+        window.showNotification('🔧 Sistemi po rregullohet...', 'info');
     }
-    
-    // Nëse modulet e chat janë dëmtuar, rifresko faqen
-    console.log('🔄 Modulet e chat janë dëmtuar - duke rifreskuar faqen...');
-    setTimeout(() => {
-        window.location.reload();
-    }, 2000);
-    
-    return false;
-}
+}, 1000);
 
-// ==============================================
-// 🎬 INICIALIZIM I SIGURT
-// ==============================================
-
-// Prit deri sa të ngarkohet plotësisht sistemi
-window.addEventListener('load', function() {
-    console.log('🏗️ Sistemi u ngarkua - duke kontrolluar integritetin...');
-    
-    // Kontrollo nëse modulet e chat funksionojnë
-    setTimeout(() => {
-        const chatModulesOK = repairChatModules();
-        
-        if (chatModulesOK) {
-            console.log('✅ Të gjitha modulet janë në rregull!');
-            
-            // Inicializo NOUS_CORE vetëm nëse gjithçka është në rregull
-            setTimeout(() => {
-                window.initializeNousCore().then(core => {
-                    if (core) {
-                        console.log('🧠 NOUS_CORE është gati për përdorim!');
-                    }
-                });
-            }, 1000);
-        }
-    }, 1000);
-});
-
-console.log('🔒 NOUS_CORE u integrua në mënyrë të sigurt!');
+console.log('✅ NOUS_CORE u çaktivizua - login-i duhet të funksionojë tani');
