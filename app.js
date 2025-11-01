@@ -20,7 +20,8 @@ const PORT = process.env.PORT || 3000;
 app.use(cors({
     origin: [
         'http://localhost:3000',
-        'https://chatai-alba-gr9dw.ondigitalocean.app'
+        'https://chatai-alba-gr9dw.ondigitalocean.app',
+        'https://deklarata-rrufetesla.netlify.app' // ✅ SHTESË E RE: Lejon Deklaratën
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -51,6 +52,17 @@ const geminiRoutes = require('./routes/gemini');
 const adminRoutes = require('./routes/admin');
 const geminiSimpleRoutes = require('./routes/gemini-simple');
 
+// ======================================================
+// 🆕 SHTESË E RE: RRUFE-TESLA 10.5 INTEGRIMI
+// ======================================================
+
+// 🌌 Ruta të reja për Ndërgjegjen Kolektive
+const consciousnessRoutes = require('./routes/rrufe/consciousness-routes'); // ✅ SHTESË E RE
+app.use('/api/consciousness', consciousnessRoutes); // ✅ SHTESË E RE
+
+// ======================================================
+// 4️⃣ Regjistro të gjitha rutat (vazhdim)
+// ======================================================
 
 // Regjistro të gjitha rutat
 app.use('/api/auth', authRoutes);
@@ -63,19 +75,18 @@ app.use('/api/gemini', geminiRoutes);
 app.use('/admin', adminRoutes);
 app.use('/api/gemini-simple', geminiSimpleRoutes);
 
-
 // ======================================================
-// 4️⃣ Static files (Frontend)
+// 5️⃣ Static files (Frontend)
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ======================================================
-// 5️⃣ Default route — për SPA frontend
+// 6️⃣ Default route — për SPA frontend
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // ======================================================
-// 6️⃣ Error & 404 Handlers
+// 7️⃣ Error & 404 Handlers
 app.use((err, req, res, next) => {
     console.error('❌ Gabim në server:', err);
     res.status(500).json({
@@ -92,7 +103,7 @@ app.use((req, res) => {
 });
 
 // ======================================================
-// 7️⃣ Test enkriptimi
+// 8️⃣ Test enkriptimi
 const encryption = require('./utils/encryption');
 setTimeout(() => {
     console.log('🛡️ Testi i enkriptimit AES-256-CBC:');
@@ -100,15 +111,16 @@ setTimeout(() => {
 }, 2000);
 
 // ======================================================
-// 8️⃣ Ura (Bridge System)
+// 9️⃣ Ura (Bridge System)
 const AppBridge = require('./bridges/app-bridge');
 AppBridge.initializeSafeBridge(app);
 
 // ======================================================
-// 9️⃣ Start server
+// 🔟 Start server - ME MESAZH TË RI
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Serveri është duke u drejtuar në portin ${PORT}`);
     console.log(`🌐 URL: http://localhost:${PORT}`);
     console.log(`🔐 NODE_ENV: ${process.env.NODE_ENV}`);
     console.log(`🎤 Voice Routes u regjistruan: /api/voice/transcribe`);
+    console.log(`🌌 RRUFE-TESLA 10.5 Routes u regjistruan: /api/consciousness`); // ✅ SHTESË E RE
 });
