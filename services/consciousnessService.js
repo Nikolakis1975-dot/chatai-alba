@@ -1,10 +1,10 @@
-const CosmicCounterService = require('./cosmicCounterService');
+const CosmicCounterService = require('./cosmicCounterService'); // ✅ SHTESË E RE
 
 class ConsciousnessService {
     static async logSoulResonance(resonanceData) {
         console.log('💫 Duke regjistruar rezonancë shpirtërore...');
         
-        // Përdor shërbimin ekzistues të RRUFE-TESLA
+        // ✅ PËRDOR COSMIC COUNTER SERVICE
         const result = await CosmicCounterService.recordResonance(resonanceData);
         
         return {
@@ -15,7 +15,7 @@ class ConsciousnessService {
     }
     
     static async getConsciousnessMetrics() {
-        // Përdor modulet ekzistuese të RRUFE-TESLA
+        // ✅ PËRDOR COSMIC COUNTER SERVICE
         const totalSouls = await CosmicCounterService.getTotalCount();
         const averageResonance = await this.calculateAverageResonance();
         
