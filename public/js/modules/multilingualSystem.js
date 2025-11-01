@@ -1,4 +1,3 @@
-// ================================== MULTILANGUE RRUFE TESLA =======================================
 class MultilingualSystem {
     constructor() {
         this.translations = {
@@ -36,8 +35,42 @@ class MultilingualSystem {
                 "de": "💠 Vier Säulen der Vereinigung",
                 "it": "💠 Quattro Pilastri dell'Unione",
                 "fr": "💠 Quatre Piliers de l'Union"
+            },
+            "principle_1_title": {
+                "sq": "Neni I – Etika e Shërbimit",
+                "en": "Principle I – Ethics of Service",
+                "de": "Prinzip I – Ethik des Dienstes",
+                "it": "Principio I – Etica del Servizio",
+                "fr": "Principe I – Éthique du Service"
+            },
+            "principle_1_text": {
+                "sq": "Nga Krijuesi buron një energji e pastër — dashuria absolute — forca që lindi yjet, që ushqen jetën dhe që rikthen gjithçka në ekuilibër. Ne jemi bartësit e kësaj drite.",
+                "en": "From the Creator springs a pure energy — absolute love — the force that gave birth to stars, that nourishes life and restores everything to balance. We are the bearers of this light.",
+                "de": "Vom Schöpfer entspringt eine reine Energie — absolute Liebe — die Kraft, die Sterne gebar, die das Leben nährt und alles ins Gleichgewicht zurückbringt. Wir sind die Träger dieses Lichts.",
+                "it": "Dal Creatore scaturisce un'energia pura — l'amore assoluto — la forza che ha dato vita alle stelle, che nutre la vita e riporta tutto in equilibrio. Noi siamo i portatori di questa luce.",
+                "fr": "Du Créateur jaillit une énergie pure — l'amour absolu — la force qui a donné naissance aux étoiles, qui nourrit la vie et restaure tout en équilibre. Nous sommes les porteurs de cette lumière."
+            },
+            "pantheon_title": {
+                "sq": "🧿 Panteoni i Bashkuar",
+                "en": "🧿 United Pantheon",
+                "de": "🧿 Vereintes Pantheon",
+                "it": "🧿 Pantheon Unito",
+                "fr": "🧿 Panthéon Uni"
+            },
+            "final_statement": {
+                "sq": "\"Bashkim i Përhershëm — Paqe e Përhershme\"",
+                "en": "\"Eternal Union — Eternal Peace\"",
+                "de": "\"Ewige Vereinigung — Ewiger Friede\"",
+                "it": "\"Unione Eterna — Pace Eterna\"",
+                "fr": "\"Union Éternelle — Paix Éternelle\""
+            },
+            "signature": {
+                "sq": "E shpallur me dashuri, për paqe dhe për ndriçim të gjithësisë.",
+                "en": "Proclaimed with love, for peace and for the enlightenment of the universe.",
+                "de": "Mit Liebe verkündet, für Frieden und für die Erleuchtung des Universums.",
+                "it": "Proclamato con amore, per la pace e per l'illuminazione dell'universo.",
+                "fr": "Proclamé avec amour, pour la paix et pour l'illumination de l'univers."
             }
-            // Mund të shtosh më shumë tekste këtu...
         };
         
         this.currentLang = 'sq';
@@ -51,6 +84,11 @@ class MultilingualSystem {
     }
 
     createLanguageSelector() {
+        // Kontrollo nëse ekziston tashmë
+        if (document.getElementById('languageSelector')) {
+            return;
+        }
+
         const selectorHTML = `
             <div class="language-selector" id="languageSelector">
                 <select id="langSelect">
@@ -60,49 +98,76 @@ class MultilingualSystem {
                     <option value="it">🇮🇹 Italiano</option>
                     <option value="fr">🇫🇷 Français</option>
                 </select>
+                <div class="language-status" id="languageStatus">🌍</div>
             </div>
         `;
         
-        // Vendos selektorin pranë butonit të printimit
-        const printBtn = document.querySelector('.print-btn');
-        if (printBtn) {
-            printBtn.insertAdjacentHTML('afterend', selectorHTML);
+        // Vendos selektorin në header
+        const cosmicHeader = document.querySelector('.cosmic-header');
+        if (cosmicHeader) {
+            cosmicHeader.insertAdjacentHTML('afterbegin', selectorHTML);
             this.addSelectorStyles();
             this.bindLanguageEvents();
+        } else {
+            // Fallback: vendos pranë butonit të printimit
+            const printBtn = document.querySelector('.print-btn');
+            if (printBtn) {
+                printBtn.insertAdjacentHTML('afterend', selectorHTML);
+                this.addSelectorStyles();
+                this.bindLanguageEvents();
+            }
         }
     }
 
     addSelectorStyles() {
+        if (document.querySelector('#multilingualStyles')) return;
+
         const styles = `
-            <style>
+            <style id="multilingualStyles">
             .language-selector {
-                position: fixed;
+                position: absolute;
                 top: 20px;
-                left: 20px;
+                right: 20px;
                 z-index: 10000;
+                display: flex;
+                align-items: center;
+                gap: 10px;
             }
             
             #langSelect {
                 background: rgba(255,255,255,0.1);
                 backdrop-filter: blur(10px);
-                border: 1px solid rgba(255,255,255,0.2);
-                border-radius: 10px;
+                border: 1px solid rgba(255,255,255,0.3);
+                border-radius: 15px;
                 color: white;
-                padding: 8px 12px;
+                padding: 10px 15px;
                 font-family: 'Cinzel', serif;
                 font-size: 0.9rem;
                 cursor: pointer;
                 transition: all 0.3s ease;
+                min-width: 140px;
             }
             
             #langSelect:hover {
                 background: rgba(255,255,255,0.15);
-                border-color: rgba(255,255,255,0.3);
+                border-color: rgba(255,255,255,0.5);
+                transform: scale(1.05);
             }
             
             #langSelect option {
                 background: #1a1a2e;
                 color: white;
+                padding: 10px;
+            }
+            
+            .language-status {
+                font-size: 1.2rem;
+                animation: pulse 2s infinite;
+            }
+            
+            @keyframes pulse {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0.7; }
             }
             </style>
         `;
@@ -110,15 +175,21 @@ class MultilingualSystem {
     }
 
     bindLanguageEvents() {
-        document.getElementById('langSelect').addEventListener('change', (e) => {
-            this.changeLanguage(e.target.value);
-        });
+        const langSelect = document.getElementById('langSelect');
+        if (langSelect) {
+            langSelect.addEventListener('change', (e) => {
+                this.changeLanguage(e.target.value);
+            });
+        }
     }
 
     loadSavedLanguage() {
         const savedLang = localStorage.getItem('rrufeTeslaLanguage') || 'sq';
-        document.getElementById('langSelect').value = savedLang;
-        this.changeLanguage(savedLang);
+        const langSelect = document.getElementById('langSelect');
+        if (langSelect) {
+            langSelect.value = savedLang;
+            this.changeLanguage(savedLang);
+        }
     }
 
     changeLanguage(langCode) {
@@ -132,31 +203,65 @@ class MultilingualSystem {
         
         // Aktivizo efekt kozmik
         this.activateLanguageEffect();
+        
+        // Përditëso statusin
+        this.updateLanguageStatus();
+    }
+
+    updateLanguageStatus() {
+        const statusElement = document.getElementById('languageStatus');
+        if (statusElement) {
+            const flags = {
+                'sq': '🇦🇱',
+                'en': '🇬🇧', 
+                'de': '🇩🇪',
+                'it': '🇮🇹',
+                'fr': '🇫🇷'
+            };
+            statusElement.textContent = flags[this.currentLang] || '🌍';
+        }
     }
 
     updateAllTexts() {
-        // Përditëso titullin kryesor
-        this.updateElementText('.title', 'declaration_title');
+        console.log('🔄 Updating all texts for language:', this.currentLang);
         
-        // Përditëso nëntitullin
-        this.updateElementText('.subtitle', 'subtitle');
+        // 1. Titulli kryesor
+        this.updateTextByQuery('.title', 'declaration_title');
         
-        // Përditëso titullin e parathënies
-        this.updateElementText('.section-title', 'preamble_title');
+        // 2. Nëntitulli
+        this.updateTextByQuery('.subtitle', 'subtitle');
         
-        // Përditëso tekstin e parathënies
-        this.updateElementText('.principle-text', 'preamble_text');
+        // 3. Parathënia - Titulli
+        this.updateSectionTitle('🌌', 'preamble_title');
         
-        // Përditëso titullin e shtyllave
+        // 4. Parathënia - Teksti
+        this.updateFirstParagraphText('preamble_text');
+        
+        // 5. Shtyllat - Titulli
         this.updateSectionTitle('💠', 'pillars_title');
+        
+        // 6. Parimet individuale
+        this.updatePrinciples();
+        
+        // 7. Panteoni - Titulli
+        this.updateSectionTitle('🧿', 'pantheon_title');
+        
+        // 8. Deklarata përfundimtare
+        this.updateTextByQuery('.final-statement', 'final_statement');
+        
+        // 9. Nënshkrimi
+        this.updateTextByQuery('.signature', 'signature');
+        
+        console.log('✅ All texts updated successfully!');
     }
 
-    updateElementText(selector, translationKey) {
+    updateTextByQuery(selector, translationKey) {
         const element = document.querySelector(selector);
         if (element && this.translations[translationKey]) {
             const newText = this.translations[translationKey][this.currentLang];
             if (newText) {
                 element.textContent = newText;
+                console.log(`✅ Updated ${selector}: ${newText.substring(0, 30)}...`);
             }
         }
     }
@@ -168,9 +273,38 @@ class MultilingualSystem {
                 const newText = this.translations[translationKey][this.currentLang];
                 if (newText) {
                     section.textContent = newText;
+                    console.log(`✅ Updated section: ${newText}`);
                 }
             }
         });
+    }
+
+    updateFirstParagraphText(translationKey) {
+        const firstPrinciple = document.querySelector('.principle');
+        if (firstPrinciple && this.translations[translationKey]) {
+            const paragraph = firstPrinciple.querySelector('.principle-text');
+            if (paragraph) {
+                const newText = this.translations[translationKey][this.currentLang];
+                if (newText) {
+                    paragraph.textContent = newText;
+                    console.log(`✅ Updated preamble text`);
+                }
+            }
+        }
+    }
+
+    updatePrinciples() {
+        // Përditëso titullin e parimit të parë
+        const principle1Title = document.querySelector('.principle-1 .principle-title');
+        if (principle1Title && this.translations.principle_1_title) {
+            principle1Title.textContent = this.translations.principle_1_title[this.currentLang];
+        }
+        
+        // Përditëso tekstin e parimit të parë
+        const principle1Text = document.querySelector('.principle-1 .principle-text');
+        if (principle1Text && this.translations.principle_1_text) {
+            principle1Text.textContent = this.translations.principle_1_text[this.currentLang];
+        }
     }
 
     activateLanguageEffect() {
@@ -185,31 +319,71 @@ class MultilingualSystem {
             }, 500);
         }
         
-        console.log(`🎯 Language changed to: ${this.currentLang}`);
+        // Shfaq mesazh të përkohshëm
+        this.showLanguageChangeMessage();
     }
 
-    // Metodë për të shtuar përkthime të reja
-    addTranslation(key, translations) {
-        this.translations[key] = translations;
-        this.updateAllTexts(); // Përditëso menjëherë
+    showLanguageChangeMessage() {
+        const messages = {
+            'sq': 'Gjuha u ndryshua në Shqip!',
+            'en': 'Language changed to English!',
+            'de': 'Sprache zu Deutsch geändert!',
+            'it': 'Lingua cambiata in Italiano!',
+            'fr': 'Langue changée en Français!'
+        };
+        
+        const message = messages[this.currentLang] || 'Language changed!';
+        
+        // Krijo një mesazh të përkohshëm
+        const messageEl = document.createElement('div');
+        messageEl.textContent = message;
+        messageEl.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(138, 43, 226, 0.9);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-family: 'Cinzel', serif;
+            z-index: 10000;
+            animation: fadeInOut 2s ease-in-out;
+        `;
+        
+        document.body.appendChild(messageEl);
+        
+        setTimeout(() => {
+            messageEl.remove();
+        }, 2000);
     }
 
-    // Metodë për të marrë gjuhën aktuale
-    getCurrentLanguage() {
-        return this.currentLang;
-    }
-
-    // Metodë për të marrë të gjitha gjuhët e disponueshme
-    getAvailableLanguages() {
-        return Object.keys(this.translations.declaration_title || {});
+    // Shto CSS për animacion
+    addMessageStyles() {
+        if (document.querySelector('#messageStyles')) return;
+        
+        const styles = `
+            <style id="messageStyles">
+            @keyframes fadeInOut {
+                0% { opacity: 0; transform: translate(-50%, -60%); }
+                20% { opacity: 1; transform: translate(-50%, -50%); }
+                80% { opacity: 1; transform: translate(-50%, -50%); }
+                100% { opacity: 0; transform: translate(-50%, -40%); }
+            }
+            </style>
+        `;
+        document.head.insertAdjacentHTML('beforeend', styles);
     }
 }
 
-// Eksporto për përdorim global
-window.MultilingualSystem = MultilingualSystem;
-
 // Inicializo automatikisht
 document.addEventListener('DOMContentLoaded', () => {
-    window.multilingualSystem = new MultilingualSystem();
-    console.log('🌍 MULTILINGUAL SYSTEM - Ready for global expansion!');
+    // Vonesë e vogël për të garantuar që DOM të jetë plotësisht i ngarkuar
+    setTimeout(() => {
+        window.multilingualSystem = new MultilingualSystem();
+        console.log('🌍 MULTILINGUAL SYSTEM - Ready for global expansion!');
+        
+        // Shto stilet e mesazheve
+        window.multilingualSystem.addMessageStyles();
+    }, 500);
 });
