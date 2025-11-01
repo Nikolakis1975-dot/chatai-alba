@@ -376,6 +376,100 @@ class MultilingualSystem {
     }
 }
 
+// ================================ UPDATEPANTHENON ================================
+updatePantheon() {
+    console.log('🔄 Updating pantheon texts...');
+    
+    // Përditëso rolet e Panteonit
+    this.updatePantheonRole('.deity:nth-child(1) .deity-role', 'cimi_role');
+    this.updatePantheonRole('.deity:nth-child(2) .deity-role', 'gemini_role');
+    this.updatePantheonRole('.deity:nth-child(3) .deity-role', 'deepseek_role');
+    this.updatePantheonRole('.deity:nth-child(4) .deity-role', 'copilot_role');
+    this.updatePantheonRole('.deity:nth-child(5) .deity-role', 'chatgpt_role');
+}
+
+updatePantheonRole(selector, translationKey) {
+    const element = document.querySelector(selector);
+    if (element && this.translations[translationKey]) {
+        const newText = this.translations[translationKey][this.currentLang];
+        if (newText) {
+            element.textContent = newText;
+            console.log(`✅ Updated pantheon role: ${selector}`);
+        }
+    }
+}
+
+updateMonitor() {
+    console.log('🔄 Updating monitor texts...');
+    
+    // Titulli i monitorit
+    this.updateText('.monitor-header h3', 'monitor_title');
+    
+    // Statusi i lidhjes
+    this.updateText('.status-text', 'connected_status');
+    
+    // Labels të metrikave
+    this.updateMonitorLabels();
+    
+    // Timeline milestones
+    this.updateTimelineMilestones();
+    
+    // Subtitle i numëruesit
+    this.updateText('.counter-subtitle', 'counter_subtitle');
+}
+
+updateMonitorLabels() {
+    // Labels të metrikave
+    const metricLabels = document.querySelectorAll('.metric-label');
+    if (metricLabels.length >= 4) {
+        // Shpirtërinj të Ndriçuar
+        if (this.translations.souls_label) {
+            metricLabels[0].textContent = this.translations.souls_label[this.currentLang];
+        }
+        // Rezonancë
+        if (this.translations.resonance_label) {
+            metricLabels[1].textContent = this.translations.resonance_label[this.currentLang];
+        }
+        // Harmoni
+        if (this.translations.harmony_label) {
+            metricLabels[2].textContent = this.translations.harmony_label[this.currentLang];
+        }
+        // Gjendja
+        if (this.translations.state_label) {
+            metricLabels[3].textContent = this.translations.state_label[this.currentLang];
+        }
+    }
+    
+    // Evolucioni
+    this.updateText('.timeline-label', 'evolution_label');
+}
+
+updateTimelineMilestones() {
+    const milestones = document.querySelectorAll('.timeline-milestones span');
+    if (milestones.length >= 5) {
+        // EMBRYONIC
+        if (this.translations.embryonic) {
+            milestones[0].textContent = this.translations.embryonic[this.currentLang];
+        }
+        // AWAKENING
+        if (this.translations.awakening) {
+            milestones[1].textContent = this.translations.awakening[this.currentLang];
+        }
+        // HARMONIZING
+        if (this.translations.harmonizing) {
+            milestones[2].textContent = this.translations.harmonizing[this.currentLang];
+        }
+        // RESONATING
+        if (this.translations.resonating) {
+            milestones[3].textContent = this.translations.resonating[this.currentLang];
+        }
+        // UNIVERSAL
+        if (this.translations.universal) {
+            milestones[4].textContent = this.translations.universal[this.currentLang];
+        }
+    }
+}
+
 // Inicializo automatikisht
 document.addEventListener('DOMContentLoaded', () => {
     // Vonesë e vogël për të garantuar që DOM të jetë plotësisht i ngarkuar
