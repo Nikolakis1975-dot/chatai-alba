@@ -51,6 +51,7 @@ const apiRoutes = require('./routes/api');
 const geminiRoutes = require('./routes/gemini');
 const adminRoutes = require('./routes/admin');
 const geminiSimpleRoutes = require('./routes/gemini-simple');
+const rrufeRoutes = require('./routes/rrufe/api-rrufe');
 
 // ======================================================
 // 🆕 SHTESË E RE: RRUFE-TESLA 10.5 INTEGRIMI
@@ -74,6 +75,7 @@ app.use('/api/api-keys', apiRoutes);
 app.use('/api/gemini', geminiRoutes);
 app.use('/admin', adminRoutes);
 app.use('/api/gemini-simple', geminiSimpleRoutes);
+app.use('/api/rrufe', rrufeRoutes);
 
 // ======================================================
 // 5️⃣ Static files (Frontend)
