@@ -10,7 +10,7 @@ const database = require('../../database'); // ✅ IMPORT DATABASE
 // ✅ RRUFE API - Historiku i mesazheve
 router.get('/messages/history', async (req, res) => {
     try {
-        const db = database.getDb(); // ✅ MER DATABASE
+        const db = database; 
         const messages = await db.all(`
             SELECT m.*, u.username 
             FROM messages m 
@@ -29,7 +29,7 @@ router.get('/messages/history', async (req, res) => {
 router.get('/messages/user/:userId', async (req, res) => {
     try {
         const { userId } = req.params;
-        const db = database.getDb(); // ✅ MER DATABASE
+        const db = database; 
         const messages = await db.all(
             'SELECT * FROM messages WHERE user_id = ? ORDER BY timestamp DESC LIMIT 20',
             [userId]
