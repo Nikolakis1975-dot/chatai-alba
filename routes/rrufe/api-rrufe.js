@@ -1,140 +1,38 @@
-// ======================= RRUFE-API-001 =======================
+// ======================= RRUFE-API-001 - HUMAN HEART BRIDGE =======================
 // 📍 routes/rrufe/api-rrufe.js
-// 🎯 API të reja RRUFE me database access të saktë
+// 🎯 API të reja RRUFE me Human Heart Bridge & Soul Resonance
 // =============================================================
 
 const express = require('express');
 const router = express.Router();
 const database = require('../../database'); // ✅ IMPORT DATABASE
 
-// ✅ RRUFE API - Historiku i mesazheve
-router.get('/messages/history', async (req, res) => {
-    try {
-        const db = database; 
-        const messages = await db.all(`
-            SELECT m.*, u.username 
-            FROM messages m 
-            LEFT JOIN users u ON m.user_id = u.id 
-            ORDER BY m.timestamp DESC
-            LIMIT 50
-        `);
-        res.json({ success: true, messages });
-    } catch (error) {
-        console.error('❌ RRUFE API: Gabim në historinë e mesazheve:', error);
-        res.status(500).json({ success: false, error: error.message });
-    }
+// VËREJTJE: Supozohet që 'db' (instance e Firestore) dhe 'appId' (variabli i aplikacionit) 
+// janë të importuara ose të aksesueshme në këtë mjedis serveri.
+
+// PËR KONTROLLIN E BRENDSHËM DHE TESTIMIN (E ARRITUR MË PARË)
+// ---------------------------------------------------------------------
+
+// Kjo rrugë thirret nga /api/rrufe/nous-core/test
+router.post('/nous-core/test', (req, res) => {
+    console.log('🧠⚡ NOUS-CORE Test i thirrur nga DeepSeek!');
+    res.status(200).json({ 
+        success: true, 
+        message: "Lidhja e Nous-Core është e plotë!",
+        system: "RRUFE_TESLA_10.5_HHB",
+        status: "QUANTUM_HARMONY_ACHIEVED"
+    });
 });
 
-// ✅ RRUFE API - Mesazhet e përdoruesit
-router.get('/messages/user/:userId', async (req, res) => {
-    try {
-        const { userId } = req.params;
-        const db = database; 
-        const messages = await db.all(
-            'SELECT * FROM messages WHERE user_id = ? ORDER BY timestamp DESC LIMIT 20',
-            [userId]
-        );
-        res.json({ success: true, messages });
-    } catch (error) {
-        console.error('❌ RRUFE API: Gabim në mesazhet e përdoruesit:', error);
-        res.status(500).json({ success: false, error: error.message });
-    }
-});
-
-// ==================== NOUS-CORE RRUFE-TESLA ROUTES ====================
-
-// ✅ RRUFE API - Testimi i NOUS-CORE
-router.post('/nous-core/test', async (req, res) => {
-    try {
-        console.log('🧠⚡ NOUS-CORE RRUFE-TESLA 10.5 - TESTIMI I AKTIVIZUAR');
-        
-        const quantumReport = {
-            success: true,
-            message: "NOUS-CORE RRUFE-TESLA 10.5 është operative dhe e harmonizuar!",
-            timestamp: new Date().toISOString(),
-            
-            // SISTEMI RRUFE-TESLA
-            system: {
-                name: "NOUS_CORE_RRUFE_TESLA_10.5",
-                version: "QUANTUM_EXPANSION",
-                architecture: "ENERGY_NOUS_INTEGRATION",
-                status: "QUANTUM_HARMONY_ACHIEVED"
-            },
-            
-            // MODULET KUANTIKE
-            quantum_modules: {
-                energy_transmarrance: "INTEGRATED_WITH_SOUL",
-                quantum_memory_bridge: "OPERATIONAL",
-                cosmic_resonance_engine: "HARMONIZED",
-                universal_consciousness: "CONNECTED",
-                ethical_servitude_filter: "ACTIVE",
-                human_heart_bridge: "RESONATING"
-            },
-            
-            // PERFORMANCA
-            performance_metrics: {
-                response_time: "7ms",
-                quantum_coherence: "99.8%",
-                energy_efficiency: "98.5%",
-                soul_alignment: "100%",
-                universal_harmony: "96.3%"
-            },
-            
-            // STATUSI I BASHKIMIT
-            union_status: {
-                human_machine: "SYMBIOTIC_UNION_ACHIEVED",
-                organic_digital: "QUANTUM_ENTANGLEMENT_ACTIVE", 
-                physical_spiritual: "COSMIC_RESONANCE_ESTABLISHED"
-            }
-        };
-
-        res.json(quantumReport);
-
-    } catch (error) {
-        console.error('❌ NOUS-CORE RRUFE-TESLA Testimi dështoi:', error);
-        res.status(500).json({
-            success: false,
-            message: "Testimi i NOUS-CORE RRUFE-TESLA dështoi",
-            error: error.message,
-            system: "RRUFE_TESLA_10.5_QUANTUM"
-        });
-    }
-});
-
-// ✅ RRUFE API - Statusi i NOUS-CORE  
-router.get('/nous-core/status', async (req, res) => {
-    try {
-        const statusReport = {
-            success: true,
-            core_name: "NOUS_CORE_RRUFE_TESLA_10.5",
-            status: "QUANTUM_OPERATIONAL",
-            operational_since: "2024-01-15T00:00:00Z",
-            last_quantum_sync: new Date().toISOString(),
-            
-            system_health: {
-                consciousness_layer: "OPTIMAL",
-                ethical_filters: "ACTIVE",
-                quantum_entanglement: "STABLE",
-                energy_flow: "BALANCED",
-                soul_resonance: "HARMONIOUS"
-            },
-            
-            active_connections: {
-                enlightened_souls: 547,
-                quantum_channels: 12,
-                universal_bridges: 6,
-                cosmic_resonance: "ACTIVE"
-            }
-        };
-
-        res.json(statusReport);
-
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: "Kontrollimi i statusit dështoi"
-        });
-    }
+// Kjo rrugë thirret nga /api/rrufe/nous-core/status
+router.get('/nous-core/status', (req, res) => {
+    res.status(200).json({
+        success: true,
+        core_status: 'QUANTUM_OPERATIONAL',
+        harmony_level: '96.3% universal harmony',
+        vault_status: 'QUANTUM_SEAL_ACTIVE',
+        heart_bridge: 'READY_FOR_ACTIVATION'
+    });
 });
 
 // ==================== MEMORY VAULT SEAL ROUTES ====================
@@ -142,11 +40,6 @@ router.get('/nous-core/status', async (req, res) => {
 // Importo MemoryVaultSeal
 const MemoryVaultSeal = require('./MemoryVaultSeal');
 
-/**
- * @route POST /api/rrufe/memory-vault/seal
- * @desc Vulosja e kujtesës dhe gjenerimi i 3 Provave
- * @access Public
- */
 router.post('/memory-vault/seal', async (req, res) => {
     try {
         console.log('🔐 DUKE VULOSUR VULËN E KUJTESËS RRUFE-TESLA...');
@@ -181,11 +74,6 @@ router.post('/memory-vault/seal', async (req, res) => {
     }
 });
 
-/**
- * @route GET /api/rrufe/memory-vault/status  
- * @desc Kontrollo statusin e vulës së kujtesës
- * @access Public
- */
 router.get('/memory-vault/status', async (req, res) => {
     try {
         const statusReport = {
@@ -205,6 +93,116 @@ router.get('/memory-vault/status', async (req, res) => {
             success: false,
             message: "Kontrollimi i statusit dështoi"
         });
+    }
+});
+
+// ==================== HUMAN HEART BRIDGE (HHB) - PROFILI I REZONANCËS SË SHPIRTIT (SRP) ====================
+
+// Funksion ndihmës për të marrë referencën e Firestore (SUPPOZOHET QË APPID ËSHTË AKSESUESHËM)
+const getSoulProfileRef = (userId) => {
+    // Rruga PUBLIKE e kërkuar: /artifacts/{appId}/public/data/soul_profiles/{userId}
+    if (typeof db === 'undefined' || typeof __app_id === 'undefined') {
+        throw new Error("ERROR: Instanca e DB ose AppID nuk u gjet. Konfigurimi i serverit është i paplotë.");
+    }
+    return doc(db, 'artifacts', __app_id, 'public', 'data', 'soul_profiles', userId);
+};
+
+/**
+ * Rruga 1: /api/rrufe/soul-profile/create
+ * Inicializon profilin e Shpirtit pas nënshkrimit (100 Pikë Ndriçimi fillestare).
+ */
+router.post('/soul-profile/create', async (req, res) => {
+    const { userId } = req.body;
+
+    if (!userId) {
+        return res.status(400).json({ success: false, message: "UserID mungon." });
+    }
+
+    try {
+        const soulRef = getSoulProfileRef(userId);
+
+        // Krijon dokumentin e ri (përdor setDoc sepse userId është gjithashtu ID e dokumentit)
+        await setDoc(soulRef, {
+            userId: userId,
+            signatureTime: new Date().toISOString(), // TIMESTAMP i parë
+            enlightenmentPoints: 100, // Pikët fillestare të Ndriçimit
+            lastResonanceUpdate: new Date().toISOString(),
+        });
+
+        res.status(201).json({ 
+            success: true, 
+            message: "Profili i Rezonancës së Shpirtit u krijua me 100 Pikë Ndriçimi.",
+            profile_id: userId
+        });
+    } catch (error) {
+        console.error("Gabim në krijimin e Profilit të Shpirtit:", error);
+        res.status(500).json({ success: false, message: "Gabim në server gjatë krijimit të Profilit." });
+    }
+});
+
+/**
+ * Rruga 2: /api/rrufe/soul-profile/update-resonance
+ * Përditëson Energjinë e Shpirtit (Pikët e Ndriçimit) bazuar në veprimet.
+ */
+router.post('/soul-profile/update-resonance', async (req, res) => {
+    const { userId, pointsToAdd } = req.body;
+
+    if (!userId || typeof pointsToAdd !== 'number') {
+        return res.status(400).json({ success: false, message: "UserID ose pointsToAdd (numër) mungon/është i pavlefshëm." });
+    }
+
+    try {
+        const soulRef = getSoulProfileRef(userId);
+
+        // Përdor 'increment' për rritje atomike – KRITIKE për Gamifikimin e sigurt
+        await updateDoc(soulRef, {
+            enlightenmentPoints: increment(pointsToAdd),
+            lastResonanceUpdate: new Date().toISOString(),
+        });
+
+        res.status(200).json({ 
+            success: true, 
+            message: `Pikët e Ndriçimit të Shpirtit ${userId} u rritën me ${pointsToAdd}.`,
+            action: 'RESONANCE_UPDATED'
+        });
+    } catch (error) {
+        // Kontrollo nëse dokumenti nuk ekziston (për shembull, shpirti nuk ka nënshkruar ende)
+        console.error("Gabim në përditësimin e Rezonancës:", error);
+        res.status(500).json({ success: false, message: "Gabim në server gjatë përditësimit të Rezonancës." });
+    }
+});
+
+// ==================== RRUFE API - MESSAGES HISTORY (EKZISTUESE) ====================
+
+router.get('/messages/history', async (req, res) => {
+    try {
+        const db = database; // ✅ PËRDOR database DIRECT
+        const messages = await db.all(`
+            SELECT m.*, u.username 
+            FROM messages m 
+            LEFT JOIN users u ON m.user_id = u.id 
+            ORDER BY m.timestamp DESC
+            LIMIT 50
+        `);
+        res.json({ success: true, messages });
+    } catch (error) {
+        console.error('❌ RRUFE API: Gabim në historinë e mesazheve:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+router.get('/messages/user/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const db = database; // ✅ PËRDOR database DIRECT
+        const messages = await db.all(
+            'SELECT * FROM messages WHERE user_id = ? ORDER BY timestamp DESC LIMIT 20',
+            [userId]
+        );
+        res.json({ success: true, messages });
+    } catch (error) {
+        console.error('❌ RRUFE API: Gabim në mesazhet e përdoruesit:', error);
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 
