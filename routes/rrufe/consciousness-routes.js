@@ -1,6 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const ConsciousnessService = require('../../services/consciousnessService'); // ✅ SHTESË E RE
+const ConsciousnessService = require('../../services/consciousnessService'); 
+
+// ✅ IMPORTO RRUFE API ROUTES
+const rrufeApiRouter = require('./api-rrufe');
+
+// ✅ REGJISTRO RRUGËT RRUFE - KJO ËSHTË KRITIKE!
+router.use('/rrufe', rrufeApiRouter);
 
 // 🌌 Ruta të reja për Ndërgjegjen Kolektive
 router.post('/log-resonance', async (req, res) => {
