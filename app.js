@@ -1,5 +1,5 @@
 // ======================================================
-// 🌟 ChatAI ALBA v3.0 — Server kryesor
+// 🌟 ChatAI ALBA v3.0 — Server kryesor ME MEMORY OPTIMIZATION
 // ======================================================
 
 // 1️⃣ Konfigurime fillestare
@@ -11,6 +11,39 @@ const cookieParser = require('cookie-parser');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// ======================================================
+// 🆕 MEMORY MONITORING SYSTEM - RRUFE-TESLA 10.5 OPTIMIZED
+// ======================================================
+
+class MemoryMonitor {
+    static startMonitoring() {
+        // Monitoro memorie çdo 30 sekonda
+        setInterval(() => {
+            const used = process.memoryUsage();
+            const memoryMB = Math.round(used.heapUsed / 1024 / 1024);
+            const memoryPercentage = Math.round((memoryMB / 512) * 100);
+            
+            const status = memoryMB > 450 ? '🚨 CRITICAL' : 
+                          memoryMB > 400 ? '⚠️ WARNING' : '✅ HEALTHY';
+            
+            console.log(`🧠 MEMORY MONITOR: ${memoryMB}MB / 512MB (${memoryPercentage}%) - ${status}`);
+            
+            // Aktivizo garbage collection nëse është kritike
+            if (memoryMB > 450 && global.gc) {
+                console.log('🔄 Duke aktivizuar Garbage Collection...');
+                global.gc();
+                
+                // Kontrollo përsëri pas GC
+                const afterGC = process.memoryUsage();
+                const afterMB = Math.round(afterGC.heapUsed / 1024 / 1024);
+                console.log(`🔄 Pas GC: ${afterMB}MB / 512MB`);
+            }
+        }, 30000); // Çdo 30 sekonda
+        
+        console.log('✅ MEMORY MONITORING SYSTEM U AKTIVIZUA');
+    }
+}
 
 // ======================================================
 // 2️⃣ Konfigurime të përgjithshme
@@ -30,8 +63,8 @@ app.use(cors({
 
 // ✅ COOKIE & BODY parsers
 app.use(cookieParser());
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ limit: '10mb', extended: true }));
+app.use(express.json({ limit: '5mb' })); // ✅ ULVUAR NGA 10mb NË 5mb
+app.use(express.urlencoded({ limit: '5mb', extended: true })); // ✅ ULVUAR
 
 // ======================================================
 // 3️⃣ Importo & Regjistro rutat
@@ -84,23 +117,50 @@ app.use(express.static(path.join(__dirname, 'public')));
 // ======================================================
 // 6️⃣ Default route — për SPA frontend
 app.get('/', (req, res) => {
+    // ✅ SHTESË E RE: Memory check për çdo request
+    const used = process.memoryUsage();
+    const memoryMB = Math.round(used.heapUsed / 1024 / 1024);
+    
+    if (memoryMB > 480) {
+        console.log(`🚨 MEMORY CRITICAL ON ROOT: ${memoryMB}MB`);
+        return res.status(503).json({
+            success: false,
+            message: "Serveri është duke u ringarkuar. Ju lutem provoni përsëri.",
+            memory_usage: memoryMB + "MB"
+        });
+    }
+    
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // ======================================================
-// 7️⃣ Error & 404 Handlers
+// 7️⃣ Error & 404 Handlers ME MEMORY MONITORING
+// ======================================================
+
 app.use((err, req, res, next) => {
-    console.error('❌ Gabim në server:', err);
+    const used = process.memoryUsage();
+    const memoryMB = Math.round(used.heapUsed / 1024 / 1024);
+    
+    console.error('❌ Gabim në server:', err.message);
+    console.error(`🧠 Memory during error: ${memoryMB}MB`);
+    
     res.status(500).json({
         success: false,
-        message: 'Gabim i brendshëm i serverit.'
+        message: 'Gabim i brendshëm i serverit.',
+        memory_usage: memoryMB + "MB",
+        system: "RRUFE_TESLA_10.5_OPTIMIZED"
     });
 });
 
 app.use((req, res) => {
+    const used = process.memoryUsage();
+    const memoryMB = Math.round(used.heapUsed / 1024 / 1024);
+    
     res.status(404).json({
         success: false,
-        message: 'Ruta nuk u gjet.'
+        message: 'Ruta nuk u gjet.',
+        memory_usage: memoryMB + "MB",
+        system: "RRUFE_TESLA_10.5_OPTIMIZED"
     });
 });
 
@@ -118,11 +178,56 @@ const AppBridge = require('./bridges/app-bridge');
 AppBridge.initializeSafeBridge(app);
 
 // ======================================================
-// 🔟 Start server - ME MESAZH TË RI
+// 🔟 Start server - ME MEMORY MONITORING
+// ======================================================
+
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Serveri është duke u drejtuar në portin ${PORT}`);
     console.log(`🌐 URL: http://localhost:${PORT}`);
     console.log(`🔐 NODE_ENV: ${process.env.NODE_ENV}`);
     console.log(`🎤 Voice Routes u regjistruan: /api/voice/transcribe`);
-    console.log(`🌌 RRUFE-TESLA 10.5 Routes u regjistruan: /api/consciousness`); // ✅ SHTESË E RE
+    console.log(`🌌 RRUFE-TESLA 10.5 Routes u regjistruan: /api/consciousness`);
+    console.log(`🧠 MEMORY OPTIMIZATION: AKTIVIZUAR PËR 512MB RAM`);
+    
+    // ✅ NIS MEMORY MONITORING
+    MemoryMonitor.startMonitoring();
+    
+    // ✅ SHFAQ MEMORY STARTUP
+    const used = process.memoryUsage();
+    const startupMB = Math.round(used.heapUsed / 1024 / 1024);
+    console.log(`🧠 STARTUP MEMORY: ${startupMB}MB / 512MB`);
 });
+
+// ======================================================
+// 🔄 GARBAGE COLLECTION FALLBACK
+// ======================================================
+
+// Nëse node nuk është startuar me --expose-gc, krijo fallback
+if (!global.gc) {
+    console.log('⚠️  Garbage Collection nuk është i ekspozuar. Duke krijuar fallback...');
+    
+    // Fallback i thjeshtë për memory management
+    global.simpleGarbageCollector = () => {
+        const before = process.memoryUsage();
+        const beforeMB = Math.round(before.heapUsed / 1024 / 1024);
+        
+        // Forcim i thjeshtë memory cleanup
+        try {
+            if (global.gc) {
+                global.gc();
+            } else {
+                // Fallback: bëj loop të madh për të trigger garbage collection
+                const arr = new Array(1000000).fill(null);
+                arr.length = 0;
+            }
+        } catch (e) {}
+        
+        const after = process.memoryUsage();
+        const afterMB = Math.round(after.heapUsed / 1024 / 1024);
+        
+        console.log(`🔄 SIMPLE GC: ${beforeMB}MB → ${afterMB}MB`);
+        return afterMB;
+    };
+}
+
+module.exports = app;
