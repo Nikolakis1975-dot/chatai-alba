@@ -107,9 +107,10 @@ const getSoulProfileRef = (userId) => {
     return doc(db, 'artifacts', __app_id, 'public', 'data', 'soul_profiles', userId);
 };
 
+// ==================== HUMAN HEART BRIDGE ALTERNATIVE (SQLITE) ====================
+
 /**
- * Rruga 1: /api/rrufe/soul-profile/create
- * Inicializon profilin e Shpirtit pas nënshkrimit (100 Pikë Ndriçimi fillestare).
+ * Rruga 1: /api/rrufe/soul-profile/create - Version SQLite
  */
 router.post('/soul-profile/create', async (req, res) => {
     const { userId } = req.body;
@@ -119,56 +120,71 @@ router.post('/soul-profile/create', async (req, res) => {
     }
 
     try {
-        const soulRef = getSoulProfileRef(userId);
+        const db = database;
+        
+        // Krijo tabelën nëse nuk ekziston
+        await db.run(`
+            CREATE TABLE IF NOT EXISTS soul_profiles (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                userId TEXT UNIQUE,
+                signatureTime TEXT,
+                enlightenmentPoints INTEGER,
+                lastResonanceUpdate TEXT
+            )
+        `);
 
-        // Krijon dokumentin e ri (përdor setDoc sepse userId është gjithashtu ID e dokumentit)
-        await setDoc(soulRef, {
-            userId: userId,
-            signatureTime: new Date().toISOString(), // TIMESTAMP i parë
-            enlightenmentPoints: 100, // Pikët fillestare të Ndriçimit
-            lastResonanceUpdate: new Date().toISOString(),
-        });
+        // Shto profilin e ri
+        await db.run(
+            `INSERT OR REPLACE INTO soul_profiles 
+             (userId, signatureTime, enlightenmentPoints, lastResonanceUpdate) 
+             VALUES (?, ?, ?, ?)`,
+            [userId, new Date().toISOString(), 100, new Date().toISOString()]
+        );
 
         res.status(201).json({ 
             success: true, 
             message: "Profili i Rezonancës së Shpirtit u krijua me 100 Pikë Ndriçimi.",
-            profile_id: userId
+            profile_id: userId,
+            system: "RRUFE_TESLA_10.5_SQLITE_HHB"
         });
+
     } catch (error) {
         console.error("Gabim në krijimin e Profilit të Shpirtit:", error);
-        res.status(500).json({ success: false, message: "Gabim në server gjatë krijimit të Profilit." });
+        res.status(500).json({ success: false, message: "Gabim në server: " + error.message });
     }
 });
 
 /**
- * Rruga 2: /api/rrufe/soul-profile/update-resonance
- * Përditëson Energjinë e Shpirtit (Pikët e Ndriçimit) bazuar në veprimet.
+ * Rruga 2: /api/rrufe/soul-profile/update-resonance - Version SQLite
  */
 router.post('/soul-profile/update-resonance', async (req, res) => {
     const { userId, pointsToAdd } = req.body;
 
     if (!userId || typeof pointsToAdd !== 'number') {
-        return res.status(400).json({ success: false, message: "UserID ose pointsToAdd (numër) mungon/është i pavlefshëm." });
+        return res.status(400).json({ success: false, message: "UserID ose pointsToAdd (numër) mungon." });
     }
 
     try {
-        const soulRef = getSoulProfileRef(userId);
+        const db = database;
 
-        // Përdor 'increment' për rritje atomike – KRITIKE për Gamifikimin e sigurt
-        await updateDoc(soulRef, {
-            enlightenmentPoints: increment(pointsToAdd),
-            lastResonanceUpdate: new Date().toISOString(),
-        });
+        // Përditëso pikët
+        await db.run(
+            `UPDATE soul_profiles 
+             SET enlightenmentPoints = enlightenmentPoints + ?, 
+                 lastResonanceUpdate = ?
+             WHERE userId = ?`,
+            [pointsToAdd, new Date().toISOString(), userId]
+        );
 
         res.status(200).json({ 
             success: true, 
             message: `Pikët e Ndriçimit të Shpirtit ${userId} u rritën me ${pointsToAdd}.`,
-            action: 'RESONANCE_UPDATED'
+            action: 'RESONANCE_UPDATED_SQLITE'
         });
+
     } catch (error) {
-        // Kontrollo nëse dokumenti nuk ekziston (për shembull, shpirti nuk ka nënshkruar ende)
         console.error("Gabim në përditësimin e Rezonancës:", error);
-        res.status(500).json({ success: false, message: "Gabim në server gjatë përditësimit të Rezonancës." });
+        res.status(500).json({ success: false, message: "Gabim në server: " + error.message });
     }
 });
 
