@@ -154,37 +154,53 @@ router.post('/soul-profile/create', async (req, res) => {
     }
 });
 
+// ======================================== update-resonance SQLite UPDATE ===========================================
 /**
- * Rruga 2: /api/rrufe/soul-profile/update-resonance - Version SQLite
+ * Rruga 2: /api/rrufe/soul-profile/update-resonance - Version i Optimizuar
  */
 router.post('/soul-profile/update-resonance', async (req, res) => {
     const { userId, pointsToAdd } = req.body;
 
     if (!userId || typeof pointsToAdd !== 'number') {
-        return res.status(400).json({ success: false, message: "UserID ose pointsToAdd (numër) mungon." });
+        return res.status(400).json({ 
+            success: false, 
+            message: "UserID ose pointsToAdd (numër) mungon." 
+        });
     }
 
     try {
         const db = database;
 
-        // Përditëso pikët
-        await db.run(
+        // ✅ VERSION I OPTIMIZUAR - më i shpejtë
+        const result = await db.run(
             `UPDATE soul_profiles 
              SET enlightenmentPoints = enlightenmentPoints + ?, 
-                 lastResonanceUpdate = ?
+                 lastResonanceUpdate = datetime('now')
              WHERE userId = ?`,
-            [pointsToAdd, new Date().toISOString(), userId]
+            [pointsToAdd, userId]
         );
 
-        res.status(200).json({ 
+        // Kontrollo nëse u përditësua ndonjë rresht
+        if (result.changes === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "Profili i shpirtit nuk u gjet. Së pari duhet të krijohet profili."
+            });
+        }
+
+        res.json({ 
             success: true, 
-            message: `Pikët e Ndriçimit të Shpirtit ${userId} u rritën me ${pointsToAdd}.`,
-            action: 'RESONANCE_UPDATED_SQLITE'
+            message: `Pikët e Ndriçimit u rritën me ${pointsToAdd}.`,
+            action: 'RESONANCE_UPDATED',
+            system: 'RRUFE_TESLA_10.5_OPTIMIZED'
         });
 
     } catch (error) {
-        console.error("Gabim në përditësimin e Rezonancës:", error);
-        res.status(500).json({ success: false, message: "Gabim në server: " + error.message });
+        console.error("❌ Gabim në përditësimin e Rezonancës:", error);
+        res.status(500).json({ 
+            success: false, 
+            message: "Gabim në server: " + error.message 
+        });
     }
 });
 
