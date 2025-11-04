@@ -107,6 +107,21 @@ function addResponseColumnToMessages() {
 function initializeDatabase() {
     console.log('🔄 Duke inicializuar databazën...');
     
+    // 🆕 TABELA E RE: SOUL PROFILES - RRUFE-TESLA 10.5
+    db.run(`CREATE TABLE IF NOT EXISTS soul_profiles (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        userId TEXT UNIQUE NOT NULL,
+        signatureTime DATETIME DEFAULT CURRENT_TIMESTAMP,
+        enlightenmentPoints INTEGER DEFAULT 100,
+        lastResonanceUpdate DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`, (err) => {
+        if (err) {
+            console.error('❌ Gabim në tabelën soul_profiles:', err);
+        } else {
+            console.log('✅ Tabela soul_profiles u inicializua - RRUFE-TESLA 10.5');
+        }
+    });
+    
     // ✅ TABELA E PËRDORUESVE - VERSION I THJESHTUAR
     db.run(`CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
