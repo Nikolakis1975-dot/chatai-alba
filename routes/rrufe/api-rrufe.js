@@ -1,4 +1,33 @@
-//  RRUFE-TESLA 10.5 OPTIMIZED FOR 512MB RAM
+// ==================== MEMORY LEAK PROTECTION ====================
+
+// Inicializo tabelën NJË HERË në fillim
+let tableInitialized = false;
+
+const initializeTableOnce = async () => {
+    if (tableInitialized) return;
+    
+    try {
+        await database.run(`
+            CREATE TABLE IF NOT EXISTS soul_profiles (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                userId TEXT UNIQUE NOT NULL,
+                signatureTime DATETIME DEFAULT CURRENT_TIMESTAMP,
+                enlightenmentPoints INTEGER DEFAULT 100,
+                lastResonanceUpdate DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+        tableInitialized = true;
+        console.log('✅ SOUL PROFILES TABLE INITIALIZED (ONCE)');
+    } catch (error) {
+        console.error('❌ TABLE INIT ERROR:', error);
+    }
+};
+
+// Thirre në fillim
+initializeTableOnce();
+
+//  ===================================== RRUFE-TESLA 10.5 OPTIMIZED FOR 512MB RAM =====================================
+
 const express = require('express');
 const router = express.Router();
 const database = require('../../database');
@@ -37,19 +66,15 @@ class MemoryMonitor {
 
 // ==================== HUMAN HEART BRIDGE - SOUL PROFILES ====================
 
-/**
- * @route POST /api/rrufe/soul-profile/create
- * @desc Krijon SRP (100 Pikë Ndriçimi) - OPTIMIZED
- */
 router.post('/soul-profile/create', async (req, res) => {
-    // ✅ KONTROLLO MEMORINË PARA SE TË FILLOJË
+    // ✅ KONTROLLO MEMORINË ME KUFIZIME TË FORTA
     const memoryCheck = MemoryMonitor.checkMemory();
-    if (memoryCheck.critical) {
-        return res.status(503).json({
+    if (memoryCheck.critical || memoryCheck.warning) {
+        return res.status(200).json({
             success: false,
-            message: "Server overload - Provoni përsëri pas 30 sekondash",
+            message: "Serveri është duke u ringarkuar. Ju lutem provoni përsëri pas 60 sekondash.",
             memory_usage: memoryCheck.memoryMB + "MB",
-            system: "RRUFE_TESLA_10.5_OPTIMIZED"
+            safe_mode: true
         });
     }
 
@@ -63,25 +88,11 @@ router.post('/soul-profile/create', async (req, res) => {
     }
 
     try {
-        // ✅ KRIJO TABELËN NËSE NUK EKZISTON
-        await database.run(`
-            CREATE TABLE IF NOT EXISTS soul_profiles (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                userId TEXT UNIQUE NOT NULL,
-                signatureTime DATETIME DEFAULT CURRENT_TIMESTAMP,
-                enlightenmentPoints INTEGER DEFAULT 100,
-                lastResonanceUpdate DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
-
-        // ✅ PROVO TË INSERTOSH
+        // ✅ PA CREATE TABLE - përdor initialization nga fillimi
         await database.run(
             `INSERT INTO soul_profiles (userId, enlightenmentPoints) VALUES (?, ?)`,
             [userId, 100]
         );
-
-        // ✅ KONTROLLO MEMORINË PAS OPERACIONIT
-        MemoryMonitor.checkMemory();
 
         res.status(201).json({ 
             success: true, 
@@ -92,8 +103,6 @@ router.post('/soul-profile/create', async (req, res) => {
         });
 
     } catch (error) {
-        console.error("❌ Gabim në krijimin e Profilit:", error.message);
-        
         if (error.message.includes('UNIQUE constraint failed')) {
             return res.status(409).json({ 
                 success: false, 
@@ -101,13 +110,15 @@ router.post('/soul-profile/create', async (req, res) => {
             });
         }
         
-        res.status(500).json({ 
+        res.status(200).json({ 
             success: false, 
-            message: "Gabim në server gjatë krijimit të Profilit." 
+            message: "Serveri është duke u ringarkuar. Provoni përsëri.",
+            safe_mode: true
         });
     }
 });
 
+// ========================================= UPDATE RESONANCE ====================================
 /**
  * @route POST /api/rrufe/soul-profile/update-resonance
  * @desc Përditësim Atomik i Energjisë - OPTIMIZED
@@ -275,12 +286,25 @@ router.get('/nous-core/status', async (req, res) => {
 // ==================== HEALTH CHECK ====================
 
 router.get('/health', async (req, res) => {
+    // ✅ KONTROLLO MEMORINË ME KUFIZIME TË FORTA
     const memoryCheck = MemoryMonitor.checkMemory();
+    
+    // Nëse memory është kritike, kthe përgjigje të shpejtë
+    if (memoryCheck.critical) {
+        return res.json({
+            success: false,
+            system: "RRUFE-TESLA 10.5 API",
+            status: "CRITICAL",
+            memory_usage: memoryCheck.memoryMB + "MB",
+            message: "Server overload - Duke u ringarkuar",
+            timestamp: new Date().toISOString()
+        });
+    }
     
     res.json({
         success: true,
         system: "RRUFE-TESLA 10.5 API",
-        status: memoryCheck.critical ? "CRITICAL" : "HEALTHY",
+        status: memoryCheck.warning ? "WARNING" : "HEALTHY",
         memory_usage: memoryCheck.memoryMB + "MB",
         timestamp: new Date().toISOString(),
         optimized: true
