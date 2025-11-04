@@ -126,10 +126,10 @@ router.post('/soul-profile/update-resonance', async (req, res) => {
         });
     }
 });
-
+// ================================================= LEADERBOARD ======================================
 /**
  * @route GET /api/rrufe/soul-profile/leaderboard
- * @desc Leaderboard - ULTRA STABLE
+ * @desc Leaderboard - FIXED VERSION
  */
 router.get('/soul-profile/leaderboard', async (req, res) => {
     const memoryCheck = MemoryMonitor.checkMemory();
@@ -142,6 +142,18 @@ router.get('/soul-profile/leaderboard', async (req, res) => {
     }
 
     try {
+        console.log('🔍 DUKE EKZEKUTUAR LEADERBOARD QUERY...');
+        
+        // ✅ SIGUROHU QË TABELA EKZISTON
+        await database.run(`CREATE TABLE IF NOT EXISTS soul_profiles (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            userId TEXT UNIQUE NOT NULL,
+            signatureTime DATETIME DEFAULT CURRENT_TIMESTAMP,
+            enlightenmentPoints INTEGER DEFAULT 100,
+            lastResonanceUpdate DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+        
+        // ✅ QUERY ME ERROR HANDLING
         const profiles = await database.all(`
             SELECT userId, enlightenmentPoints
             FROM soul_profiles 
@@ -149,20 +161,36 @@ router.get('/soul-profile/leaderboard', async (req, res) => {
             LIMIT 10
         `);
 
+        console.log(`📊 LEADERBOARD RESULTS: ${profiles ? profiles.length : 0} profiles`);
+        
+        // ✅ SIGUROHU QË PROFILES ËSHTË ARRAY
+        const profilesArray = Array.isArray(profiles) ? profiles : [];
+        
         res.json({ 
             success: true, 
-            message: "Leaderboard u mor!",
-            profiles: profiles || [],
-            total: profiles ? profiles.length : 0
+            message: "Leaderboard u mor me sukses!",
+            profiles: profilesArray,
+            total: profilesArray.length,
+            debug: {
+                table_exists: true,
+                query_executed: true,
+                results_count: profilesArray.length
+            }
         });
 
     } catch (error) {
+        console.error('❌ LEADERBOARD ERROR:', error.message);
+        
         res.json({
             success: true,
             message: "Leaderboard në modalitet të sigurt",
             profiles: [],
             total: 0,
-            safe_mode: true
+            safe_mode: true,
+            debug: {
+                error: error.message,
+                table_exists: false
+            }
         });
     }
 });
