@@ -129,7 +129,7 @@ router.post('/soul-profile/update-resonance', async (req, res) => {
 // ================================================= LEADERBOARD ======================================
 /**
  * @route GET /api/rrufe/soul-profile/leaderboard
- * @desc Leaderboard - FIXED VERSION
+ * @desc Leaderboard - DATABASE FIXED VERSION
  */
 router.get('/soul-profile/leaderboard', async (req, res) => {
     const memoryCheck = MemoryMonitor.checkMemory();
@@ -145,41 +145,54 @@ router.get('/soul-profile/leaderboard', async (req, res) => {
         console.log('🔍 DUKE EKZEKUTUAR LEADERBOARD QUERY...');
         
         // ✅ SIGUROHU QË TABELA EKZISTON
-        await database.run(`CREATE TABLE IF NOT EXISTS soul_profiles (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            userId TEXT UNIQUE NOT NULL,
-            signatureTime DATETIME DEFAULT CURRENT_TIMESTAMP,
-            enlightenmentPoints INTEGER DEFAULT 100,
-            lastResonanceUpdate DATETIME DEFAULT CURRENT_TIMESTAMP
-        )`);
+        await new Promise((resolve, reject) => {
+            database.run(`CREATE TABLE IF NOT EXISTS soul_profiles (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                userId TEXT UNIQUE NOT NULL,
+                signatureTime DATETIME DEFAULT CURRENT_TIMESTAMP,
+                enlightenmentPoints INTEGER DEFAULT 100,
+                lastResonanceUpdate DATETIME DEFAULT CURRENT_TIMESTAMP
+            )`, (err) => {
+                if (err) reject(err);
+                else resolve();
+            });
+        });
         
-        // ✅ QUERY ME ERROR HANDLING
-        const profiles = await database.all(`
-            SELECT userId, enlightenmentPoints
-            FROM soul_profiles 
-            ORDER BY enlightenmentPoints DESC 
-            LIMIT 10
-        `);
+        // ✅ DATABASE QUERY ME PROMISE - FIXED!
+        const profiles = await new Promise((resolve, reject) => {
+            database.all(`
+                SELECT userId, enlightenmentPoints
+                FROM soul_profiles 
+                ORDER BY enlightenmentPoints DESC 
+                LIMIT 10
+            `, (err, rows) => {
+                if (err) {
+                    console.error('❌ DATABASE QUERY ERROR:', err);
+                    reject(err);
+                } else {
+                    console.log(`📊 DATABASE RESULTS: ${rows ? rows.length : 0} rows`);
+                    resolve(rows || []);
+                }
+            });
+        });
 
-        console.log(`📊 LEADERBOARD RESULTS: ${profiles ? profiles.length : 0} profiles`);
-        
-        // ✅ SIGUROHU QË PROFILES ËSHTË ARRAY
-        const profilesArray = Array.isArray(profiles) ? profiles : [];
+        console.log(`🎯 LEADERBOARD FINAL: ${profiles.length} profiles`);
         
         res.json({ 
             success: true, 
             message: "Leaderboard u mor me sukses!",
-            profiles: profilesArray,
-            total: profilesArray.length,
+            profiles: profiles,
+            total: profiles.length,
             debug: {
                 table_exists: true,
                 query_executed: true,
-                results_count: profilesArray.length
+                results_count: profiles.length,
+                sample_data: profiles.length > 0 ? profiles[0] : null
             }
         });
 
     } catch (error) {
-        console.error('❌ LEADERBOARD ERROR:', error.message);
+        console.error('❌ LEADERBOARD FINAL ERROR:', error.message);
         
         res.json({
             success: true,
@@ -188,8 +201,7 @@ router.get('/soul-profile/leaderboard', async (req, res) => {
             total: 0,
             safe_mode: true,
             debug: {
-                error: error.message,
-                table_exists: false
+                error: error.message
             }
         });
     }
