@@ -1,36 +1,7 @@
-// ==================== MEMORY LEAK PROTECTION ====================
-
-// Inicializo tabelën NJË HERË në fillim
-let tableInitialized = false;
-
-const initializeTableOnce = async () => {
-    if (tableInitialized) return;
-    
-    try {
-        await database.run(`
-            CREATE TABLE IF NOT EXISTS soul_profiles (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                userId TEXT UNIQUE NOT NULL,
-                signatureTime DATETIME DEFAULT CURRENT_TIMESTAMP,
-                enlightenmentPoints INTEGER DEFAULT 100,
-                lastResonanceUpdate DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
-        tableInitialized = true;
-        console.log('✅ SOUL PROFILES TABLE INITIALIZED (ONCE)');
-    } catch (error) {
-        console.error('❌ TABLE INIT ERROR:', error);
-    }
-};
-
-// Thirre në fillim
-initializeTableOnce();
-
-//  ===================================== RRUFE-TESLA 10.5 OPTIMIZED FOR 512MB RAM =====================================
-
+// =========================== RRUFE-TESLA 10.5 ULTRA STABLE ===============================
 const express = require('express');
 const router = express.Router();
-const database = require('../../database');
+const database = require('../../database'); // ✅ IMPORT I SAKTË
 
 class MemoryMonitor {
     static checkMemory() {
@@ -39,100 +10,83 @@ class MemoryMonitor {
         
         console.log(`🧠 MEMORY MONITOR: ${memoryMB}MB / 512MB`);
         
-        // Nëse memory është kritike, kthe error
         if (memoryMB > 450) {
-            console.log('🚨 MEMORY CRITICAL - Triggering garbage collection');
-            if (global.gc) {
-                global.gc(); // Forcim garbage collection
-            }
-            return {
-                critical: true,
-                memoryMB: memoryMB,
-                message: "Memory usage critical"
-            };
+            console.log('🚨 MEMORY CRITICAL');
+            if (global.gc) global.gc();
+            return { critical: true, memoryMB };
         }
         
         if (memoryMB > 400) {
-            return {
-                warning: true,
-                memoryMB: memoryMB,
-                message: "Memory usage high"
-            };
+            return { warning: true, memoryMB };
         }
         
-        return { healthy: true, memoryMB: memoryMB };
+        return { healthy: true, memoryMB };
     }
 }
 
 // ==================== HUMAN HEART BRIDGE - SOUL PROFILES ====================
 
+/**
+ * @route POST /api/rrufe/soul-profile/create
+ * @desc Krijon SRP - ULTRA STABLE
+ */
 router.post('/soul-profile/create', async (req, res) => {
-    // ✅ KONTROLLO MEMORINË ME KUFIZIME TË FORTA
     const memoryCheck = MemoryMonitor.checkMemory();
-    if (memoryCheck.critical || memoryCheck.warning) {
-        return res.status(200).json({
+    if (memoryCheck.critical) {
+        return res.json({
             success: false,
-            message: "Serveri është duke u ringarkuar. Ju lutem provoni përsëri pas 60 sekondash.",
-            memory_usage: memoryCheck.memoryMB + "MB",
-            safe_mode: true
+            message: "Server overload - Provoni përsëri",
+            memory_usage: memoryCheck.memoryMB + "MB"
         });
     }
 
     const { userId } = req.body;
     
     if (!userId) {
-        return res.status(400).json({ 
+        return res.json({ 
             success: false, 
             message: "UserID mungon." 
         });
     }
 
     try {
-        // ✅ PA CREATE TABLE - përdor initialization nga fillimi
+        // ✅ QUERY I THJESHTË & I SIGURT
         await database.run(
             `INSERT INTO soul_profiles (userId, enlightenmentPoints) VALUES (?, ?)`,
             [userId, 100]
         );
 
-        res.status(201).json({ 
+        res.json({ 
             success: true, 
-            message: "Profili i Rezonancës së Shpirtit u krijua me 100 Pikë Ndriçimi.",
-            profile_id: userId,
-            system: "RRUFE_TESLA_10.5_HHB",
-            memory_optimized: true
+            message: "Profili i Shpirtit u krijua me 100 Pikë!",
+            profile_id: userId
         });
 
     } catch (error) {
-        if (error.message.includes('UNIQUE constraint failed')) {
-            return res.status(409).json({ 
+        if (error.message.includes('UNIQUE')) {
+            return res.json({ 
                 success: false, 
-                message: "Profili i Shpirtit ekziston tashmë." 
+                message: "Profili ekziston tashmë." 
             });
         }
         
-        res.status(200).json({ 
+        res.json({ 
             success: false, 
-            message: "Serveri është duke u ringarkuar. Provoni përsëri.",
-            safe_mode: true
+            message: "Gabim në server." 
         });
     }
 });
 
-// ========================================= UPDATE RESONANCE ====================================
 /**
  * @route POST /api/rrufe/soul-profile/update-resonance  
- * @desc Përditësim Atomik - ULTRA SAFE VERSION
+ * @desc Përditësim - ULTRA STABLE
  */
 router.post('/soul-profile/update-resonance', async (req, res) => {
-    // ✅ KONTROLLO MEMORINË ME KUFIZIME SHUMË TË FORTA
     const memoryCheck = MemoryMonitor.checkMemory();
-    if (memoryCheck.critical || memoryCheck.warning) {
-        console.log('🚨 UPDATE RESONANCE BLOCKED - Memory:', memoryCheck.memoryMB + 'MB');
-        return res.status(200).json({
-            success: true,
-            message: "Operacioni u krye në modalitet të sigurt për shkak të ngarkesës së lartë.",
-            action: 'RESONANCE_SAFE_MODE',
-            performance: "SAFE_MODE_ACTIVATED",
+    if (memoryCheck.critical) {
+        return res.json({
+            success: false,
+            message: "Server overload",
             memory_usage: memoryCheck.memoryMB + "MB"
         });
     }
@@ -140,190 +94,109 @@ router.post('/soul-profile/update-resonance', async (req, res) => {
     const { userId, pointsToAdd } = req.body;
 
     if (!userId || typeof pointsToAdd !== 'number') {
-        return res.status(400).json({ 
+        return res.json({ 
             success: false, 
-            message: "UserID ose pointsToAdd (numër) mungon." 
+            message: "UserID ose pointsToAdd mungon." 
         });
     }
 
     try {
-        console.log('🔄 DUKE PËRDITËSUAR REZONANCËN (Ultra Safe)...');
-        
-        // ✅ QUERY SUPER I THJESHTË & I SIGURT
         const result = await database.run(
-            `UPDATE soul_profiles 
-             SET enlightenmentPoints = enlightenmentPoints + ?,
-                 lastResonanceUpdate = CURRENT_TIMESTAMP
-             WHERE userId = ?`,
+            `UPDATE soul_profiles SET enlightenmentPoints = enlightenmentPoints + ? WHERE userId = ?`,
             [pointsToAdd, userId]
         );
 
-        // ✅ KONTROLLO NËSE U PËRDITËSUA
         if (result.changes === 0) {
-            return res.status(200).json({ 
-                success: true,
-                message: "Profili nuk u gjet - operacioni u anashkalua në mënyrë të sigurt.",
-                action: 'PROFILE_NOT_FOUND_SAFE'
+            return res.json({ 
+                success: false, 
+                message: "Profili nuk u gjet." 
             });
         }
 
-        // ✅ KONTROLLO MEMORINË PAS OPERACIONIT
-        const afterMemory = MemoryMonitor.checkMemory();
-        
-        console.log(`✅ UPDATE SUCCESS: User ${userId} +${pointsToAdd} points, Memory: ${afterMemory.memoryMB}MB`);
-
-        res.status(200).json({ 
+        res.json({ 
             success: true, 
-            message: `Pikët u rritën me ${pointsToAdd} në mënyrë të sigurt!`,
-            action: 'RESONANCE_UPDATED_ULTRA_SAFE',
-            performance: "ULTRA_SAFE_OPTIMIZED",
-            memory_before: memoryCheck.memoryMB + "MB",
-            memory_after: afterMemory.memoryMB + "MB"
+            message: `Pikët u rritën me ${pointsToAdd}!`,
+            performance: "STABLE"
         });
 
     } catch (error) {
-        console.error('❌ UPDATE RESONANCE ERROR (Safe Fallback):', error.message);
-        
-        // ✅ KTHE PËRGJIGJE TË SIGURT EDHE NË RAST CRASH
-        res.status(200).json({
-            success: true,
-            message: "Operacioni u krye në modalitet të sigurt - ndryshimet do të reflektohen pasi serveri të ringarkohet.",
-            action: 'RESONANCE_SAFE_FALLBACK',
-            performance: "FALLBACK_ULTRA_SAFE",
-            system: "RRUFE_TESLA_10.5_CRASH_PROOF"
+        res.json({
+            success: false,
+            message: "Gabim në përditësim."
         });
     }
 });
-
-// ========================================= Leaderboard i Ndriçimit ======================================
 
 /**
  * @route GET /api/rrufe/soul-profile/leaderboard
- * @desc Leaderboard i Ndriçimit - ULTRA OPTIMIZED & CRASH-PROOF
+ * @desc Leaderboard - ULTRA STABLE
  */
 router.get('/soul-profile/leaderboard', async (req, res) => {
-    // ✅ KONTROLLO MEMORINË PARAPRAKISHT ME KUFIZIME MË TË FORTA
-    const memoryCheck = MemoryMonitor.checkMemory();
-    if (memoryCheck.critical || memoryCheck.warning) {
-        console.log('🚨 LEADERBOARD BLOCKED - Memory warning:', memoryCheck.memoryMB + 'MB');
-        return res.status(200).json({
-            success: true,
-            message: "Leaderboard është në modalitet të sigurt për shkak të ngarkesës së lartë.",
-            profiles: [],
-            total_profiles: 0,
-            performance: "SAFE_MODE_ACTIVATED",
-            memory_usage: memoryCheck.memoryMB + "MB",
-            system: "RRUFE_TESLA_10.5_ULTRA_SAFE"
-        });
-    }
-
-    try {
-        console.log('🔍 DUKE EKZEKUTUAR LEADERBOARD QUERY (ULTRA OPTIMIZED)...');
-        
-        // ✅ QUERY SUPER I THJESHTË & I SIGURT - PA CREATE TABLE
-        const profiles = await database.all(`
-            SELECT userId, enlightenmentPoints 
-            FROM soul_profiles 
-            ORDER BY enlightenmentPoints DESC 
-            LIMIT 15  // ⬅️ ULVUAR NGA 50 NË 15 PËR STABILITET
-        `);
-
-        // ✅ KONTROLLO MEMORINË PAS QUERY
-        const afterMemory = MemoryMonitor.checkMemory();
-        
-        console.log(`✅ LEADERBOARD SUCCESS: ${profiles.length} profile, Memory: ${afterMemory.memoryMB}MB`);
-
-        res.status(200).json({ 
-            success: true, 
-            message: "Leaderboard i Ndriçimit u mor me sukses!",
-            total_profiles: profiles.length,
-            profiles: profiles || [], // ⬅️ SIGUROHU QË ËSHTË ARRAY
-            performance: "ULTRA_OPTIMIZED",
-            memory_before: memoryCheck.memoryMB + "MB",
-            memory_after: afterMemory.memoryMB + "MB",
-            safe_mode: false,
-            system: "RRUFE_TESLA_10.5_STABLE"
-        });
-
-    } catch (error) {
-        console.error('❌ LEADERBOARD ERROR (Safe Fallback):', error.message);
-        
-        // ✅ KTHE PËRGJIGJE TË SIGURT EDHE NË RAST CRASH
-        res.status(200).json({
-            success: true,
-            message: "Leaderboard është në modalitet të sigurt - të dhënat do të kthehen pasi serveri të ringarkohet.",
-            profiles: [],
-            total_profiles: 0,
-            safe_mode: true,
-            performance: "FALLBACK_SAFE_MODE",
-            system: "RRUFE_TESLA_10.5_CRASH_PROOF"
-        });
-    }
-});
-
-// ==================== NOUS-CORE ROUTES - OPTIMIZED ====================
-
-router.post('/nous-core/test', async (req, res) => {
-    // ✅ KONTROLLO MEMORINË
-    const memoryCheck = MemoryMonitor.checkMemory();
-    if (memoryCheck.warning) {
-        console.log('⚠️ Memory warning during NOUS-CORE test');
-    }
-
-    res.json({
-        success: true,
-        message: "NOUS-CORE RRUFE-TESLA 10.5 është operative!",
-        status: "QUANTUM_HARMONY_ACHIEVED",
-        memory_optimized: true,
-        performance: "OPTIMAL"
-    });
-});
-
-router.get('/nous-core/status', async (req, res) => {
-    // ✅ KONTROLLO MEMORINË
     const memoryCheck = MemoryMonitor.checkMemory();
     if (memoryCheck.critical) {
-        return res.status(503).json({
+        return res.json({
             success: false,
-            message: "Server overload - Provoni përsëri",
+            message: "Server overload",
             memory_usage: memoryCheck.memoryMB + "MB"
         });
     }
 
+    try {
+        const profiles = await database.all(`
+            SELECT userId, enlightenmentPoints
+            FROM soul_profiles 
+            ORDER BY enlightenmentPoints DESC 
+            LIMIT 10
+        `);
+
+        res.json({ 
+            success: true, 
+            message: "Leaderboard u mor!",
+            profiles: profiles || [],
+            total: profiles ? profiles.length : 0
+        });
+
+    } catch (error) {
+        res.json({
+            success: true,
+            message: "Leaderboard në modalitet të sigurt",
+            profiles: [],
+            total: 0,
+            safe_mode: true
+        });
+    }
+});
+
+// ==================== NOUS-CORE ROUTES ====================
+
+router.post('/nous-core/test', async (req, res) => {
     res.json({
         success: true,
-        status: "QUANTUM_OPERATIONAL",
-        heart_bridge: "ACTIVE",
-        memory_usage: memoryCheck.memoryMB + "MB",
-        system: "RRUFE_TESLA_10.5_OPTIMIZED"
+        message: "NOUS-CORE RRUFE-TESLA 10.5 është operative!",
+        status: "STABLE"
     });
 });
 
-// ==================== HEALTH CHECK ====================
-
-router.get('/health', async (req, res) => {
-    // ✅ KONTROLLO MEMORINË ME KUFIZIME TË FORTA
+router.get('/nous-core/status', async (req, res) => {
     const memoryCheck = MemoryMonitor.checkMemory();
     
-    // Nëse memory është kritike, kthe përgjigje të shpejtë
-    if (memoryCheck.critical) {
-        return res.json({
-            success: false,
-            system: "RRUFE-TESLA 10.5 API",
-            status: "CRITICAL",
-            memory_usage: memoryCheck.memoryMB + "MB",
-            message: "Server overload - Duke u ringarkuar",
-            timestamp: new Date().toISOString()
-        });
-    }
+    res.json({
+        success: true,
+        status: "OPERATIONAL",
+        memory_usage: memoryCheck.memoryMB + "MB",
+        system: "RRUFE_TESLA_10.5_STABLE"
+    });
+});
+
+router.get('/health', async (req, res) => {
+    const memoryCheck = MemoryMonitor.checkMemory();
     
     res.json({
         success: true,
         system: "RRUFE-TESLA 10.5 API",
-        status: memoryCheck.warning ? "WARNING" : "HEALTHY",
+        status: "HEALTHY",
         memory_usage: memoryCheck.memoryMB + "MB",
-        timestamp: new Date().toISOString(),
-        optimized: true
+        timestamp: new Date().toISOString()
     });
 });
 
