@@ -1,23 +1,17 @@
+// routes/rrufe/consciousness-routes.js - VERSIONI I SAKTË
 const express = require('express');
 const router = express.Router();
 const ConsciousnessService = require('../../services/consciousnessService'); 
 
-// ========================================== ✅ IMPORTO RRUFE API ROUTES ===========================================
+// ✅ IMPORTO TË GJITHA API-T RRUFE
 const rrufeApiRouter = require('./api-rrufe');
-const piApiRouter = require('./api-perpetual-intelligence');
+const perpetualLightRouter = require('./api-perpetual-light');
+const perpetualIntelligenceRouter = require('./api-perpetual-intelligence');
 
-// ================================== ✅ REGJISTRO RRUGËT RRUFE - KJO ËSHTË KRITIKE! ==============================
+// ✅ REGJISTRO TË GJITHA RRUGËT
 router.use('/rrufe', rrufeApiRouter);
-router.use('/rrufe', piApiRouter);
-
-// ================================== Shto në consciousness-routes.js =======================================
-const perpetualRoutes = require('./api-perpetual-intelligence');
-
-// ================================== Regjistro rrugët e PI ===================================================
-router.use('/rrufe/perpetual', perpetualRoutes);
-
-// ===============================Shto në consciousness-routes =========================================
-const perpetualLightRoutes = require('./api-perpetual-light');
+router.use('/rrufe', perpetualLightRouter); 
+router.use('/rrufe', perpetualIntelligenceRouter);
 
 // ================================= Regjistro versionin e lehtë =====================================
 router.use('/rrufe/perpetual-light', perpetualLightRoutes);
