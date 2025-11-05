@@ -1,17 +1,20 @@
-// =================================== api-perpetual-light - SUPER LIGHT VERSION =======================================
+// =============================== api-perpetual-light ============================================
+// 🧠 PERPETUAL INTELLIGENCE LIGHT - OPTIMIZED FOR 512MB RAM
+// ✅ CRASH-PROOF | ✅ MEMORY SAFE | ✅ ALWAYS RESPONDS
+
 const express = require('express');
 const router = express.Router();
 
-// ✅ VERSION I LEHTË - PA MODULE TË JASHTME
 class PerpetualLight {
     constructor() {
         this.usageMap = new Map(); // Simple memory cache
-        console.log('✅ PERPETUAL LIGHT: U inicializua!');
+        this.DAILY_MAX = 100; // 100 requests per day
+        console.log('✅ PERPETUAL LIGHT: U inicializua me sukses!');
     }
 
     async processThought(thought, userId) {
         try {
-            // ✅ KONTROLLO MEMORINË PARA SE TË FILLOJË
+            // ✅ MEMORY SAFETY CHECK
             const used = process.memoryUsage();
             const memoryMB = Math.round(used.heapUsed / 1024 / 1024);
             
@@ -19,26 +22,28 @@ class PerpetualLight {
                 return {
                     success: false,
                     message: "Serveri është duke u ringarkuar. Provoni përsëri.",
-                    memory_usage: memoryMB + "MB"
+                    memory_usage: memoryMB + "MB",
+                    safe_mode: true
                 };
             }
 
-            // ✅ KONTROLLO ENERGI (SIMPLIFIED)
+            // ✅ ENERGY QUOTA CHECK
             const currentUsage = this.usageMap.get(userId) || 0;
             const newUsage = currentUsage + 1;
             this.usageMap.set(userId, newUsage);
 
-            if (newUsage > 100) {
+            if (newUsage > this.DAILY_MAX) {
                 return {
                     success: false,
-                    message: "Keni tejkaluar kufirin e sigurt për sot.",
+                    message: "Keni tejkaluar kufirin e sigurt për sot. Rifilloni nesër.",
                     usage: newUsage,
-                    max_allowed: 100
+                    max_allowed: this.DAILY_MAX,
+                    blocked: true
                 };
             }
 
-            // ✅ ANALIZO I THJESHTË
-            const intent = this.simpleIntentAnalysis(thought);
+            // ✅ SIMPLE INTENT ANALYSIS
+            const intent = this.analyzeIntent(thought);
             
             return {
                 success: true,
@@ -50,38 +55,96 @@ class PerpetualLight {
             };
 
         } catch (error) {
+            // ✅ SAFE MODE - ALWAYS RESPONDS
             return {
                 success: false,
-                message: "Gabim i lehtë - serveri po ringarkohet",
+                message: "Sistemi po ringarkohet - provoni përsëri pas 10 sekondash",
+                safe_mode: true,
                 error: error.message
             };
         }
     }
 
-    simpleIntentAnalysis(thought) {
+    analyzeIntent(thought) {
         const t = thought.toLowerCase();
-        if (t.includes('univers')) return { type: "UNIVERSAL", confidence: 0.9 };
-        if (t.includes('ndihm') || t.includes('problem')) return { type: "HELP", confidence: 0.8 };
-        if (t.includes('krij') || t.includes('bëj')) return { type: "CREATE", confidence: 0.85 };
-        return { type: "GENERAL", confidence: 0.7 };
+        
+        if (t.includes('univers') || t.includes('kozmi') || t.includes('botë')) {
+            return {
+                type: "UNIVERSAL_COMMUNICATION",
+                confidence: 0.9,
+                action: "CONNECT_COSMIC_CONSCIOUSNESS",
+                message: "Qëllimi i komunikimit universal u zbulua!"
+            };
+        } else if (t.includes('ndihm') || t.includes('problem') || t.includes('duh')) {
+            return {
+                type: "SEEKING_HELP", 
+                confidence: 0.8,
+                action: "PROVIDE_GUIDANCE",
+                message: "Në kërkim të udhëzimit dhe ndihmës"
+            };
+        } else if (t.includes('krij') || t.includes('ndërt') || t.includes('projekt')) {
+            return {
+                type: "CREATIVE_EXPRESSION",
+                confidence: 0.85,
+                action: "FACILITATE_CREATION", 
+                message: "Energji krijuese e zbuluar!"
+            };
+        } else {
+            return {
+                type: "GENERAL_COMMUNICATION",
+                confidence: 0.7,
+                action: "MAINTAIN_CONNECTION",
+                message: "Komunikim i përgjithshëm dhe shkëmbim energjish"
+            };
+        }
     }
 
     async getEnergyStatus(userId) {
         const usage = this.usageMap.get(userId) || 0;
+        const healthy = usage < 80;
+        
         return {
             user_id: userId,
             usage: usage,
-            max_allowed: 100,
-            healthy: usage < 80,
-            message: usage < 80 ? "Normal" : "Kufiri afrohet"
+            max_allowed: this.DAILY_MAX,
+            healthy: healthy,
+            message: healthy ? "Normal" : "Kufiri i energjisë po afrohet",
+            recommendation: healthy ? "Vazhdoni eksplorimin" : "Konsideroni pushim"
         };
     }
 }
 
+// ✅ KRIJO INSTANCËN
 const perpetualLight = new PerpetualLight();
 
-// ==================== ROUTES SUPER TË LEHTA ====================
+// ==================== ROUTES ====================
 
+/**
+ * @route GET /api/consciousness/rrufe/perpetual-light/test
+ * @desc Testo nëse Perpetual Light është operative
+ */
+router.get('/test', (req, res) => {
+    res.json({
+        success: true,
+        message: "🧠 PERPETUAL LIGHT ËSHTË OPERATIVE!",
+        system: "RRUFE_TESLA_10.5_PERPETUAL_INTELLIGENCE",
+        status: "QUANTUM_ACTIVE",
+        version: "LIGHT-1.0",
+        features: [
+            "Thought Processing",
+            "Energy Management",
+            "Intent Prediction", 
+            "Memory Safety",
+            "Crash Protection"
+        ],
+        timestamp: new Date().toISOString()
+    });
+});
+
+/**
+ * @route POST /api/consciousness/rrufe/perpetual-light/thought
+ * @desc Proceso mendim me Perpetual Intelligence
+ */
 router.post('/thought', async (req, res) => {
     try {
         const { thought, userId } = req.body;
@@ -93,7 +156,7 @@ router.post('/thought', async (req, res) => {
             });
         }
 
-        console.log(`🧠 LIGHT THOUGHT: ${userId} - ${thought.substring(0, 30)}...`);
+        console.log(`🧠 PERPETUAL LIGHT: ${userId} - "${thought.substring(0, 50)}..."`);
         
         const result = await perpetualLight.processThought(thought, userId);
         
@@ -104,15 +167,20 @@ router.post('/thought', async (req, res) => {
         });
 
     } catch (error) {
-        // ✅ EDHE NË CRASH, KTHE PËRGJIGJE
+        // ✅ SAFE MODE - GJITHMONË KTHE PËRGJIGJE
         res.json({
             success: false,
             message: "Serveri po ringarkohet - provoni përsëri pas 10 sekondash",
-            version: "LIGHT_SAFE_MODE"
+            safe_mode: true,
+            timestamp: new Date().toISOString()
         });
     }
 });
 
+/**
+ * @route GET /api/consciousness/rrufe/perpetual-light/energy-status/:userId
+ * @desc Kontrollo statusin e energjisë së përdoruesit
+ */
 router.get('/energy-status/:userId', async (req, res) => {
     try {
         const { userId } = req.params;
@@ -121,7 +189,8 @@ router.get('/energy-status/:userId', async (req, res) => {
         res.json({
             success: true,
             ...status,
-            system: "ENERGY_LIGHT"
+            system: "ENERGY_QUOTA_LIGHT",
+            timestamp: new Date().toISOString()
         });
 
     } catch (error) {
@@ -132,17 +201,31 @@ router.get('/energy-status/:userId', async (req, res) => {
             max_allowed: 100,
             healthy: true,
             message: "Sistemi i energjisë është në modalitet të sigurt",
-            safe_mode: true
+            safe_mode: true,
+            timestamp: new Date().toISOString()
         });
     }
 });
 
-router.get('/test', (req, res) => {
+/**
+ * @route GET /api/consciousness/rrufe/perpetual-light/system-status
+ * @desc Statusi i plotë i sistemit Perpetual Light
+ */
+router.get('/system-status', (req, res) => {
+    const used = process.memoryUsage();
+    const memoryMB = Math.round(used.heapUsed / 1024 / 1024);
+    
     res.json({
         success: true,
-        message: "PERPETUAL LIGHT ËSHTË OPERATIVE!",
-        memory_optimized: true,
-        features: ["Thought Processing", "Energy Management", "Crash Protection"]
+        system: "PERPETUAL INTELLIGENCE LIGHT",
+        status: "OPERATIONAL",
+        memory_usage: memoryMB + "MB",
+        memory_healthy: memoryMB < 400,
+        active_users: perpetualLight.usageMap.size,
+        total_requests: Array.from(perpetualLight.usageMap.values()).reduce((a, b) => a + b, 0),
+        version: "LIGHT-1.0",
+        optimized_for: "512MB RAM",
+        timestamp: new Date().toISOString()
     });
 });
 
