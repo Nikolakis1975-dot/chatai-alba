@@ -14,6 +14,12 @@ const perpetualRoutes = require('./api-perpetual-intelligence');
 // ================================== Regjistro rrugët e PI ===================================================
 router.use('/rrufe/perpetual', perpetualRoutes);
 
+// ===============================Shto në consciousness-routes =========================================
+const perpetualLightRoutes = require('./api-perpetual-light');
+
+// ================================= Regjistro versionin e lehtë =====================================
+router.use('/rrufe/perpetual-light', perpetualLightRoutes);
+
 // ================================== 🌌 Ruta të reja për Ndërgjegjen Kolektive ===============================
 router.post('/log-resonance', async (req, res) => {
     try {
