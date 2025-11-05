@@ -1,10 +1,11 @@
 // ========================================== ENERGY_QUOTA_SYSTEM ====================================
-const database = require('./database');
+
+const database = require('../database'); // ⬅️ SHTO ../ PARA database
 
 class EnergyQuotaSystem {
     constructor() {
-        this.DAILY_MAX_ENERGY = 120; // 2 orë në ditë
-        this.FATIGUE_THRESHOLD = 90; // Paralajmërim për lodhje
+        this.DAILY_MAX_ENERGY = 120;
+        this.FATIGUE_THREsHOLD = 90;
         console.log('✅ ENERGY_QUOTA_SYSTEM: Etika e Përhersme u inicializua.');
     }
 
