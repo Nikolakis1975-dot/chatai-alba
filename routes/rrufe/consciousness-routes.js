@@ -1,9 +1,11 @@
 // 🌌 RRUFE-TESLA 10.5 CONSCIOUSNESS API - VERSION I PLOTË I PËRDITËSUAR
 // ✅ OPTIMIZUAR PËR 512MB RAM | ✅ CRASH-PROOF | ✅ MEMORY SAFE 
 // ✅ PERPETUAL LIGHT FALLBACK | ✅ PERPETUAL INTELLIGENCE ME MEMORI
+// ✅ PERPETUAL INTELLIGENCE INTERFACE - 🆕 E RE!
 
 const express = require('express');
 const router = express.Router();
+const path = require('path'); // 🆕 SHTUAR PËR FILE SERVING
 
 // ==================== MEMORY MONITORING ====================
 class ConsciousnessMemoryMonitor {
@@ -71,6 +73,22 @@ try {
 } catch (error) {
     console.error('❌ Gabim në regjistrimin e perpetual-intelligence:', error.message);
 }
+
+// 🆕 RUGË E RE PËR PERPETUAL INTELLIGENCE INTERFACE
+router.get('/perpetual-interface', (req, res) => {
+    try {
+        res.sendFile(path.join(__dirname, '../../public/perpetual-intelligence-interface.html'));
+        console.log('✅ Perpetual Intelligence Interface u servua me sukses');
+    } catch (error) {
+        console.error('❌ Gabim në servimin e Perpetual Interface:', error.message);
+        res.status(500).json({
+            success: false,
+            message: 'Ndërfaqja e Perpetual Intelligence nuk u gjet',
+            error: error.message,
+            system: "RRUFE_TESLA_10.5_FILE_SERVER"
+        });
+    }
+});
 
 // ==================== PERPETUAL LIGHT FALLBACK ROUTES ====================
 // 🧠 SIGURIMI QË PERPETUAL LIGHT ËSHTË GJITHMONË E AKSESUESHME
@@ -488,7 +506,8 @@ router.get('/health', (req, res) => {
             "Crash Protection",
             "Safe Mode Fallback",
             "Perpetual Light Fallback",
-            "Perpetual Intelligence with Memory" // 🆕 E RE
+            "Perpetual Intelligence with Memory", // 🆕 E RE
+            "Perpetual Intelligence Interface" // 🆕 E RE
         ],
         routes_available: [
             "POST /api/consciousness/log-resonance",
@@ -496,6 +515,7 @@ router.get('/health', (req, res) => {
             "GET /api/consciousness/health",
             "GET /api/consciousness/memory-status",
             "GET /api/consciousness/system-info",
+            "GET /api/consciousness/perpetual-interface", // 🆕 E RE
             "GET /api/consciousness/rrufe/* (RRUFE APIs)",
             "GET /api/consciousness/rrufe/perpetual-light/* (Perpetual Light)",
             "POST /api/consciousness/rrufe/perpetual-light/thought",
@@ -545,7 +565,8 @@ router.get('/system-info', (req, res) => {
             "Consciousness Metrics",
             "Soul Resonance Tracking",
             "Memory Safety System",
-            "Context Memory Archive" // 🆕 E RE
+            "Context Memory Archive", // 🆕 E RE
+            "Perpetual Interface Server" // 🆕 E RE
         ],
         node_version: process.version,
         platform: process.platform,
@@ -570,6 +591,7 @@ router.use((req, res) => {
             '/api/consciousness/log-resonance',
             '/api/consciousness/memory-status',
             '/api/consciousness/system-info',
+            '/api/consciousness/perpetual-interface', // 🆕 E RE
             '/api/consciousness/rrufe/*',
             '/api/consciousness/rrufe/perpetual-light/*',
             '/api/consciousness/rrufe/perpetual/*' // 🆕 E RE
@@ -600,5 +622,6 @@ console.log('🛡️  Memory Monitoring: AKTIV');
 console.log('🌌 Safe Mode System: GATI');
 console.log('🧠 Perpetual Light Fallback: AKTIV');
 console.log('💾 Perpetual Intelligence with Memory: AKTIV');
+console.log('🎨 Perpetual Intelligence Interface: AKTIV');
 
 module.exports = router;
