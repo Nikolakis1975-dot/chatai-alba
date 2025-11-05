@@ -253,4 +253,21 @@ console.log('✅ Consciousness Routes u inicializuan me sukses!');
 console.log('🛡️  Memory Monitoring: AKTIV');
 console.log('🌌 Safe Mode System: GATI');
 
+// ============================== Shto këtë në consciousness-routes ============================================
+router.get('/test-perpetual-light', (req, res) => {
+    const memoryCheck = ConsciousnessMemoryMonitor.checkHealth();
+    
+    // Testo nëse perpetualLightRouter ekziston
+    const perpetualLightExists = perpetualLightRouter && typeof perpetualLightRouter === 'function';
+    
+    res.json({
+        perpetual_light_available: perpetualLightExists,
+        memory_status: memoryCheck,
+        message: perpetualLightExists 
+            ? "Perpetual Light routes janë të gatshme!" 
+            : "Perpetual Light routes nuk janë gjetur!",
+        timestamp: new Date().toISOString()
+    });
+});
+
 module.exports = router;
