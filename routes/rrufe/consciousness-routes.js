@@ -12,6 +12,7 @@ const perpetualIntelligenceRouter = require('./api-perpetual-intelligence');
 router.use('/rrufe', rrufeApiRouter);
 router.use('/rrufe', perpetualLightRouter); 
 router.use('/rrufe', perpetualIntelligenceRouter);
+router.use('/rrufe/pi', perpetualIntelligenceRouter); // Rrugë e dedikuar
 
 // ================================= Regjistro versionin e lehtë =====================================
 router.use('/rrufe/perpetual-light', perpetualLightRoutes);
