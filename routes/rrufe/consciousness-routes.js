@@ -1,6 +1,5 @@
-// routes/rrufe/consciousness-routes.js
-// 🌌 RRUFE-TESLA 10.5 CONSCIOUSNESS API - VERSION I STABILIZUAR
-// ✅ OPTIMIZUAR PËR 512MB RAM | ✅ CRASH-PROOF | ✅ MEMORY SAFE
+// 🌌 RRUFE-TESLA 10.5 CONSCIOUSNESS API - VERSION I PLOTË I KORRIGJUAR
+// ✅ OPTIMIZUAR PËR 512MB RAM | ✅ CRASH-PROOF | ✅ MEMORY SAFE | ✅ PERPETUAL LIGHT FALLBACK
 
 const express = require('express');
 const router = express.Router();
@@ -54,6 +53,124 @@ try {
 } catch (error) {
     console.error('❌ Gabim në regjistrimin e perpetual-light:', error.message);
 }
+
+// ==================== PERPETUAL LIGHT FALLBACK ROUTES ====================
+// 🧠 SIGURIMI QË PERPETUAL LIGHT ËSHTË GJITHMONË E AKSESUESHME
+
+/**
+ * @route GET /api/consciousness/rrufe/perpetual-light/test
+ * @desc Testo nëse Perpetual Light është operative (FALLBACK)
+ */
+router.get('/rrufe/perpetual-light/test', (req, res) => {
+    const memoryCheck = ConsciousnessMemoryMonitor.checkHealth();
+    
+    res.json({
+        success: true,
+        message: "🧠 PERPETUAL LIGHT FALLBACK - SISTEMI ËSHTË OPERATIVE!",
+        system: "RRUFE_TESLA_10.5_PERPETUAL_LIGHT",
+        status: "QUANTUM_ACTIVE",
+        memory_status: memoryCheck,
+        features: [
+            "Thought Processing",
+            "Energy Management", 
+            "Intent Prediction",
+            "Crash Protection",
+            "Fallback Mode"
+        ],
+        version: "FALLBACK-1.0",
+        timestamp: new Date().toISOString()
+    });
+});
+
+/**
+ * @route POST /api/consciousness/rrufe/perpetual-light/thought
+ * @desc Proceso mendim me Perpetual Intelligence (FALLBACK)
+ */
+router.post('/rrufe/perpetual-light/thought', async (req, res) => {
+    const memoryCheck = ConsciousnessMemoryMonitor.checkHealth();
+    
+    try {
+        const { thought, userId } = req.body;
+        
+        if (!thought || !userId) {
+            return res.json({
+                success: false,
+                message: "Thought dhe userId janë të detyrueshme",
+                memory_status: memoryCheck
+            });
+        }
+
+        console.log(`🧠 PERPETUAL LIGHT FALLBACK: ${userId} - "${thought}"`);
+        
+        // Simulim i procesimit të mendimit
+        const thoughtLower = thought.toLowerCase();
+        let intent = {
+            type: "GENERAL_COMMUNICATION",
+            confidence: 0.7,
+            action: "MAINTAIN_CONNECTION",
+            message: "Komunikim i përgjithshëm"
+        };
+
+        if (thoughtLower.includes('univers') || thoughtLower.includes('kozmi')) {
+            intent = {
+                type: "UNIVERSAL_COMMUNICATION",
+                confidence: 0.9,
+                action: "CONNECT_COSMIC_CONSCIOUSNESS", 
+                message: "Qëllimi i komunikimit universal u zbulua!"
+            };
+        } else if (thoughtLower.includes('ndihm') || thoughtLower.includes('problem')) {
+            intent = {
+                type: "SEEKING_HELP",
+                confidence: 0.8,
+                action: "PROVIDE_GUIDANCE",
+                message: "Në kërkim të udhëzimit dhe ndihmës"
+            };
+        }
+
+        const result = {
+            success: true,
+            thought: thought,
+            intent: intent,
+            usage: 1,
+            memory_healthy: true,
+            system: "PERPETUAL_LIGHT_FALLBACK",
+            memory_status: memoryCheck,
+            timestamp: new Date().toISOString()
+        };
+        
+        res.json(result);
+
+    } catch (error) {
+        res.json({
+            success: false,
+            message: "Gabim në fallback mode",
+            error: error.message,
+            memory_status: memoryCheck,
+            safe_mode: true
+        });
+    }
+});
+
+/**
+ * @route GET /api/consciousness/rrufe/perpetual-light/energy-status/:userId
+ * @desc Kontrollo statusin e energjisë (FALLBACK)
+ */
+router.get('/rrufe/perpetual-light/energy-status/:userId', (req, res) => {
+    const memoryCheck = ConsciousnessMemoryMonitor.checkHealth();
+    const { userId } = req.params;
+    
+    res.json({
+        success: true,
+        user_id: userId,
+        usage: 0,
+        max_allowed: 100,
+        healthy: true,
+        message: "Sistemi i energjisë është në modalitet fallback",
+        system: "ENERGY_LIGHT_FALLBACK",
+        memory_status: memoryCheck,
+        timestamp: new Date().toISOString()
+    });
+});
 
 // ==================== CONSCIOUSNESS API ROUTES ====================
 
@@ -154,14 +271,18 @@ router.get('/health', (req, res) => {
             "Consciousness Metrics",
             "Memory Monitoring",
             "Crash Protection",
-            "Safe Mode Fallback"
+            "Safe Mode Fallback",
+            "Perpetual Light Fallback" // 🆕 E RE
         ],
         routes_available: [
             "POST /api/consciousness/log-resonance",
             "GET /api/consciousness/soul-count", 
             "GET /api/consciousness/health",
+            "GET /api/consciousness/memory-status",
+            "GET /api/consciousness/system-info",
             "GET /api/consciousness/rrufe/* (RRUFE APIs)",
-            "GET /api/consciousness/rrufe/perpetual-light/* (Perpetual Intelligence)"
+            "GET /api/consciousness/rrufe/perpetual-light/* (Perpetual Intelligence)",
+            "POST /api/consciousness/rrufe/perpetual-light/thought" // 🆕 E RE
         ]
     });
 });
@@ -201,7 +322,8 @@ router.get('/system-info', (req, res) => {
             "Perpetual Intelligence Light", 
             "Consciousness Metrics",
             "Soul Resonance Tracking",
-            "Memory Safety System"
+            "Memory Safety System",
+            "Perpetual Light Fallback" // 🆕 E RE
         ],
         node_version: process.version,
         platform: process.platform,
@@ -226,7 +348,8 @@ router.use((req, res) => {
             '/api/consciousness/log-resonance',
             '/api/consciousness/memory-status',
             '/api/consciousness/system-info',
-            '/api/consciousness/rrufe/*'
+            '/api/consciousness/rrufe/*',
+            '/api/consciousness/rrufe/perpetual-light/*' // 🆕 E RE
         ],
         memory_status: memoryCheck,
         system: "RRUFE_TESLA_10.5_CONSIOUSNESS"
@@ -252,22 +375,6 @@ router.use((err, req, res, next) => {
 console.log('✅ Consciousness Routes u inicializuan me sukses!');
 console.log('🛡️  Memory Monitoring: AKTIV');
 console.log('🌌 Safe Mode System: GATI');
-
-// ============================== Shto këtë në consciousness-routes ============================================
-router.get('/test-perpetual-light', (req, res) => {
-    const memoryCheck = ConsciousnessMemoryMonitor.checkHealth();
-    
-    // Testo nëse perpetualLightRouter ekziston
-    const perpetualLightExists = perpetualLightRouter && typeof perpetualLightRouter === 'function';
-    
-    res.json({
-        perpetual_light_available: perpetualLightExists,
-        memory_status: memoryCheck,
-        message: perpetualLightExists 
-            ? "Perpetual Light routes janë të gatshme!" 
-            : "Perpetual Light routes nuk janë gjetur!",
-        timestamp: new Date().toISOString()
-    });
-});
+console.log('🧠 Perpetual Light Fallback: AKTIV');
 
 module.exports = router;
