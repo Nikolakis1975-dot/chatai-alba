@@ -1,83 +1,87 @@
-// ====================================================== EmpathyPredictionEngine =======================================
+// ============================== EmpathyPredictionEngine VERSION I PËRDITËSUAR ME MEMORI =============================
+const ContextMemoryArchive = require('./CONTEXT_MEMORY_ARCHIVE');
+
 class EmpathyPredictionEngine {
     constructor() {
-        console.log('✅ EmpathyPredictionEngine: Motori i Qëllimit u inicializua.');
+        this.contextMemory = new ContextMemoryArchive();
+        console.log('✅ EmpathyPredictionEngine: U inicializua me Context Memory!');
     }
 
-    async predictIntent(thoughtData) {
-        // Analizo mendimin për të parashikuar qëllimin e vërtetë
+    async predictIntent(thoughtData, userId) {
         const thought = thoughtData.thought.toLowerCase();
         
-        let intent = "GENERAL_COMMUNICATION";
-        let confidence = 0.7;
+        // Merr historinë e kontekstit
+        const contextHistory = await this.contextMemory.getContextHistory(userId);
+        const recentIntent = await this.contextMemory.getRecentIntent(userId);
+        const intentPattern = await this.contextMemory.getIntentPattern(userId);
 
-        // Parashiko qëllimin bazuar në përmbajtje
-        if (thought.includes('univers') || thought.includes('botë') || thought.includes('kozmi')) {
-            intent = "UNIVERSAL_COMMUNICATION";
-            confidence = 0.9;
-        } else if (thought.includes('ndihm') || thought.includes('duh') || thought.includes('problem')) {
-            intent = "SEEKING_HELP";
-            confidence = 0.8;
+        // ANALIZË BAZË E INTENTIT
+        let intent = {
+            type: "GENERAL_COMMUNICATION",
+            confidence: 0.7,
+            action: "MAINTAIN_CONNECTION",
+            message: "Komunikim i përgjithshëm dhe shkëmbim energjish"
+        };
+
+        if (thought.includes('univers') || thought.includes('kozmi') || thought.includes('botë')) {
+            intent = {
+                type: "UNIVERSAL_COMMUNICATION",
+                confidence: 0.9,
+                action: "CONNECT_COSMIC_CONSCIOUSNESS",
+                message: "Qëllimi i komunikimit universal u zbulua!"
+            };
+        } else if (thought.includes('ndihm') || thought.includes('problem') || thought.includes('duh')) {
+            intent = {
+                type: "SEEKING_HELP", 
+                confidence: 0.8,
+                action: "PROVIDE_GUIDANCE",
+                message: "Në kërkim të udhëzimit dhe ndihmës"
+            };
         } else if (thought.includes('krij') || thought.includes('ndërt') || thought.includes('projekt')) {
-            intent = "CREATIVE_EXPRESSION";
-            confidence = 0.85;
-        } else if (thought.includes('pyet') || thought.includes('kurioz') || thought.includes('dëshir')) {
-            intent = "CURIOSITY_DRIVEN";
-            confidence = 0.75;
+            intent = {
+                type: "CREATIVE_EXPRESSION",
+                confidence: 0.85,
+                action: "FACILITATE_CREATION", 
+                message: "Energji krijuese e zbuluar!"
+            };
         }
+
+        // 🧠 PËRMIRËSIM ME KONTEKST
+        if (intentPattern && intentPattern.pattern === "REPEATED_INTENT") {
+            // Rrit besimin nëse ka pattern të përsëritur
+            intent.confidence = Math.min(0.95, intent.confidence + 0.15);
+            intent.message += " (Konfirmuar nga historia e kontekstit)";
+        }
+
+        if (recentIntent && recentIntent.intent?.type === intent.type) {
+            // Rrit besimin për intent të njëjtë
+            intent.confidence = Math.min(0.98, intent.confidence + 0.1);
+        }
+
+        // Ruaj në memorie për kontekst të ardhshëm
+        await this.contextMemory.saveNewEntry(userId, {
+            thought: thoughtData.thought,
+            intent: intent,
+            energy_usage: 1,
+            context: thoughtData.context || "perpetual_intelligence"
+        });
 
         return {
             intent: intent,
-            confidence: confidence,
             thought_analyzed: thoughtData.thought,
-            context: thoughtData.context || "perpetual_intelligence",
-            emotional_tone: this.analyzeEmotionalTone(thought),
+            context_enhanced: intentPattern ? true : false,
+            confidence_boost: intent.confidence > 0.7 ? "HIGH" : "MEDIUM",
+            memory_entries: contextHistory.length + 1,
             timestamp: new Date().toISOString()
         };
     }
 
-    analyzeEmotionalTone(thought) {
-        const positiveWords = ['lumtur', 'gezuar', 'dashuri', 'paqe', 'shpresë', 'ëndërr'];
-        const negativeWords = ['shqetësim', 'frikë', 'ankth', 'hidhërim', 'problem'];
-        
-        let tone = "NEUTRAL";
-        let score = 0;
-
-        positiveWords.forEach(word => {
-            if (thought.includes(word)) score += 1;
-        });
-
-        negativeWords.forEach(word => {
-            if (thought.includes(word)) score -= 1;
-        });
-
-        if (score > 0) tone = "POSITIVE";
-        if (score < 0) tone = "NEGATIVE";
-
-        return {
-            tone: tone,
-            score: score,
-            analysis: "EMOTIONAL_CONTEXT_DETECTED"
-        };
+    async getContextAnalysis(userId) {
+        return await this.contextMemory.getMemoryStats(userId);
     }
 
-    async processVisionIntent(visionData) {
-        return {
-            intent: "VISUAL_UNDERSTANDING",
-            objects_detected: this.identifyObjects(visionData),
-            context_derived: this.deriveContext(visionData),
-            confidence: 0.8,
-            system: "PERPETUAL_VISION"
-        };
-    }
-
-    identifyObjects(visionData) {
-        // Simulim i identifikimit të objekteve
-        return ["universal_pattern", "energy_field", "consciousness_stream"];
-    }
-
-    deriveContext(visionData) {
-        return "QUANTUM_REALITY_PERCEPTION";
+    async clearUserContext(userId) {
+        return await this.contextMemory.clearHistory(userId);
     }
 }
 
