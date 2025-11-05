@@ -1,17 +1,17 @@
-// =================================== api-perpetual-intelligence - VERSION I RREGULLUAR =================================
+// =================================== api-perpetual-intelligence - VERSION I PËRDITËSUAR ME MEMORI =================================
 const express = require('express');
 const router = express.Router();
 
-// ✅ IMPORTET E SAKTA
-const EnergyQuotaSystem = require('../../utils/ENERGY_QUOTA_SYSTEM');
+// ✅ IMPORTET E REJA ME MEMORI KONTEKSTUALE
+const EnergyQuotaSystem = require('../../utils/ENERGY_QUOTA_SYSTEM_SIMPLE');
 const EmpathyPredictionEngine = require('../../utils/EmpathyPredictionEngine');
 
 class PerpetualIntelligenceCore {
     constructor() {
         this.energyQuota = new EnergyQuotaSystem();
-        this.empathyEngine = new EmpathyPredictionEngine();
-        this.status = "QUANTUM_ACTIVE";
-        console.log('✅ PERPETUAL INTELLIGENCE CORE: U inicializua me mbrojtje etike!');
+        this.empathyEngine = new EmpathyPredictionEngine(); // 🆕 TASHMË KA MEMORI KONTEKSTUALE
+        this.status = "QUANTUM_ACTIVE_WITH_MEMORY";
+        console.log('✅ PERPETUAL INTELLIGENCE CORE: U inicializua me Context Memory!');
     }
 
     async processThought(thoughtData, userId) {
@@ -30,8 +30,8 @@ class PerpetualIntelligenceCore {
                 };
             }
 
-            // ✅ Pastaj përkthen qëllimin
-            const predictedIntent = await this.empathyEngine.predictIntent(thoughtData);
+            // ✅ Pastaj përkthen qëllimin ME MEMORI KONTEKSTUALE
+            const predictedIntent = await this.empathyEngine.predictIntent(thoughtData, userId); // 🆕 SHTUA userId
             
             // ✅ Përditëso përdorimin e energjisë
             await this.energyQuota.updateUsage(userId, 1);
@@ -56,7 +56,7 @@ class PerpetualIntelligenceCore {
                 energy_status: "HEALTHY",
                 usage: energyStatus.usage,
                 max_allowed: energyStatus.max_allowed,
-                system: "PERPETUAL_INTELLIGENCE_ACTIVE"
+                system: "PERPETUAL_INTELLIGENCE_WITH_MEMORY" // 🆕 NDRYSHUAR
             };
 
         } catch (error) {
@@ -96,12 +96,54 @@ class PerpetualIntelligenceCore {
             throw error;
         }
     }
+
+    // 🆕 METODA TË REJA PËR MENAXHIMIN E MEMORISË
+    async getContextAnalysis(userId) {
+        try {
+            const contextAnalysis = await this.empathyEngine.getContextAnalysis(userId);
+            const energyStatus = await this.energyQuota.checkSystemStatus(userId);
+
+            return {
+                success: true,
+                user_id: userId,
+                context_analysis: contextAnalysis,
+                energy_status: energyStatus,
+                system: "CONTEXT_MEMORY_ANALYSIS"
+            };
+        } catch (error) {
+            return {
+                success: false,
+                message: "Analiza e kontekstit dështoi",
+                error: error.message
+            };
+        }
+    }
+
+    async clearUserMemory(userId) {
+        try {
+            await this.empathyEngine.clearUserContext(userId);
+            await this.energyQuota.resetUsage(userId);
+
+            return {
+                success: true,
+                message: "Memoria e përdoruesit u pastrua me sukses",
+                user_id: userId,
+                system: "MEMORY_RESET_COMPLETE"
+            };
+        } catch (error) {
+            return {
+                success: false,
+                message: "Pastrimi i memories dështoi",
+                error: error.message
+            };
+        }
+    }
 }
 
 // ✅ KRIJO INSTANCËN KRYESORE
 const piCore = new PerpetualIntelligenceCore();
 
-// ==================== ROUTES ====================
+// ==================== ROUTES E REJA ME MEMORI ====================
 
 router.post('/thought', async (req, res) => {
     try {
@@ -127,6 +169,7 @@ router.post('/thought', async (req, res) => {
             system: "RRUFE_TESLA_10.5_PERPETUAL_INTELLIGENCE",
             council_approved: true,
             ethical_guard: "ACTIVE",
+            memory_enhanced: true, // 🆕 TREGO SE KA MEMORI
             timestamp: new Date().toISOString()
         });
 
@@ -135,6 +178,54 @@ router.post('/thought', async (req, res) => {
         res.json({
             success: false,
             message: "Procesimi i mendimit dështoi",
+            error: error.message
+        });
+    }
+});
+
+// 🆕 RUGË E RE PËR ANALIZË KONTEKSTI
+router.get('/context-analysis/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        
+        console.log(`🧠 CONTEXT ANALYSIS: ${userId}`);
+        
+        const result = await piCore.getContextAnalysis(userId);
+        
+        res.json({
+            ...result,
+            timestamp: new Date().toISOString(),
+            system: "RRUFE_TESLA_10.5_CONTEXT_MEMORY"
+        });
+
+    } catch (error) {
+        res.json({
+            success: false,
+            message: "Analiza e kontekstit dështoi",
+            error: error.message
+        });
+    }
+});
+
+// 🆕 RUGË E RE PËR PASTRIM MEMORIE
+router.post('/clear-memory/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        
+        console.log(`🗑️ CLEAR MEMORY: ${userId}`);
+        
+        const result = await piCore.clearUserMemory(userId);
+        
+        res.json({
+            ...result,
+            timestamp: new Date().toISOString(),
+            system: "MEMORY_MANAGEMENT"
+        });
+
+    } catch (error) {
+        res.json({
+            success: false,
+            message: "Pastrimi i memories dështoi",
             error: error.message
         });
     }
@@ -166,18 +257,27 @@ router.get('/energy-status/:userId', async (req, res) => {
     }
 });
 
-// ✅ Rrugë e re për testim të shpejtë
+// ✅ Rrugë e përditësuar për testim
 router.get('/test', (req, res) => {
     res.json({
         success: true,
-        message: "PERPETUAL INTELLIGENCE API është OPERATIVE!",
+        message: "PERPETUAL INTELLIGENCE API ME MEMORI KONTEKSTUALE ËSHTË OPERATIVE!",
         system: "RRUFE_TESLA_10.5",
-        status: "QUANTUM_ACTIVE",
+        status: "QUANTUM_ACTIVE_WITH_MEMORY",
         features: [
             "Energy Quota System",
             "Empathy Prediction Engine", 
+            "Context Memory Archive",
             "Ethical Guard Rails",
-            "Direct Thought Processing"
+            "Direct Thought Processing",
+            "Memory Management",
+            "Context Analysis"
+        ],
+        new_endpoints: [
+            "POST /thought (me memorie kontekstuale)",
+            "GET /context-analysis/:userId",
+            "POST /clear-memory/:userId",
+            "GET /energy-status/:userId"
         ]
     });
 });
