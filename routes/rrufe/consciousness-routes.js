@@ -4,9 +4,11 @@ const ConsciousnessService = require('../../services/consciousnessService');
 
 // ========================================== ✅ IMPORTO RRUFE API ROUTES ===========================================
 const rrufeApiRouter = require('./api-rrufe');
+const piApiRouter = require('./api-perpetual-intelligence');
 
 // ================================== ✅ REGJISTRO RRUGËT RRUFE - KJO ËSHTË KRITIKE! ==============================
 router.use('/rrufe', rrufeApiRouter);
+router.use('/rrufe', piApiRouter);
 
 // ================================== Shto në consciousness-routes.js =======================================
 const perpetualRoutes = require('./api-perpetual-intelligence');
