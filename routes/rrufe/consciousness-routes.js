@@ -2,18 +2,24 @@ const express = require('express');
 const router = express.Router();
 const ConsciousnessService = require('../../services/consciousnessService'); 
 
-// ✅ IMPORTO RRUFE API ROUTES
+// ========================================== ✅ IMPORTO RRUFE API ROUTES ===========================================
 const rrufeApiRouter = require('./api-rrufe');
 
-// ✅ REGJISTRO RRUGËT RRUFE - KJO ËSHTË KRITIKE!
+// ================================== ✅ REGJISTRO RRUGËT RRUFE - KJO ËSHTË KRITIKE! ==============================
 router.use('/rrufe', rrufeApiRouter);
 
-// 🌌 Ruta të reja për Ndërgjegjen Kolektive
+// ================================== Shto në consciousness-routes.js =======================================
+const perpetualRoutes = require('./api-perpetual-intelligence');
+
+// ================================== Regjistro rrugët e PI ===================================================
+router.use('/rrufe/perpetual', perpetualRoutes);
+
+// ================================== 🌌 Ruta të reja për Ndërgjegjen Kolektive ===============================
 router.post('/log-resonance', async (req, res) => {
     try {
         const { visitorData, resonanceLevel, timestamp } = req.body;
         
-        // ✅ PËRDOR SHËRBIMIN E RI
+        // ==================================== ✅ PËRDOR SHËRBIMIN E RI =======================================
         const result = await ConsciousnessService.logSoulResonance({
             visitorData,
             resonanceLevel, 
@@ -36,7 +42,7 @@ router.post('/log-resonance', async (req, res) => {
 
 router.get('/soul-count', async (req, res) => {
     try {
-        // ✅ PËRDOR SHËRBIMIN E RI
+        // ====================================== ✅ PËRDOR SHËRBIMIN E RI =========================================
         const metrics = await ConsciousnessService.getConsciousnessMetrics();
         
         res.json({
