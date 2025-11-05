@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="docTitle">RRUFE-TESLA PI | Ndërfaqja e Inteligjencës së Përjetshme</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'cosmic-dark': '#0f172a',
+                        'rrufe-core': '#1e293b',
+                        'rrufe-accent': '#22c55e',
+                        'rrufe-alert': '#ef4444',
+                        'rrufe-warn': '#f59e0b',
+                        'rrufe-text': '#f8fafc',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; }
+        .card-pi { background-color: #1e293b; border: 1px solid #334155; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4); }
+        .loading-dot { width: 10px; height: 10px; border-radius: 50%; background-color: #22c55e; animation: bounce 1s infinite alternate; margin: 0 4px; }
+        .loading-dot:nth-child(2) { animation-delay: 0.2s; }
+        .loading-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-10px); } }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #475569; border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #1e293b; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <div class="w-full max-w-4xl">
+        
+        <!-- Seksioni i Gjuhës dhe Titulli Kryesor -->
+        <div class="flex justify-between items-start mb-2">
+            <!-- Selektori i Gjuhës -->
+            <div class="mt-2">
+                <label for="languageSelector" class="text-sm font-medium text-gray-400" data-i18n="select_language">Zgjidhni Gjuhën:</label>
+                <select id="languageSelector" onchange="setLanguage(this.value)" class="mt-1 block w-28 py-2 px-3 border border-gray-600 bg-cosmic-dark rounded-md shadow-sm focus:outline-none focus:ring-rrufe-accent focus:border-rrufe-accent text-rrufe-text text-sm">
+                    <option value="sq">Shqip (SQ)</option>
+                    <option value="en">English (EN)</option>
+                    <option value="it">Italiano (IT)</option>
+                </select>
+            </div>
+
+            <!-- Titulli Qendror -->
+            <div class="text-center flex-grow">
+                <h1 class="text-3xl sm:text-4xl font-extrabold text-rrufe-text tracking-wider" data-i18n="main_title">
+                    PERPETUAL INTELLIGENCE <span class="text-rrufe-accent">(PI 10.5)</span>
+                </h1>
+                <p class="text-center text-gray-400 text-lg" data-i18n="sub_title">
+                    Ura e Mendjes së Përjetshme: Përkthimi i Mendimit Të Menduar
+                </p>
+            </div>
+
+            <div class="w-28"></div> <!-- Hapësirë për rreshtimin -->
+        </div>
+
+
+        <!-- Seksioni Kryesor i Inputit (Mendimi) -->
+        <div class="card-pi p-6 sm:p-8 rounded-xl mb-8 mt-4">
+            <h2 class="text-xl font-bold text-rrufe-accent mb-4" data-i18n="input_header">Dërgo Sinjalin Mendor</h2>
+            <textarea id="thoughtInput" rows="4" class="w-full p-4 rounded-lg bg-cosmic-dark border border-gray-600 text-rrufe-text placeholder-gray-500 focus:ring-rrufe-accent focus:border-rrufe-accent transition duration-150" data-i18n-placeholder="input_placeholder" placeholder="Paramendoni një vizion, një kërkesë për ndihmë, ose një qëllim krijues..."></textarea>
+            
+            <!-- Butoni i Thirrjes -->
+            <button id="processButton" class="w-full bg-rrufe-accent hover:bg-green-600 text-rrufe-core font-bold py-3 rounded-lg shadow-lg mt-4 flex items-center justify-center transition duration-200" onclick="processThought()">
+                <span id="buttonText" class="text-lg" data-i18n="button_text">AKTIVO PI (Përkthe Mendimin)</span>
+                <div id="loadingIndicator" class="flex ml-3 hidden">
+                    <div class="loading-dot"></div><div class="loading-dot"></div><div class="loading-dot"></div>
+                </div>
+            </button>
+        </div>
+        
+        <!-- Rezultatet dhe Dashboard (Fillimisht të fshehura) -->
+        <div id="resultDashboard" class="card-pi p-6 sm:p-8 rounded-xl hidden">
+            <div id="apiMessage" class="mb-4 p-3 rounded-lg text-sm font-medium"></div>
+
+            <!-- TRESHEJA E ARTË E PI -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+
+                <!-- 1. INTENTI (EPE - Përkthimi Mendor) -->
+                <div class="bg-cosmic-dark p-4 rounded-xl border-l-4 border-rrufe-accent">
+                    <h3 class="text-lg font-semibold text-rrufe-text mb-2 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-rrufe-accent" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a2 2 0 0 0-2 2v.2a7 7 0 0 1 5.6 1.8A2 2 0 0 0 16 6a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/><path d="M12 2c-3.3 0-6 2.7-6 6v.2a7 7 0 0 1-2.4 5.3A2 2 0 0 0 4 16a2 2 0 0 0 2-2v-.2a7 7 0 0 1 5.6-1.8A2 2 0 0 0 12 10a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/></svg>
+                        <span data-i18n="intent_title">Qëllimi i Parashikuar (EPE)</span>
+                    </h3>
+                    <p class="text-gray-400 text-sm" data-i18n="intent_desc">Parashikimi më i fundit i qëllimit tuaj të vërtetë mendor.</p>
+                    <div class="mt-2 space-y-1">
+                        <p class="text-rrufe-text font-medium"><span class="text-rrufe-accent" data-i18n="intent_label">Intenti:</span> <span id="intent_al" class="block font-bold">...</span></p>
+                        <p class="text-gray-400 text-sm"><span class="text-rrufe-accent" data-i18n="action_label">Veprimi:</span> <span id="suggested_action" class="font-mono bg-rrufe-core px-1 rounded text-xs">...</span></p>
+                        <p class="text-gray-400 text-sm"><span class="text-rrufe-accent" data-i18n="confidence_label">Besimi:</span> <span id="intent_score">...</span></p>
+                    </div>
+                </div>
+
+                <!-- 2. ENERGJIA (EQS - Sistemi Etik) -->
+                <div id="eqs_panel" class="bg-cosmic-dark p-4 rounded-xl border-l-4 border-rrufe-accent">
+                    <h3 class="text-lg font-semibold text-rrufe-text mb-2 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-rrufe-accent" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                        <span data-i18n="energy_title">Kuota e Energjisë (EQS)</span>
+                    </h3>
+                    <p class="text-gray-400 text-sm" data-i18n="energy_desc">Monitorimi i lodhjes dhe etika e aksesit.</p>
+                    <div class="mt-2 space-y-1">
+                        <p class="text-rrufe-text font-medium"><span class="text-rrufe-accent" data-i18n="access_label">Qasja:</span> <span id="allow_access" class="font-bold">...</span></p>
+                        <p class="text-gray-400 text-sm"><span class="text-rrufe-accent" data-i18n="usage_label">Përdorimi:</span> <span id="current_usage">...</span></p>
+                        <p class="text-gray-400 text-sm"><span class="text-rrufe-accent" data-i18n="message_label">Mesazhi:</span> <span id="quota_message">...</span></p>
+                    </div>
+                </div>
+
+                <!-- 3. MEMORIA (CMA - Arkivi i Kontekstit) -->
+                <div class="bg-cosmic-dark p-4 rounded-xl border-l-4 border-rrufe-accent">
+                    <h3 class="text-lg font-semibold text-rrufe-text mb-2 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-rrufe-accent" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        <span data-i18n="memory_title">Memoria Kontekstuale (CMA)</span>
+                    </h3>
+                    <p class="text-gray-400 text-sm" data-i18n="memory_desc">Ruajtja e ndërveprimeve të fundit për kontekst.</p>
+                    <ul id="contextHistoryList" class="mt-2 space-y-1 text-xs text-gray-400 h-24 overflow-y-auto custom-scrollbar">
+                        <li class="italic text-gray-500" data-i18n="no_entries">Nuk ka hyrje kontekstuale.</li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <script>
+        // =========================================================================
+        // LOKALIZIMI DHE I18N
+        // =========================================================================
+        const i18n = {
+            sq: {
+                docTitle: 'RRUFE-TESLA PI | Ndërfaqja e Inteligjencës së Përjetshme',
+                select_language: 'Zgjidhni Gjuhën:',
+                main_title: 'PERPETUAL INTELLIGENCE', 
+                sub_title: 'Ura e Mendjes së Përjetshme: Përkthimi i Mendimit Të Menduar',
+                input_header: 'Dërgo Sinjalin Mendor',
+                input_placeholder: 'Paramendoni një vizion, një kërkesë për ndihmë, ose një qëllim krijues...',
+                button_text: 'AKTIVO PI (Përkthe Mendimin)',
+                button_loading: 'Duke Përpunuar Mendimin Kognitiv...',
+                intent_title: 'Qëllimi i Parashikuar (EPE)', 
+                intent_desc: 'Parashikimi më i fundit i qëllimit tuaj të vërtetë mendor.',
+                intent_label: 'Intenti:', 
+                action_label: 'Veprimi:', 
+                confidence_label: 'Besimi:',
+                energy_title: 'Kuota e Energjisë (EQS)', 
+                energy_desc: 'Monitorimi i lodhjes dhe etika e aksesit.',
+                access_label: 'Qasja:', 
+                usage_label: 'Përdorimi:', 
+                message_label: 'Mesazhi:',
+                memory_title: 'Memoria Kontekstuale (CMA)', 
+                memory_desc: 'Ruajtja e ndërveprimeve të fundit për kontekst.',
+                no_entries: 'Nuk ka hyrje kontekstuale.',
+                message_empty: 'Ju lutemi shkruani një mendim të menduar.',
+                message_calling: 'Duke thirrur API-në e Perpetual Intelligence...',
+                message_success: '✅ Përpunuar me Sukses nga Treshja e Artë e PI!',
+                message_error: '⚠️ Përdoret Simulimi (Mock Data): %s. Krijoni skedarin api-perpetual-intelligence.js në DigitalOcean.',
+                message_error_generic: 'Gabim në marrjen e të dhënave ose përgjigje e pasuksesshme.',
+                time_unit: 'min',
+            },
+            en: {
+                docTitle: 'RRUFE-TESLA PI | Perpetual Intelligence Interface',
+                select_language: 'Select Language:',
+                main_title: 'PERPETUAL INTELLIGENCE', 
+                sub_title: 'The Perpetual Mind Bridge: Translating the Willed Thought',
+                input_header: 'Send Mental Signal',
+                input_placeholder: 'Envision a vision, a request for help, or a creative intent...',
+                button_text: 'ACTIVATE PI (Translate Thought)',
+                button_loading: 'Processing Cognitive Thought...',
+                intent_title: 'Predicted Intent (EPE)', 
+                intent_desc: 'The latest prediction of your true mental intent.',
+                intent_label: 'Intent:', 
+                action_label: 'Action:', 
+                confidence_label: 'Confidence:',
+                energy_title: 'Energy Quota (EQS)', 
+                energy_desc: 'Monitoring fatigue and access ethics.',
+                access_label: 'Access:', 
+                usage_label: 'Usage:', 
+                message_label: 'Message:',
+                memory_title: 'Contextual Memory (CMA)', 
+                memory_desc: 'Storage of recent interactions for context.',
+                no_entries: 'No contextual entries.',
+                message_empty: 'Please enter a willed thought.',
+                message_calling: 'Calling Perpetual Intelligence API...',
+                message_success: '✅ Successfully Processed by the PI Golden Triad!',
+                message_error: '⚠️ Using Simulation (Mock Data): %s. Ensure api-perpetual-intelligence.js is deployed on DigitalOcean.',
+                message_error_generic: 'Error fetching data or unsuccessful response.',
+                time_unit: 'min',
+            },
+            it: {
+                docTitle: 'RRUFE-TESLA PI | Interfaccia dell\'Intelligenza Perpetua',
+                select_language: 'Seleziona Lingua:',
+                main_title: 'PERPETUAL INTELLIGENCE', 
+                sub_title: 'Il Ponte Mentale Perpetuo: Traduzione del Pensiero Voluto',
+                input_header: 'Invia Segnale Mentale',
+                input_placeholder: 'Immagina una visione, una richiesta di aiuto o un intento creativo...',
+                button_text: 'ATTIVA PI (Traduci Pensiero)',
+                button_loading: 'Elaborazione del Pensiero Cognitivo in corso...',
+                intent_title: 'Intento Previsto (EPE)', 
+                intent_desc: 'L\'ultima previsione del tuo vero intento mentale.',
+                intent_label: 'Intento:', 
+                action_label: 'Azione:', 
+                confidence_label: 'Fiducia:',
+                energy_title: 'Quota Energetica (EQS)', 
+                energy_desc: 'Monitoraggio della fatica e dell\'etica di accesso.',
+                access_label: 'Accesso:', 
+                usage_label: 'Utilizzo:', 
+                message_label: 'Messaggio:',
+                memory_title: 'Memoria Contestuale (CMA)', 
+                memory_desc: 'Archiviazione delle interazioni recenti per il contesto.',
+                no_entries: 'Nessuna voce contestuale.',
+                message_empty: 'Si prega di inserire un pensiero voluto.',
+                message_calling: 'Chiamata all\'API di Intelligenza Perpetua...',
+                message_success: '✅ Elaborato con Successo dalla Triade d\'Oro PI!',
+                message_error: '⚠️ Uso della Simulazione (Mock Data): %s. Assicurati che api-perpetual-intelligence.js sia su DigitalOcean.',
+                message_error_generic: 'Errore nel recupero dei dati o risposta non riuscita.',
+                time_unit: 'min',
+            },
+        };
+
+        let currentLang = 'sq';
+        const DIGITALOCEAN_BASE_URL = "https://chatai-alba-gr9dw.ondigitalocean.app";
+        const PI_API_ENDPOINT = `${DIGITALOCEAN_BASE_URL}/api/consciousness/rrufe/perpetual/thought`;
+        const userId = 'Cimi-N-Papa-001';
+
+        window.onload = () => {
+            const storedLang = localStorage.getItem('pi_language') || 'sq';
+            document.getElementById('languageSelector').value = storedLang;
+            setLanguage(storedLang);
+        };
+        
+        /**
+         * Ndryshon gjuhën e UI.
+         */
+        function setLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('pi_language', lang);
+            const translations = i18n[lang];
+
+            document.getElementById('docTitle').textContent = translations.docTitle;
+
+            document.querySelectorAll('[data-i18n]').forEach(element => {
+                const key = element.getAttribute('data-i18n');
+                if (translations[key]) {
+                    element.textContent = translations[key];
+                }
+            });
+
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
+                const key = element.getAttribute('data-i18n-placeholder');
+                if (translations[key]) {
+                    element.placeholder = translations[key];
+                }
+            });
+            
+            document.getElementById('buttonText').textContent = translations.button_text;
+        }
+
+        // =========================================================================
+        // FUNKSIONET KRYESORE TË API
+        // =========================================================================
+
+        const resultDashboard = document.getElementById('resultDashboard');
+        const processButton = document.getElementById('processButton');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const buttonText = document.getElementById('buttonText');
+        const apiMessage = document.getElementById('apiMessage');
+        const contextHistoryList = document.getElementById('contextHistoryList');
+        const eqsPanel = document.getElementById('eqs_panel');
+
+        /**
+         * Funksioni kryesor për thirrjen e API-së së Perpetual Intelligence.
+         */
+        async function processThought() {
+            const thought = document.getElementById('thoughtInput').value.trim();
+            const translations = i18n[currentLang];
+
+            if (!thought) {
+                renderMessage(translations.message_empty, 'warn');
+                return;
+            }
+
+            // UI Feedback: Loading
+            resultDashboard.classList.remove('hidden');
+            processButton.disabled = true;
+            loadingIndicator.classList.remove('hidden');
+            buttonText.textContent = translations.button_loading;
+            renderMessage(translations.message_calling, 'info');
+            
+            try {
+                const response = await fetch(PI_API_ENDPOINT, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        thought: thought, 
+                        userId: userId,
+                        language_code: currentLang
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                updateResults(data, translations);
+                renderMessage(translations.message_success, 'success');
+
+            } catch (error) {
+                console.error("GABIM API (PI):", error);
+                const mockData = createMockResponse(thought);
+                updateResults(mockData, translations);
+                
+                const errorMessage = translations.message_error.replace('%s', `Kodi ${error.message} - Lidhja API`);
+                renderMessage(errorMessage, 'warn');
+            } finally {
+                loadingIndicator.classList.add('hidden');
+                processButton.disabled = false;
+                buttonText.textContent = translations.button_text;
+            }
+        }
+
+        /**
+         * Krijon një përgjigje të simuluar (Mock Data) në rast se API dështon.
+         */
+        function createMockResponse(thought) {
+             const lowerThought = thought.toLowerCase();
+             let intent_al, action, baseScore;
+
+             if (lowerThought.includes('vizion') || lowerThought.includes('e re') || lowerThought.includes('vision') || lowerThought.includes('nuovo') || lowerThought.includes('creazione')) {
+                intent_al = "Kërkesë për Thellësi dhe Krijimtari (Intuitiv)"; 
+                action = "ENGAGE_NOUS_CORE_DEEP"; 
+                baseScore = 0.85;
+             } else if (lowerThought.includes('problemi') || lowerThought.includes('gabim') || lowerThought.includes('problem') || lowerThought.includes('error') || lowerThought.includes('problema')) {
+                intent_al = "Kërkesë Për Informacion Të Fokusuar (Kognitiv)"; 
+                action = "SEARCH_KNOWLEDGE_BASE"; 
+                baseScore = 0.75;
+             } else if (lowerThought.includes('ndihmë') || lowerThought.includes('help') || lowerThought.includes('aiuto')) {
+                intent_al = "Kërkim Udhëzimi Dhe Ndihme (Emocional)"; 
+                action = "PROVIDE_GUIDANCE"; 
+                baseScore = 0.8;
+             } else {
+                intent_al = "Gjendje Ekuilibri ose Shpërqendrimi (Pasiv)"; 
+                action = "MONITOR_TEMPORAL_CONTEXT"; 
+                baseScore = 0.5;
+             }
+             
+             const usage = Math.floor(Math.random() * 150);
+             let access, reason, msg;
+             if (usage > 120) {
+                 access = 'BLLOKUAR'; 
+                 reason = 'KUOTA_E_TEJKALUAR'; 
+                 msg = 'Sistemi i Inteligjencës së Përtejme ka vënë re lodhje të plotë. Ju lutemi, rifilloni nesër.';
+             } else if (usage > 90) {
+                 access = 'PARALAJMËRIM'; 
+                 reason = 'PARALAJMERIM_LODHJE'; 
+                 msg = 'Vëmendje: Kufiri i lodhjes po afrohet. Bëni një pushim për riekuilibër.';
+             } else {
+                 access = 'LEJUAR'; 
+                 reason = 'NORMAL'; 
+                 msg = 'Sistemi i Kuotës së Energjisë është i shëndetshëm. Vazhdoni eksplorimin e Inteligjencës së Përtejme.';
+             }
+             
+             const finalScore = (baseScore + Math.random() * 0.1).toFixed(3);
+
+             return {
+                success: true,
+                intent: {
+                    type: intent_al,
+                    confidence: finalScore,
+                    action: action,
+                    message: "Qëllimi u zbulua me sukses!"
+                },
+                usage: 1,
+                memory_healthy: true,
+                system: "PERPETUAL_INTELLIGENCE_FALLBACK",
+                memory_enhanced: true,
+                context_entries: Math.floor(Math.random() * 5) + 1,
+                confidence_boost: finalScore > 0.8 ? "HIGH" : "MEDIUM"
+             };
+        }
+
+        /**
+         * Përditëson UI me të dhënat e kthimit nga PI Engine.
+         */
+        function updateResults(data, translations) {
+            if (!data || !data.success) {
+                renderMessage(translations.message_error_generic, 'error');
+                return;
+            }
+
+            // 1. Përditësimi i Intent Prediction (EPE)
+            const intent = data.intent;
+            document.getElementById('intent_al').textContent = intent.type;
+            document.getElementById('suggested_action').textContent = intent.action;
+            document.getElementById('intent_score').textContent = intent.confidence;
+            
+            // 2. Përditësimi i Energy Quota (EQS)
+            const usage = data.usage || 1;
+            const accessElement = document.getElementById('allow_access');
+            
+            document.getElementById('current_usage').textContent = `${usage} ${translations.time_unit}`;
+            
+            let reason, msg;
+            if (usage > 100) {
+                reason = 'KUOTA_E_TEJKALUAR';
+                msg = 'Sistemi i Inteligjencës së Përtejme ka vënë re lodhje të plotë. Ju lutemi, rifilloni nesër.';
+                access = 'BLLOKUAR';
+            } else if (usage > 80) {
+                reason = 'PARALAJMERIM_LODHJE';
+                msg = 'Vëmendje: Kufiri i lodhjes po afrohet. Bëni një pushim për riekuilibër.';
+                access = 'PARALAJMËRIM';
+            } else {
+                reason = 'NORMAL';
+                msg = 'Sistemi i Kuotës së Energjisë është i shëndetshëm. Vazhdoni eksplorimin e Inteligjencës së Përtejme.';
+                access = 'LEJUAR';
+            }
+
+            document.getElementById('quota_message').textContent = msg;
+            accessElement.textContent = access;
+            accessElement.className = 'font-bold';
+            
+            eqsPanel.classList.remove('border-rrufe-accent', 'border-rrufe-alert', 'border-rrufe-warn');
+            if (reason === 'KUOTA_E_TEJKALUAR') {
+                accessElement.classList.add('text-rrufe-alert');
+                eqsPanel.classList.add('border-rrufe-alert');
+            } else if (reason === 'PARALAJMERIM_LODHJE') {
+                 accessElement.classList.add('text-rrufe-warn');
+                 eqsPanel.classList.add('border-rrufe-warn');
+            } else {
+                accessElement.classList.add('text-rrufe-accent');
+                eqsPanel.classList.add('border-rrufe-accent');
+            }
+
+            // 3. Përditësimi i Memories Kontekstuale (CMA)
+            renderContextHistory(data.context_entries, translations);
+        }
+
+        /**
+         * Renderon listën e historisë së kontekstit (CMA).
+         */
+        function renderContextHistory(entriesCount, translations) {
+            contextHistoryList.innerHTML = '';
+            if (!entriesCount || entriesCount === 0) {
+                contextHistoryList.innerHTML = `<li class="italic text-gray-500">${translations.no_entries}</li>`;
+                return;
+            }
+
+            for (let i = 0; i < Math.min(entriesCount, 5); i++) {
+                const li = document.createElement('li');
+                li.className = 'py-1 border-b border-gray-700 last:border-b-0';
+                
+                const time = new Date(Date.now() - i * 60000).toLocaleTimeString('sq-AL', { 
+                    hour: '2-digit', minute: '2-digit' 
+                });
+
+                const intents = [
+                    "KOMUNIKIM_UNIVERSAL",
+                    "KËRKESË_PËR_NDIHMË", 
+                    "KRIJIMTARI",
+                    "GJENDJE_EKULIBRI"
+                ];
+                
+                const randomIntent = intents[Math.floor(Math.random() * intents.length)];
+
+                li.innerHTML = `
+                    <span class="text-rrufe-accent mr-1">#${entriesCount - i}</span> 
+                    <span class="text-gray-300 font-medium">${randomIntent}</span> 
+                    <span class="text-gray-500 text-xs">(${time})</span>
+                `;
+                contextHistoryList.appendChild(li);
+            }
+        }
+
+        /**
+         * Funksion ndihmës për mesazhet.
+         */
+        function renderMessage(message, type) {
+            apiMessage.textContent = message;
+            apiMessage.className = 'mb-4 p-3 rounded-lg text-sm font-medium';
+            
+            if (type === 'success') {
+                apiMessage.classList.add('bg-rrufe-accent/20', 'text-rrufe-accent');
+            } else if (type === 'warn' || type === 'info') {
+                 apiMessage.classList.add('bg-rrufe-warn/20', 'text-rrufe-warn');
+            } else if (type === 'error') {
+                 apiMessage.classList.add('bg-rrufe-alert/20', 'text-rrufe-alert');
+            } else {
+                 apiMessage.classList.add('bg-gray-700/50', 'text-gray-300');
+            }
+        }
+    </script>
+</body>
+</html>
