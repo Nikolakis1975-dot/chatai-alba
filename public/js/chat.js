@@ -103,6 +103,7 @@ function showMemoryStats() {
 // 🚀 FUNKSIONI KRYESOR I PËRDITËSUAR PËR DËRGIMIN E MESAZHEVE
 // ======================================================
 
+// 🚀 FUNKSIONI KRYESOR I PËRDITËSUAR ME MBROJTJE KUNDËR GABIMEVE
 async function sendMessage() {
     const input = document.getElementById('user-input');
     const message = input.value.trim();
@@ -114,54 +115,63 @@ async function sendMessage() {
     try {
         addMessage(message, 'user');
 
-        // 🧠 INTEGRIMI I RI ME LONG-TERM MEMORY
+        // 🧠 INTEGRIMI I RI ME LONG-TERM MEMORY ME MBROJTJE
         let ltmManager = window.ltmManager;
         let isLTMReady = false;
 
+        // Kontrollo nëse LTM është i disponueshëm
         if (!ltmManager && typeof LongTermMemoryManager !== 'undefined') {
-            ltmManager = await initializeLTMForChat();
-        }
-
-        if (ltmManager) {
+            try {
+                ltmManager = await initializeLTMForChat();
+                if (ltmManager) {
+                    isLTMReady = true;
+                    console.log('🧠 LTM u inicializua me sukses për këtë mesazh');
+                }
+            } catch (error) {
+                console.warn('⚠️ LTM inicializimi dështoi, duke përdorur fallback:', error);
+            }
+        } else if (ltmManager) {
             isLTMReady = true;
-            console.log('🧠 LTM aktiv për këtë mesazh');
         }
 
         // 🎯 PROCESIMI I MESAZHIT ME OSE PA LTM
-        let response;
         if (isLTMReady && ltmManager && (window.currentAIMode === 'ADVANCED' || window.currentAIMode === 'DIVINE')) {
             // ✅ PËRDOR LONG-TERM MEMORY ME MANDATIN OPERACIONAL
-            const payload = ltmManager.generateGeminiPayload(message);
-            
-            console.log('🎯 Duke dërguar mesazh me LTM integration...');
-            response = await fetch('/api/gemini/chat-with-memory', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ 
-                    message: message,
-                    userId: getCurrentUserId(),
-                    ltmPayload: payload,
-                    mode: window.currentAIMode || 'SIMPLE'
-                })
-            });
+            try {
+                const payload = ltmManager.generateGeminiPayload(message);
+                
+                console.log('🎯 Duke dërguar mesazh me LTM integration...');
+                const response = await fetch('/api/gemini/chat-with-memory', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        message: message,
+                        userId: getCurrentUserId(),
+                        ltmPayload: payload,
+                        mode: window.currentAIMode || 'SIMPLE'
+                    })
+                });
 
-            const data = await response.json();
-            
-            if (data.success) {
-                ltmManager.addAIResponse(data.response);
-                await ltmManager.saveChatHistory();
+                const data = await response.json();
                 
-                addMessage(data.response, 'bot');
-                console.log('💾 Përgjigja u ruajt në Long-Term Memory');
-                
-                if ((window.currentAIMode === 'ADVANCED' || window.currentAIMode === 'DIVINE')) {
-                    const stats = ltmManager.getMemoryStats();
-                    console.log('📊 Memory Stats:', stats);
+                if (data.success) {
+                    ltmManager.addAIResponse(data.response);
+                    await ltmManager.saveChatHistory();
+                    
+                    addMessage(data.response, 'bot');
+                    console.log('💾 Përgjigja u ruajt në Long-Term Memory');
+                    
+                    if ((window.currentAIMode === 'ADVANCED' || window.currentAIMode === 'DIVINE')) {
+                        const stats = ltmManager.getMemoryStats();
+                        console.log('📊 Memory Stats:', stats);
+                    }
+                } else {
+                    throw new Error(data.response || 'Gabim në përpunim');
                 }
-            } else {
-                // Fallback në sistemin e vjetër nëse LTM dështon
+            } catch (ltmError) {
+                console.warn('⚠️ LTM procesimi dështoi, duke përdorur fallback:', ltmError);
                 await sendToBackend(message);
             }
             
