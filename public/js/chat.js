@@ -8,16 +8,31 @@ console.log("🎯 RRUFE-TESLA 10.5 Frontend Chat System u inicializua!");
 // 🧠 LONG-TERM MEMORY INTEGRATION - FUNKSIONET E REJA
 // ======================================================
 
-// 🎯 FUNKSIONI PËR INICIALIZIMIN E LTM NË FILLIM TË CHAT-IT
+// 🎯 FUNKSIONI I RI PËR INICIALIZIMIN E LTM ME PRITJE
 async function initializeLTMForChat() {
     console.log('🎯 Duke inicializuar Long-Term Memory për chat...');
     
-    try {
-        if (typeof LongTermMemoryManager === 'undefined') {
-            console.warn('⚠️ LongTermMemoryManager nuk është i ngarkuar');
-            return null;
+    // Prit deri sa LTM të jetë i ngarkuar (max 10 sekonda)
+    let attempts = 0;
+    const maxAttempts = 50; // 10 sekonda
+    
+    while (attempts < maxAttempts) {
+        if (typeof LongTermMemoryManager !== 'undefined') {
+            console.log('✅ LongTermMemoryManager u gjet!');
+            break;
         }
+        
+        console.log(`⏳ Duke pritur për LTM... (${attempts + 1}/${maxAttempts})`);
+        await new Promise(resolve => setTimeout(resolve, 200));
+        attempts++;
+    }
+    
+    if (typeof LongTermMemoryManager === 'undefined') {
+        console.warn('⚠️ LongTermMemoryManager nuk u ngarkua pas 10 sekondash');
+        return null;
+    }
 
+    try {
         const userId = getCurrentUserId() || 'guest_user';
         const db = window.firebaseApp || null;
         
