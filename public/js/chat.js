@@ -477,3 +477,49 @@ window.quickLTMTEST = function() {
 };
 
 console.log("✅ RRUFE-TESLA 10.5 Chat System u inicializua plotësisht me LTM integration!");
+
+// ========================== 🎯 FUNKSION I RI PËR VERIFIKIM TË GJALLË TË LTM ==================================
+window.verifyLTMRealTime = async function() {
+    console.log('🔍 VERIFIKIM I GJALLË I LTM:');
+    
+    // Prit deri sa LTM të jetë i ngarkuar
+    let ltmLoaded = false;
+    for (let i = 0; i < 20; i++) {
+        if (typeof LongTermMemoryManager !== 'undefined') {
+            ltmLoaded = true;
+            break;
+        }
+        await new Promise(resolve => setTimeout(resolve, 250));
+    }
+    
+    if (!ltmLoaded) {
+        console.log('❌ LTM nuk u ngarkua brenda 5 sekondave');
+        console.log('📌 Kontrollo:');
+        console.log('   - A është shtuar <script src="./utils/LongTermMemoryManager.js"></script>');
+        console.log('   - A ekziston skedari në atë location');
+        return false;
+    }
+    
+    console.log('✅ LTM është i ngarkuar!');
+    
+    // Krijo një instancë testuese
+    try {
+        const testLTM = new LongTermMemoryManager('verify_user', null);
+        await testLTM.initialize();
+        
+        const stats = testLTM.getMemoryStats();
+        console.log('📊 LTM Stats:', stats);
+        
+        // Testo mandatin
+        const testQuestion = "Kush je ti?";
+        const isRelevant = testLTM.isMandateRelevantQuestion(testQuestion);
+        console.log(`🎯 Test pyetje: "${testQuestion}" → Relevante: ${isRelevant}`);
+        
+        addMessage(`🧠 **LTM Verifikim:** ✅ Aktiv\n📊 Mesazhe: ${stats.total_messages}\n🎯 Test: "${testQuestion}"`, 'system');
+        
+        return true;
+    } catch (error) {
+        console.error('❌ Gabim në verifikimin e LTM:', error);
+        return false;
+    }
+};
