@@ -1,8 +1,12 @@
 // ======================================================
-// 🚀 chat.js - FRONTEND CHAT FUNCTIONS FOR RRUFE-TESLA 10.5
+// 🚀 chat.js - FRONTEND CHAT FUNCTIONS FOR RRUFE-TESLA 11.0
 // ======================================================
 
-console.log("🎯 RRUFE-TESLA 10.5 Frontend Chat System u inicializua!");
+console.log("🎯 RRUFE-TESLA 11.0 Frontend Chat System u inicializua!");
+
+// 🧠 VARIABLA PËR PËRGJIGJE TË GJALLA
+let isAIThinking = false;
+let currentTypingDelay = 0;
 
 // ======================================================
 // 🧠 LONG-TERM MEMORY INTEGRATION - FUNKSIONET E REJA
@@ -100,10 +104,9 @@ function showMemoryStats() {
 }
 
 // ======================================================
-// 🚀 FUNKSIONI KRYESOR I PËRDITËSUAR PËR DËRGIMIN E MESAZHEVE
+// 🚀 FUNKSIONI KRYESOR I PËRDITËSUAR ME PËRGJIGJE TË GJALLA
 // ======================================================
 
-// 🚀 FUNKSIONI KRYESOR I PËRDITËSUAR ME MBROJTJE KUNDËR GABIMEVE
 async function sendMessage() {
     const input = document.getElementById('user-input');
     const message = input.value.trim();
@@ -113,7 +116,15 @@ async function sendMessage() {
     input.value = '';
 
     try {
+        // Shto mesazhin e përdoruesit në chat
         addMessage(message, 'user');
+
+        // Aktivizo typing indicator
+        showTypingIndicator();
+        
+        // Simulo kohë mendimi natyrale
+        const thinkingTime = calculateThinkingTime(message);
+        await new Promise(resolve => setTimeout(resolve, thinkingTime));
 
         // 🧠 INTEGRIMI I RI ME LONG-TERM MEMORY ME MBROJTJE
         let ltmManager = window.ltmManager;
@@ -135,6 +146,7 @@ async function sendMessage() {
         }
 
         // 🎯 PROCESIMI I MESAZHIT ME OSE PA LTM
+        let responseData;
         if (isLTMReady && ltmManager && (window.currentAIMode === 'ADVANCED' || window.currentAIMode === 'DIVINE')) {
             // ✅ PËRDOR LONG-TERM MEMORY ME MANDATIN OPERACIONAL
             try {
@@ -154,13 +166,12 @@ async function sendMessage() {
                     })
                 });
 
-                const data = await response.json();
+                responseData = await response.json();
                 
-                if (data.success) {
-                    ltmManager.addAIResponse(data.response);
+                if (responseData.success) {
+                    ltmManager.addAIResponse(responseData.response);
                     await ltmManager.saveChatHistory();
                     
-                    addMessage(data.response, 'bot');
                     console.log('💾 Përgjigja u ruajt në Long-Term Memory');
                     
                     if ((window.currentAIMode === 'ADVANCED' || window.currentAIMode === 'DIVINE')) {
@@ -168,21 +179,118 @@ async function sendMessage() {
                         console.log('📊 Memory Stats:', stats);
                     }
                 } else {
-                    throw new Error(data.response || 'Gabim në përpunim');
+                    throw new Error(responseData.response || 'Gabim në përpunim');
                 }
             } catch (ltmError) {
                 console.warn('⚠️ LTM procesimi dështoi, duke përdorur fallback:', ltmError);
-                await sendToBackend(message);
+                responseData = await sendToBackend(message);
             }
             
         } else {
             // 🔄 FALLBACK NË SISTEMIN E VJETËR
-            await sendToBackend(message);
+            responseData = await sendToBackend(message);
+        }
+
+        // Fshi typing indicator
+        hideTypingIndicator();
+
+        if (responseData.success) {
+            // Shto përgjigjen me efekt të gjallë typing
+            await addMessageWithTypingEffect(responseData.response, 'bot');
+        } else {
+            addMessage('❌ Ups! Diçka shkoi keq. Provoni përsëri? 😊', 'system');
         }
 
     } catch (error) {
         console.error('❌ Gabim në dërgimin e mesazhit:', error);
-        addMessage('❌ Gabim në sistem. Ju lutem provoni përsëri.', 'system');
+        hideTypingIndicator();
+        addMessage('❌ Oh jo! Lidhja dështoi. Po provoj përsëri... 🔄', 'system');
+    }
+}
+
+// ======================================================
+// 🎭 SISTEMI I TYPING EFFECT TË GJALLË
+// ======================================================
+
+// ⏰ FUNKSION PËR KOHË MENDIMI REALISTE
+function calculateThinkingTime(message) {
+    const words = message.split(' ').length;
+    const baseTime = 800 + (words * 120); // 800ms bazë + 120ms per fjalë
+    const randomExtra = Math.random() * 1000; // Variancë natyrale
+    return baseTime + randomExtra;
+}
+
+// ⌨️ FUNKSION PËR TYPING EFFECT TË GJALLË
+async function addMessageWithTypingEffect(text, sender) {
+    return new Promise((resolve) => {
+        const chat = document.getElementById('chat');
+        const messageDiv = document.createElement('div');
+        
+        messageDiv.className = `message ${sender}-message typing-active`;
+        messageDiv.innerHTML = `
+            <div class="message-content">
+                <div class="message-text"></div>
+                <div class="typing-dots">
+                    <span></span><span></span><span></span>
+                </div>
+                <div class="message-time">${new Date().toLocaleTimeString()}</div>
+            </div>
+        `;
+        
+        chat.appendChild(messageDiv);
+        chat.scrollTop = chat.scrollHeight;
+
+        // Simulo typing real
+        let index = 0;
+        const typingSpeed = 30 + Math.random() * 20; // Speed variabël
+        
+        function typeCharacter() {
+            if (index < text.length) {
+                const currentText = text.substring(0, index + 1);
+                messageDiv.querySelector('.message-text').textContent = currentText;
+                index++;
+                
+                // Shto pause të rastësishme për efekt realist
+                const pause = Math.random() < 0.02 ? 200 : 0;
+                setTimeout(typeCharacter, typingSpeed + pause);
+            } else {
+                // Përfundo typing
+                messageDiv.classList.remove('typing-active');
+                const dots = messageDiv.querySelector('.typing-dots');
+                if (dots) dots.style.display = 'none';
+                resolve();
+            }
+        }
+        
+        // Fillo typing pas një pause të shkurtër
+        setTimeout(typeCharacter, 300);
+    });
+}
+
+// ✨ FUNKSIONE PËR TYPING INDICATOR
+function showTypingIndicator() {
+    const chat = document.getElementById('chat');
+    const typingDiv = document.createElement('div');
+    
+    typingDiv.id = 'typing-indicator';
+    typingDiv.className = 'message bot-message typing-active';
+    typingDiv.innerHTML = `
+        <div class="message-content">
+            <div class="typing-dots">
+                <span></span><span></span><span></span>
+            </div>
+            <div class="message-time">${new Date().toLocaleTimeString()}</div>
+        </div>
+    `;
+    
+    chat.appendChild(typingDiv);
+    chat.scrollTop = chat.scrollHeight;
+}
+
+function hideTypingIndicator() {
+    const typingIndicator = document.getElementById('typing-indicator');
+    if (typingIndicator) {
+        typingIndicator.remove();
     }
 }
 
@@ -206,15 +314,14 @@ async function sendToBackend(message) {
         });
 
         const data = await response.json();
+        return data;
         
-        if (data.success) {
-            addMessage(data.response, 'bot');
-        } else {
-            addMessage('❌ ' + (data.response || 'Gabim në përpunimin e mesazhit'), 'system');
-        }
     } catch (error) {
         console.error('❌ Gabim në dërgimin e mesazhit:', error);
-        addMessage('❌ Gabim në lidhje me serverin. Provo përsëri.', 'system');
+        return {
+            success: false,
+            response: '❌ Gabim në lidhje me serverin. Provo përsëri.'
+        };
     }
 }
 
@@ -304,7 +411,7 @@ function getCurrentUserId() {
 }
 
 // ======================================================
-// 🎯 SISTEMI I RI I KONTROLLIT MANUAL TË AI - RRUFE-TESLA 10.5
+// 🎯 SISTEMI I RI I KONTROLLIT MANUAL TË AI - RRUFE-TESLA 11.0
 // ======================================================
 
 // Variabla globale për të ndjekur modin aktual
@@ -317,7 +424,7 @@ function activateSimpleAI() {
     updateAIButtonStyles('SIMPLE');
     
     if (window.addMessage) {
-        window.addMessage('🔹 **AI i Thjeshtë i aktivizuar** - Chat-i do të jetë i shpejtë dhe natyral! Përgjigjet do të duken "të gjalla" dhe natyrore.', 'system');
+        addMessage('🔹 **U kthyem në modalitetin normal** - Biseda do të jetë e shpejtë dhe natyrale! 😊', 'system');
     }
     
     console.log('🔹 Çaktivizimi i moduleve të avancuara për chat normal...');
@@ -340,11 +447,11 @@ function activateAdvancedAI() {
             if (ltm) {
                 console.log('🧠 LTM u inicializua për modalitetin e avancuar');
                 const stats = ltm.getMemoryStats();
-                addMessage(`🌌 **RRUFE-TESLA 10.5 i aktivizuar** - Të gjitha modulet janë operative!\n🧠 Memorja: ${stats.total_messages} mesazhe`, 'system');
+                addMessage(`🌌 **RRUFE-TESLA 11.0 i aktivizuar** - Të gjitha modulet janë operative!\n🧠 Memorja: ${stats.total_messages} mesazhe`, 'system');
             }
         });
     } else if (window.addMessage) {
-        addMessage('🌌 **RRUFE-TESLA 10.5 i aktivizuar** - Të gjitha modulet janë operative! Përgjigjet do të jenë super-inteligjente por mund të jenë më të ngadalshme.', 'system');
+        addMessage('🌌 **RRUFE-TESLA 11.0 i aktivizuar** - Tani do të jesh më i thellë dhe detajuar! ⚡', 'system');
     }
 }
 
@@ -366,11 +473,11 @@ function activateDivineAI() {
             if (ltm) {
                 console.log('🧠 LTM u inicializua për modalitetin hyjnor');
                 const stats = ltm.getMemoryStats();
-                addMessage(`⚡ **Divine Fusion i aktivizuar** - 5 Perënditë e AI-ve janë gati për bashkim!\n🧠 Memorja: ${stats.total_messages} mesazhe`, 'system');
+                addMessage(`⚡ **Modaliteti Hyjnor i aktivizuar** - Gati për analiza të thella! 🌟\n🧠 Memorja: ${stats.total_messages} mesazhe`, 'system');
             }
         });
     } else if (window.addMessage) {
-        addMessage('⚡ **Divine Fusion i aktivizuar** - 5 Perënditë e AI-ve janë gati për bashkim! Kjo është modaliteti më i fuqishëm por më i ngadalshëm.', 'system');
+        addMessage('⚡ **Modaliteti Hyjnor i aktivizuar** - Gati për analiza të thella! 🌟', 'system');
     }
 }
 
@@ -441,6 +548,11 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }, 2000);
     }
+    
+    // Shto mesazh mirëseardhjeje të gjallë
+    setTimeout(() => {
+        addMessage('👋 Përshëndetje! Unë jam RRUFE-TESLA 11.0. 🌟 Si mund të të ndihmoj sot?', 'bot');
+    }, 3000);
 });
 
 // ======================================================
@@ -475,8 +587,6 @@ window.quickLTMTEST = function() {
         addMessage('🧪 **Test LTM:** ❌ Jo aktiv', 'system');
     }
 };
-
-console.log("✅ RRUFE-TESLA 10.5 Chat System u inicializua plotësisht me LTM integration!");
 
 // ========================== 🎯 FUNKSION I RI PËR VERIFIKIM TË GJALLË TË LTM ==================================
 window.verifyLTMRealTime = async function() {
@@ -523,3 +633,5 @@ window.verifyLTMRealTime = async function() {
         return false;
     }
 };
+
+console.log("✅ RRUFE-TESLA 11.0 Chat System u inicializua plotësisht me PËRGJIGJE TË GJALLA!");
