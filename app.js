@@ -91,6 +91,11 @@ const rrufeRoutes = require('./routes/rrufe/api-rrufe');
 // const BioNeuralNetwork = require('./public/js/modules/bioNeuralNetwork');
 const ContextMemoryService = require('./services/contextMemoryService');
 const ConsciousnessService = require('./services/consciousnessService');
+// ✅ SHTO KËTË:
+const EmotionalContextService = require('./services/emotionalContextService');
+
+// ✅ INICIALIZO NË STARTUP:
+// const emotionalService = new EmotionalContextService();
 
 // ======================================================
 // 🆕 SHTESË E RE: RRUFE-TESLA 10.5 INTEGRIMI
