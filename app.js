@@ -85,6 +85,10 @@ const geminiRoutes = require('./routes/gemini');
 const adminRoutes = require('./routes/admin');
 const geminiSimpleRoutes = require('./routes/gemini-simple');
 const rrufeRoutes = require('./routes/rrufe/api-rrufe');
+// ❌ KËTO NUK JANË TË IMPORTUARA:
+const EmotionalContextEngine = require('./public/js/modules/emotionalContextEngine');
+const QuantumMemory = require('./public/js/modules/quantumMemory');
+const BioNeuralNetwork = require('./public/js/modules/bioNeuralNetwork');
 
 // ======================================================
 // 🆕 SHTESË E RE: RRUFE-TESLA 10.5 INTEGRIMI
@@ -109,6 +113,10 @@ app.use('/api/gemini', geminiRoutes);
 app.use('/admin', adminRoutes);
 app.use('/api/gemini-simple', geminiSimpleRoutes);
 app.use('/api/rrufe', rrufeRoutes);
+// ❌ NUK KA ROUTES SPECIFIKE:
+app.use('/api/emotional', emotionalRoutes);
+app.use('/api/quantum', quantumRoutes);
+app.use('/api/bioneural', bioNeuralRoutes);
 
 // ======================================================
 // 5️⃣ Static files (Frontend)
