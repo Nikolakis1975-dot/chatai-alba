@@ -30,70 +30,181 @@ class RrufePlatform {
         
         console.log(`✅ RRUFE-TESLA ${this.version} u inicializua me sukses!`);
     }
-
-    initializeModules() {
-        console.log('🔧 Duke inicializuar modulet RRUFE-TESLA...');
+// =========================================== INSTALIMI I MODULEVE =================================================
+   initializeModules() {
+    console.log('🔧 Duke inicializuar modulet RRUFE-TESLA...');
+    
+    // ✅ PRIT QË MODULET TË NGARKOHEN - VERSION I RI
+    const maxAttempts = 10;
+    let attempts = 0;
+    
+    const tryInitialize = () => {
+        attempts++;
+        console.log(`🕒 Tentimi ${attempts}/${maxAttempts} për inicializim...`);
         
-        // ✅ MODULET BAZË
-        if (typeof ContextMemory !== 'undefined') {
-            this.modules.contextMemory = new ContextMemory();
-            rlog('✅ ContextMemory u inicializua!');
+        // ✅ MODULET BAZË ME VALIDIM TË FORTUAR
+        if (typeof ContextMemory !== 'undefined' && !this.modules.contextMemory) {
+            try {
+                this.modules.contextMemory = new ContextMemory();
+                rlog('✅ ContextMemory u inicializua!');
+            } catch (error) {
+                console.log('❌ Gabim në ContextMemory:', error.message);
+            }
         }
         
-        if (typeof QuantumMemory !== 'undefined') {
-            this.modules.quantumMemory = new QuantumMemory();
-            rlog('✅ QuantumMemory u inicializua!');
+        if (typeof QuantumMemory !== 'undefined' && !this.modules.quantumMemory) {
+            try {
+                this.modules.quantumMemory = new QuantumMemory();
+                rlog('✅ QuantumMemory u inicializua!');
+            } catch (error) {
+                console.log('❌ Gabim në QuantumMemory:', error.message);
+            }
         }
         
-        if (typeof BioNeuralNetwork !== 'undefined') {
-            this.modules.bioNeuralNetwork = new BioNeuralNetwork();
-            rlog('✅ BioNeuralNetwork u inicializua!');
+        if (typeof BioNeuralNetwork !== 'undefined' && !this.modules.bioNeuralNetwork) {
+            try {
+                this.modules.bioNeuralNetwork = new BioNeuralNetwork();
+                rlog('✅ BioNeuralNetwork u inicializua!');
+            } catch (error) {
+                console.log('❌ Gabim në BioNeuralNetwork:', error.message);
+            }
         }
         
-        if (typeof TemporalContext !== 'undefined') {
-            this.modules.temporalContext = new TemporalContext();
-            rlog('✅ TemporalContext u inicializua!');
+        if (typeof TemporalContext !== 'undefined' && !this.modules.temporalContext) {
+            try {
+                this.modules.temporalContext = new TemporalContext();
+                rlog('✅ TemporalContext u inicializua!');
+            } catch (error) {
+                console.log('❌ Gabim në TemporalContext:', error.message);
+            }
         }
         
         // ✅ MODULET E AVANCUARA
-        if (typeof CognitiveAwareness !== 'undefined') {
-            this.modules.cognitiveAwareness = new CognitiveAwareness();
-            rlog('✅ CognitiveAwareness u inicializua!');
+        if (typeof CognitiveAwareness !== 'undefined' && !this.modules.cognitiveAwareness) {
+            try {
+                this.modules.cognitiveAwareness = new CognitiveAwareness();
+                rlog('✅ CognitiveAwareness u inicializua!');
+            } catch (error) {
+                console.log('❌ Gabim në CognitiveAwareness:', error.message);
+            }
         }
         
-        if (typeof DivineFusion !== 'undefined') {
-            this.modules.divineFusion = new DivineFusion();
-            rlog('✅ DivineFusion u inicializua!');
+        if (typeof DivineFusion !== 'undefined' && !this.modules.divineFusion) {
+            try {
+                this.modules.divineFusion = new DivineFusion();
+                rlog('✅ DivineFusion u inicializua!');
+            } catch (error) {
+                console.log('❌ Gabim në DivineFusion:', error.message);
+            }
         }
         
-        if (typeof KunformTranslator !== 'undefined') {
-            this.modules.kunformTranslator = new KunformTranslator();
-            rlog('✅ KunformTranslator u inicializua!');
+        if (typeof KunformTranslator !== 'undefined' && !this.modules.kunformTranslator) {
+            try {
+                this.modules.kunformTranslator = new KunformTranslator();
+                rlog('✅ KunformTranslator u inicializua!');
+            } catch (error) {
+                console.log('❌ Gabim në KunformTranslator:', error.message);
+            }
         }
         
-        if (typeof NeuralFeedbackLoop !== 'undefined') {
-            this.modules.neuralFeedbackLoop = new NeuralFeedbackLoop();
-            rlog('✅ NeuralFeedbackLoop u inicializua!');
+        if (typeof NeuralFeedbackLoop !== 'undefined' && !this.modules.neuralFeedbackLoop) {
+            try {
+                this.modules.neuralFeedbackLoop = new NeuralFeedbackLoop();
+                rlog('✅ NeuralFeedbackLoop u inicializua!');
+            } catch (error) {
+                console.log('❌ Gabim në NeuralFeedbackLoop:', error.message);
+            }
         }
         
         // ✅ MODULET E REJA
-        if (typeof DivinePantheonSystem !== 'undefined') {
-            this.modules.divinePantheon = new DivinePantheonSystem();
-            rlog('✅ DivinePantheonSystem u inicializua!');
+        if (typeof DivinePantheonSystem !== 'undefined' && !this.modules.divinePantheon) {
+            try {
+                this.modules.divinePantheon = new DivinePantheonSystem();
+                rlog('✅ DivinePantheonSystem u inicializua!');
+            } catch (error) {
+                console.log('❌ Gabim në DivinePantheonSystem:', error.message);
+            }
         }
         
-        if (typeof DivineConstitution !== 'undefined') {
-            this.modules.divineConstitution = new DivineConstitution();
-            rlog('✅ DivineConstitution u inicializua!');
+        if (typeof DivineConstitution !== 'undefined' && !this.modules.divineConstitution) {
+            try {
+                this.modules.divineConstitution = new DivineConstitution();
+                rlog('✅ DivineConstitution u inicializua!');
+            } catch (error) {
+                console.log('❌ Gabim në DivineConstitution:', error.message);
+            }
         }
         
-        if (typeof UniversalAIFederation !== 'undefined') {
-            this.modules.universalFederation = new UniversalAIFederation();
-            rlog('✅ UniversalAIFederation u inicializua!');
+        if (typeof UniversalAIFederation !== 'undefined' && !this.modules.universalFederation) {
+            try {
+                this.modules.universalFederation = new UniversalAIFederation();
+                rlog('✅ UniversalAIFederation u inicializua!');
+            } catch (error) {
+                console.log('❌ Gabim në UniversalAIFederation:', error.message);
+            }
         }
         
-        rlog(`📊 Total module të inicializuara: ${Object.keys(this.modules).length}`);
+        // ✅ KONTROLLO NËSE TË GJITHA MODULET JANË GATI
+        const modulesReady = Object.keys(this.modules).length >= 3; // Minimum 3 module
+        
+        if (modulesReady || attempts >= maxAttempts) {
+            rlog(`📊 Total module të inicializuara: ${Object.keys(this.modules).length}`);
+            this.onModulesInitialized();
+        } else {
+            setTimeout(tryInitialize, 500); // Provo përsëri pas 500ms
+        }
+    };
+    
+    tryInitialize();
+}
+
+// ==================================== ✅ METODË E RE PËR PAS-INICIALIZIMIT ==============================================
+onModulesInitialized() {
+    console.log('🎉 Të gjitha modulet u inicializuan!');
+    
+    // TANI mund të integrohet me sistemin ekzistues
+    this.integrateWithExisting();
+    this.testPlatform();
+    
+    // ✅ VERIFIKO EMOTIONAL CONTEXT ENGINE
+    this.verifyEmotionalEngine();
+}
+
+// ✅ METODË PËR VERIFIKIMIN E EMOTIONAL ENGINE
+verifyEmotionalEngine() {
+    console.log('💖 Duke verifikuar Emotional Context Engine...');
+    
+    if (window.emotionalContextEngine) {
+        try {
+            const status = window.emotionalContextEngine.getEngineStatus();
+            console.log('🎭 Emotional Engine Status:', status);
+            
+            // ✅ TESTO FUNKSIONALITETIN
+            const testVector = window.emotionalContextEngine.generateAdaptationVector(
+                { tone: 'joy', intensity: 0.8, confidence: 0.9 },
+                {}
+            );
+            console.log('🧪 Test Emotional Vector:', testVector);
+            rlog('💖 Emotional Context Engine është operative!');
+        } catch (error) {
+            console.log('❌ Gabim në Emotional Engine test:', error.message);
+        }
+    } else {
+        console.log('❌ Emotional Context Engine nuk u inicializua!');
+        
+        // ✅ PROVO TA INICIALIZOJMË MANUALISHT
+        if (typeof EmotionalContextEngine !== 'undefined') {
+            try {
+                window.emotionalContextEngine = new EmotionalContextEngine();
+                rlog('✅ Emotional Engine u inicializua manualisht!');
+            } catch (error) {
+                console.log('❌ Gabim në inicializim manual:', error.message);
+            }
+        } else {
+            console.log('❌ EmotionalContextEngine nuk është i definuar në window');
+        }
     }
+}
 
     // ✅ METODA: INTEGRIMI I THJESHTË ME SISTEMIN EKZISTUES
     integrateWithExisting() {
