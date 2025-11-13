@@ -86,6 +86,11 @@ const adminRoutes = require('./routes/admin');
 const geminiSimpleRoutes = require('./routes/gemini-simple');
 const rrufeRoutes = require('./routes/rrufe/api-rrufe');
 
+// ✅ SHTO KËTO IMPORTE:
+const ContextMemoryService = require('./services/contextMemoryService');
+const contextMemoryRoutes = require('./routes/context-memory');
+// ✅ INICIALIZO SHËRBIMIN:
+const contextMemoryService = new ContextMemoryService();
 
 // ======================================================
 // 🆕 SHTESË E RE: RRUFE-TESLA 10.5 INTEGRIMI
@@ -110,7 +115,8 @@ app.use('/api/gemini', geminiRoutes);
 app.use('/admin', adminRoutes);
 app.use('/api/gemini-simple', geminiSimpleRoutes);
 app.use('/api/rrufe', rrufeRoutes);
-
+// ✅ REGJISTRO ROUTET:
+app.use('/api/context-memory', contextMemoryRoutes);
 
 // ======================================================
 // 5️⃣ Static files (Frontend)
