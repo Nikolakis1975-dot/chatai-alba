@@ -86,9 +86,11 @@ const adminRoutes = require('./routes/admin');
 const geminiSimpleRoutes = require('./routes/gemini-simple');
 const rrufeRoutes = require('./routes/rrufe/api-rrufe');
 // ❌ KËTO NUK JANË TË IMPORTUARA:
-const EmotionalContextEngine = require('./public/js/modules/emotionalContextEngine');
-const QuantumMemory = require('./public/js/modules/quantumMemory');
-const BioNeuralNetwork = require('./public/js/modules/bioNeuralNetwork');
+// const EmotionalContextEngine = require('./public/js/modules/emotionalContextEngine');
+// const QuantumMemory = require('./public/js/modules/quantumMemory');
+// const BioNeuralNetwork = require('./public/js/modules/bioNeuralNetwork');
+const ContextMemoryService = require('./services/contextMemoryService');
+const ConsciousnessService = require('./services/consciousnessService');
 
 // ======================================================
 // 🆕 SHTESË E RE: RRUFE-TESLA 10.5 INTEGRIMI
