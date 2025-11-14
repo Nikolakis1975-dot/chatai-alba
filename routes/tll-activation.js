@@ -1,4 +1,4 @@
-// ================================================== routes/tll-activation =============================================
+// ================================================== tll-activation =============================================
 const express = require('express');
 const TLLActivationService = require('../services/TLL_Activation_Service');
 const router = express.Router();
