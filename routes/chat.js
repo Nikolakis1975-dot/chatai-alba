@@ -539,35 +539,4 @@ class LocalChatIntelligence {
     }
 }
 
-// ==================== 🚀 AUTO-INITIALIZATION ====================
-// Kjo pjesë shkon në FUND të skedarit, para module.exports
-
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 RRUFE-TESLA - Duke inicializuar sistemin...');
-    
-    setTimeout(async () => {
-        try {
-            // Inicializo LTM
-            if (typeof LongTermMemoryManager !== 'undefined' && !window.ltmManager) {
-                await initializeLTMForChat();
-            }
-            
-            // Inicializo Memory Interface
-            if (typeof initializeMemoryInterface !== 'undefined') {
-                initializeMemoryInterface();
-            }
-            
-            // Shto LTM në Platform
-            if (window.rrufePlatform && window.ltmManager) {
-                window.rrufePlatform.modules.longTermMemory = window.ltmManager;
-            }
-            
-            console.log('✅ RRUFE-TESLA 10.5 u inicializua automatikisht!');
-            
-        } catch (error) {
-            console.error('❌ Gabim në inicializim automatik:', error);
-        }
-    }, 3000);
-});
-
 module.exports = router;
