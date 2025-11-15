@@ -902,3 +902,95 @@ window.showDetailedMemoryStats = showDetailedMemoryStats;
 window.initializeMemoryInterface = initializeMemoryInterface;
 
 console.log("✅ Memory Display System u ngarkua në chat.js!");
+
+// ================================= Sistemi lokal i inteligjencës ======================================
+class LocalChatIntelligence {
+    constructor() {
+        this.knowledgeBase = {
+            greetings: {
+                patterns: ['pershendetje', 'hello', 'hi', 'tung', 'ciao', 'mirëmëngjes', 'mirëdita', 'mirëmbrëma'],
+                responses: [
+                    'Përshëndetje! 😊 Mirë se ju gjetëm!',
+                    'Hello! Si mund t'ju ndihmoj sot?',
+                    'Tungjatjeta! Gëzohem që ju shoh!',
+                    'Përshëndetje! Çfarë mund të bëj për ju?'
+                ]
+            },
+            farewells: {
+                patterns: ['mirupafshim', 'bye', 'lamtumirë', 'shëndet', 'flm', 'faleminderit'],
+                responses: [
+                    'Mirupafshim! 😊 Ishte kënaqësi të flisja me ju!',
+                    'Lamtumirë! Shpresoj të flasim sërish!',
+                    'Faleminderit! Ju uroj një ditë të mbarë!',
+                    'Shëndet! Mos u largoni shumë!'
+                ]
+            },
+            help: {
+                patterns: ['ndihmo', 'help', 'komanda', 'si punon', 'çfarë mund të bësh'],
+                responses: [
+                    'Unë jam RRUFE-TESLA! Mund të:\n• Të përgjigjem pyetjeve bazë\n• Të llogarit matematikë\n• Të kujtoj bisedat tona\n• Të ndihmoj me informacione\n\nShkruani pyetjen tuaj!'
+                ]
+            },
+            math: {
+                patterns: ['+', '-', '*', '/', '^', 'llogarit', 'sa është'],
+                responses: []
+            },
+            // ... më shumë kategori
+        };
+    }
+
+    processMessage(message) {
+        const lowerMessage = message.toLowerCase();
+        
+        // Kontrollo nëse është matematikë
+        if (this.isMathExpression(message)) {
+            return this.solveMath(message);
+        }
+        
+        // Kontrollo kategori të tjera
+        for (let category in this.knowledgeBase) {
+            for (let pattern of this.knowledgeBase[category].patterns) {
+                if (lowerMessage.includes(pattern)) {
+                    const responses = this.knowledgeBase[category].responses;
+                    return responses[Math.floor(Math.random() * responses.length)];
+                }
+            }
+        }
+        
+        // Përgjigje default
+        return this.getDefaultResponse();
+    }
+
+    isMathExpression(text) {
+        const mathRegex = /^[\d+\-*/().^ ]+$/;
+        return mathRegex.test(text.replace(/\s/g, ''));
+    }
+
+    solveMath(expression) {
+        try {
+            // Pastro dhe siguro shprehjen
+            let cleanExpr = expression.replace(/[^0-9+\-*/().^]/g, '');
+            
+            // Zëvendëso ^ me ** për fuqi
+            cleanExpr = cleanExpr.replace(/\^/g, '**');
+            
+            // Përdor Function constructor për llogaritje të sigurt
+            const result = Function(`"use strict"; return (${cleanExpr})`)();
+            
+            return `🧮 Rezultati: **${result}**`;
+        } catch (error) {
+            return '❌ Nuk mund ta llogaris shprehjen matematikore.';
+        }
+    }
+
+    getDefaultResponse() {
+        const defaultResponses = [
+            'Interesante! Çfarë mendoni ju për këtë?',
+            'E kuptoj! A keni ndonjë pyetje tjetër?',
+            'Faleminderit për këtë informacion!',
+            'Po dëgjoj... vazhdoni ju lutem!',
+            'Kjo është shumë interesante!'
+        ];
+        return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
+    }
+}
