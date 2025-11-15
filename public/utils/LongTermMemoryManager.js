@@ -89,6 +89,28 @@ class LongTermMemoryManager {
         console.log('💾 Mesazhi u shtua në LTM. Total:', this.chatHistory.length);
     }
 
+    // 🆕 METODË E RE - SHTON MESAZH PËRDORUESI
+    addUserMessage(message) {
+        this.addMessage('user', message);
+    }
+
+    // 🆕 METODË E RE - SHTON PËRGJIGJE AI  
+    addAIResponse(response) {
+        this.addMessage('model', response);
+    }
+
+    // 🆕 METODË E RE - KTHEN HISTORINË E PLOTË
+    getChatHistory() {
+        return this.chatHistory;
+    }
+
+    // 🆕 METODË E RE - PASTRON MEMORINË
+    clearMemory() {
+        this.chatHistory = [];
+        console.log('🧹 Memoria u pastrua!');
+        return true;
+    }
+
     generateGeminiPayload(message) {
         this.addMessage('user', message);
         
@@ -140,10 +162,6 @@ PËRGJIGJU DUKE APLIKUAR PARIMET PBO DHE RESPEKTUAR MANDATIN OPERACIONAL!
                 }]
             }
         };
-    }
-
-    addAIResponse(text) {
-        this.addMessage('model', text);
     }
 
     async saveChatHistory() {
