@@ -1026,3 +1026,179 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }, 3000);
 });
+
+// ==================== 🎨 CODE FORMATTING & SYNTAX HIGHLIGHTING ====================
+
+console.log("🎨 Duke ngarkuar sistemin e formatimit të kodit...");
+
+/**
+ * Formatizon dhe thekson kodet në mesazhe
+ */
+function formatCodeBlocks() {
+    console.log("🔧 Duke formatizuar blloqet e kodit...");
+    
+    // Gjej të gjitha blloqet e kodit në chat
+    const codeBlocks = document.querySelectorAll('pre code');
+    console.log(`📊 Gjetur ${codeBlocks.length} blloqe kodi për formatizim`);
+    
+    // Apliko highlight për secilin bllok
+    codeBlocks.forEach((block, index) => {
+        try {
+            hljs.highlightElement(block);
+            console.log(`✅ Blloku ${index + 1} u theksua`);
+        } catch (error) {
+            console.log(`❌ Gabim në theksimin e bllokut ${index + 1}:`, error);
+        }
+    });
+    
+    // Shto butona kopjimi
+    addCopyButtons();
+}
+
+/**
+ * Shton butona kopjimi për blloqet e kodit
+ */
+function addCopyButtons() {
+    const preElements = document.querySelectorAll('pre');
+    console.log(`📋 Duke shtuar butona kopjimi për ${preElements.length} blloqe...`);
+    
+    preElements.forEach((pre, index) => {
+        // Kontrollo nëse ka tashmë buton kopjimi
+        if (!pre.querySelector('.copy-btn')) {
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'copy-btn';
+            copyBtn.textContent = '📋 Kopjo';
+            copyBtn.title = 'Kopjo kodin';
+            copyBtn.style.cssText = `
+                position: absolute;
+                top: 8px;
+                right: 8px;
+                background: #4285f4;
+                color: white;
+                border: none;
+                padding: 6px 12px;
+                border-radius: 4px;
+                font-size: 12px;
+                cursor: pointer;
+                font-family: 'Fira Code', monospace;
+                z-index: 10;
+                opacity: 0.9;
+                transition: opacity 0.2s;
+            `;
+            
+            // Efekt hover
+            copyBtn.onmouseenter = () => copyBtn.style.opacity = '1';
+            copyBtn.onmouseleave = () => copyBtn.style.opacity = '0.9';
+            
+            // Funksioni i kopjimit
+            copyBtn.onclick = function() {
+                const code = pre.querySelector('code')?.innerText || '';
+                navigator.clipboard.writeText(code).then(() => {
+                    const originalText = copyBtn.textContent;
+                    copyBtn.textContent = '✅ Kopjuar!';
+                    copyBtn.style.background = '#34A853';
+                    
+                    setTimeout(() => {
+                        copyBtn.textContent = originalText;
+                        copyBtn.style.background = '#4285f4';
+                    }, 2000);
+                }).catch(err => {
+                    console.error('❌ Gabim në kopjim:', err);
+                    copyBtn.textContent = '❌ Gabim';
+                    copyBtn.style.background = '#EA4335';
+                    
+                    setTimeout(() => {
+                        copyBtn.textContent = '📋 Kopjo';
+                        copyBtn.style.background = '#4285f4';
+                    }, 2000);
+                });
+            };
+            
+            pre.style.position = 'relative';
+            pre.appendChild(copyBtn);
+            console.log(`✅ Buton kopjimi u shtua për bllokun ${index + 1}`);
+        }
+    });
+}
+
+/**
+ * Përpunon mesazhet e reja për kod
+ */
+function processMessageForCode(messageElement) {
+    if (!messageElement) return;
+    
+    const htmlContent = messageElement.innerHTML;
+    
+    // Kontrollo për kode në format ```code```
+    const codeMatches = htmlContent.match(/```(\w+)?\s*([\s\S]*?)```/g);
+    
+    if (codeMatches) {
+        console.log(`🎯 Gjetur ${codeMatches.length} kode për përpunim`);
+        
+        codeMatches.forEach((match, index) => {
+            // Extract language and code content
+            const matchResult = match.match(/```(\w+)?\s*([\s\S]*?)```/);
+            const language = matchResult[1] || 'auto';
+            const codeContent = matchResult[2].trim();
+            
+            console.log(`📝 Kodi ${index + 1}: ${language}, ${codeContent.length} karaktere`);
+            
+            // Highlight kodin
+            const highlightedCode = language === 'auto' 
+                ? hljs.highlightAuto(codeContent).value
+                : hljs.highlight(codeContent, { language }).value;
+            
+            // Krijo bllokun e formatuar
+            const formattedCode = `
+                <div class="code-block" style="
+                    background: #1e1e1e; 
+                    border: 1px solid #333; 
+                    border-radius: 8px; 
+                    margin: 15px 0; 
+                    overflow: hidden;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                ">
+                    <div style="
+                        background: #2d2d2d; 
+                        padding: 12px 16px; 
+                        border-bottom: 1px solid #333; 
+                        font-size: 13px; 
+                        color: #ccc;
+                        font-family: 'Fira Code', monospace;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                    ">
+                        <span>🧬 ${language.toUpperCase()} CODE</span>
+                        <span style="font-size: 11px; color: #888;">${codeContent.length} chars</span>
+                    </div>
+                    <pre style="
+                        margin: 0; 
+                        padding: 16px; 
+                        overflow-x: auto; 
+                        background: #1e1e1e;
+                        color: #d4d4d4;
+                        font-family: 'Fira Code', monospace;
+                        font-size: 14px;
+                        line-height: 1.5;
+                    "><code>${highlightedCode}</code></pre>
+                </div>
+            `;
+            
+            // Zëvendëso në mesazh
+            messageElement.innerHTML = messageElement.innerHTML.replace(match, formattedCode);
+        });
+        
+        // Apliko highlight dhe shto butona pasi të jetë shtuar në DOM
+        setTimeout(() => {
+            formatCodeBlocks();
+        }, 100);
+    }
+}
+
+// Eksporto funksionet globale
+window.formatCodeBlocks = formatCodeBlocks;
+window.addCopyButtons = addCopyButtons;
+window.processMessageForCode = processMessageForCode;
+
+console.log("✅ Sistemi i formatimit të kodit u ngarkua!");
