@@ -994,3 +994,35 @@ class LocalChatIntelligence {
         return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
     }
 }
+
+// ==================== 🚀 AUTO-INITIALIZATION ====================
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 RRUFE-TESLA - Duke inicializuar sistemin...');
+    
+    setTimeout(async () => {
+        try {
+            // Inicializo LTM
+            if (typeof LongTermMemoryManager !== 'undefined' && !window.ltmManager) {
+                console.log('🧠 Duke inicializuar Long-Term Memory...');
+                await initializeLTMForChat();
+            }
+            
+            // Inicializo Memory Interface
+            if (typeof initializeMemoryInterface !== 'undefined') {
+                console.log('🎨 Duke inicializuar Memory Interface...');
+                initializeMemoryInterface();
+            }
+            
+            // Shto LTM në Platform
+            if (window.rrufePlatform && window.ltmManager && !window.rrufePlatform.modules.longTermMemory) {
+                window.rrufePlatform.modules.longTermMemory = window.ltmManager;
+                console.log('✅ LTM u shtua në platformën RRUFE-TESLA');
+            }
+            
+            console.log('✅ RRUFE-TESLA 10.5 u inicializua automatikisht!');
+            
+        } catch (error) {
+            console.error('❌ Gabim në inicializim automatik:', error);
+        }
+    }, 3000);
+});
