@@ -1,3 +1,57 @@
+// =========================================== chat ==============================================================
+// ✅ SHTO KËTO NË FILLIM:
+
+// Kontrollo nëse modulet janë ngarkuar, nëse jo krijo fallback
+function ensureModulesLoaded() {
+    // LongTermMemoryManager
+    if (typeof LongTermMemoryManager === 'undefined') {
+        console.log('🔄 LongTermMemoryManager nuk u gjet, duke krijuar fallback...');
+        // Krijo një version të thjeshtë
+        window.LongTermMemoryManager = class {
+            constructor(userId) { 
+                this.userId = userId; 
+                this.messages = [];
+            }
+            async initialize() { 
+                console.log('✅ LTM Fallback initialized');
+                return Promise.resolve(); 
+            }
+            generateGeminiPayload(msg) { 
+                return { message: msg, context: 'Nuk ka memorie' }; 
+            }
+            addAIResponse() {}
+            async saveChatHistory() { return Promise.resolve(); }
+            getMemoryStats() { 
+                return { total_messages: 0, user_messages: 0, ai_messages: 0, capacity: '0/1000' };
+            }
+        };
+    }
+
+    // EmotionalContextEngine  
+    if (typeof EmotionalContextEngine === 'undefined') {
+        console.log('🔄 EmotionalContextEngine nuk u gjet, duke krijuar fallback...');
+        window.EmotionalContextEngine = class {
+            analyzeEmotionalContext() { return 'neutral'; }
+            getEmotionalContext() { return { current_emotion: 'neutral' }; }
+        };
+    }
+
+    // rrufePlatform
+    window.rrufePlatform = window.rrufePlatform || {
+        modules: {
+            divineFusion: {
+                performDivineActivationRitual: function() {
+                    console.log('🔮 Divine Fusion - FALLBACK MODE');
+                    addMessage('⚡ **Divine Fusion** i aktivizua (Fallback Mode)', 'system');
+                }
+            }
+        }
+    };
+}
+
+// Thirre këtë në fillim
+ensureModulesLoaded();
+
 // ======================================================
 // 🚀  FRONTEND CHAT FUNCTIONS FOR RRUFE-TESLA 11.0
 // ======================================================
