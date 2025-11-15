@@ -717,5 +717,19 @@ async function initializeLTMForChat() {
     }
 }
 
-// Eksporto globalisht
+// ================================ Eksporto globalisht ===================================
 window.initializeLTMForChat = initializeLTMForChat;
+
+// Shto në fund të chat.js për inicializim automatik
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        if (typeof initializeLTMForChat !== 'undefined') {
+            initializeLTMForChat().then(ltm => {
+                if (ltm) {
+                    console.log('✅ LTM u inicializua automatikisht!');
+                    addMessage('🧠 **Memoria Afatgjatë** u aktivizua automatikisht!', 'system');
+                }
+            });
+        }
+    }, 2000);
+});
