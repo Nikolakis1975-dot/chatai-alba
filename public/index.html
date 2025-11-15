@@ -958,6 +958,90 @@ window.debugVoiceAI = function() {
 };
 
 console.log("🎯 Voice AI sistem i plotë u inicializua!");
+
+    // ============================== Shto në fund ==========================================================
+function updateHeaderWithMemoryStatus() {
+    const header = document.querySelector('header');
+    
+    // Kontrollo nëse ekziston tashmë memory status
+    let memoryStatus = document.getElementById('memory-status');
+    
+    if (!memoryStatus) {
+        memoryStatus = document.createElement('div');
+        memoryStatus.id = 'memory-status';
+        memoryStatus.style.cssText = `
+            display: inline-block;
+            margin-left: 15px;
+            padding: 5px 10px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 15px;
+            font-size: 12px;
+            border: 1px solid #00ff00;
+        `;
+        
+        // Vendose pas butonave të AI
+        const aiControls = document.querySelector('.ai-controls');
+        if (aiControls) {
+            aiControls.parentNode.insertBefore(memoryStatus, aiControls.nextSibling);
+        } else {
+            header.appendChild(memoryStatus);
+        }
+    }
+    
+    // Update content
+    if (window.ltmManager) {
+        const stats = window.ltmManager.getMemoryStats();
+        memoryStatus.innerHTML = `🧠 ${stats.total_messages} mesazhe | ${stats.capacity}`;
+        memoryStatus.title = `Memoria: ${stats.user_messages} user + ${stats.ai_messages} AI mesazhe`;
+    } else {
+        memoryStatus.innerHTML = '🧠 Memorie joaktive';
+        memoryStatus.title = 'Long-Term Memory nuk është inicializuar';
+    }
+}
+
+    // ==================== 🧠 MEMORY NOTIFICATIONS ====================
+
+// Funksion për notifikime të memories
+function showMemoryNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = 'memory-notification';
+    notification.textContent = message;
+    notification.style.cssText = `
+        position: fixed;
+        top: 60px;
+        right: 10px;
+        background: ${type === 'success' ? '#4CAF50' : '#2196F3'};
+        color: white;
+        padding: 8px 12px;
+        border-radius: 5px;
+        z-index: 1001;
+        font-size: 12px;
+        animation: slideInRight 0.3s ease-out;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Fshi pas 3 sekondash
+    setTimeout(() => {
+        notification.style.animation = 'slideOutRight 0.3s ease-in';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+// Shto animation CSS në <style> tag ekzistues
+const memoryStyle = document.createElement('style');
+memoryStyle.textContent = `
+    @keyframes slideInRight {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOutRight {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+`;
+document.head.appendChild(memoryStyle);
     
    </script>
 
