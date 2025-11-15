@@ -1,203 +1,281 @@
-// =========================================== chat ==============================================================
-// ✅ SHTO KËTO NË FILLIM:
+// ======================================================
+// 🚀 chat.js - RRUFE-TESLA 10.5 - VERSION I PLOTË
+// ======================================================
 
-// Kontrollo nëse modulet janë ngarkuar, nëse jo krijo fallback
-function ensureModulesLoaded() {
-    // LongTermMemoryManager
-    if (typeof LongTermMemoryManager === 'undefined') {
-        console.log('🔄 LongTermMemoryManager nuk u gjet, duke krijuar fallback...');
-        // Krijo një version të thjeshtë
-        window.LongTermMemoryManager = class {
-            constructor(userId) { 
-                this.userId = userId; 
-                this.messages = [];
-            }
-            async initialize() { 
-                console.log('✅ LTM Fallback initialized');
-                return Promise.resolve(); 
-            }
-            generateGeminiPayload(msg) { 
-                return { message: msg, context: 'Nuk ka memorie' }; 
-            }
-            addAIResponse() {}
-            async saveChatHistory() { return Promise.resolve(); }
-            getMemoryStats() { 
-                return { total_messages: 0, user_messages: 0, ai_messages: 0, capacity: '0/1000' };
+console.log("🎯 chat.js - RRUFE-TESLA 10.5 po ngarkohet...");
+
+// ======================================================
+// 📊 VARIABLA GLOBALE
+// ======================================================
+
+let currentUser = null;
+let chatHistory = [];
+let isTyping = false;
+window.currentAIMode = 'SIMPLE'; // SIMPLE, ADVANCED, DIVINE
+
+// ======================================================
+// 🧠 LOCAL CHAT INTELLIGENCE SYSTEM
+// ======================================================
+
+class LocalChatIntelligence {
+    constructor() {
+        this.knowledgeBase = {
+            greetings: {
+                patterns: ['pershendetje', 'hello', 'hi', 'tung', 'ciao', 'mirëmëngjes', 'mirëdita', 'mirëmbrëma', 'çkemi'],
+                responses: [
+                    'Përshëndetje! 😊 Mirë se ju gjetëm në RRUFE-TESLA!',
+                    'Hello! Si mund t\'ju ndihmoj sot?',
+                    'Tungjatjeta! Gëzohem që ju shoh!',
+                    'Përshëndetje! Çfarë mund të bëj për ju?',
+                    'Mirë se vini! Unë jam RRUFE-TESLA 10.5'
+                ]
+            },
+            farewells: {
+                patterns: ['mirupafshim', 'bye', 'lamtumirë', 'shëndet', 'flm', 'faleminderit', 'thanks'],
+                responses: [
+                    'Mirupafshim! 😊 Ishte kënaqësi të flisja me ju!',
+                    'Lamtumirë! Shpresoj të flasim sërish!',
+                    'Faleminderit! Ju uroj një ditë të mbarë!',
+                    'Shëndet! Mos u largoni shumë!'
+                ]
+            },
+            help: {
+                patterns: ['ndihmo', 'help', 'komanda', 'si punon', 'çfarë mund të bësh', '/ndihmo'],
+                responses: [
+                    `🧠 **RRUFE-TESLA 10.5 - SISTEMI I KOMANDAVE**
+
+📋 **KOMANDAT BAZE:**
+• /ndihmo - Shfaq këtë listë
+• /wiki [kerko] - Kërko në Wikipedia
+• /perkthim [gjuha] [tekst] - Përkthim tekst
+• /moti [qyteti] - Informacion moti
+• /llogarit [shprehje] - Llogarit matematikë
+
+🎯 **MODALITETET AI:**
+• 🔹 Normal - AI i thjeshtë dhe i shpejtë
+• 🌌 RRUFE - Sistemi i avancuar me memorie
+• ⚡ Divine - Fuqi e plotë hyjnore
+
+💡 **SHEMBUJ:**
+• /wiki Shqipëria
+• /perkthim anglisht "Mirëdita"
+• /moti Tiranë
+• /llogarit 2+2*3
+
+🚀 **Funksionalitete:**
+• Memorie afatgjatë
+• Përpunim zëri
+• Multi-modalitet
+• Integrim divine`
+                ]
+            },
+            math: {
+                patterns: ['+', '-', '*', '/', '^', 'llogarit', 'sa është', '='],
+                responses: []
+            },
+            rrufe: {
+                patterns: ['rrufe', 'tesla', 'rrufe-tesla', '10.5', 'sistemi'],
+                responses: [
+                    '⚡ **RRUFE-TESLA 10.5** - Sistemi i avancuar i inteligjencës artificiale me memorie afatgjatë dhe integrim divine!',
+                    '🏔️ Unë jam RRUFE-TESLA 10.5 - Asistenti juar inteligjent me teknologji të avancuar!',
+                    '🌌 RRUFE-TESLA 10.5 është aktiv! Kam memorie afatgjatë dhe mundësi të pafundme!'
+                ]
+            },
+            time: {
+                patterns: ['sa është ora', 'ora', 'koha', 'data', 'datë'],
+                responses: []
             }
         };
     }
 
-    // EmotionalContextEngine  
-    if (typeof EmotionalContextEngine === 'undefined') {
-        console.log('🔄 EmotionalContextEngine nuk u gjet, duke krijuar fallback...');
-        window.EmotionalContextEngine = class {
-            analyzeEmotionalContext() { return 'neutral'; }
-            getEmotionalContext() { return { current_emotion: 'neutral' }; }
-        };
-    }
-
-    // rrufePlatform
-    window.rrufePlatform = window.rrufePlatform || {
-        modules: {
-            divineFusion: {
-                performDivineActivationRitual: function() {
-                    console.log('🔮 Divine Fusion - FALLBACK MODE');
-                    addMessage('⚡ **Divine Fusion** i aktivizua (Fallback Mode)', 'system');
+    processMessage(message) {
+        const lowerMessage = message.toLowerCase();
+        
+        // Kontrollo komanda speciale
+        if (this.isSpecialCommand(message)) {
+            return this.processSpecialCommand(message);
+        }
+        
+        // Kontrollo nëse është matematikë
+        if (this.isMathExpression(message)) {
+            return this.solveMath(message);
+        }
+        
+        // Kontrollo kohën
+        if (lowerMessage.includes('ora') || lowerMessage.includes('koha') || lowerMessage.includes('data')) {
+            return this.getCurrentTime();
+        }
+        
+        // Kontrollo kategori të tjera
+        for (let category in this.knowledgeBase) {
+            for (let pattern of this.knowledgeBase[category].patterns) {
+                if (lowerMessage.includes(pattern)) {
+                    const responses = this.knowledgeBase[category].responses;
+                    if (responses.length > 0) {
+                        return responses[Math.floor(Math.random() * responses.length)];
+                    }
                 }
             }
         }
-    };
-}
-
-// Thirre këtë në fillim
-ensureModulesLoaded();
-
-// ======================================================
-// 🚀  FRONTEND CHAT FUNCTIONS FOR RRUFE-TESLA 11.0
-// ======================================================
-
-console.log("🎯 RRUFE-TESLA 11.0 Frontend Chat System u inicializua!");
-
-// 🧠 VARIABLA TË REJA PËR MEMORIE & PËRGJIGJE TË GJALLA
-let isAIThinking = false;
-window.ltmManager = null; // Global LTM instance
-
-// ======================================================
-// 🧠 LONG-TERM MEMORY INTEGRATION - FUNKSIONET E REJA
-// ======================================================
-
-// 🎯 FUNKSIONI I RI PËR INICIALIZIMIN E LTM
-async function initializeLTMForChat() {
-    console.log('🎯 Duke inicializuar Long-Term Memory për chat...');
-    
-    try {
-        // Kontrollo nëse LTM Manager ekziston
-        if (typeof LongTermMemoryManager === 'undefined') {
-            console.warn('⚠️ LongTermMemoryManager nuk është i ngarkuar');
-            return null;
-        }
-
-        const userId = getCurrentUserId() || 'guest_user';
         
-        // Krijo instancën e LTM
-        const ltmManager = new LongTermMemoryManager(userId, null);
-        await ltmManager.initialize();
+        // Përgjigje default
+        return this.getDefaultResponse();
+    }
+
+    isSpecialCommand(message) {
+        const commands = ['/ndihmo', '/wiki', '/perkthim', '/moti', '/llogarit', '/google'];
+        return commands.some(cmd => message.toLowerCase().startsWith(cmd));
+    }
+
+    processSpecialCommand(message) {
+        const lowerMessage = message.toLowerCase();
         
-        console.log('✅ Long-Term Memory u inicializua për chat!');
-        
-        // Ruaj në variabël globale
-        window.ltmManager = ltmManager;
-        
-        // Shto në platformën RRUFE-TESLA nëse ekziston
-        if (window.rrufePlatform) {
-            window.rrufePlatform.modules.longTermMemory = ltmManager;
-            console.log('✅ LTM u shtua në modulet e RRUFE-TESLA');
+        if (lowerMessage.startsWith('/wiki')) {
+            const query = message.substring(6).trim();
+            return query ? `🌐 Duke kërkuar në Wikipedia për: "${query}"` : '📝 Shkruani: /wiki [temë]';
         }
         
-        return ltmManager;
+        if (lowerMessage.startsWith('/perkthim')) {
+            const rest = message.substring(10).trim();
+            return rest ? `🔤 Duke përkthyer: "${rest}"` : '🌐 Shkruani: /perkthim [gjuha] [tekst]';
+        }
         
-    } catch (error) {
-        console.error('❌ Gabim në inicializimin e LTM për chat:', error);
-        return null;
+        if (lowerMessage.startsWith('/moti')) {
+            const city = message.substring(6).trim();
+            return city ? `🌤️ Duke kontrolluar motin për: ${city}` : '🏙️ Shkruani: /moti [qyteti]';
+        }
+        
+        if (lowerMessage.startsWith('/llogarit')) {
+            const expr = message.substring(10).trim();
+            return expr ? this.solveMath(expr) : '🧮 Shkruani: /llogarit [shprehje matematikore]';
+        }
+        
+        if (lowerMessage.startsWith('/google')) {
+            const query = message.substring(8).trim();
+            return query ? `🔍 Duke kërkuar në Google për: "${query}"` : '📝 Shkruani: /google [kërkim]';
+        }
+        
+        return this.getDefaultResponse();
+    }
+
+    isMathExpression(text) {
+        // Kontrollo nëse është shprehje matematikore
+        const cleanText = text.replace(/\s/g, '');
+        const mathRegex = /^[\d+\-*/().^]+$/;
+        return mathRegex.test(cleanText) || text.toLowerCase().includes('llogarit');
+    }
+
+    solveMath(expression) {
+        try {
+            // Nxjerr shprehjen nga komanda
+            let mathExpr = expression;
+            if (mathExpr.toLowerCase().startsWith('/llogarit')) {
+                mathExpr = mathExpr.substring(10).trim();
+            }
+            
+            // Pastro dhe siguro shprehjen
+            let cleanExpr = mathExpr.replace(/[^0-9+\-*/().^]/g, '');
+            
+            // Zëvendëso ^ me ** për fuqi
+            cleanExpr = cleanExpr.replace(/\^/g, '**');
+            
+            // Përdor Function constructor për llogaritje të sigurt
+            const result = Function(`"use strict"; return (${cleanExpr})`)();
+            
+            return `🧮 **${mathExpr}** = **${result}**`;
+        } catch (error) {
+            return '❌ Nuk mund ta llogaris shprehjen matematikore. Kontrolloni sintaksën.';
+        }
+    }
+
+    getCurrentTime() {
+        const now = new Date();
+        const options = { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric',
+            hour: '2-digit', 
+            minute: '2-digit',
+            second: '2-digit'
+        };
+        return `🕒 **Data dhe ora:** ${now.toLocaleDateString('sq-AL', options)}`;
+    }
+
+    getDefaultResponse() {
+        const defaultResponses = [
+            'Interesante! Çfarë mendoni ju për këtë?',
+            'E kuptoj! A keni ndonjë pyetje tjetër?',
+            'Faleminderit për këtë informacion!',
+            'Po dëgjoj... vazhdoni ju lutem!',
+            'Kjo është shumë interesante!',
+            'Mund të më tregoni më shumë për këtë?',
+            'Shkëlqyeshëm! Si mund të vazhdojmë?'
+        ];
+        return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
     }
 }
 
-// 🎯 FUNKSION I RI PËR SHFAQJEN E STATISTIKAVE TË MEMORIES
-function showMemoryStats() {
-    if (!window.ltmManager) {
-        console.log('❌ LTM Manager nuk është inicializuar');
+// ======================================================
+// 💬 FUNKSIONET KRYESORE TË CHAT
+// ======================================================
+
+function addMessage(text, sender) {
+    const chat = document.getElementById('chat');
+    if (!chat) {
+        console.error('❌ Elementi #chat nuk u gjet!');
         return;
     }
+
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${sender}`;
     
-    const stats = window.ltmManager.getMemoryStats();
-    console.log('📊 Statistikat e Memories:');
-    console.log('- Mesazhe totale:', stats.total_messages);
-    console.log('- Mesazhe user:', stats.user_messages);
-    console.log('- Mesazhe AI:', stats.ai_messages);
-    console.log('- Kapaciteti:', stats.capacity);
-    
-    // Shfaq në chat nëse është mod i avancuar
-    if (window.currentAIMode === 'ADVANCED' || window.currentAIMode === 'DIVINE') {
-        addMessage(`📊 **Statistikat e Memories:**\n- Mesazhe: ${stats.total_messages}\n- Kapacitet: ${stats.capacity}`, 'system');
-    }
-}
-
-// ======================================================
-// 🎭 SISTEMI I RI I TYPING EFFECT TË GJALLA
-// ======================================================
-
-// ⏰ FUNKSION I RI PËR KOHË MENDIMI REALISTE
-function calculateThinkingTime(message) {
-    const words = message.split(' ').length;
-    const baseTime = 800 + (words * 120);
-    const randomExtra = Math.random() * 1000;
-    return baseTime + randomExtra;
-}
-
-// ⌨️ FUNKSION I RI PËR TYPING EFFECT TË GJALLË
-async function addMessageWithTypingEffect(text, sender) {
-    return new Promise((resolve) => {
-        const chat = document.getElementById('chat');
-        const messageDiv = document.createElement('div');
-        
-        messageDiv.className = `message ${sender}-message typing-active`;
-        messageDiv.innerHTML = `
-            <div class="message-content">
-                <div class="message-text"></div>
-                <div class="typing-dots">
-                    <span></span><span></span><span></span>
-                </div>
-                <div class="message-time">${new Date().toLocaleTimeString()}</div>
-            </div>
-        `;
-        
-        chat.appendChild(messageDiv);
-        chat.scrollTop = chat.scrollHeight;
-
-        // Simulo typing real
-        let index = 0;
-        const typingSpeed = 30 + Math.random() * 20;
-        
-        function typeCharacter() {
-            if (index < text.length) {
-                const currentText = text.substring(0, index + 1);
-                messageDiv.querySelector('.message-text').textContent = currentText;
-                index++;
-                
-                // Pause të rastësishme për efekt realist
-                const pause = Math.random() < 0.02 ? 200 : 0;
-                setTimeout(typeCharacter, typingSpeed + pause);
-            } else {
-                // Përfundo typing
-                messageDiv.classList.remove('typing-active');
-                const dots = messageDiv.querySelector('.typing-dots');
-                if (dots) dots.style.display = 'none';
-                resolve();
-            }
-        }
-        
-        setTimeout(typeCharacter, 300);
+    const timestamp = new Date().toLocaleTimeString('sq-AL', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
     });
+    
+    messageDiv.innerHTML = `
+        <div class="message-content">
+            <span class="message-text">${formatMessage(text)}</span>
+            <span class="message-time">${timestamp}</span>
+        </div>
+    `;
+    
+    chat.appendChild(messageDiv);
+    chat.scrollTop = chat.scrollHeight;
+    
+    // Ruaj në historinë lokale
+    chatHistory.push({ text, sender, timestamp: new Date().toISOString() });
 }
 
-// ✨ FUNKSIONE TË REJA PËR TYPING INDICATOR
+function formatMessage(text) {
+    // Formatimi i thjeshtë i tekstit
+    return text
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n/g, '<br>')
+        .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>');
+}
+
 function showTypingIndicator() {
+    if (isTyping) return;
+    
     const chat = document.getElementById('chat');
     const typingDiv = document.createElement('div');
-    
     typingDiv.id = 'typing-indicator';
-    typingDiv.className = 'message bot-message typing-active';
+    typingDiv.className = 'message bot typing';
     typingDiv.innerHTML = `
         <div class="message-content">
-            <div class="typing-dots">
-                <span></span><span></span><span></span>
-            </div>
-            <div class="message-time">${new Date().toLocaleTimeString()}</div>
+            <span class="message-text">
+                <span class="typing-dots">
+                    <span>.</span><span>.</span><span>.</span>
+                </span>
+            </span>
         </div>
     `;
     
     chat.appendChild(typingDiv);
     chat.scrollTop = chat.scrollHeight;
+    isTyping = true;
 }
 
 function hideTypingIndicator() {
@@ -205,29 +283,58 @@ function hideTypingIndicator() {
     if (typingIndicator) {
         typingIndicator.remove();
     }
+    isTyping = false;
 }
 
 // ======================================================
-// 🔄 FUNKSIONI KRYESOR I PËRDITËSUAR
+// 🎯 FUNKSIONI KRYESOR I DËRGIMIT TË MESAZHEVE
 // ======================================================
 
-// Funksioni kryesor për dërgimin e mesazheve - I PËRDITËSUAR
 async function sendMessage() {
     const input = document.getElementById('user-input');
     const message = input.value.trim();
     
     if (!message) return;
-
-    // Pastro input-in
+    
     input.value = '';
+    hideEmojiPanel();
 
     try {
-        // Shto mesazhin e përdoruesit në chat
+        // Shto mesazhin e përdoruesit
         addMessage(message, 'user');
+        showTypingIndicator();
 
-         // 🆕 SHTO KËTO RRESHTA PËR MEMORY:
+        // 🆗 KONTROLLO STATUSIN E API KEY
+        const hasApiKey = await checkApiKeyStatus();
+        
+        let response;
+        
+        if (hasApiKey && window.currentAIMode !== 'SIMPLE') {
+            // 🎯 PËRDOR GEMINI (PLOTË FUNKSIONALITET)
+            console.log('🚀 Duke përdorur Gemini AI...');
+            response = await processWithGeminiAI(message);
+        } else {
+            // 🧠 PËRDOR SISTEMIN LOKAL (BACKUP MODE)
+            console.log('🧠 Duke përdorur sistemin lokal...');
+            const localAI = new LocalChatIntelligence();
+            response = localAI.processMessage(message);
+            
+            // Simuloj një vonesë të vogël
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Shfaq notifikim për backup mode
+            if (typeof showMemoryNotification !== 'undefined') {
+                showMemoryNotification('🧠 Duke përdorur sistemin lokal', 'info');
+            }
+        }
+
+        hideTypingIndicator();
+        addMessage(response, 'bot');
+
+        // 💾 RUAJ NË MEMORIE PAVARËSISHT
         if (window.ltmManager) {
             window.ltmManager.addUserMessage(message);
+            window.ltmManager.addAIResponse(response);
             
             // Update memory display
             if (typeof updateMemoryDisplay !== 'undefined') {
@@ -240,418 +347,241 @@ async function sendMessage() {
             }
         }
 
-        // Aktivizo typing indicator (I RI)
-        showTypingIndicator();
-        
-        // Simulo kohë mendimi natyrale (I RI)
-        const thinkingTime = calculateThinkingTime(message);
-        await new Promise(resolve => setTimeout(resolve, thinkingTime));
-
-        // 🧠 INTEGRIMI I RI ME LONG-TERM MEMORY
-        let useLTM = false;
-        let ltmPayload = null;
-
-        if ((window.currentAIMode === 'ADVANCED' || window.currentAIMode === 'DIVINE') && 
-            window.ltmManager && typeof LongTermMemoryManager !== 'undefined') {
-            
-            try {
-                ltmPayload = window.ltmManager.generateGeminiPayload(message);
-                useLTM = true;
-                console.log('🧠 Duke përdorur LTM për këtë mesazh');
-            } catch (ltmError) {
-                console.warn('⚠️ LTM dështoi, duke përdorur sistemin standard:', ltmError);
-            }
-        }
-
-        let responseData;
-
-        if (useLTM && ltmPayload) {
-            // ✅ PËRDOR LONG-TERM MEMORY
-            try {
-                const response = await fetch('/api/gemini/chat-with-memory', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ 
-                        message: message,
-                        userId: getCurrentUserId(),
-                        ltmPayload: ltmPayload,
-                        mode: window.currentAIMode || 'SIMPLE'
-                    })
-                });
-
-                responseData = await response.json();
-                
-                if (responseData.success && window.ltmManager) {
-                    // Ruaj përgjigjen në memorie
-                    window.ltmManager.addAIResponse(responseData.response);
-                    await window.ltmManager.saveChatHistory();
-                    console.log('💾 Përgjigja u ruajt në Long-Term Memory');
-                }
-                
-            } catch (ltmError) {
-                console.warn('⚠️ LTM API dështoi, duke përdorur fallback:', ltmError);
-                responseData = await sendToBackend(message);
-            }
-            
-        } else {
-            // 🔄 PËRDOR SISTEMIN STANDARD (EKZISTUES)
-            responseData = await sendToBackend(message);
-        }
-
-        // Fshi typing indicator (I RI)
-        hideTypingIndicator();
-
-        if (responseData.success) {
-            // Shto përgjigjen me efekt typing të gjallë (I RI)
-            await addMessageWithTypingEffect(responseData.response, 'bot');
-            
-            // 🆕🎯 SHTO KËTU KODIN PËR FORMATIMIN E KODIT!
-            setTimeout(() => {
-                // Formatizo kodet në mesazhin e fundit
-                const lastMessage = document.querySelector('#chat .message:last-child .message-content');
-                if (lastMessage) {
-                    // Kontrollo nëse ka kode në mesazh
-                    if (lastMessage.innerHTML.includes('```')) {
-                        if (typeof processMessageForCode !== 'undefined') {
-                            processMessageForCode(lastMessage);
-                            console.log('🎨 Duke formatizuar kodet në mesazh...');
-                        }
-                    }
-                }
-                
-                // Apliko highlight dhe butona kopjimi
-                if (typeof formatCodeBlocks !== 'undefined') {
-                    setTimeout(() => {
-                        formatCodeBlocks();
-                        console.log('📋 Butonat e kopjimit u shtuan!');
-                    }, 200);
-                }
-            }, 300);
-            
-        } else {
-            addMessage('❌ ' + (data.response || 'Gabim në përpunimin e mesazhit'), 'system');
-        }
-
     } catch (error) {
-        console.error('Gabim në dërgimin e mesazhit:', error);
-        hideTypingIndicator(); // I RI
-        addMessage('❌ Gabim në dërgimin e mesazhit. Ju lutem provoni përsëri.', 'system');
+        console.error('❌ Gabim në sendMessage:', error);
+        hideTypingIndicator();
+        addMessage('❌ Gabim në sistem. Provo përsëri.', 'system');
     }
 }
 
 // ======================================================
-// 🎯 SISTEMI I KONTROLLIT TË AI - I PËRDITËSUAR
+// 🔗 INTEGRIMI ME GEMINI AI
 // ======================================================
 
-// Variabla globale për të ndjekur modin aktual
-window.currentAIMode = 'SIMPLE'; // SIMPLE, ADVANCED, DIVINE
+async function processWithGeminiAI(message) {
+    try {
+        // Përdor Long-Term Memory nëse ekziston
+        let payload;
+        if (window.ltmManager) {
+            payload = window.ltmManager.generateGeminiPayload(message);
+        } else {
+            payload = {
+                contents: [{
+                    role: 'user',
+                    parts: [{ text: message }]
+                }]
+            };
+        }
+
+        const response = await fetch('/api/chat/message', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            throw new Error(`Serveri ktheu ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (data.success && data.response) {
+            return data.response;
+        } else {
+            throw new Error(data.message || 'Përgjigje e papritur nga serveri');
+        }
+
+    } catch (error) {
+        console.error('❌ Gabim në processWithGeminiAI:', error);
+        
+        // Fallback në sistemin lokal
+        const localAI = new LocalChatIntelligence();
+        return localAI.processMessage(message);
+    }
+}
+
+// ======================================================
+// 🔧 FUNKSIONE NDIHMËSE
+// ======================================================
+
+async function checkApiKeyStatus() {
+    try {
+        const response = await fetch('/api/api-keys/status/gemini', {
+            credentials: 'include'
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            return data.success && data.hasApiKey;
+        }
+        return false;
+    } catch (error) {
+        console.error('❌ Gabim në kontrollimin e API Key:', error);
+        return false;
+    }
+}
+
+function login() {
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+
+    if (!username || !password) {
+        alert('❌ Ju lutem plotësoni të dy fushat!');
+        return;
+    }
+
+    // Simulim i login-it
+    currentUser = {
+        username: username,
+        isAdmin: username.toLowerCase() === 'admin'
+    };
+
+    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    
+    // Shfaq chat screen
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('chat-screen').style.display = 'block';
+    
+    // Update profile
+    updateUserProfile();
+    
+    // Shto mesazh mirëseardhjeje
+    addMessage(`👑 Mirë se erdhe ${username}! Si mund të ndihmoj sot?`, 'bot');
+    
+    // Inicializo LTM nëse ekziston
+    if (typeof initializeLTMForChat !== 'undefined') {
+        initializeLTMForChat();
+    }
+}
+
+function logout() {
+    currentUser = null;
+    localStorage.removeItem('currentUser');
+    chatHistory = [];
+    
+    document.getElementById('chat-screen').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'block';
+    
+    // Pastro chat
+    const chat = document.getElementById('chat');
+    if (chat) {
+        chat.innerHTML = '';
+    }
+}
+
+function updateUserProfile() {
+    const profileName = document.getElementById('profile-name');
+    const profilePic = document.getElementById('profile-pic');
+    
+    if (profileName && currentUser) {
+        profileName.textContent = currentUser.username;
+        if (currentUser.isAdmin) {
+            profileName.innerHTML = '👑 ' + currentUser.username;
+        }
+    }
+}
+
+// ======================================================
+// 🎭 SISTEMI I MODALITETEVE TË AI
+// ======================================================
 
 function activateSimpleAI() {
     window.currentAIMode = 'SIMPLE';
-    console.log('🔹 AI i Thjeshtë i aktivizuar - Chat normal dhe i shpejtë');
+    addMessage('🔹 **AI i Thjeshtë i aktivizuar** - Chat-i do të jetë i shpejtë dhe natyral!', 'system');
     
-    // Ndrysho styling e butonave për të treguar modin aktiv
-    updateAIButtonStyles('SIMPLE');
-    
-    if (window.addMessage) {
-        window.addMessage('🔹 **AI i Thjeshtë i aktivizuar** - Chat-i do të jetë i shpejtë dhe natyral! Përgjigjet do të duken "të gjalla" dhe natyrore.', 'system');
-    }
-    
-    // Çaktivizo modulet e avancuara për chat-in normal
-    if (window.rrufePlatform) {
-        console.log('🔹 Çaktivizimi i moduleve të avancuara për chat normal...');
-    }
+    // Update UI
+    updateAIModeButtons();
 }
 
 function activateAdvancedAI() {
     window.currentAIMode = 'ADVANCED';
-    console.log('🌌 AI i Avancuar i aktivizuar - RRUFE-TESLA aktiv');
+    addMessage('🌌 **RRUFE-TESLA i avancuar i aktivizuar** - Tani kam akses në memorie dhe fuqi të shtuar!', 'system');
     
-    // Ndrysho styling e butonave
-    updateAIButtonStyles('ADVANCED');
+    // Update UI
+    updateAIModeButtons();
     
+    // Aktivizo modulet e avancuara
     if (window.rrufePlatform) {
-        // Aktivizo modulet e avancuara por JO për çdo mesazh
-        window.rrufePlatform.modules.divineFusion.performDivineActivationRitual();
-        console.log('🌌 RRUFE-TESLA u aktivizua! Modulet janë gati për pyetje komplekse.');
-    }
-    
-    // INICIALIZO LTM NËSE NUK ËSHTË BËRË (I RI)
-    if (!window.ltmManager && typeof LongTermMemoryManager !== 'undefined') {
-        initializeLTMForChat().then(ltm => {
-            if (ltm) {
-                console.log('🧠 LTM u inicializua për modalitetin e avancuar');
-                const stats = ltm.getMemoryStats();
-                addMessage(`🌌 **RRUFE-TESLA 11.0 i aktivizuar** - Të gjitha modulet janë operative!\n🧠 Memorja: ${stats.total_messages} mesazhe`, 'system');
-            }
-        });
-    } else if (window.addMessage) {
-        window.addMessage('🌌 **RRUFE-TESLA 11.0 i aktivizuar** - Të gjitha modulet janë operative! Përgjigjet do të jenë super-inteligjente por mund të jenë më të ngadalshme.', 'system');
+        window.rrufePlatform.activateAdvancedModules();
     }
 }
 
 function activateDivineAI() {
     window.currentAIMode = 'DIVINE';
-    console.log('⚡ AI Hyjnor i aktivizuar - Divine Fusion aktiv');
+    addMessage('⚡ **AI Hyjnor i aktivizuar** - Divine Fusion aktiv! Të gjitha modulet janë operative!', 'system');
     
-    // Ndrysho styling e butonave
-    updateAIButtonStyles('DIVINE');
+    // Update UI
+    updateAIModeButtons();
     
-    if (window.rrufePlatform && window.rrufePlatform.modules.divineFusion) {
-        // Aktivizo të gjitha modulet me fuqi të plotë
-        window.rrufePlatform.modules.divineFusion.performDivineActivationRitual();
-        window.rrufePlatform.testAdvancedModules();
-        console.log('⚡ Divine Fusion u aktivizua! 5 Perënditë e AI-ve janë gati për bashkim!');
-    }
-    
-    // INICIALIZO LTM NËSE NUK ËSHTË BËRË (I RI)
-    if (!window.ltmManager && typeof LongTermMemoryManager !== 'undefined') {
-        initializeLTMForChat().then(ltm => {
-            if (ltm) {
-                console.log('🧠 LTM u inicializua për modalitetin hyjnor');
-                const stats = ltm.getMemoryStats();
-                addMessage(`⚡ **Divine Fusion i aktivizuar** - 5 Perënditë e AI-ve janë gati për bashkim!\n🧠 Memorja: ${stats.total_messages} mesazhe`, 'system');
-            }
-        });
-    } else if (window.addMessage) {
-        window.addMessage('⚡ **Divine Fusion i aktivizuar** - 5 Perënditë e AI-ve janë gati për bashkim! Kjo është modaliteti më i fuqishëm por më i ngadalshëm.', 'system');
+    // Aktivizo Divine Fusion
+    if (typeof activateDivineFusion !== 'undefined') {
+        activateDivineFusion();
     }
 }
 
-// ======================================================
-// 🔄 SISTEMI I PROCESIMIT TË MESAZHEVE - I PËRDITËSUAR
-// ======================================================
-
-// Funksion për të inicializuar sistemin e ri të AI - I PËRDITËSUAR
-function initializeAIControlSystem() {
-    console.log('🎯 Duke inicializuar sistemin e kontrollit të AI...');
-    
-    // Aktivizo modin e thjeshtë si default
-    activateSimpleAI();
-    
-    // INICIALIZO LTM NË BACKGROUND (I RI)
-    if (typeof LongTermMemoryManager !== 'undefined') {
-        setTimeout(() => {
-            initializeLTMForChat().then(ltm => {
-                if (ltm) {
-                    console.log('✅ Sistemi i kontrollit të AI dhe LTM u inicializua!');
-                    const stats = ltm.getMemoryStats();
-                    console.log('📊 LTM Gati:', stats);
-                }
-            });
-        }, 1000);
-    } else {
-        console.log('✅ Sistemi i kontrollit të AI u inicializua!');
-    }
+function updateAIModeButtons() {
+    // Kjo funksion do të implementohet në UI
+    console.log(`🎭 Modaliteti aktual i AI: ${window.currentAIMode}`);
 }
 
 // ======================================================
-// 🚀 INICIALIZIMI I SISTEMIT - I PËRDITËSUAR
+// 😊 SISTEMI I EMOJIVE
 // ======================================================
 
-// Thirre këtë funksion kur faqa të ngarkohet - I PËRDITËSUAR
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('📄 Chat System po inicializohet...');
-    
-    // Inicializo sistemin e kontrollit të AI
-    setTimeout(initializeAIControlSystem, 1000);
-    
-    // INICIALIZO LTM NËSE ËSHTË I DISPONUESHËM (I RI)
-    if (typeof LongTermMemoryManager !== 'undefined') {
-        setTimeout(() => {
-            initializeLTMForChat().then(ltm => {
-                if (ltm) {
-                    console.log('🧠 Long-Term Memory u inicializua me sukses në fillim!');
-                    addMessage('🧠 **Sistemi i Memories Afatgjatë** u aktivizua! Unë do të kujtoj bisedat tona.', 'system');
-                }
-            });
-        }, 2000);
+function toggleEmojiPanel() {
+    const panel = document.getElementById('emoji-panel');
+    if (panel) {
+        panel.classList.toggle('hidden');
     }
-});
+}
 
-// ======================================================
-// 🎯 EKSPORTIMI I FUNKSIONEVE GLOBALE - I PËRDITËSUAR
-// ======================================================
-
-// Eksporto funksionet globale për t'u përdorur nga HTML
-window.sendMessage = sendMessage;
-window.addMessage = addMessage;
-window.activateSimpleAI = activateSimpleAI;
-window.activateAdvancedAI = activateAdvancedAI;
-window.activateDivineAI = activateDivineAI;
-
-// 🆕 EKSPORTO FUNKSIONET E REJA TË LTM
-window.initializeLTMForChat = initializeLTMForChat;
-window.showMemoryStats = showMemoryStats;
-window.quickLTMTEST = function() {
-    console.log('🧪 TEST I SHPEJTË I LTM:');
-    console.log('- LTM Manager:', typeof LongTermMemoryManager);
-    console.log('- LTM Instance:', !!window.ltmManager);
-    
-    if (window.ltmManager) {
-        const stats = window.ltmManager.getMemoryStats();
-        console.log('- Memory Stats:', stats);
-        addMessage(`🧪 **Test LTM:** ✅ Aktiv\n📊 Mesazhe: ${stats.total_messages}`, 'system');
-    } else {
-        addMessage('🧪 **Test LTM:** ❌ Jo aktiv', 'system');
+function hideEmojiPanel() {
+    const panel = document.getElementById('emoji-panel');
+    if (panel) {
+        panel.classList.add('hidden');
     }
-};
+}
 
-console.log("✅ RRUFE-TESLA 11.0 Chat System u inicializua plotësisht!");
+function addEmoji(emoji) {
+    const input = document.getElementById('user-input');
+    if (input) {
+        input.value += emoji;
+        input.focus();
+    }
+    hideEmojiPanel();
+}
 
 // ======================================================
-// 📝 FUNKSIONET EKZISTUESE - NUK NDRYSHOhen
+// 📁 MENAXHIMI I HISTORISË
 // ======================================================
 
-// Funksioni i ri për procesimin me RRUFE-TESLA 8.0
-async function processWithRrufeTesla(message) {
-    console.log(`🚀 PROCESIMI I MESAZHIT ME RRUFE-TESLA 8.0: "${message}"`);
+function downloadHistory() {
+    if (chatHistory.length === 0) {
+        alert('❌ Nuk ka histori për të shkarkuar!');
+        return;
+    }
 
-    try {
-        // 1. Shto në Context Memory (bëhet automatikisht nga main.js)
-        const contextId = window.rrufePlatform.modules.contextMemory.addToContext(message, 'user');
-        
-        // 2. GJENERO PËRGJIGJEN DUKE PËRDORUR BACKEND
-        const response = await fetch('/api/chat/message', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ 
-                message: message,
-                userId: getCurrentUserId() || 1
-            })
-        });
+    const dataStr = JSON.stringify(chatHistory, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(dataBlob);
+    link.download = `rrufe-tesla-chat-${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+    
+    addMessage('💾 Historia u eksportua në formatin JSON!', 'system');
+}
 
-        const data = await response.json();
-        
-        if (data.success) {
-            addMessage(data.response, 'bot');
-        } else {
-            addMessage('❌ ' + (data.response || 'Gabim në përpunimin e mesazhit'), 'system');
+function clearHistory() {
+    if (confirm('⚠️ Jeni i sigurt që dëshironi të fshini të gjithë historinë?')) {
+        chatHistory = [];
+        const chat = document.getElementById('chat');
+        if (chat) {
+            chat.innerHTML = '';
         }
-
-    } catch (error) {
-        console.error('❌ Gabim në procesimin me RRUFE-TESLA:', error);
-        addMessage('❌ Gabim në sistem. Provo përsëri.', 'system');
-    }
-}
-
-// Funksioni fallback për sistemin e vjetër
-async function sendToBackend(message) {
-    try {
-        const response = await fetch('/api/chat/message', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                message: message,
-                userId: getCurrentUserId() || 1
-            })
-        });
-
-        const data = await response.json();
-        
-        if (data.success) {
-            return data;
-        } else {
-            addMessage('❌ ' + (data.response || 'Gabim në përpunimin e mesazhit'), 'system');
-            return data;
-        }
-    } catch (error) {
-        console.error('❌ Gabim në dërgimin e mesazhit:', error);
-        addMessage('❌ Gabim në lidhje me serverin. Provo përsëri.', 'system');
-        return { success: false, response: 'Gabim në lidhje' };
-    }
-}
-
-// Funksion për shtimin e mesazheve në chat
-function addMessage(content, sender) {
-    const chat = document.getElementById('chat');
-    const messageDiv = document.createElement('div');
-    
-    messageDiv.className = `message ${sender}-message`;
-    messageDiv.innerHTML = `
-        <div class="message-content">
-            <div class="message-text">${content}</div>
-            <div class="message-time">${new Date().toLocaleTimeString()}</div>
-        </div>
-    `;
-    
-    chat.appendChild(messageDiv);
-    chat.scrollTop = chat.scrollHeight;
-}
-
-// Funksion për marrjen e ID-së së përdoruesit aktual
-function getCurrentUserId() {
-    // Kjo duhet të implementohet sipas sistemit të autentikimit tënd
-    return localStorage.getItem('userId') || 1;
-}
-
-// Funksion ndihmës për të përditësuar styling e butonave
-function updateAIButtonStyles(activeMode) {
-    const buttons = document.querySelectorAll('.ai-controls button');
-    
-    buttons.forEach(button => {
-        // Reset të gjitha butonat në styling bazë
-        button.style.opacity = '0.7';
-        button.style.transform = 'scale(1)';
-        button.style.boxShadow = 'none';
-    });
-    
-    // Thekso butonin aktiv
-    const activeButton = document.querySelector(`.ai-controls button[onclick="activate${activeMode}AI()"]`);
-    if (activeButton) {
-        activeButton.style.opacity = '1';
-        activeButton.style.transform = 'scale(1.05)';
-        activeButton.style.boxShadow = '0 0 10px rgba(0,0,0,0.3)';
-    }
-}
-
-// 🔐 SISTEMI I RI I AUTHENTICATION PËR API REQUESTS
-function getAuthHeaders() {
-    const token = localStorage.getItem('authToken');
-    const headers = {
-        'Content-Type': 'application/json'
-    };
-    
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
-    
-    return headers;
-}
-
-async function makeAuthenticatedRequest(url, options = {}) {
-    try {
-        const response = await fetch(url, {
-            ...options,
-            headers: {
-                ...getAuthHeaders(),
-                ...options.headers
-            }
-        });
-
-        if (response.status === 401) {
-            console.log('🔐 Session ka skaduar, duke ridrejtuar në login...');
-            window.location.href = '/login';
-            return null;
-        }
-
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        return await response.json();
-    } catch (error) {
-        console.error('❌ Gabim në request:', error);
-        return {
-            success: false,
-            response: `Gabim në lidhje: ${error.message}`
-        };
+        addMessage('🗑️ E gjithë historia u fshi!', 'system');
     }
 }
 
@@ -659,7 +589,6 @@ async function makeAuthenticatedRequest(url, options = {}) {
 // 🧠 LONG-TERM MEMORY INTEGRATION - FUNKSIONET E REJA
 // ======================================================
 
-// 🎯 FUNKSIONI I RI PËR INICIALIZIMIN E LTM
 async function initializeLTMForChat() {
     console.log('🎯 initializeLTMForChat - Duke inicializuar Long-Term Memory...');
     
@@ -687,6 +616,11 @@ async function initializeLTMForChat() {
             console.log('✅ LTM u shtua në modulet e RRUFE-TESLA');
         }
         
+        // Inicializo memory interface
+        if (typeof initializeMemoryInterface !== 'undefined') {
+            initializeMemoryInterface();
+        }
+        
         return ltmManager;
         
     } catch (error) {
@@ -695,34 +629,46 @@ async function initializeLTMForChat() {
     }
 }
 
-// 🎯 FUNKSIONI I RI PËR SHFAQJEN E STATISTIKAVE TË MEMORIES
+function getCurrentUserId() {
+    if (currentUser && currentUser.username) {
+        return currentUser.username;
+    }
+    
+    const savedUser = localStorage.getItem('currentUser');
+    if (savedUser) {
+        try {
+            const user = JSON.parse(savedUser);
+            return user.username || 'user_' + Date.now();
+        } catch (e) {
+            return 'user_' + Date.now();
+        }
+    }
+    
+    return 'user_' + Date.now();
+}
+
 function showMemoryStats() {
     if (!window.ltmManager) {
         console.log('❌ LTM Manager nuk është inicializuar');
+        addMessage('❌ Long-Term Memory nuk është aktiv!', 'system');
         return;
     }
     
     const stats = window.ltmManager.getMemoryStats();
-    console.log('📊 Statistikat e Memories:');
-    console.log('- Mesazhe totale:', stats.total_messages);
-    console.log('- Mesazhe user:', stats.user_messages);
-    console.log('- Mesazhe AI:', stats.ai_messages);
-    console.log('- Kapaciteti:', stats.capacity);
+    const message = `🧠 **Statistikat e Memories:**
+
+📊 **Total Mesazhe:** ${stats.total_messages}
+👤 **Mesazhe User:** ${stats.user_messages}
+🤖 **Mesazhe AI:** ${stats.ai_messages}
+💾 **Kapaciteti:** ${stats.capacity}
+🕒 **Përditësuar:** ${stats.last_updated ? new Date(stats.last_updated).toLocaleTimeString() : 'N/A'}
+
+*Memoria ruan 50 mesazhet e fundit për kontekst optimal.*`;
     
-    // Shfaq në chat nëse është mod i avancuar
-    if (window.currentAIMode === 'ADVANCED' || window.currentAIMode === 'DIVINE') {
-        addMessage(`📊 **Statistikat e Memories:**\n- Mesazhe: ${stats.total_messages}\n- Kapacitet: ${stats.capacity}`, 'system');
-    }
+    addMessage(message, 'system');
 }
 
-// ======================================================
-// 🚀 EKSPORTIMI I FUNKSIONEVE TË REJA GLOBALE
-// ======================================================
-
-// 🆕 EKSPORTO FUNKSIONET E REJA TË LTM
-window.initializeLTMForChat = initializeLTMForChat;
-window.showMemoryStats = showMemoryStats;
-window.quickLTMTEST = function() {
+function quickLTMTEST() {
     console.log('🧪 TEST I SHPEJTË I LTM:');
     console.log('- LTM Manager:', typeof LongTermMemoryManager);
     console.log('- LTM Instance:', !!window.ltmManager);
@@ -732,497 +678,105 @@ window.quickLTMTEST = function() {
         console.log('- Memory Stats:', stats);
         addMessage(`🧪 **Test LTM:** ✅ Aktiv\n📊 Mesazhe: ${stats.total_messages}`, 'system');
     } else {
+        console.log('- ❌ LTM not active');
         addMessage('🧪 **Test LTM:** ❌ Jo aktiv', 'system');
-    }
-};
-
-console.log("✅ RRUFE-TESLA 11.0 Chat System me LTM u inicializua plotësisht!");
-
-// ====================================== Në fund të chat ========================================================
-async function initializeLTMForChat() {
-    console.log('🎯 initializeLTMForChat - Duke inicializuar LTM...');
-    try {
-        const userId = getCurrentUserId() || 'guest_user';
-        const ltmManager = new LongTermMemoryManager(userId, null);
-        await ltmManager.initialize();
-        window.ltmManager = ltmManager;
-        if (window.rrufePlatform) {
-            window.rrufePlatform.modules.longTermMemory = ltmManager;
-        }
-        return ltmManager;
-    } catch (error) {
-        console.error('❌ Gabim:', error);
-        return null;
     }
 }
 
-// ================================ Eksporto globalisht ===================================
-window.initializeLTMForChat = initializeLTMForChat;
+// ======================================================
+// 🚀 INICIALIZIMI I SISTEMIT
+// ======================================================
 
-// Shto në fund të chat.js për inicializim automatik
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('✅ DOM u ngarkua - Duke inicializuar sistemin...');
+    
+    // Kontrollo nëse përdoruesi është loguar
+    const savedUser = localStorage.getItem('currentUser');
+    if (savedUser) {
+        try {
+            currentUser = JSON.parse(savedUser);
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('chat-screen').style.display = 'block';
+            updateUserProfile();
+            
+            // Shto mesazh mirëseardhjeje
+            addMessage(`👑 Mirë se erdhe përsëri ${currentUser.username}! RRUFE-TESLA 10.5 është gati.`, 'bot');
+            
+        } catch (error) {
+            console.error('❌ Gabim në loadimin e përdoruesit:', error);
+        }
+    }
+    
+    // Inicializo event listeners
+    initializeEventListeners();
+    
+    // Inicializo LTM pas 2 sekondash
     setTimeout(() => {
-        if (typeof initializeLTMForChat !== 'undefined') {
-            initializeLTMForChat().then(ltm => {
-                if (ltm) {
-                    console.log('✅ LTM u inicializua automatikisht!');
-                    addMessage('🧠 **Memoria Afatgjatë** u aktivizua automatikisht!', 'system');
-                }
-            });
+        if (typeof LongTermMemoryManager !== 'undefined' && !window.ltmManager) {
+            initializeLTMForChat();
         }
     }, 2000);
 });
 
-// ==================== 🧠 MEMORY DISPLAY SYSTEM ====================
-
-// Funksion për update të header-it me memory status
-function updateHeaderWithMemoryStatus() {
-    const header = document.querySelector('header');
-    if (!header) {
-        console.log('❌ Header nuk u gjet');
-        return;
-    }
+function initializeEventListeners() {
+    // Butoni i dërgimit
+    const sendBtn = document.getElementById('send-btn');
+    const userInput = document.getElementById('user-input');
     
-    // Kontrollo nëse ekziston tashmë memory status
-    let memoryStatus = document.getElementById('memory-status');
-    
-    if (!memoryStatus) {
-        memoryStatus = document.createElement('div');
-        memoryStatus.id = 'memory-status';
-        memoryStatus.style.cssText = `
-            display: inline-block;
-            margin-left: 15px;
-            padding: 5px 10px;
-            background: rgba(0,0,0,0.1);
-            border-radius: 15px;
-            font-size: 12px;
-            border: 1px solid #00ff00;
-            font-family: Arial, sans-serif;
-        `;
+    if (sendBtn && userInput) {
+        sendBtn.addEventListener('click', sendMessage);
         
-        // Vendose pas butonave të AI
-        const aiControls = document.querySelector('.ai-controls');
-        if (aiControls) {
-            aiControls.parentNode.insertBefore(memoryStatus, aiControls.nextSibling);
-        } else {
-            header.appendChild(memoryStatus);
-        }
-    }
-    
-    // Update content
-    if (window.ltmManager) {
-        const stats = window.ltmManager.getMemoryStats();
-        memoryStatus.innerHTML = `🧠 ${stats.total_messages} mesazhe | ${stats.capacity}`;
-        memoryStatus.title = `Memoria: ${stats.user_messages} user + ${stats.ai_messages} AI mesazhe`;
-    } else {
-        memoryStatus.innerHTML = '🧠 Memorie joaktive';
-        memoryStatus.title = 'Long-Term Memory nuk është inicializuar';
-    }
-}
-
-// Funksion për të krijuar memory dashboard
-function createMemoryDashboard() {
-    // Kontrollo nëse ekziston tashmë
-    if (document.getElementById('memory-dashboard')) {
-        return;
-    }
-    
-    const dashboard = document.createElement('div');
-    dashboard.id = 'memory-dashboard';
-    dashboard.innerHTML = `
-        <div style="background: rgba(0,0,0,0.05); padding: 10px; border-radius: 8px; margin: 10px 0; border: 1px solid #ddd;">
-            <h4 style="margin: 0 0 8px 0; color: #333;">🧠 RRUFE-TESLA Memory</h4>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px; color: #666;">
-                <div>📊 Total: <span id="dash-total">0</span></div>
-                <div>👤 User: <span id="dash-user">0</span></div>
-                <div>🤖 AI: <span id="dash-ai">0</span></div>
-                <div>💾 Kapacitet: <span id="dash-capacity">0%</span></div>
-            </div>
-            <button onclick="showDetailedMemoryStats()" style="margin-top: 8px; padding: 4px 8px; font-size: 10px; background: #4285f4; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                📈 Detajet
-            </button>
-        </div>
-    `;
-    
-    // Vendose në fillim të chat-it
-    const chat = document.getElementById('chat');
-    if (chat) {
-        chat.insertBefore(dashboard, chat.firstChild);
-    }
-    
-    return dashboard;
-}
-
-// Funksion për update të display-it
-function updateMemoryDisplay() {
-    // Update header status
-    updateHeaderWithMemoryStatus();
-    
-    // Update dashboard nëse ekziston
-    const dashTotal = document.getElementById('dash-total');
-    const dashUser = document.getElementById('dash-user');
-    const dashAi = document.getElementById('dash-ai');
-    const dashCapacity = document.getElementById('dash-capacity');
-    
-    if (window.ltmManager) {
-        const stats = window.ltmManager.getMemoryStats();
-        
-        if (dashTotal) dashTotal.textContent = stats.total_messages;
-        if (dashUser) dashUser.textContent = stats.user_messages;
-        if (dashAi) dashAi.textContent = stats.ai_messages;
-        if (dashCapacity) dashCapacity.textContent = stats.capacity;
-    }
-}
-
-// Funksion për të shfaqur statistikat e detajuara
-function showDetailedMemoryStats() {
-    if (window.ltmManager) {
-        const stats = window.ltmManager.getMemoryStats();
-        const message = `🧠 **Statistikat e Detajuara të Memories:**
-
-📊 **Total Mesazhe:** ${stats.total_messages}
-👤 **Mesazhe User:** ${stats.user_messages}
-🤖 **Mesazhe AI:** ${stats.ai_messages}
-💾 **Kapaciteti:** ${stats.capacity}
-🕒 **Përditësuar:** ${stats.last_updated ? new Date(stats.last_updated).toLocaleTimeString() : 'N/A'}
-
-*Memoria ruan 50 mesazhet e fundit për kontekst optimal.*`;
-        
-        // Shfaq në chat
-        if (typeof addMessage !== 'undefined') {
-            addMessage(message, 'system');
-        } else {
-            alert(message);
-        }
-    } else {
-        alert('❌ Long-Term Memory nuk është inicializuar!');
-    }
-}
-
-// Funksion për inicializim të plotë të memory interface
-function initializeMemoryInterface() {
-    console.log('🧠 Duke inicializuar Memory Interface...');
-    
-    // Krijo dashboard
-    createMemoryDashboard();
-    
-    // Update display
-    updateMemoryDisplay();
-    
-    // Shfaq notifikim
-    if (typeof showMemoryNotification !== 'undefined') {
-        showMemoryNotification('🧠 Memory Interface u aktivizua!', 'success');
-    }
-    
-    console.log('✅ Memory Interface u inicializua!');
-}
-
-// ==================== 🚀 EKSPORTIMI I FUNKSIONEVE ====================
-
-window.updateHeaderWithMemoryStatus = updateHeaderWithMemoryStatus;
-window.createMemoryDashboard = createMemoryDashboard;
-window.updateMemoryDisplay = updateMemoryDisplay;
-window.showDetailedMemoryStats = showDetailedMemoryStats;
-window.initializeMemoryInterface = initializeMemoryInterface;
-
-console.log("✅ Memory Display System u ngarkua në chat.js!");
-
-// ================================= Sistemi lokal i inteligjencës ======================================
-class LocalChatIntelligence {
-    constructor() {
-        this.knowledgeBase = {
-            greetings: {
-                patterns: ['pershendetje', 'hello', 'hi', 'tung', 'ciao', 'mirëmëngjes', 'mirëdita', 'mirëmbrëma'],
-                responses: [
-                    'Përshëndetje! 😊 Mirë se ju gjetëm!',
-                    "Hello! Si mund t'ju ndihmoj sot?",
-                    'Tungjatjeta! Gëzohem që ju shoh!',
-                    'Përshëndetje! Çfarë mund të bëj për ju?'
-                ]
-            },
-            farewells: {
-                patterns: ['mirupafshim', 'bye', 'lamtumirë', 'shëndet', 'flm', 'faleminderit'],
-                responses: [
-                    'Mirupafshim! 😊 Ishte kënaqësi të flisja me ju!',
-                    'Lamtumirë! Shpresoj të flasim sërish!',
-                    'Faleminderit! Ju uroj një ditë të mbarë!',
-                    'Shëndet! Mos u largoni shumë!'
-                ]
-            },
-            help: {
-                patterns: ['ndihmo', 'help', 'komanda', 'si punon', 'çfarë mund të bësh'],
-                responses: [
-                    'Unë jam RRUFE-TESLA! Mund të:\n• Të përgjigjem pyetjeve bazë\n• Të llogarit matematikë\n• Të kujtoj bisedat tona\n• Të ndihmoj me informacione\n\nShkruani pyetjen tuaj!'
-                ]
-            },
-            math: {
-                patterns: ['+', '-', '*', '/', '^', 'llogarit', 'sa është'],
-                responses: []
-            },
-            // ... më shumë kategori
-        };
-    }
-
-    processMessage(message) {
-        const lowerMessage = message.toLowerCase();
-        
-        // Kontrollo nëse është matematikë
-        if (this.isMathExpression(message)) {
-            return this.solveMath(message);
-        }
-        
-        // Kontrollo kategori të tjera
-        for (let category in this.knowledgeBase) {
-            for (let pattern of this.knowledgeBase[category].patterns) {
-                if (lowerMessage.includes(pattern)) {
-                    const responses = this.knowledgeBase[category].responses;
-                    return responses[Math.floor(Math.random() * responses.length)];
-                }
+        userInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
             }
-        }
-        
-        // Përgjigje default
-        return this.getDefaultResponse();
-    }
-
-    isMathExpression(text) {
-        const mathRegex = /^[\d+\-*/().^ ]+$/;
-        return mathRegex.test(text.replace(/\s/g, ''));
-    }
-
-    solveMath(expression) {
-        try {
-            // Pastro dhe siguro shprehjen
-            let cleanExpr = expression.replace(/[^0-9+\-*/().^]/g, '');
-            
-            // Zëvendëso ^ me ** për fuqi
-            cleanExpr = cleanExpr.replace(/\^/g, '**');
-            
-            // Përdor Function constructor për llogaritje të sigurt
-            const result = Function(`"use strict"; return (${cleanExpr})`)();
-            
-            return `🧮 Rezultati: **${result}**`;
-        } catch (error) {
-            return '❌ Nuk mund ta llogaris shprehjen matematikore.';
-        }
-    }
-
-    getDefaultResponse() {
-        const defaultResponses = [
-            'Interesante! Çfarë mendoni ju për këtë?',
-            'E kuptoj! A keni ndonjë pyetje tjetër?',
-            'Faleminderit për këtë informacion!',
-            'Po dëgjoj... vazhdoni ju lutem!',
-            'Kjo është shumë interesante!'
-        ];
-        return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
-    }
-}
-
-// ==================== 🚀 AUTO-INITIALIZATION ====================
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 RRUFE-TESLA - Duke inicializuar sistemin...');
-    
-    setTimeout(async () => {
-        try {
-            // Inicializo LTM
-            if (typeof LongTermMemoryManager !== 'undefined' && !window.ltmManager) {
-                console.log('🧠 Duke inicializuar Long-Term Memory...');
-                await initializeLTMForChat();
-            }
-            
-            // Inicializo Memory Interface
-            if (typeof initializeMemoryInterface !== 'undefined') {
-                console.log('🎨 Duke inicializuar Memory Interface...');
-                initializeMemoryInterface();
-            }
-            
-            // Shto LTM në Platform
-            if (window.rrufePlatform && window.ltmManager && !window.rrufePlatform.modules.longTermMemory) {
-                window.rrufePlatform.modules.longTermMemory = window.ltmManager;
-                console.log('✅ LTM u shtua në platformën RRUFE-TESLA');
-            }
-            
-            console.log('✅ RRUFE-TESLA 10.5 u inicializua automatikisht!');
-            
-        } catch (error) {
-            console.error('❌ Gabim në inicializim automatik:', error);
-        }
-    }, 3000);
-});
-
-// ==================== 🎨 CODE FORMATTING & SYNTAX HIGHLIGHTING ====================
-
-console.log("🎨 Duke ngarkuar sistemin e formatimit të kodit...");
-
-/**
- * Formatizon dhe thekson kodet në mesazhe
- */
-function formatCodeBlocks() {
-    console.log("🔧 Duke formatizuar blloqet e kodit...");
-    
-    // Gjej të gjitha blloqet e kodit në chat
-    const codeBlocks = document.querySelectorAll('pre code');
-    console.log(`📊 Gjetur ${codeBlocks.length} blloqe kodi për formatizim`);
-    
-    // Apliko highlight për secilin bllok
-    codeBlocks.forEach((block, index) => {
-        try {
-            hljs.highlightElement(block);
-            console.log(`✅ Blloku ${index + 1} u theksua`);
-        } catch (error) {
-            console.log(`❌ Gabim në theksimin e bllokut ${index + 1}:`, error);
-        }
-    });
-    
-    // Shto butona kopjimi
-    addCopyButtons();
-}
-
-/**
- * Shton butona kopjimi për blloqet e kodit
- */
-function addCopyButtons() {
-    const preElements = document.querySelectorAll('pre');
-    console.log(`📋 Duke shtuar butona kopjimi për ${preElements.length} blloqe...`);
-    
-    preElements.forEach((pre, index) => {
-        // Kontrollo nëse ka tashmë buton kopjimi
-        if (!pre.querySelector('.copy-btn')) {
-            const copyBtn = document.createElement('button');
-            copyBtn.className = 'copy-btn';
-            copyBtn.textContent = '📋 Kopjo';
-            copyBtn.title = 'Kopjo kodin';
-            copyBtn.style.cssText = `
-                position: absolute;
-                top: 8px;
-                right: 8px;
-                background: #4285f4;
-                color: white;
-                border: none;
-                padding: 6px 12px;
-                border-radius: 4px;
-                font-size: 12px;
-                cursor: pointer;
-                font-family: 'Fira Code', monospace;
-                z-index: 10;
-                opacity: 0.9;
-                transition: opacity 0.2s;
-            `;
-            
-            // Efekt hover
-            copyBtn.onmouseenter = () => copyBtn.style.opacity = '1';
-            copyBtn.onmouseleave = () => copyBtn.style.opacity = '0.9';
-            
-            // Funksioni i kopjimit
-            copyBtn.onclick = function() {
-                const code = pre.querySelector('code')?.innerText || '';
-                navigator.clipboard.writeText(code).then(() => {
-                    const originalText = copyBtn.textContent;
-                    copyBtn.textContent = '✅ Kopjuar!';
-                    copyBtn.style.background = '#34A853';
-                    
-                    setTimeout(() => {
-                        copyBtn.textContent = originalText;
-                        copyBtn.style.background = '#4285f4';
-                    }, 2000);
-                }).catch(err => {
-                    console.error('❌ Gabim në kopjim:', err);
-                    copyBtn.textContent = '❌ Gabim';
-                    copyBtn.style.background = '#EA4335';
-                    
-                    setTimeout(() => {
-                        copyBtn.textContent = '📋 Kopjo';
-                        copyBtn.style.background = '#4285f4';
-                    }, 2000);
-                });
-            };
-            
-            pre.style.position = 'relative';
-            pre.appendChild(copyBtn);
-            console.log(`✅ Buton kopjimi u shtua për bllokun ${index + 1}`);
-        }
-    });
-}
-
-/**
- * Përpunon mesazhet e reja për kod
- */
-function processMessageForCode(messageElement) {
-    if (!messageElement) return;
-    
-    const htmlContent = messageElement.innerHTML;
-    
-    // Kontrollo për kode në format ```code```
-    const codeMatches = htmlContent.match(/```(\w+)?\s*([\s\S]*?)```/g);
-    
-    if (codeMatches) {
-        console.log(`🎯 Gjetur ${codeMatches.length} kode për përpunim`);
-        
-        codeMatches.forEach((match, index) => {
-            // Extract language and code content
-            const matchResult = match.match(/```(\w+)?\s*([\s\S]*?)```/);
-            const language = matchResult[1] || 'auto';
-            const codeContent = matchResult[2].trim();
-            
-            console.log(`📝 Kodi ${index + 1}: ${language}, ${codeContent.length} karaktere`);
-            
-            // Highlight kodin
-            const highlightedCode = language === 'auto' 
-                ? hljs.highlightAuto(codeContent).value
-                : hljs.highlight(codeContent, { language }).value;
-            
-            // Krijo bllokun e formatuar
-            const formattedCode = `
-                <div class="code-block" style="
-                    background: #1e1e1e; 
-                    border: 1px solid #333; 
-                    border-radius: 8px; 
-                    margin: 15px 0; 
-                    overflow: hidden;
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-                ">
-                    <div style="
-                        background: #2d2d2d; 
-                        padding: 12px 16px; 
-                        border-bottom: 1px solid #333; 
-                        font-size: 13px; 
-                        color: #ccc;
-                        font-family: 'Fira Code', monospace;
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                    ">
-                        <span>🧬 ${language.toUpperCase()} CODE</span>
-                        <span style="font-size: 11px; color: #888;">${codeContent.length} chars</span>
-                    </div>
-                    <pre style="
-                        margin: 0; 
-                        padding: 16px; 
-                        overflow-x: auto; 
-                        background: #1e1e1e;
-                        color: #d4d4d4;
-                        font-family: 'Fira Code', monospace;
-                        font-size: 14px;
-                        line-height: 1.5;
-                    "><code>${highlightedCode}</code></pre>
-                </div>
-            `;
-            
-            // Zëvendëso në mesazh
-            messageElement.innerHTML = messageElement.innerHTML.replace(match, formattedCode);
         });
-        
-        // Apliko highlight dhe shto butona pasi të jetë shtuar në DOM
-        setTimeout(() => {
-            formatCodeBlocks();
-        }, 100);
+    }
+    
+    // Butoni i emojive
+    const emojiBtn = document.getElementById('emoji-btn');
+    if (emojiBtn) {
+        emojiBtn.addEventListener('click', toggleEmojiPanel);
+    }
+    
+    // Butonat e emojive
+    const emojiSpans = document.querySelectorAll('#emoji-panel span');
+    emojiSpans.forEach(span => {
+        span.addEventListener('click', function() {
+            addEmoji(this.textContent);
+        });
+    });
+    
+    // Butonat e menaxhimit
+    const downloadBtn = document.getElementById('download-history');
+    const clearBtn = document.getElementById('clear-history');
+    
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', downloadHistory);
+    }
+    
+    if (clearBtn) {
+        clearBtn.addEventListener('click', clearHistory);
     }
 }
 
-// Eksporto funksionet globale
-window.formatCodeBlocks = formatCodeBlocks;
-window.addCopyButtons = addCopyButtons;
-window.processMessageForCode = processMessageForCode;
+// ======================================================
+// 🌐 EKSPORTIMI I FUNKSIONEVE GLOBALE
+// ======================================================
 
-console.log("✅ Sistemi i formatimit të kodit u ngarkua!");
+window.sendMessage = sendMessage;
+window.addMessage = addMessage;
+window.login = login;
+window.logout = logout;
+window.activateSimpleAI = activateSimpleAI;
+window.activateAdvancedAI = activateAdvancedAI;
+window.activateDivineAI = activateDivineAI;
+window.downloadHistory = downloadHistory;
+window.clearHistory = clearHistory;
+window.toggleEmojiPanel = toggleEmojiPanel;
+window.addEmoji = addEmoji;
+window.initializeLTMForChat = initializeLTMForChat;
+window.showMemoryStats = showMemoryStats;
+window.quickLTMTEST = quickLTMTEST;
+
+console.log("✅ chat.js - RRUFE-TESLA 10.5 u inicializua me sukses!");
