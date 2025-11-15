@@ -306,6 +306,30 @@ async function sendMessage() {
         if (responseData.success) {
             // Shto përgjigjen me efekt typing të gjallë (I RI)
             await addMessageWithTypingEffect(responseData.response, 'bot');
+            
+            // 🆕🎯 SHTO KËTU KODIN PËR FORMATIMIN E KODIT!
+            setTimeout(() => {
+                // Formatizo kodet në mesazhin e fundit
+                const lastMessage = document.querySelector('#chat .message:last-child .message-content');
+                if (lastMessage) {
+                    // Kontrollo nëse ka kode në mesazh
+                    if (lastMessage.innerHTML.includes('```')) {
+                        if (typeof processMessageForCode !== 'undefined') {
+                            processMessageForCode(lastMessage);
+                            console.log('🎨 Duke formatizuar kodet në mesazh...');
+                        }
+                    }
+                }
+                
+                // Apliko highlight dhe butona kopjimi
+                if (typeof formatCodeBlocks !== 'undefined') {
+                    setTimeout(() => {
+                        formatCodeBlocks();
+                        console.log('📋 Butonat e kopjimit u shtuan!');
+                    }, 200);
+                }
+            }, 300);
+            
         } else {
             addMessage('❌ ' + (data.response || 'Gabim në përpunimin e mesazhit'), 'system');
         }
