@@ -455,7 +455,7 @@ class LocalChatIntelligence {
                 patterns: ['pershendetje', 'hello', 'hi', 'tung', 'ciao', 'mirëmëngjes', 'mirëdita', 'mirëmbrëma'],
                 responses: [
                     'Përshëndetje! 😊 Mirë se ju gjetëm!',
-                    'Hello! Si mund t'ju ndihmoj sot?',
+                    "Hello! Si mund t'ju ndihmoj sot?",
                     'Tungjatjeta! Gëzohem që ju shoh!',
                     'Përshëndetje! Çfarë mund të bëj për ju?'
                 ]
