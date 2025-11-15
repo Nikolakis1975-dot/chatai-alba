@@ -225,6 +225,21 @@ async function sendMessage() {
         // Shto mesazhin e përdoruesit në chat
         addMessage(message, 'user');
 
+         // 🆕 SHTO KËTO RRESHTA PËR MEMORY:
+        if (window.ltmManager) {
+            window.ltmManager.addUserMessage(message);
+            
+            // Update memory display
+            if (typeof updateMemoryDisplay !== 'undefined') {
+                updateMemoryDisplay();
+            }
+            
+            // Shfaq notifikim
+            if (typeof showMemoryNotification !== 'undefined') {
+                showMemoryNotification('💾 Mesazhi u ruajt në memorie!', 'success');
+            }
+        }
+
         // Aktivizo typing indicator (I RI)
         showTypingIndicator();
         
@@ -733,3 +748,157 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }, 2000);
 });
+
+// ==================== 🧠 MEMORY DISPLAY SYSTEM ====================
+
+// Funksion për update të header-it me memory status
+function updateHeaderWithMemoryStatus() {
+    const header = document.querySelector('header');
+    if (!header) {
+        console.log('❌ Header nuk u gjet');
+        return;
+    }
+    
+    // Kontrollo nëse ekziston tashmë memory status
+    let memoryStatus = document.getElementById('memory-status');
+    
+    if (!memoryStatus) {
+        memoryStatus = document.createElement('div');
+        memoryStatus.id = 'memory-status';
+        memoryStatus.style.cssText = `
+            display: inline-block;
+            margin-left: 15px;
+            padding: 5px 10px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 15px;
+            font-size: 12px;
+            border: 1px solid #00ff00;
+            font-family: Arial, sans-serif;
+        `;
+        
+        // Vendose pas butonave të AI
+        const aiControls = document.querySelector('.ai-controls');
+        if (aiControls) {
+            aiControls.parentNode.insertBefore(memoryStatus, aiControls.nextSibling);
+        } else {
+            header.appendChild(memoryStatus);
+        }
+    }
+    
+    // Update content
+    if (window.ltmManager) {
+        const stats = window.ltmManager.getMemoryStats();
+        memoryStatus.innerHTML = `🧠 ${stats.total_messages} mesazhe | ${stats.capacity}`;
+        memoryStatus.title = `Memoria: ${stats.user_messages} user + ${stats.ai_messages} AI mesazhe`;
+    } else {
+        memoryStatus.innerHTML = '🧠 Memorie joaktive';
+        memoryStatus.title = 'Long-Term Memory nuk është inicializuar';
+    }
+}
+
+// Funksion për të krijuar memory dashboard
+function createMemoryDashboard() {
+    // Kontrollo nëse ekziston tashmë
+    if (document.getElementById('memory-dashboard')) {
+        return;
+    }
+    
+    const dashboard = document.createElement('div');
+    dashboard.id = 'memory-dashboard';
+    dashboard.innerHTML = `
+        <div style="background: rgba(0,0,0,0.05); padding: 10px; border-radius: 8px; margin: 10px 0; border: 1px solid #ddd;">
+            <h4 style="margin: 0 0 8px 0; color: #333;">🧠 RRUFE-TESLA Memory</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px; color: #666;">
+                <div>📊 Total: <span id="dash-total">0</span></div>
+                <div>👤 User: <span id="dash-user">0</span></div>
+                <div>🤖 AI: <span id="dash-ai">0</span></div>
+                <div>💾 Kapacitet: <span id="dash-capacity">0%</span></div>
+            </div>
+            <button onclick="showDetailedMemoryStats()" style="margin-top: 8px; padding: 4px 8px; font-size: 10px; background: #4285f4; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                📈 Detajet
+            </button>
+        </div>
+    `;
+    
+    // Vendose në fillim të chat-it
+    const chat = document.getElementById('chat');
+    if (chat) {
+        chat.insertBefore(dashboard, chat.firstChild);
+    }
+    
+    return dashboard;
+}
+
+// Funksion për update të display-it
+function updateMemoryDisplay() {
+    // Update header status
+    updateHeaderWithMemoryStatus();
+    
+    // Update dashboard nëse ekziston
+    const dashTotal = document.getElementById('dash-total');
+    const dashUser = document.getElementById('dash-user');
+    const dashAi = document.getElementById('dash-ai');
+    const dashCapacity = document.getElementById('dash-capacity');
+    
+    if (window.ltmManager) {
+        const stats = window.ltmManager.getMemoryStats();
+        
+        if (dashTotal) dashTotal.textContent = stats.total_messages;
+        if (dashUser) dashUser.textContent = stats.user_messages;
+        if (dashAi) dashAi.textContent = stats.ai_messages;
+        if (dashCapacity) dashCapacity.textContent = stats.capacity;
+    }
+}
+
+// Funksion për të shfaqur statistikat e detajuara
+function showDetailedMemoryStats() {
+    if (window.ltmManager) {
+        const stats = window.ltmManager.getMemoryStats();
+        const message = `🧠 **Statistikat e Detajuara të Memories:**
+
+📊 **Total Mesazhe:** ${stats.total_messages}
+👤 **Mesazhe User:** ${stats.user_messages}
+🤖 **Mesazhe AI:** ${stats.ai_messages}
+💾 **Kapaciteti:** ${stats.capacity}
+🕒 **Përditësuar:** ${stats.last_updated ? new Date(stats.last_updated).toLocaleTimeString() : 'N/A'}
+
+*Memoria ruan 50 mesazhet e fundit për kontekst optimal.*`;
+        
+        // Shfaq në chat
+        if (typeof addMessage !== 'undefined') {
+            addMessage(message, 'system');
+        } else {
+            alert(message);
+        }
+    } else {
+        alert('❌ Long-Term Memory nuk është inicializuar!');
+    }
+}
+
+// Funksion për inicializim të plotë të memory interface
+function initializeMemoryInterface() {
+    console.log('🧠 Duke inicializuar Memory Interface...');
+    
+    // Krijo dashboard
+    createMemoryDashboard();
+    
+    // Update display
+    updateMemoryDisplay();
+    
+    // Shfaq notifikim
+    if (typeof showMemoryNotification !== 'undefined') {
+        showMemoryNotification('🧠 Memory Interface u aktivizua!', 'success');
+    }
+    
+    console.log('✅ Memory Interface u inicializua!');
+}
+
+// ==================== 🚀 EKSPORTIMI I FUNKSIONEVE ====================
+
+window.updateHeaderWithMemoryStatus = updateHeaderWithMemoryStatus;
+window.createMemoryDashboard = createMemoryDashboard;
+window.updateMemoryDisplay = updateMemoryDisplay;
+window.showDetailedMemoryStats = showDetailedMemoryStats;
+window.initializeMemoryInterface = initializeMemoryInterface;
+
+console.log("✅ Memory Display System u ngarkua në chat.js!");
