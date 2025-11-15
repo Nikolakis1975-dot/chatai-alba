@@ -1235,6 +1235,168 @@ function quickMemoryTest() {
 }
 
 window.quickMemoryTest = quickMemoryTest;
+
+    // ==================== 🎯 COMPLETE MEMORY SYSTEM INITIALIZATION ====================
+
+// Funksion për marrjen e User ID
+function getCurrentUserId() {
+    try {
+        const savedUser = localStorage.getItem('currentUser');
+        if (savedUser) {
+            const user = JSON.parse(savedUser);
+            return user.username || 'user_' + Date.now();
+        }
+    } catch (e) {
+        console.error('Gabim në marrjen e user ID:', e);
+    }
+    return 'user_' + Date.now();
+}
+
+// Funksioni kryesor për inicializimin e Memory System
+function initializeMemorySystem() {
+    console.log('🎯 Duke inicializuar Memory System...');
+    
+    // Kontrollo nëse LongTermMemoryManager është i ngarkuar
+    if (typeof LongTermMemoryManager === 'undefined') {
+        console.log('⏳ Duke pritur LongTermMemoryManager...');
+        setTimeout(initializeMemorySystem, 1000);
+        return;
+    }
+    
+    console.log('✅ LongTermMemoryManager u gjet!');
+    
+    // Krijo LTM instance nëse nuk ekziston
+    if (!window.ltmManager) {
+        console.log('🔄 Duke krijuar LTM instance...');
+        const userId = getCurrentUserId();
+        window.ltmManager = new LongTermMemoryManager(userId, null);
+        
+        window.ltmManager.initialize().then(() => {
+            console.log('✅ LTM u inicializua me sukses!');
+            
+            // Tani inicializo Memory Interface
+            if (typeof initializeMemoryInterface !== 'undefined') {
+                initializeMemoryInterface();
+            } else {
+                console.log('❌ initializeMemoryInterface nuk u gjet');
+            }
+            
+        }).catch(error => {
+            console.error('❌ Gabim në inicializimin e LTM:', error);
+        });
+    } else {
+        console.log('✅ LTM ekziston tashmë');
+        // LTM ekziston tashmë, inicializo interface
+        if (typeof initializeMemoryInterface !== 'undefined') {
+            initializeMemoryInterface();
+        }
+    }
+}
+
+// Funksion për debug
+function debugMemorySystem() {
+    console.log('🔍 DEBUG MEMORY SYSTEM:');
+    console.log('- LongTermMemoryManager:', typeof LongTermMemoryManager);
+    console.log('- window.ltmManager:', window.ltmManager);
+    console.log('- initializeMemoryInterface:', typeof initializeMemoryInterface);
+    console.log('- User ID:', getCurrentUserId());
+    console.log('- Document readyState:', document.readyState);
+    
+    if (typeof LongTermMemoryManager !== 'undefined') {
+        console.log('✅ LongTermMemoryManager është i ngarkuar');
+    } else {
+        console.log('❌ LongTermMemoryManager nuk është i ngarkuar');
+    }
+}
+
+// Buton emergjent për inicializim manual
+function addEmergencyMemoryButton() {
+    // Kontrollo nëse ekziston tashmë
+    if (document.getElementById('emergency-memory-btn')) {
+        return;
+    }
+    
+    const btn = document.createElement('button');
+    btn.id = 'emergency-memory-btn';
+    btn.innerHTML = '🚨 INIT MEMORY';
+    btn.style.cssText = `
+        background: #ff4444; 
+        color: white; 
+        border: none; 
+        padding: 8px 12px; 
+        border-radius: 20px; 
+        margin: 2px; 
+        font-size: 12px; 
+        cursor: pointer;
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        z-index: 9999;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    `;
+    btn.onclick = function() {
+        console.log('🚨 Emergency Memory Initialization...');
+        debugMemorySystem();
+        initializeMemorySystem();
+    };
+    
+    document.body.appendChild(btn);
+    console.log('✅ Emergency Memory Button u shtua');
+}
+
+// ==================== 🚀 AUTOMATIC INITIALIZATION ====================
+
+// Inicializo kur faqja është plotësisht e ngarkuar
+window.addEventListener('load', function() {
+    console.log('✅ Window u ngarkua plotësisht');
+    
+    // Shto butonin emergjent
+    addEmergencyMemoryButton();
+    
+    // Kontrollo nëse jemi në chat screen
+    const chatScreen = document.getElementById('chat-screen');
+    if (chatScreen && chatScreen.style.display !== 'none') {
+        console.log('🎯 Chat screen është aktiv - duke inicializuar Memory System...');
+        // Inicializo pas 3 sekondash për të dhënë kohë sistemeve të tjera
+        setTimeout(initializeMemorySystem, 3000);
+    }
+});
+
+// Gjithashtu kontrollo kur bëhet login
+function checkLoginAndInitialize() {
+    const chatScreen = document.getElementById('chat-screen');
+    if (chatScreen && chatScreen.style.display !== 'none') {
+        console.log('🔑 User logged in - initializing memory...');
+        setTimeout(initializeMemorySystem, 2000);
+    }
+}
+
+// Kontrollo çdo 2 sekonda nëse useri është loguar
+setInterval(checkLoginAndInitialize, 2000);
+
+// ==================== 📡 EKSPORTIMI I FUNKSIONEVE ====================
+
+window.initializeMemorySystem = initializeMemorySystem;
+window.debugMemorySystem = debugMemorySystem;
+window.getCurrentUserId = getCurrentUserId;
+window.addEmergencyMemoryButton = addEmergencyMemoryButton;
+
+console.log("✅ Memory System Initialization u ngarkua!");
+
+// ==================== 🧪 TESTI I SHPEJTË ====================
+
+// Testo menjëherë nëse sistemi është gati
+setTimeout(function() {
+    console.log('🧪 Running quick memory system test...');
+    debugMemorySystem();
+    
+    // Nëse jemi në chat screen, provo të inicializosh
+    const chatScreen = document.getElementById('chat-screen');
+    if (chatScreen && chatScreen.style.display !== 'none') {
+        console.log('🎯 Chat screen detected, attempting auto-init...');
+        initializeMemorySystem();
+    }
+}, 5000);
     
    </script>
 
