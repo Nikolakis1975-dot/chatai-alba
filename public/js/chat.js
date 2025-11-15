@@ -615,3 +615,86 @@ async function makeAuthenticatedRequest(url, options = {}) {
         };
     }
 }
+
+// ======================================================
+// 🧠 LONG-TERM MEMORY INTEGRATION - FUNKSIONET E REJA
+// ======================================================
+
+// 🎯 FUNKSIONI I RI PËR INICIALIZIMIN E LTM
+async function initializeLTMForChat() {
+    console.log('🎯 initializeLTMForChat - Duke inicializuar Long-Term Memory...');
+    
+    try {
+        // Kontrollo nëse LTM Manager ekziston
+        if (typeof LongTermMemoryManager === 'undefined') {
+            console.warn('⚠️ LongTermMemoryManager nuk është i ngarkuar');
+            return null;
+        }
+
+        const userId = getCurrentUserId() || 'guest_user';
+        
+        // Krijo instancën e LTM
+        const ltmManager = new LongTermMemoryManager(userId, null);
+        await ltmManager.initialize();
+        
+        console.log('✅ Long-Term Memory u inicializua për chat!');
+        
+        // Ruaj në variabël globale
+        window.ltmManager = ltmManager;
+        
+        // Shto në platformën RRUFE-TESLA nëse ekziston
+        if (window.rrufePlatform) {
+            window.rrufePlatform.modules.longTermMemory = ltmManager;
+            console.log('✅ LTM u shtua në modulet e RRUFE-TESLA');
+        }
+        
+        return ltmManager;
+        
+    } catch (error) {
+        console.error('❌ Gabim në inicializimin e LTM për chat:', error);
+        return null;
+    }
+}
+
+// 🎯 FUNKSIONI I RI PËR SHFAQJEN E STATISTIKAVE TË MEMORIES
+function showMemoryStats() {
+    if (!window.ltmManager) {
+        console.log('❌ LTM Manager nuk është inicializuar');
+        return;
+    }
+    
+    const stats = window.ltmManager.getMemoryStats();
+    console.log('📊 Statistikat e Memories:');
+    console.log('- Mesazhe totale:', stats.total_messages);
+    console.log('- Mesazhe user:', stats.user_messages);
+    console.log('- Mesazhe AI:', stats.ai_messages);
+    console.log('- Kapaciteti:', stats.capacity);
+    
+    // Shfaq në chat nëse është mod i avancuar
+    if (window.currentAIMode === 'ADVANCED' || window.currentAIMode === 'DIVINE') {
+        addMessage(`📊 **Statistikat e Memories:**\n- Mesazhe: ${stats.total_messages}\n- Kapacitet: ${stats.capacity}`, 'system');
+    }
+}
+
+// ======================================================
+// 🚀 EKSPORTIMI I FUNKSIONEVE TË REJA GLOBALE
+// ======================================================
+
+// 🆕 EKSPORTO FUNKSIONET E REJA TË LTM
+window.initializeLTMForChat = initializeLTMForChat;
+window.showMemoryStats = showMemoryStats;
+window.quickLTMTEST = function() {
+    console.log('🧪 TEST I SHPEJTË I LTM:');
+    console.log('- LTM Manager:', typeof LongTermMemoryManager);
+    console.log('- LTM Instance:', !!window.ltmManager);
+    
+    if (window.ltmManager) {
+        const stats = window.ltmManager.getMemoryStats();
+        console.log('- Memory Stats:', stats);
+        addMessage(`🧪 **Test LTM:** ✅ Aktiv\n📊 Mesazhe: ${stats.total_messages}`, 'system');
+    } else {
+        addMessage('🧪 **Test LTM:** ❌ Jo aktiv', 'system');
+    }
+};
+
+console.log("✅ RRUFE-TESLA 11.0 Chat System me LTM u inicializua plotësisht!");
