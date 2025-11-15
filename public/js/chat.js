@@ -698,3 +698,24 @@ window.quickLTMTEST = function() {
 };
 
 console.log("✅ RRUFE-TESLA 11.0 Chat System me LTM u inicializua plotësisht!");
+
+// ====================================== Në fund të chat ========================================================
+async function initializeLTMForChat() {
+    console.log('🎯 initializeLTMForChat - Duke inicializuar LTM...');
+    try {
+        const userId = getCurrentUserId() || 'guest_user';
+        const ltmManager = new LongTermMemoryManager(userId, null);
+        await ltmManager.initialize();
+        window.ltmManager = ltmManager;
+        if (window.rrufePlatform) {
+            window.rrufePlatform.modules.longTermMemory = ltmManager;
+        }
+        return ltmManager;
+    } catch (error) {
+        console.error('❌ Gabim:', error);
+        return null;
+    }
+}
+
+// Eksporto globalisht
+window.initializeLTMForChat = initializeLTMForChat;
