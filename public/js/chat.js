@@ -88,7 +88,7 @@ function hideTypingIndicator() {
 }
 
 // ======================================================
-// 🎯 FUNKSIONI KRYESOR I DËRGIMIT TË MESAZHEVE
+// 🎯 FUNKSIONI KRYESOR I DËRGIMIT - VERSION I INTEGRUAR
 // ======================================================
 
 async function sendMessage() {
@@ -105,40 +105,112 @@ async function sendMessage() {
         // Shto mesazhin e përdoruesit
         addMessage(message, 'user');
         
-        // Trego se po shtypet
-        showTypingIndicator();
+        // 1. PARAQITJE NË KONSOLË PËR DEBUG
+        console.log(`💬 [CHAT.JS] Mesazh: ${message}`);
+        console.log(`🎯 [CHAT.JS] Modaliteti: ${window.currentAIMode || 'SIMPLE'}`);
         
-        // Simulo përgjigje
-        setTimeout(() => {
-            // Fshi treguesin e shtypjes
-            hideTypingIndicator();
+        // 2. KONTROLLO NËSE ËSHTË KOMANDË E THJESHTË (sistemi ynë)
+        const isSimpleCommand = isExactCommand(message) || isPureMathExpression(message) || isMathQuestion(message.toLowerCase()) || isGreeting(message.toLowerCase());
+        
+        if (isSimpleCommand) {
+            console.log('✅ [CHAT.JS] Duke përdorur sistemin tonë të komandave');
             
-            // PROCESO MESAZHIN
-            let response = processUserMessage(message);
+            // Trego se po shtypet
+            showTypingIndicator();
             
-            // Shto përgjigjen
-            addMessage(response, 'bot');
-            
-            // Ruaj në memorie nëse ekziston
-            if (window.ltmManager) {
-                window.ltmManager.addUserMessage(message);
-                window.ltmManager.addAIResponse(response);
+            // Proceso me sistemin tonë
+            setTimeout(() => {
+                hideTypingIndicator();
+                let response = processUserMessage(message);
+                addMessage(response, 'bot');
                 
-                // Update memory display
+                // Ruaj në memory
+                if (window.ltmManager) {
+                    window.ltmManager.addUserMessage(message);
+                    window.ltmManager.addAIResponse(response);
+                    updateMemoryDisplay();
+                }
+            }, 1500);
+            
+        } else {
+            // 3. KALO MESAZHIN NË SISTEMIN EKZISTUES RRUFE-TESLA
+            console.log('🔄 [CHAT.JS] Duke kaluar mesazhin në sistemin RRUFE-TESLA');
+            
+            // Kontrollo nëse ekziston sistemi i vjetër
+            if (typeof window.processUserMessage !== 'undefined') {
+                console.log('🎯 [CHAT.JS] Duke përdorur processUserMessage të vjetër');
+                
+                // Përdor sistemin e vjetër
+                try {
+                    const response = await window.processUserMessage(message);
+                    if (response) {
+                        addMessage(response, 'bot');
+                        
+                        // Ruaj në memory
+                        if (window.ltmManager) {
+                            window.ltmManager.addUserMessage(message);
+                            window.ltmManager.addAIResponse(response);
+                            updateMemoryDisplay();
+                        }
+                    }
+                } catch (error) {
+                    console.error('❌ Gabim në processUserMessage:', error);
+                    addMessage('❌ Gabim në sistem. Provo përsëri.', 'system');
+                }
+                
+            } else if (typeof window.sendMessageToServer !== 'undefined') {
+                // Ose përdor sistemin tjetër
+                console.log('🎯 [CHAT.JS] Duke përdorur sendMessageToServer');
+                window.sendMessageToServer(message);
+                
+            } else {
+                // Fallback në sistemin tonë
+                console.log('🔄 [CHAT.JS] Duke përdorur sistemin tonë si fallback');
+                showTypingIndicator();
+                
                 setTimeout(() => {
-                    if (typeof updateMemoryDisplay !== 'undefined') {
+                    hideTypingIndicator();
+                    let response = processUserMessage(message);
+                    addMessage(response, 'bot');
+                    
+                    if (window.ltmManager) {
+                        window.ltmManager.addUserMessage(message);
+                        window.ltmManager.addAIResponse(response);
                         updateMemoryDisplay();
                     }
-                }, 100);
+                }, 1500);
             }
-            
-        }, 1500);
+        }
         
     } catch (error) {
         console.error('❌ Gabim në sendMessage:', error);
         addMessage('❌ Gabim në sistem. Provo përsëri.', 'system');
     }
 }
+
+// ======================================================
+// 🔄 FUNKSIONE SHTESË PËR INTEGRIM
+// ======================================================
+
+// Funksion për të kontrolluar sistemet ekzistuese
+function checkExistingSystems() {
+    console.log('🔍 Duke kontrolluar sistemet ekzistuese:');
+    console.log('- processUserMessage:', typeof window.processUserMessage);
+    console.log('- sendMessageToServer:', typeof window.sendMessageToServer);
+    console.log('- rrufePlatform:', typeof window.rrufePlatform);
+    console.log('- currentAIMode:', window.currentAIMode);
+    
+    // Kontrollo nëse ka API Key system
+    if (typeof window.checkApiKeyStatus !== 'undefined') {
+        console.log('- API Key System: ✅ EKZISTON');
+    } else {
+        console.log('- API Key System: ❌ NUK EKZISTON');
+    }
+}
+
+// Ekzekuto kontrollin pas ngarkimit
+setTimeout(checkExistingSystems, 3000);
+
 
 // ======================================================
 // 🧠 SISTEMI I PROCESIMIT TË MESAZHEVE
