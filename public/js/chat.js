@@ -790,3 +790,51 @@ window.quickLTMTEST = quickLTMTEST;
 window.getCurrentUserId = getCurrentUserId;
 
 console.log("✅ chat.js - RRUFE-TESLA 10.5 u inicializua me sukses!");
+
+// ==================== 🚀 SYSTEM OVERRIDE - FORCE CHAT.JS ====================
+
+function takeOverChatSystem() {
+    console.log('🎯 Taking over chat system...');
+    
+    // Ndalo event listeners ekzistues
+    const sendBtn = document.getElementById('send-btn');
+    const userInput = document.getElementById('user-input');
+    
+    if (sendBtn && userInput) {
+        // Krijo elementë të rinj për të ndaluar event listeners ekzistues
+        const newSendBtn = sendBtn.cloneNode(true);
+        const newUserInput = userInput.cloneNode(true);
+        
+        sendBtn.parentNode.replaceChild(newSendBtn, sendBtn);
+        userInput.parentNode.replaceChild(newUserInput, userInput);
+        
+        // Shto event listeners të rinj që përdorin sistemin tonë
+        newSendBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('✅ chat.js send button clicked');
+            window.sendMessage();
+        });
+        
+        newUserInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('✅ chat.js enter pressed');
+                window.sendMessage();
+            }
+        });
+        
+        console.log('✅ Chat system takeover complete!');
+    }
+}
+
+// Ekzekuto pasi të ngarkohet faqja
+setTimeout(takeOverChatSystem, 2000);
+
+// Gjithashtu ekzekuto kur bëhet login
+const originalLogin = window.login;
+window.login = function() {
+    if (originalLogin) originalLogin();
+    setTimeout(takeOverChatSystem, 1000);
+};
