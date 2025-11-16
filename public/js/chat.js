@@ -249,8 +249,8 @@ function addMessage(text, sender) {
     
     // Ruaj në historinë lokale
     window.chatHistory.push({ text, sender, timestamp: new Date().toISOString() });
+ }
 }
-
 function formatMessage(text) {
     // Formatimi i thjeshtë i tekstit
     return text
