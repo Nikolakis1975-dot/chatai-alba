@@ -683,3 +683,60 @@ setTimeout(() => {
 }, 1000);
 
 console.log('✅ NOUS_CORE u çaktivizua - login-i duhet të funksionojë tani');
+
+// ======================================================
+// 🚀 MEMORY INTEGRATION PATCH - SHTO NË FUND TË main.js
+// ======================================================
+
+function integrateMemoryWithMainSystem() {
+    console.log('🧠 Duke integruar Memory System me main.js...');
+    
+    // Mbivendos integrimin ekzistues
+    if (window.rrufePlatform && window.rrufePlatform.integrateWithExisting) {
+        const originalIntegrate = window.rrufePlatform.integrateWithExisting;
+        
+        window.rrufePlatform.integrateWithExisting = function() {
+            // Thirr integrimin origjinal
+            originalIntegrate.call(this);
+            
+            // Pastaj shto memory integration
+            console.log('💾 Duke shtuar Memory Integration patch...');
+            
+            const originalSendMessage = window.sendMessage;
+            if (originalSendMessage) {
+                window.sendMessage = async function() {
+                    const input = document.getElementById('user-input');
+                    const message = input ? input.value.trim() : '';
+                    
+                    if (!message) return;
+                    
+                    // 🆕 Shto në memory PARA se të procesojë
+                    if (window.ltmManager) {
+                        window.ltmManager.addUserMessage(message);
+                    }
+                    
+                    // Thirr funksionin origjinal
+                    await originalSendMessage.call(this);
+                    
+                    // 🆕 Shto përgjigjen në memory PASI të përgjigjet
+                    setTimeout(() => {
+                        if (window.ltmManager && window.chatHistory) {
+                            const lastMsg = window.chatHistory[window.chatHistory.length - 1];
+                            if (lastMsg && lastMsg.sender === 'bot') {
+                                window.ltmManager.addAIResponse(lastMsg.text);
+                                if (typeof updateMemoryDisplay !== 'undefined') {
+                                    updateMemoryDisplay();
+                                }
+                            }
+                        }
+                    }, 1000);
+                };
+                
+                console.log('✅ Memory Integration Patch u aktivizua!');
+            }
+        };
+    }
+}
+
+// Ekzekuto patch-in
+setTimeout(integrateMemoryWithMainSystem, 5000);
