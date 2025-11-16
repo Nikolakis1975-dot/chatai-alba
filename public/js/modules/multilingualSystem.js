@@ -397,6 +397,7 @@ updatePantheonRole(selector, translationKey) {
             console.log(`✅ Updated pantheon role: ${selector}`);
         }
     }
+  }
 }
 
 updateMonitor() {
