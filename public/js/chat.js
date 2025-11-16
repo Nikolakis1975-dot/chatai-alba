@@ -45,7 +45,7 @@ function addMessage(text, sender) {
     }
 }
 
-// Funksioni kryesor i dërgimit
+// Funksioni kryesor i dërgimit - VERSION I PËRMIRËSUAR
 async function sendMessage() {
     try {
         const input = document.getElementById('user-input');
@@ -79,16 +79,8 @@ async function sendMessage() {
             const typingIndicator = document.getElementById('typing-indicator');
             if (typingIndicator) typingIndicator.remove();
             
-            // Përgjigje e thjeshtë
-            let response = "E kuptoj! Si mund të ndihmoj?";
-            
-            if (message.toLowerCase().includes('pershendetje') || message.toLowerCase().includes('hello')) {
-                response = "Përshëndetje! 😊 Si mund t'ju ndihmoj sot?";
-            } else if (message.toLowerCase().includes('/ndihmo')) {
-                response = "🧠 **SISTEMI I KOMANDAVE**\n• /ndihmo - Shfaq këtë listë\n• /moti [qyteti] - Informacion moti\n• /wiki [temë] - Kërko në Wikipedia";
-            } else if (message.toLowerCase().includes('/moti')) {
-                response = "🌤️ **Moti:** +18°C ☀️ Diell\n*Sistemi aktual i motit do të implementohet më vonë*";
-            }
+            // PROCESO MESAZHIN ME SISTEM TË RI
+            let response = processUserMessage(message);
             
             // Shto përgjigjen
             addMessage(response, 'bot');
@@ -111,6 +103,153 @@ async function sendMessage() {
     } catch (error) {
         console.error('❌ Gabim në sendMessage:', error);
         addMessage('❌ Gabim në sistem. Provo përsëri.', 'system');
+    }
+}
+
+// ======================================================
+// 🧠 SISTEM I RI I PROCESIMIT TË MESAZHEVE
+// ======================================================
+
+function processUserMessage(message) {
+    const lowerMessage = message.toLowerCase().trim();
+    
+    console.log('🎯 Duke procesuar mesazhin:', message);
+    
+    // 1. KONTROLLO KOMANDA TË QARTA
+    if (isExactCommand(message)) {
+        return processExactCommand(message);
+    }
+    
+    // 2. KONTROLLO MATEMATIKË
+    if (isMathExpression(message)) {
+        return solveMath(message);
+    }
+    
+    // 3. KONTROLLO PËRSHËNDETJE
+    if (lowerMessage.includes('pershendetje') || lowerMessage.includes('hello') || 
+        lowerMessage.includes('hi') || lowerMessage.includes('tung')) {
+        return "Përshëndetje! 😊 Si mund t'ju ndihmoj sot?";
+    }
+    
+    // 4. PËRGJIGJE DEFAULT
+    return "E kuptoj! Si mund të ndihmoj?";
+}
+
+// 🎯 FUNKSIONET PËR KOMANDA
+function isExactCommand(message) {
+    const exactCommands = [
+        '/ndihmo', '/help', 
+        '/moti', '/mot', '/weather',
+        '/wiki', '/wikipedia', 
+        '/perkthim', '/translate',
+        '/llogarit', '/calc', '/calculate',
+        '/google', '/search'
+    ];
+    
+    const firstWord = message.toLowerCase().split(' ')[0];
+    return exactCommands.includes(firstWord);
+}
+
+function processExactCommand(message) {
+    const parts = message.split(' ');
+    const command = parts[0].toLowerCase();
+    const argument = parts.slice(1).join(' ');
+    
+    console.log('🎯 Procesoj komandën:', command, 'me argument:', argument);
+    
+    switch(command) {
+        case '/ndihmo':
+        case '/help':
+            return `🧠 **RRUFE-TESLA - SISTEMI I KOMANDAVE**
+
+📋 **KOMANDAT BAZE:**
+• /ndihmo - Shfaq këtë listë
+• /wiki [temë] - Kërko në Wikipedia  
+• /moti [qyteti] - Informacion moti
+• /llogarit [shprehje] - Llogarit matematikë
+• /perkthim [tekst] - Përkthim tekst
+
+💡 **SHEMBUJ:**
+• /wiki Shqipëria
+• /moti Tirana
+• /llogarit 15+25*2
+• /perkthim "Mirëdita"`;
+
+        case '/moti':
+        case '/mot':
+        case '/weather':
+            if (argument) {
+                return `🌤️ **Moti në ${argument}:** +18°C ☀️ Diell, erë e lehtë\n*Sistemi aktual i motit do të implementohet më vonë*`;
+            } else {
+                return '🏙️ **Shkruani:** /moti [qyteti]\n**Shembull:** /moti Tirana';
+            }
+
+        case '/wiki':
+        case '/wikipedia':
+            if (argument) {
+                return `🌐 **Wikipedia për "${argument}":**\n${argument} është një temë interesante. Informacioni aktual do të gjenerohet nga sistemi i plotë i kërkimit.\n*Kjo është përgjigje demo*`;
+            } else {
+                return '📝 **Shkruani:** /wiki [temë]\n**Shembull:** /wiki Shqipëria';
+            }
+
+        case '/perkthim':
+        case '/translate':
+            if (argument) {
+                return `🔤 **Përkthimi:**\n"${argument}" → "Informacion demo i përkthimit"\n*Sistemi i plotë i përkthimit do të implementohet më vonë*`;
+            } else {
+                return '🌐 **Shkruani:** /perkthim [tekst]\n**Shembull:** /perkthim "Mirëdita"';
+            }
+
+        case '/llogarit':
+        case '/calc':
+        case '/calculate':
+            if (argument) {
+                return solveMath(argument);
+            } else {
+                return '🧮 **Shkruani:** /llogarit [shprehje]\n**Shembull:** /llogarit 2+2*3';
+            }
+
+        case '/google':
+        case '/search':
+            if (argument) {
+                return `🔍 **Rezultatet për "${argument}":**\n1. Informacion demo...\n2. Rezultati i dytë...\n*Kërkimi aktual do të implementohet më vonë*`;
+            } else {
+                return '📝 **Shkruani:** /google [kërkim]\n**Shembull:** /google teknologji';
+            }
+
+        default:
+            return "E kuptoj! Si mund të ndihmoj?";
+    }
+}
+
+// 🧮 FUNKSIONET PËR MATEMATIKË
+function isMathExpression(text) {
+    const cleanText = text.replace(/\s/g, '');
+    const mathRegex = /^[\d+\-*/().^]+$/;
+    return mathRegex.test(cleanText) || text.toLowerCase().includes('sa bejne') || text.includes('+') || text.includes('-') || text.includes('*') || text.includes('/');
+}
+
+function solveMath(expression) {
+    try {
+        let mathExpr = expression;
+        
+        // Nxjerr nga komanda /llogarit
+        if (mathExpr.toLowerCase().startsWith('/llogarit')) {
+            mathExpr = mathExpr.substring(10).trim();
+        }
+        
+        // Pastro shprehjen
+        let cleanExpr = mathExpr.replace(/[^0-9+\-*/().^]/g, '');
+        
+        // Zëvendëso ^ me ** për fuqi
+        cleanExpr = cleanExpr.replace(/\^/g, '**');
+        
+        // Llogarit me siguri
+        const result = Function(`"use strict"; return (${cleanExpr})`)();
+        
+        return `🧮 **${mathExpr}** = **${result}**`;
+    } catch (error) {
+        return '❌ Nuk mund ta llogaris shprehjen matematikore. Kontrolloni sintaksën.';
     }
 }
 
