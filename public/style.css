@@ -362,3 +362,43 @@ header button:hover {
   #emoji-panel { grid-template-columns: repeat(5,1fr); padding:10px; gap:5px; }
   #emoji-panel span { font-size:20px; padding:5px; }
 }
+
+/* Emoji Button */
+#emoji-btn {
+  position: relative; /* Siguron që paneli të lidhet me butonin */
+  z-index: 1001;      /* Më lart se çdo panel që mund ta mbulojë */
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  padding: 12px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 18px;
+  margin-right: 12px;
+  transition: all 0.3s ease;
+}
+
+#emoji-btn:hover {
+  background: #f8f9fa;
+  border-color: #dadce0;
+}
+
+/* Emoji Panel */
+#emoji-panel {
+  position: absolute;
+  bottom: 70px;
+  left: 0; /* lidhet me butonin */
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+  background: #ffffff;
+  border: 1px solid #dadce0;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  z-index: 1000; /* pak më poshtë se butoni, por mbi chat */
+  pointer-events: auto; /* Siguron që klikimet të kapen */
+}
+
+#emoji-panel.hidden {
+  display: none;
+}
