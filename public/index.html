@@ -1199,7 +1199,242 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 console.log("🧠 Simple Memory Integration Script u ngarkua!");
- 
+
+   // ======================================================
+// 🎯 ULTRA-EFFECTIVE MEMORY INTEGRATION
+// ======================================================
+
+console.log("🎯 Duke nisur Ultra-Effective Memory Integration...");
+
+class UltraMemoryIntegration {
+    constructor() {
+        this.isMonitoring = false;
+        this.processedMessages = new Set();
+        this.start();
+    }
+    
+    start() {
+        console.log("🚀 Duke nisur monitorimin ultra-effectiv...");
+        
+        // 1. Prit deri të jetë gati LTM
+        this.waitForLTM().then(() => {
+            console.log("✅ LTM është gati, duke nisur monitorimin...");
+            
+            // 2. Ngarko mesazhet ekzistuese
+            this.loadExistingMessages();
+            
+            // 3. Nis monitorimin e vazhdueshëm
+            this.startAggressiveMonitoring();
+            
+            // 4. Monitoro butonin dhe input-in
+            this.monitorUserInteractions();
+            
+            this.isMonitoring = true;
+            console.log("✅ Ultra Memory Integration u aktivizua!");
+        });
+    }
+    
+    async waitForLTM() {
+        while (!window.ltmManager || !window.ltmManager.isInitialized) {
+            console.log("⏳ Duke pritur LTM...");
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        return true;
+    }
+    
+    loadExistingMessages() {
+        const chat = document.getElementById('chat');
+        if (!chat) return;
+        
+        const messages = chat.querySelectorAll('.message');
+        console.log(`📨 Duke ngarkuar ${messages.length} mesazhe ekzistuese...`);
+        
+        messages.forEach((message, index) => {
+            this.processMessage(message, `existing-${index}`);
+        });
+        
+        this.updateMemoryDisplay();
+    }
+    
+    startAggressiveMonitoring() {
+        // Monitoro çdo 500ms për mesazhe të reja
+        setInterval(() => {
+            this.monitorNewMessages();
+        }, 500);
+        
+        // Gjithashtu monitoro ndryshimet në DOM
+        this.observeDOMChanges();
+    }
+    
+    monitorNewMessages() {
+        const chat = document.getElementById('chat');
+        if (!chat || !window.ltmManager) return;
+        
+        const messages = chat.querySelectorAll('.message');
+        
+        messages.forEach((message, index) => {
+            const messageId = this.getMessageId(message, index);
+            
+            if (!this.processedMessages.has(messageId)) {
+                console.log(`🆕 Mesazh i ri u zbulua: ${messageId}`);
+                this.processMessage(message, messageId);
+                this.processedMessages.add(messageId);
+            }
+        });
+    }
+    
+    getMessageId(message, index) {
+        // Krijo ID unik për mesazhin
+        const text = message.querySelector('.message-text')?.textContent || '';
+        const sender = message.classList.contains('user') ? 'user' : 
+                      message.classList.contains('bot') ? 'ai' : 'unknown';
+        
+        return `${sender}-${text.substring(0, 20)}-${index}`;
+    }
+    
+    processMessage(message, messageId) {
+        if (!window.ltmManager) return;
+        
+        const messageText = message.querySelector('.message-text');
+        const sender = message.classList.contains('user') ? 'user' : 
+                      message.classList.contains('bot') ? 'ai' : null;
+        
+        if (messageText && sender) {
+            const text = messageText.textContent || messageText.innerText;
+            
+            if (text && text.trim() && text.length > 1) {
+                console.log(`💾 Duke procesuar mesazh ${sender}: ${text.substring(0, 40)}...`);
+                
+                try {
+                    if (sender === 'user') {
+                        window.ltmManager.addUserMessage(text);
+                    } else {
+                        window.ltmManager.addAIResponse(text);
+                    }
+                    
+                    // Update display menjëherë
+                    this.updateMemoryDisplay();
+                    
+                } catch (error) {
+                    console.error("❌ Gabim në ruajtjen e mesazhit:", error);
+                }
+            }
+        }
+    }
+    
+    observeDOMChanges() {
+        // Përdor MutationObserver për të kapur ndryshimet në DOM
+        const chat = document.getElementById('chat');
+        if (!chat) return;
+        
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'childList') {
+                    mutation.addedNodes.forEach((node) => {
+                        if (node.nodeType === 1 && node.classList && 
+                            (node.classList.contains('message') || node.querySelector('.message'))) {
+                            
+                            const message = node.classList.contains('message') ? node : node.querySelector('.message');
+                            if (message) {
+                                setTimeout(() => {
+                                    this.processMessage(message, `dom-${Date.now()}`);
+                                }, 100);
+                            }
+                        }
+                    });
+                }
+            });
+        });
+        
+        observer.observe(chat, { childList: true, subtree: true });
+        console.log("👀 MutationObserver u aktivizua!");
+    }
+    
+    monitorUserInteractions() {
+        const sendButton = document.getElementById('send-btn');
+        const userInput = document.getElementById('user-input');
+        
+        if (sendButton) {
+            sendButton.addEventListener('click', () => {
+                this.handleUserMessage();
+            });
+        }
+        
+        if (userInput) {
+            userInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.handleUserMessage();
+                }
+            });
+        }
+    }
+    
+    handleUserMessage() {
+        const userInput = document.getElementById('user-input');
+        if (userInput && window.ltmManager) {
+            const message = userInput.value.trim();
+            if (message) {
+                console.log("🎯 Duke parandaluar mesazhin e user-it:", message);
+                // Mesazhi do të kapet automatikisht nga monitorimi
+            }
+        }
+    }
+    
+    updateMemoryDisplay() {
+        if (!window.ltmManager) return;
+        
+        try {
+            const stats = window.ltmManager.getMemoryStats();
+            
+            // Update header
+            const memoryStatus = document.getElementById('memory-status');
+            if (memoryStatus) {
+                memoryStatus.innerHTML = `🧠 ${stats.total_messages} mesazhe | ${stats.capacity}`;
+            }
+            
+            // Update dashboard
+            const dashTotal = document.getElementById('dash-total');
+            const dashUser = document.getElementById('dash-user');
+            const dashAi = document.getElementById('dash-ai');
+            const dashCapacity = document.getElementById('dash-capacity');
+            
+            if (dashTotal) dashTotal.textContent = stats.total_messages;
+            if (dashUser) dashUser.textContent = stats.user_messages;
+            if (dashAi) dashAi.textContent = stats.ai_messages;
+            if (dashCapacity) dashCapacity.textContent = stats.capacity;
+            
+            console.log(`📊 Memory updated: ${stats.total_messages} mesazhe`);
+            
+        } catch (error) {
+            console.error("❌ Gabim në update të display-it:", error);
+        }
+    }
+}
+
+// INICIALIZO SISTEMIN
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("📄 DOM u ngarkua - duke nisur Ultra Memory Integration...");
+    
+    // Jep kohë sistemeve të tjera të ngarkohen
+    setTimeout(() => {
+        window.ultraMemoryIntegration = new UltraMemoryIntegration();
+    }, 3000);
+});
+
+// GJITHASHTU PROVO KUR WINDOW ËSHTË GATI
+window.addEventListener('load', function() {
+    console.log("🔄 Window u ngarkua - duke kontrolluar memory integration...");
+    
+    setTimeout(() => {
+        if (!window.ultraMemoryIntegration) {
+            window.ultraMemoryIntegration = new UltraMemoryIntegration();
+        }
+    }, 5000);
+});
+
+console.log("🎯 Ultra Memory Integration Script u ngarkua!");
+
+    
    </script>
 
 <!-- === 🚀 8 MODULET RRUFE-TESLA - VERSION FINAL === -->
