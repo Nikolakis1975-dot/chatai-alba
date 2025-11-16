@@ -293,9 +293,12 @@ function hideTypingIndicator() {
 // 🎯 FUNKSIONI KRYESOR I DËRGIMIT TË MESAZHEVE
 // ======================================================
 
+// Shto në fillim të sendMessage për debug
 async function sendMessage() {
     const input = document.getElementById('user-input');
     const message = input.value.trim();
+    
+    console.log('🔍 chat.js - sendMessage called with:', message);
     
     if (!message) return;
     
@@ -303,7 +306,6 @@ async function sendMessage() {
     hideEmojiPanel();
 
     try {
-        // Shto mesazhin e përdoruesit
         addMessage(message, 'user');
         showTypingIndicator();
 
