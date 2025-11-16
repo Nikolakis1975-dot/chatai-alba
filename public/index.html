@@ -1456,7 +1456,166 @@ setTimeout(function() {
         }
     }
 }, 5000);
+
+ // ======================================================
+// 🔄 MEMORY INTEGRATION WITH EXISTING RRUFE-TESLA SYSTEM
+// ======================================================
+
+console.log("🔄 Duke integruar Memory me RRUFE-TESLA...");
+
+function integrateMemoryWithRrufeTesla() {
+    console.log("🎯 Duke nisur integrimin e memory...");
     
+    // 1. KONTROLLO NËSE EKZISTOJNË ELEMENTËT
+    const chatElement = document.getElementById('chat');
+    const userInput = document.getElementById('user-input');
+    const sendButton = document.getElementById('send-btn');
+    
+    if (!chatElement || !userInput) {
+        console.log("❌ Elementët e chat-it nuk u gjetën");
+        return false;
+    }
+    
+    console.log("✅ Elementët e chat-it u gjetën");
+    
+    // 2. INICIALIZO LTM NËSE NUK EKZISTON
+    if (typeof LongTermMemoryManager !== 'undefined' && !window.ltmManager) {
+        console.log("🔄 Duke krijuar LTM instance...");
+        const userId = getCurrentUserId();
+        window.ltmManager = new LongTermMemoryManager(userId, null);
+        window.ltmManager.initialize().then(() => {
+            console.log("✅ LTM u inicializua për integrim");
+            initializeMemoryInterface();
+        });
+    }
+    
+    // 3. KAP MESAZHET EKZISTUESE
+    function loadExistingMessages() {
+        const messages = chatElement.querySelectorAll('.message');
+        console.log(`📨 Duke ngarkuar ${messages.length} mesazhe ekzistuese...`);
+        
+        messages.forEach(message => {
+            const messageText = message.querySelector('.message-text');
+            const sender = message.classList.contains('user') ? 'user' : 
+                          message.classList.contains('bot') ? 'ai' : null;
+            
+            if (messageText && sender && window.ltmManager) {
+                const text = messageText.textContent || messageText.innerText;
+                if (text.trim()) {
+                    if (sender === 'user') {
+                        window.ltmManager.addUserMessage(text);
+                    } else {
+                        window.ltmManager.addAIResponse(text);
+                    }
+                }
+            }
+        });
+        
+        updateMemoryDisplay();
+        console.log("✅ Mesazhet ekzistuese u ngarkuan në memory");
+    }
+    
+    // 4. MONITORO PËR MESAZHE TË REJA
+    let lastMessageCount = chatElement.children.length;
+    
+    function monitorNewMessages() {
+        const currentCount = chatElement.children.length;
+        
+        if (currentCount > lastMessageCount) {
+            console.log(`🆕 U gjetën ${currentCount - lastMessageCount} mesazhe të reja`);
+            
+            const newMessages = Array.from(chatElement.children).slice(lastMessageCount);
+            
+            newMessages.forEach(message => {
+                const messageText = message.querySelector('.message-text');
+                const sender = message.classList.contains('user') ? 'user' : 
+                              message.classList.contains('bot') ? 'ai' : null;
+                
+                if (messageText && sender && window.ltmManager) {
+                    const text = messageText.textContent || messageText.innerText;
+                    
+                    if (text.trim()) {
+                        console.log(`💾 Duke ruajtur mesazh ${sender}: ${text.substring(0, 50)}...`);
+                        
+                        if (sender === 'user') {
+                            window.ltmManager.addUserMessage(text);
+                        } else {
+                            window.ltmManager.addAIResponse(text);
+                        }
+                        
+                        updateMemoryDisplay();
+                    }
+                }
+            });
+            
+            lastMessageCount = currentCount;
+        }
+    }
+    
+    // 5. MBROJTJE E BUTONIT TË DËRGIMIT
+    if (sendButton) {
+        const originalOnClick = sendButton.onclick;
+        
+        sendButton.onclick = function(e) {
+            const message = userInput.value.trim();
+            if (message && window.ltmManager) {
+                console.log("💾 Duke ruajtur mesazhin e user-it:", message);
+                window.ltmManager.addUserMessage(message);
+                updateMemoryDisplay();
+            }
+            
+            if (originalOnClick) {
+                return originalOnClick.call(this, e);
+            }
+        };
+    }
+    
+    // 6. MBROJTJE E ENTER KEY
+    userInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            const message = userInput.value.trim();
+            if (message && window.ltmManager) {
+                console.log("💾 Duke ruajtur mesazhin e user-it (Enter):", message);
+                window.ltmManager.addUserMessage(message);
+                updateMemoryDisplay();
+            }
+        }
+    });
+    
+    // 7. NIS MONITORIMIN
+    setTimeout(loadExistingMessages, 1000);
+    setInterval(monitorNewMessages, 500);
+    
+    console.log("✅ Memory Integration me RRUFE-TESLA u aktivizua!");
+    return true;
+}
+
+// INICIALIZO INTEGRIMIN
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("📄 DOM u ngarkua - duke nisur Memory Integration...");
+    
+    setTimeout(() => {
+        // Jep kohë sistemeve të tjera të ngarkohen
+        if (!integrateMemoryWithRrufeTesla()) {
+            // Provo përsëri nëse dështoi herën e parë
+            setTimeout(integrateMemoryWithRrufeTesla, 3000);
+        }
+    }, 2000);
+});
+
+// GJITHASHTU PROVO KUR WINDOW ËSHTË GATI
+window.addEventListener('load', function() {
+    console.log("🔄 Window u ngarkua - duke kontrolluar Memory Integration...");
+    
+    setTimeout(() => {
+        if (!window.memoryIntegrationActive) {
+            integrateMemoryWithRrufeTesla();
+        }
+    }, 4000);
+});
+
+console.log("🔄 Memory Integration Script u ngarkua!");
+ 
    </script>
 
 <!-- === 🚀 8 MODULET RRUFE-TESLA - VERSION FINAL === -->
