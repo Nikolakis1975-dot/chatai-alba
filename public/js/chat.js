@@ -94,133 +94,130 @@ class LocalChatIntelligence {
         };
     }
 
-    processMessage(message) {
-        const lowerMessage = message.toLowerCase();
-        
-        // Kontrollo komanda speciale
-        if (this.isSpecialCommand(message)) {
-            return this.processSpecialCommand(message);
-        }
-        
-        // Kontrollo nëse është matematikë
-        if (this.isMathExpression(message)) {
-            return this.solveMath(message);
-        }
-        
-        // Kontrollo kohën
-        if (lowerMessage.includes('ora') || lowerMessage.includes('koha') || lowerMessage.includes('data')) {
-            return this.getCurrentTime();
-        }
-        
-        // Kontrollo kategori të tjera
-        for (let category in this.knowledgeBase) {
-            for (let pattern of this.knowledgeBase[category].patterns) {
-                if (lowerMessage.includes(pattern)) {
-                    const responses = this.knowledgeBase[category].responses;
-                    if (responses.length > 0) {
-                        return responses[Math.floor(Math.random() * responses.length)];
-                    }
+    // ======================================================
+// 🛠️ RREGULLIMI I SISTEMIT TË KOMANDAVE
+// ======================================================
+
+// Në klasën LocalChatIntelligence, zëvendëso funksionin processMessage me këtë:
+processMessage(message) {
+    const lowerMessage = message.toLowerCase().trim();
+    
+    console.log('🔍 Processing message:', message);
+    
+    // 🆕 KONTROLLO MË PARË PËR KOMANDA TË QARTA
+    if (this.isExactCommand(message)) {
+        console.log('✅ Exact command detected');
+        return this.processExactCommand(message);
+    }
+    
+    // Kontrollo komanda speciale
+    if (this.isSpecialCommand(message)) {
+        console.log('✅ Special command detected');
+        return this.processSpecialCommand(message);
+    }
+    
+    // Kontrollo nëse është matematikë
+    if (this.isMathExpression(message)) {
+        console.log('✅ Math expression detected');
+        return this.solveMath(message);
+    }
+    
+    // Kontrollo kohën
+    if (lowerMessage.includes('ora') || lowerMessage.includes('koha') || lowerMessage.includes('data')) {
+        return this.getCurrentTime();
+    }
+    
+    // Kontrollo kategori të tjera
+    for (let category in this.knowledgeBase) {
+        for (let pattern of this.knowledgeBase[category].patterns) {
+            if (lowerMessage.includes(pattern)) {
+                const responses = this.knowledgeBase[category].responses;
+                if (responses.length > 0) {
+                    return responses[Math.floor(Math.random() * responses.length)];
                 }
             }
         }
-        
-        // Përgjigje default
-        return this.getDefaultResponse();
     }
-
-    isSpecialCommand(message) {
-        const commands = ['/ndihmo', '/wiki', '/perkthim', '/moti', '/llogarit', '/google'];
-        return commands.some(cmd => message.toLowerCase().startsWith(cmd));
-    }
-
-    processSpecialCommand(message) {
-        const lowerMessage = message.toLowerCase();
-        
-        if (lowerMessage.startsWith('/wiki')) {
-            const query = message.substring(6).trim();
-            return query ? `🌐 Duke kërkuar në Wikipedia për: "${query}"` : '📝 Shkruani: /wiki [temë]';
-        }
-        
-        if (lowerMessage.startsWith('/perkthim')) {
-            const rest = message.substring(10).trim();
-            return rest ? `🔤 Duke përkthyer: "${rest}"` : '🌐 Shkruani: /perkthim [gjuha] [tekst]';
-        }
-        
-        if (lowerMessage.startsWith('/moti')) {
-            const city = message.substring(6).trim();
-            return city ? `🌤️ Duke kontrolluar motin për: ${city}` : '🏙️ Shkruani: /moti [qyteti]';
-        }
-        
-        if (lowerMessage.startsWith('/llogarit')) {
-            const expr = message.substring(10).trim();
-            return expr ? this.solveMath(expr) : '🧮 Shkruani: /llogarit [shprehje matematikore]';
-        }
-        
-        if (lowerMessage.startsWith('/google')) {
-            const query = message.substring(8).trim();
-            return query ? `🔍 Duke kërkuar në Google për: "${query}"` : '📝 Shkruani: /google [kërkim]';
-        }
-        
-        return this.getDefaultResponse();
-    }
-
-    isMathExpression(text) {
-        // Kontrollo nëse është shprehje matematikore
-        const cleanText = text.replace(/\s/g, '');
-        const mathRegex = /^[\d+\-*/().^]+$/;
-        return mathRegex.test(cleanText) || text.toLowerCase().includes('llogarit');
-    }
-
-    solveMath(expression) {
-        try {
-            // Nxjerr shprehjen nga komanda
-            let mathExpr = expression;
-            if (mathExpr.toLowerCase().startsWith('/llogarit')) {
-                mathExpr = mathExpr.substring(10).trim();
-            }
-            
-            // Pastro dhe siguro shprehjen
-            let cleanExpr = mathExpr.replace(/[^0-9+\-*/().^]/g, '');
-            
-            // Zëvendëso ^ me ** për fuqi
-            cleanExpr = cleanExpr.replace(/\^/g, '**');
-            
-            // Përdor Function constructor për llogaritje të sigurt
-            const result = Function(`"use strict"; return (${cleanExpr})`)();
-            
-            return `🧮 **${mathExpr}** = **${result}**`;
-        } catch (error) {
-            return '❌ Nuk mund ta llogaris shprehjen matematikore. Kontrolloni sintaksën.';
-        }
-    }
-
-    getCurrentTime() {
-        const now = new Date();
-        const options = { 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric',
-            hour: '2-digit', 
-            minute: '2-digit',
-            second: '2-digit'
-        };
-        return `🕒 **Data dhe ora:** ${now.toLocaleDateString('sq-AL', options)}`;
-    }
-
-    getDefaultResponse() {
-        const defaultResponses = [
-            'Interesante! Çfarë mendoni ju për këtë?',
-            'E kuptoj! A keni ndonjë pyetje tjetër?',
-            'Faleminderit për këtë informacion!',
-            'Po dëgjoj... vazhdoni ju lutem!',
-            'Kjo është shumë interesante!',
-            'Mund të më tregoni më shumë për këtë?',
-            'Shkëlqyeshëm! Si mund të vazhdojmë?'
-        ];
-        return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
-    }
+    
+    // Përgjigje default
+    return this.getDefaultResponse();
 }
 
+// 🆕 FUNKSION I RI PËR KOMANDA TË QARTA
+isExactCommand(message) {
+    const exactCommands = [
+        '/ndihmo', '/help', 
+        '/moti', '/mot', '/weather',
+        '/wiki', '/wikipedia', 
+        '/perkthim', '/translate',
+        '/llogarit', '/calc', '/calculate',
+        '/google', '/search'
+    ];
+    
+    const firstWord = message.toLowerCase().split(' ')[0];
+    return exactCommands.includes(firstWord);
+}
+
+// 🆕 FUNKSION I RI PËR PROCESIMIN E KOMANDAVE TË QARTA
+processExactCommand(message) {
+    const parts = message.split(' ');
+    const command = parts[0].toLowerCase();
+    const argument = parts.slice(1).join(' ');
+    
+    console.log('🎯 Processing exact command:', command, 'with argument:', argument);
+    
+    switch(command) {
+        case '/ndihmo':
+        case '/help':
+            return this.knowledgeBase.help.responses[0];
+            
+        case '/moti':
+        case '/mot':
+        case '/weather':
+            if (argument) {
+                return `🌤️ **Moti në ${argument}:** +15°C ☀️ Diell, erë e lehtë verilindore\n*Kjo është informacion demo. Sistemi aktual i motit do të implementohet më vonë.*`;
+            } else {
+                return '🏙️ **Shkruani:** /moti [qyteti]\n**Shembull:** /moti Tirana';
+            }
+            
+        case '/wiki':
+        case '/wikipedia':
+            if (argument) {
+                return `🌐 **Wikipedia për "${argument}":**\n${argument} është një temë interesante. Informacioni aktual do të gjenerohet nga sistemi i plotë i kërkimit.\n*Kjo është përgjigje demo.*`;
+            } else {
+                return '📝 **Shkruani:** /wiki [temë]\n**Shembull:** /wiki Shqipëria';
+            }
+            
+        case '/perkthim':
+        case '/translate':
+            if (argument) {
+                return `🔤 **Përkthimi:**\n"${argument}" → "${argument} (translated)"\n*Sistemi i plotë i përkthimit do të implementohet më vonë.*`;
+            } else {
+                return '🌐 **Shkruani:** /perkthim [tekst]\n**Shembull:** /perkthim "Mirëdita"';
+            }
+            
+        case '/llogarit':
+        case '/calc':
+        case '/calculate':
+            if (argument) {
+                return this.solveMath(argument);
+            } else {
+                return '🧮 **Shkruani:** /llogarit [shprehje]\n**Shembull:** /llogarit 2+2*3';
+            }
+            
+        case '/google':
+        case '/search':
+            if (argument) {
+                return `🔍 **Rezultatet e kërkimit për "${argument}":**\n1. Rezultati i parë...\n2. Rezultati i dytë...\n*Kërkimi aktual në Google do të implementohet më vonë.*`;
+            } else {
+                return '📝 **Shkruani:** /google [kërkim]\n**Shembull:** /google teknologji';
+            }
+            
+        default:
+            return this.getDefaultResponse();
+    }
+}
+    
 // ======================================================
 // 💬 FUNKSIONET KRYESORE TË CHAT
 // ======================================================
