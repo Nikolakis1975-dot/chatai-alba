@@ -1,15 +1,21 @@
 // ======================================================
-// 🚀 chat.js - RRUFE-TESLA 10.5 - VERSION I THJESHTË & I SIGURT
+// 🚀 chat.js - RRUFE-TESLA 10.5 - VERSION FINAL
 // ======================================================
 
-console.log("✅ chat.js - Duke u ngarkuar...");
+console.log("✅ chat.js - RRUFE-TESLA 10.5 po ngarkohet...");
 
-// Variabla globale
+// ======================================================
+// 📊 VARIABLA GLOBALE
+// ======================================================
+
 window.chatHistory = window.chatHistory || [];
 window.isTyping = window.isTyping || false;
 window.currentAIMode = window.currentAIMode || 'SIMPLE';
 
-// Funksioni kryesor i shtimit të mesazheve
+// ======================================================
+// 💬 FUNKSIONET KRYESORE TË CHAT
+// ======================================================
+
 function addMessage(text, sender) {
     try {
         const chat = document.getElementById('chat');
@@ -26,9 +32,15 @@ function addMessage(text, sender) {
             minute: '2-digit' 
         });
         
+        // Formatimi i tekstit
+        const formattedText = text
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\n/g, '<br>')
+            .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>');
+        
         messageDiv.innerHTML = `
             <div class="message-content">
-                <span class="message-text">${text}</span>
+                <span class="message-text">${formattedText}</span>
                 <span class="message-time">${timestamp}</span>
             </div>
         `;
@@ -45,7 +57,40 @@ function addMessage(text, sender) {
     }
 }
 
-// Funksioni kryesor i dërgimit - VERSION I PËRMIRËSUAR
+function showTypingIndicator() {
+    if (window.isTyping) return;
+    
+    const chat = document.getElementById('chat');
+    const typingDiv = document.createElement('div');
+    typingDiv.id = 'typing-indicator';
+    typingDiv.className = 'message bot typing';
+    typingDiv.innerHTML = `
+        <div class="message-content">
+            <span class="message-text">
+                <span class="typing-dots">
+                    <span>.</span><span>.</span><span>.</span>
+                </span>
+            </span>
+        </div>
+    `;
+    
+    chat.appendChild(typingDiv);
+    chat.scrollTop = chat.scrollHeight;
+    window.isTyping = true;
+}
+
+function hideTypingIndicator() {
+    const typingIndicator = document.getElementById('typing-indicator');
+    if (typingIndicator) {
+        typingIndicator.remove();
+    }
+    window.isTyping = false;
+}
+
+// ======================================================
+// 🎯 FUNKSIONI KRYESOR I DËRGIMIT TË MESAZHEVE
+// ======================================================
+
 async function sendMessage() {
     try {
         const input = document.getElementById('user-input');
@@ -61,25 +106,14 @@ async function sendMessage() {
         addMessage(message, 'user');
         
         // Trego se po shtypet
-        const chat = document.getElementById('chat');
-        const typingDiv = document.createElement('div');
-        typingDiv.id = 'typing-indicator';
-        typingDiv.className = 'message bot typing';
-        typingDiv.innerHTML = `
-            <div class="message-content">
-                <span class="message-text">Po shkruaj...</span>
-            </div>
-        `;
-        chat.appendChild(typingDiv);
-        chat.scrollTop = chat.scrollHeight;
+        showTypingIndicator();
         
         // Simulo përgjigje
         setTimeout(() => {
             // Fshi treguesin e shtypjes
-            const typingIndicator = document.getElementById('typing-indicator');
-            if (typingIndicator) typingIndicator.remove();
+            hideTypingIndicator();
             
-            // PROCESO MESAZHIN ME SISTEM TË RI
+            // PROCESO MESAZHIN
             let response = processUserMessage(message);
             
             // Shto përgjigjen
@@ -107,7 +141,7 @@ async function sendMessage() {
 }
 
 // ======================================================
-// 🧠 SISTEM I RI I PROCESIMIT TË MESAZHEVE
+// 🧠 SISTEMI I PROCESIMIT TË MESAZHEVE
 // ======================================================
 
 function processUserMessage(message) {
@@ -117,22 +151,34 @@ function processUserMessage(message) {
     
     // 1. KONTROLLO KOMANDA TË QARTA
     if (isExactCommand(message)) {
+        console.log('✅ Komandë e qartë u gjet');
         return processExactCommand(message);
     }
     
-    // 2. KONTROLLO MATEMATIKË
-    if (isMathExpression(message)) {
-        return solveMath(message);
-    }
-    
-    // 3. KONTROLLO PËRSHËNDETJE
-    if (lowerMessage.includes('pershendetje') || lowerMessage.includes('hello') || 
-        lowerMessage.includes('hi') || lowerMessage.includes('tung')) {
+    // 2. KONTROLLO PËRSHËNDETJE
+    if (isGreeting(lowerMessage)) {
+        console.log('✅ Përshëndetje u gjet');
         return "Përshëndetje! 😊 Si mund t'ju ndihmoj sot?";
     }
     
-    // 4. PËRGJIGJE DEFAULT
-    return "E kuptoj! Si mund të ndihmoj?";
+    // 3. KONTROLLO MATEMATIKË (VETËM NËSE ËSHTË SHPREHJE E PASTËR)
+    if (isPureMathExpression(message)) {
+        console.log('✅ Shprehje matematikore e pastër u gjet');
+        return solveMath(message);
+    }
+    
+    // 4. KONTROLLO PYRJE MATEMATIKE
+    if (isMathQuestion(lowerMessage)) {
+        console.log('✅ Pyetje matematike u gjet');
+        const mathExpr = extractMathFromQuestion(message);
+        if (mathExpr) {
+            return solveMath(mathExpr);
+        }
+    }
+    
+    // 5. PËRGJIGJE DEFAULT
+    console.log('🔹 Duke përdorur përgjigjen default');
+    return getDefaultResponse();
 }
 
 // 🎯 FUNKSIONET PËR KOMANDA
@@ -148,6 +194,39 @@ function isExactCommand(message) {
     
     const firstWord = message.toLowerCase().split(' ')[0];
     return exactCommands.includes(firstWord);
+}
+
+function isGreeting(message) {
+    const greetings = ['pershendetje', 'hello', 'hi', 'tung', 'ciao', 'mirëmëngjes', 'mirëdita', 'mirëmbrëma', 'çkemi'];
+    return greetings.some(greet => message.includes(greet));
+}
+
+function isPureMathExpression(text) {
+    const cleanText = text.replace(/\s/g, '');
+    const pureMathRegex = /^[\d+\-*/().^]+$/;
+    return cleanText.length >= 2 && pureMathRegex.test(cleanText);
+}
+
+function isMathQuestion(message) {
+    const mathQuestions = ['sa bejne', 'sa është', 'sa janë', 'llogarit', 'calc', 'calculate'];
+    return mathQuestions.some(question => message.includes(question));
+}
+
+function extractMathFromQuestion(message) {
+    const mathMatch = message.match(/[\d+\-*/().^]+/);
+    return mathMatch ? mathMatch[0] : null;
+}
+
+function getDefaultResponse() {
+    const defaultResponses = [
+        'E kuptoj! Si mund të ndihmoj?',
+        'Interesante! A keni ndonjë pyetje tjetër?',
+        'Faleminderit për këtë informacion!',
+        'Po dëgjoj... vazhdoni ju lutem!',
+        'Kjo është shumë interesante!',
+        'Mund të më tregoni më shumë për këtë?'
+    ];
+    return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
 }
 
 function processExactCommand(message) {
@@ -218,20 +297,16 @@ function processExactCommand(message) {
             }
 
         default:
-            return "E kuptoj! Si mund të ndihmoj?";
+            return getDefaultResponse();
     }
 }
 
 // 🧮 FUNKSIONET PËR MATEMATIKË
-function isMathExpression(text) {
-    const cleanText = text.replace(/\s/g, '');
-    const mathRegex = /^[\d+\-*/().^]+$/;
-    return mathRegex.test(cleanText) || text.toLowerCase().includes('sa bejne') || text.includes('+') || text.includes('-') || text.includes('*') || text.includes('/');
-}
-
 function solveMath(expression) {
     try {
-        let mathExpr = expression;
+        let mathExpr = expression.trim();
+        
+        console.log('🧮 Duke llogaritur:', mathExpr);
         
         // Nxjerr nga komanda /llogarit
         if (mathExpr.toLowerCase().startsWith('/llogarit')) {
@@ -241,6 +316,10 @@ function solveMath(expression) {
         // Pastro shprehjen
         let cleanExpr = mathExpr.replace(/[^0-9+\-*/().^]/g, '');
         
+        if (cleanExpr.length === 0) {
+            return '❌ Nuk gjetëm shprehje matematikore.';
+        }
+        
         // Zëvendëso ^ me ** për fuqi
         cleanExpr = cleanExpr.replace(/\^/g, '**');
         
@@ -248,46 +327,18 @@ function solveMath(expression) {
         const result = Function(`"use strict"; return (${cleanExpr})`)();
         
         return `🧮 **${mathExpr}** = **${result}**`;
+        
     } catch (error) {
+        console.error('❌ Gabim në llogaritje:', error);
         return '❌ Nuk mund ta llogaris shprehjen matematikore. Kontrolloni sintaksën.';
     }
 }
 
-// Funksionet e tjera themelore
-function login() {
-    const username = document.getElementById('username').value.trim();
-    const password = document.getElementById('password').value;
+// ======================================================
+// 🌐 EKSPORTIMI I FUNKSIONEVE GLOBALE
+// ======================================================
 
-    if (!username || !password) {
-        alert('❌ Ju lutem plotësoni të dy fushat!');
-        return;
-    }
-
-    window.currentUser = { username: username, isAdmin: username.toLowerCase() === 'admin' };
-    localStorage.setItem('currentUser', JSON.stringify(window.currentUser));
-    
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('chat-screen').style.display = 'block';
-    
-    addMessage(`👑 Mirë se erdhe ${username}! RRUFE-TESLA është gati.`, 'bot');
-}
-
-function logout() {
-    window.currentUser = null;
-    localStorage.removeItem('currentUser');
-    window.chatHistory = [];
-    
-    document.getElementById('chat-screen').style.display = 'none';
-    document.getElementById('login-screen').style.display = 'block';
-    
-    const chat = document.getElementById('chat');
-    if (chat) chat.innerHTML = '';
-}
-
-// Eksporto funksionet globale
 window.sendMessage = sendMessage;
 window.addMessage = addMessage;
-window.login = login;
-window.logout = logout;
 
-console.log("✅ chat.js u ngarkua me sukses!");
+console.log("✅ chat.js - RRUFE-TESLA 10.5 u inicializua me sukses!");
