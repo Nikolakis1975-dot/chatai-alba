@@ -780,3 +780,50 @@ window.showMemoryStats = showMemoryStats;
 window.quickLTMTEST = quickLTMTEST;
 
 console.log("✅ chat.js - RRUFE-TESLA 10.5 u inicializua me sukses!");
+
+// ==================== 🔄 MEMORY DISPLAY INTEGRATION ====================
+
+// Force update memory display pas çdo mesazhi
+const originalSendMessage = window.sendMessage;
+window.sendMessage = async function() {
+    const input = document.getElementById('user-input');
+    const message = input.value.trim();
+    
+    if (!message) return;
+    input.value = '';
+    hideEmojiPanel();
+
+    try {
+        addMessage(message, 'user');
+        showTypingIndicator();
+
+        // ... kodi ekzistues i sendMessage ...
+        
+        // PASI TË KRYHET PROCESIMI, SHTO KËTO:
+        hideTypingIndicator();
+        addMessage(response, 'bot');
+
+        // 🆕 FORCE MEMORY UPDATE
+        if (window.ltmManager) {
+            window.ltmManager.addUserMessage(message);
+            window.ltmManager.addAIResponse(response);
+            
+            // Update memory display me vonesë të vogël
+            setTimeout(() => {
+                if (typeof updateMemoryDisplay !== 'undefined') {
+                    updateMemoryDisplay();
+                }
+                if (typeof showMemoryNotification !== 'undefined') {
+                    showMemoryNotification('💾 Mesazhi u ruajt në memorie!', 'success');
+                }
+            }, 500);
+        }
+
+    } catch (error) {
+        console.error('Gabim:', error);
+        hideTypingIndicator();
+        addMessage('❌ Gabim në sistem. Provo përsëri.', 'system');
+    }
+};
+
+console.log("✅ Memory Display Integration u shtua në chat.js!");
