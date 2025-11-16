@@ -1,17 +1,23 @@
 // ======================================================
-// 🚀 chat.js - RRUFE-TESLA 10.5 - VERSION I PLOTË
+// 🚀 chat.js - RRUFE-TESLA 10.5 - VERSION I PLOTË I KORRIGJUAR
 // ======================================================
 
 console.log("🎯 chat.js - RRUFE-TESLA 10.5 po ngarkohet...");
 
 // ======================================================
-// 📊 VARIABLA GLOBALE
+// 📊 VARIABLA GLOBALE - PA KONFLIKTE
 // ======================================================
 
-
-window.chatHistory = window.chatHistory || [];
-window.isTyping = window.isTyping || false;
-window.currentAIMode = window.currentAIMode || 'SIMPLE';
+// Përdor variabla globale ekzistuese ose krijo nëse nuk ekzistojnë
+if (typeof window.chatHistory === 'undefined') {
+    window.chatHistory = [];
+}
+if (typeof window.isTyping === 'undefined') {
+    window.isTyping = false;
+}
+if (typeof window.currentAIMode === 'undefined') {
+    window.currentAIMode = 'SIMPLE'; // SIMPLE, ADVANCED, DIVINE
+}
 
 // ======================================================
 // 🧠 LOCAL CHAT INTELLIGENCE SYSTEM
@@ -245,7 +251,7 @@ function addMessage(text, sender) {
     chat.scrollTop = chat.scrollHeight;
     
     // Ruaj në historinë lokale
-    chatHistory.push({ text, sender, timestamp: new Date().toISOString() });
+    window.chatHistory.push({ text, sender, timestamp: new Date().toISOString() });
 }
 
 function formatMessage(text) {
@@ -257,7 +263,7 @@ function formatMessage(text) {
 }
 
 function showTypingIndicator() {
-    if (isTyping) return;
+    if (window.isTyping) return;
     
     const chat = document.getElementById('chat');
     const typingDiv = document.createElement('div');
@@ -275,7 +281,7 @@ function showTypingIndicator() {
     
     chat.appendChild(typingDiv);
     chat.scrollTop = chat.scrollHeight;
-    isTyping = true;
+    window.isTyping = true;
 }
 
 function hideTypingIndicator() {
@@ -283,7 +289,7 @@ function hideTypingIndicator() {
     if (typingIndicator) {
         typingIndicator.remove();
     }
-    isTyping = false;
+    window.isTyping = false;
 }
 
 // ======================================================
@@ -336,15 +342,15 @@ async function sendMessage() {
             window.ltmManager.addUserMessage(message);
             window.ltmManager.addAIResponse(response);
             
-            // Update memory display
-            if (typeof updateMemoryDisplay !== 'undefined') {
-                updateMemoryDisplay();
-            }
-            
-            // Shfaq notifikim
-            if (typeof showMemoryNotification !== 'undefined') {
-                showMemoryNotification('💾 Mesazhi u ruajt në memorie!', 'success');
-            }
+            // Update memory display me vonesë
+            setTimeout(() => {
+                if (typeof updateMemoryDisplay !== 'undefined') {
+                    updateMemoryDisplay();
+                }
+                if (typeof showMemoryNotification !== 'undefined') {
+                    showMemoryNotification('💾 Mesazhi u ruajt në memorie!', 'success');
+                }
+            }, 500);
         }
 
     } catch (error) {
@@ -433,12 +439,12 @@ function login() {
     }
 
     // Simulim i login-it
-    currentUser = {
+    window.currentUser = {
         username: username,
         isAdmin: username.toLowerCase() === 'admin'
     };
 
-    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    localStorage.setItem('currentUser', JSON.stringify(window.currentUser));
     
     // Shfaq chat screen
     document.getElementById('login-screen').style.display = 'none';
@@ -452,14 +458,16 @@ function login() {
     
     // Inicializo LTM nëse ekziston
     if (typeof initializeLTMForChat !== 'undefined') {
-        initializeLTMForChat();
+        setTimeout(() => {
+            initializeLTMForChat();
+        }, 1000);
     }
 }
 
 function logout() {
-    currentUser = null;
+    window.currentUser = null;
     localStorage.removeItem('currentUser');
-    chatHistory = [];
+    window.chatHistory = [];
     
     document.getElementById('chat-screen').style.display = 'none';
     document.getElementById('login-screen').style.display = 'block';
@@ -475,10 +483,10 @@ function updateUserProfile() {
     const profileName = document.getElementById('profile-name');
     const profilePic = document.getElementById('profile-pic');
     
-    if (profileName && currentUser) {
-        profileName.textContent = currentUser.username;
-        if (currentUser.isAdmin) {
-            profileName.innerHTML = '👑 ' + currentUser.username;
+    if (profileName && window.currentUser) {
+        profileName.textContent = window.currentUser.username;
+        if (window.currentUser.isAdmin) {
+            profileName.innerHTML = '👑 ' + window.currentUser.username;
         }
     }
 }
@@ -558,12 +566,12 @@ function addEmoji(emoji) {
 // ======================================================
 
 function downloadHistory() {
-    if (chatHistory.length === 0) {
+    if (window.chatHistory.length === 0) {
         alert('❌ Nuk ka histori për të shkarkuar!');
         return;
     }
 
-    const dataStr = JSON.stringify(chatHistory, null, 2);
+    const dataStr = JSON.stringify(window.chatHistory, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     
     const link = document.createElement('a');
@@ -576,7 +584,7 @@ function downloadHistory() {
 
 function clearHistory() {
     if (confirm('⚠️ Jeni i sigurt që dëshironi të fshini të gjithë historinë?')) {
-        chatHistory = [];
+        window.chatHistory = [];
         const chat = document.getElementById('chat');
         if (chat) {
             chat.innerHTML = '';
@@ -618,7 +626,9 @@ async function initializeLTMForChat() {
         
         // Inicializo memory interface
         if (typeof initializeMemoryInterface !== 'undefined') {
-            initializeMemoryInterface();
+            setTimeout(() => {
+                initializeMemoryInterface();
+            }, 1000);
         }
         
         return ltmManager;
@@ -630,8 +640,8 @@ async function initializeLTMForChat() {
 }
 
 function getCurrentUserId() {
-    if (currentUser && currentUser.username) {
-        return currentUser.username;
+    if (window.currentUser && window.currentUser.username) {
+        return window.currentUser.username;
     }
     
     const savedUser = localStorage.getItem('currentUser');
@@ -694,13 +704,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const savedUser = localStorage.getItem('currentUser');
     if (savedUser) {
         try {
-            currentUser = JSON.parse(savedUser);
+            window.currentUser = JSON.parse(savedUser);
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('chat-screen').style.display = 'block';
             updateUserProfile();
             
             // Shto mesazh mirëseardhjeje
-            addMessage(`👑 Mirë se erdhe përsëri ${currentUser.username}! RRUFE-TESLA 10.5 është gati.`, 'bot');
+            addMessage(`👑 Mirë se erdhe përsëri ${window.currentUser.username}! RRUFE-TESLA 10.5 është gati.`, 'bot');
             
         } catch (error) {
             console.error('❌ Gabim në loadimin e përdoruesit:', error);
@@ -778,52 +788,6 @@ window.addEmoji = addEmoji;
 window.initializeLTMForChat = initializeLTMForChat;
 window.showMemoryStats = showMemoryStats;
 window.quickLTMTEST = quickLTMTEST;
+window.getCurrentUserId = getCurrentUserId;
 
 console.log("✅ chat.js - RRUFE-TESLA 10.5 u inicializua me sukses!");
-
-// ==================== 🔄 MEMORY DISPLAY INTEGRATION ====================
-
-// Force update memory display pas çdo mesazhi
-const originalSendMessage = window.sendMessage;
-window.sendMessage = async function() {
-    const input = document.getElementById('user-input');
-    const message = input.value.trim();
-    
-    if (!message) return;
-    input.value = '';
-    hideEmojiPanel();
-
-    try {
-        addMessage(message, 'user');
-        showTypingIndicator();
-
-        // ... kodi ekzistues i sendMessage ...
-        
-        // PASI TË KRYHET PROCESIMI, SHTO KËTO:
-        hideTypingIndicator();
-        addMessage(response, 'bot');
-
-        // 🆕 FORCE MEMORY UPDATE
-        if (window.ltmManager) {
-            window.ltmManager.addUserMessage(message);
-            window.ltmManager.addAIResponse(response);
-            
-            // Update memory display me vonesë të vogël
-            setTimeout(() => {
-                if (typeof updateMemoryDisplay !== 'undefined') {
-                    updateMemoryDisplay();
-                }
-                if (typeof showMemoryNotification !== 'undefined') {
-                    showMemoryNotification('💾 Mesazhi u ruajt në memorie!', 'success');
-                }
-            }, 500);
-        }
-
-    } catch (error) {
-        console.error('Gabim:', error);
-        hideTypingIndicator();
-        addMessage('❌ Gabim në sistem. Provo përsëri.', 'system');
-    }
-};
-
-console.log("✅ Memory Display Integration u shtua në chat.js!");
