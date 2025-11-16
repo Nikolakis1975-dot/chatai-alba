@@ -173,7 +173,7 @@
 
     /* ==================== FIX PËR INPUT AREA ==================== */
     #input-area {
-      display: none; /* E fshehur në fillim */
+      display: none !important; /* E fshehur në fillim */
     }
 
     #chat-screen #input-area {
@@ -639,19 +639,9 @@
     </header>
     
     <main id="chat"></main>
-
-    <!-- BUTONAT E VJETËR (PËR BACKWARD COMPATIBILITY) - I FSHIHEM NË CSS -->
-    <div style="display: none;">
-      <button id="verify-email-btn" onclick="verifyEmail()">📧 Verifiko Email</button>
-      <button id="change-photo">🖼️ Ndrysho Foto</button>
-      <button id="api-key-btn">🔑 API Key</button>
-      <button id="download-history">📥 Shkarko</button>
-      <button id="upload-history">📤 Ngarko</button>
-      <button id="clear-history">🗑️ Fshi</button>
-    </div>
   </div>
 
-  <!-- INPUT AREA - E FSHIHUR NË FILLIM -->
+  <!-- INPUT AREA - E FSHIHUR NË FILLIM, SHFAQET VETËM NË CHAT -->
   <footer id="input-area">
     <button id="emoji-btn">😊</button>
     <div id="emoji-panel" class="hidden">
@@ -708,6 +698,16 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- BUTONAT E VJETËR (PËR BACKWARD COMPATIBILITY) - I FSHIHEM NË CSS -->
+  <div style="display: none;">
+    <button id="verify-email-btn" onclick="verifyEmail()">📧 Verifiko Email</button>
+    <button id="change-photo">🖼️ Ndrysho Foto</button>
+    <button id="api-key-btn">🔑 API Key</button>
+    <button id="download-history">📥 Shkarko</button>
+    <button id="upload-history">📤 Ngarko</button>
+    <button id="clear-history">🗑️ Fshi</button>
   </div>
 
   <script src="script.js"></script>
@@ -1320,7 +1320,7 @@
             if (result.success && result.transcript) {
                 return result.transcript;
             } else {
-                throw new Error(result.message || 'Transkriptimi dështoi');
+                throw new Error(result.message || 'Transkriptioni dështoi');
             }
             
         } catch (error) {
