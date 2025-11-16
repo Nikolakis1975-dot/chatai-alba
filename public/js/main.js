@@ -220,50 +220,114 @@ verifyEmotionalEngine() {
                 
                 if (!message) return;
 
-                // ✅ TREGO MODIN AKTUAL NË KONSOLË
-                console.log(`💬 [MODE: ${window.currentAIMode || 'SIMPLE'}] Mesazh: ${message.substring(0, 50)}`);
+// ======================================================
+// 🛠️ RREGULLIMI I INTEGRIMIT 
+// ======================================================
 
-                // ✅ PROCESIMI BAZË PËR TË GJITHA MODET:
-                if (window.rrufePlatform?.modules?.contextMemory) {
-                    window.rrufePlatform.modules.contextMemory.addToContext(message, 'user');
+// ✅ ZËVENDËSO INTEGRIMIN E VJETËR ME KËTË TË RI:
+integrateWithExisting() {
+    rlog('🔗 Duke integruar me sistemin ekzistues (VERSION I PËRMBLDSHËM)...');
+    
+    // ✅ INTEGRIMI I PLOTË ME sendMessage - PËRDOR SISTEMIN TONË
+    if (typeof window.sendMessage !== 'undefined') {
+        const originalSendMessage = window.sendMessage;
+        
+        window.sendMessage = async function() {
+            const input = document.getElementById('user-input');
+            const message = input ? input.value.trim() : '';
+            
+            if (!message) return;
+
+            // ✅ TREGO MODIN AKTUAL NË KONSOLË
+            console.log(`💬 [MODE: ${window.currentAIMode || 'SIMPLE'}] Mesazh: ${message.substring(0, 50)}`);
+
+            // 🆕 ✅ SHTIMI I DETYRUESHËM NË LONG-TERM MEMORY
+            if (window.ltmManager) {
+                try {
+                    window.ltmManager.addUserMessage(message);
+                    console.log('💾 Mesazhi u shtua në LTM');
+                    
+                    // Update memory display
+                    if (typeof updateMemoryDisplay !== 'undefined') {
+                        setTimeout(updateMemoryDisplay, 100);
+                    }
+                } catch (error) {
+                    console.log('❌ Gabim në shtimin në LTM:', error);
                 }
+            }
 
-                // ✅ PROCESIMI SHTESË SIPAS MODIT TË AKTIVIZUAR:
-                const currentMode = window.currentAIMode || 'SIMPLE';
+            // ✅ PROCESIMI BAZË PËR TË GJITHA MODET:
+            if (window.rrufePlatform?.modules?.contextMemory) {
+                window.rrufePlatform.modules.contextMemory.addToContext(message, 'user');
+            }
+
+            // ✅ PROCESIMI SHTESË SIPAS MODIT TË AKTIVIZUAR:
+            const currentMode = window.currentAIMode || 'SIMPLE';
+            
+            switch(currentMode) {
+                case 'ADVANCED':
+                    // Përdor modulet e avancuara VETËM për pyetje komplekse
+                    if (message.length > 50 || message.includes('?')) {
+                        console.log('🎯 [ADVANCED] Duke përdorur module të avancuara për pyetje komplekse...');
+                        if (window.rrufePlatform?.modules?.cognitiveAwareness) {
+                            window.rrufePlatform.modules.cognitiveAwareness.processCognitiveLayer(
+                                message, 'user', 'current_user'
+                            );
+                        }
+                    }
+                    break;
+                    
+                case 'DIVINE':
+                    // Përdor të gjitha modulet për çdo mesazh
+                    console.log('⚡ [DIVINE] Duke përdorur të gjitha modulet RRUFE-TESLA...');
+                    if (window.rrufePlatform?.modules?.divineFusion) {
+                        try {
+                            await window.rrufePlatform.modules.divineFusion.invokeDivineFusion(
+                                message,
+                                window.rrufePlatform.modules.contextMemory?.conversationContext
+                            );
+                        } catch (error) {
+                            console.log('❌ Divine Fusion error:', error);
+                        }
+                    }
+                    break;
+                    
+                case 'SIMPLE':
+                default:
+                    // ✅ MODI I THJESHTË: ASGJË TJETËR - chat plotësisht normal
+                    console.log('🔹 [SIMPLE] Procesim i thjeshtë - chat normal dhe i shpejtë');
+                    break;
+            }
+
+            // ✅ THIRR FUNKSIONIN ORIGJINAL (chat.js)
+            try {
+                await originalSendMessage.call(this);
                 
-                switch(currentMode) {
-                    case 'ADVANCED':
-                        // Përdor modulet e avancuara VETËM për pyetje komplekse
-                        if (message.length > 50 || message.includes('?')) {
-                            console.log('🎯 [ADVANCED] Duke përdorur module të avancuara për pyetje komplekse...');
-                            if (window.rrufePlatform?.modules?.cognitiveAwareness) {
-                                window.rrufePlatform.modules.cognitiveAwareness.processCognitiveLayer(
-                                    message, 'user', 'current_user'
-                                );
+                // 🆕 ✅ PAS PËRGJIGJES, SHTO NË MEMORY
+                setTimeout(() => {
+                    if (window.ltmManager && window.chatHistory && window.chatHistory.length > 0) {
+                        const lastMessage = window.chatHistory[window.chatHistory.length - 1];
+                        if (lastMessage && lastMessage.sender === 'bot') {
+                            window.ltmManager.addAIResponse(lastMessage.text);
+                            console.log('💾 Përgjigja u shtua në LTM');
+                            
+                            if (typeof updateMemoryDisplay !== 'undefined') {
+                                updateMemoryDisplay();
                             }
                         }
-                        break;
-                        
-                    case 'DIVINE':
-                        // Përdor të gjitha modulet për çdo mesazh
-                        console.log('⚡ [DIVINE] Duke përdorur të gjitha modulet RRUFE-TESLA...');
-                        if (window.rrufePlatform?.modules?.divineFusion) {
-                            try {
-                                await window.rrufePlatform.modules.divineFusion.invokeDivineFusion(
-                                    message,
-                                    window.rrufePlatform.modules.contextMemory?.conversationContext
-                                );
-                            } catch (error) {
-                                console.log('❌ Divine Fusion error:', error);
-                            }
-                        }
-                        break;
-                        
-                    case 'SIMPLE':
-                    default:
-                        // ✅ MODI I THJESHTË: ASGJË TJETËR - chat plotësisht normal
-                        console.log('🔹 [SIMPLE] Procesim i thjeshtë - chat normal dhe i shpejtë');
-                        // VETËM ContextMemory, asgjë tjetër!
+                    }
+                }, 500);
+                
+            } catch (error) {
+                console.log('❌ Gabim në originalSendMessage:', error);
+            }
+        };
+        
+        rlog('✅ INTEGRIMI I PLOTË ME sendMessage & LTM U AKTIVIZUA!');
+    }
+}
+                
+ // ==================================== VETËM ContextMemory, asgjë tjetër! ============================================
                         break;
                 }
 
