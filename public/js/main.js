@@ -740,3 +740,86 @@ function integrateMemoryWithMainSystem() {
 
 // Ekzekuto patch-in
 setTimeout(integrateMemoryWithMainSystem, 5000);
+
+// ======================================================
+// 🚀 MEMORY INTEGRATION PATCH - SHTO NË FUND TË main.js
+// ======================================================
+
+function forceMemoryIntegration() {
+    console.log('🧠 FORCING MEMORY INTEGRATION...');
+    
+    // Mbivendos sendMessage për të shtuar në memory
+    if (typeof window.sendMessage !== 'undefined') {
+        const originalSendMessage = window.sendMessage;
+        
+        window.sendMessage = async function() {
+            const input = document.getElementById('user-input');
+            const message = input ? input.value.trim() : '';
+            
+            if (!message) return;
+            
+            console.log('💾 FORCE: Adding message to LTM:', message.substring(0, 50));
+            
+            // 🆕 FORCE ADD TO MEMORY - PARA procesimit
+            if (window.ltmManager) {
+                try {
+                    window.ltmManager.addUserMessage(message);
+                    console.log('✅ FORCE: User message added to LTM');
+                } catch (error) {
+                    console.log('❌ FORCE: Error adding user message:', error);
+                }
+            }
+            
+            // Thirr funksionin origjinal
+            let originalResult;
+            try {
+                originalResult = await originalSendMessage.call(this);
+            } catch (error) {
+                console.log('❌ Error in original sendMessage:', error);
+            }
+            
+            // 🆕 FORCE ADD AI RESPONSE - PAS procesimit
+            setTimeout(() => {
+                if (window.ltmManager) {
+                    try {
+                        // Gjej përgjigjen e fundit nga chatHistory
+                        if (window.chatHistory && window.chatHistory.length > 0) {
+                            const lastMessages = window.chatHistory.slice(-3); // Shiko 3 mesazhet e fundit
+                            const aiResponse = lastMessages.find(msg => msg.sender === 'bot');
+                            
+                            if (aiResponse && aiResponse.text) {
+                                window.ltmManager.addAIResponse(aiResponse.text);
+                                console.log('✅ FORCE: AI response added to LTM:', aiResponse.text.substring(0, 50));
+                                
+                                // Update display
+                                if (typeof updateMemoryDisplay !== 'undefined') {
+                                    updateMemoryDisplay();
+                                    console.log('✅ FORCE: Memory display updated');
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.log('❌ FORCE: Error adding AI response:', error);
+                    }
+                }
+            }, 1500); // Prit 1.5 sekonda për të dhënë kohë përgjigjes
+            
+            return originalResult;
+        };
+        
+        console.log('✅ FORCE: Memory Integration Patch ACTIVATED!');
+    }
+}
+
+// Ekzekuto patch-in pas 5 sekondash
+setTimeout(forceMemoryIntegration, 5000);
+
+// Gjithashtu ekzekuto kur bëhet login
+const originalLogin = window.login;
+if (originalLogin) {
+    window.login = function() {
+        const result = originalLogin.apply(this, arguments);
+        setTimeout(forceMemoryIntegration, 2000);
+        return result;
+    };
+}
