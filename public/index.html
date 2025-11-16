@@ -1344,7 +1344,69 @@ function addEmergencyMemoryButton() {
     console.log('✅ Emergency Memory Button u shtua');
 }
 
-// ==================== 🚀 AUTOMATIC INITIALIZATION ====================
+// ==================== 🎯 FIXED AUTOMATIC INITIALIZATION ====================
+
+let memoryInitialized = false; // Variabël për të ndaluar inicializime të shumta
+
+// Funksioni kryesor për inicializimin e Memory System
+function initializeMemorySystem() {
+    if (memoryInitialized) {
+        console.log('⏩ Memory System tashmë është inicializuar');
+        return;
+    }
+    
+    console.log('🎯 Duke inicializuar Memory System...');
+    memoryInitialized = true;
+    
+    // Kontrollo nëse LongTermMemoryManager është i ngarkuar
+    if (typeof LongTermMemoryManager === 'undefined') {
+        console.log('⏳ Duke pritur LongTermMemoryManager...');
+        memoryInitialized = false;
+        setTimeout(initializeMemorySystem, 2000);
+        return;
+    }
+    
+    console.log('✅ LongTermMemoryManager u gjet!');
+    
+    // Krijo LTM instance nëse nuk ekziston
+    if (!window.ltmManager) {
+        console.log('🔄 Duke krijuar LTM instance...');
+        const userId = getCurrentUserId();
+        window.ltmManager = new LongTermMemoryManager(userId, null);
+        
+        window.ltmManager.initialize().then(() => {
+            console.log('✅ LTM u inicializua me sukses!');
+            
+            // Tani inicializo Memory Interface
+            if (typeof initializeMemoryInterface !== 'undefined') {
+                setTimeout(initializeMemoryInterface, 1000);
+            }
+            
+        }).catch(error => {
+            console.error('❌ Gabim në inicializimin e LTM:', error);
+            memoryInitialized = false;
+        });
+    } else {
+        console.log('✅ LTM ekziston tashmë');
+        // LTM ekziston tashmë, inicializo interface
+        if (typeof initializeMemoryInterface !== 'undefined') {
+            setTimeout(initializeMemoryInterface, 1000);
+        }
+    }
+}
+
+// Version i ri i checkLoginAndInitialize pa loop
+function checkLoginAndInitialize() {
+    const chatScreen = document.getElementById('chat-screen');
+    if (chatScreen && chatScreen.style.display !== 'none' && !memoryInitialized) {
+        console.log('🔑 User logged in - initializing memory...');
+        initializeMemorySystem();
+        return true; // Ndaloni kontrollin e mëtejshëm
+    }
+    return false;
+}
+
+// ==================== 🚀 SMART INITIALIZATION ====================
 
 // Inicializo kur faqja është plotësisht e ngarkuar
 window.addEventListener('load', function() {
@@ -1353,26 +1415,19 @@ window.addEventListener('load', function() {
     // Shto butonin emergjent
     addEmergencyMemoryButton();
     
-    // Kontrollo nëse jemi në chat screen
-    const chatScreen = document.getElementById('chat-screen');
-    if (chatScreen && chatScreen.style.display !== 'none') {
-        console.log('🎯 Chat screen është aktiv - duke inicializuar Memory System...');
-        // Inicializo pas 3 sekondash për të dhënë kohë sistemeve të tjera
-        setTimeout(initializeMemorySystem, 3000);
-    }
+    // Kontrollo një herë nëse jemi në chat screen
+    setTimeout(() => {
+        if (!checkLoginAndInitialize()) {
+            // Nëse nuk u inicializua, provo përsëri pas 5 sekondash
+            setTimeout(() => {
+                if (!memoryInitialized) {
+                    console.log('🔄 Retrying memory initialization...');
+                    checkLoginAndInitialize();
+                }
+            }, 5000);
+        }
+    }, 3000);
 });
-
-// Gjithashtu kontrollo kur bëhet login
-function checkLoginAndInitialize() {
-    const chatScreen = document.getElementById('chat-screen');
-    if (chatScreen && chatScreen.style.display !== 'none') {
-        console.log('🔑 User logged in - initializing memory...');
-        setTimeout(initializeMemorySystem, 2000);
-    }
-}
-
-// Kontrollo çdo 2 sekonda nëse useri është loguar
-setInterval(checkLoginAndInitialize, 2000);
 
 // ==================== 📡 EKSPORTIMI I FUNKSIONEVE ====================
 
@@ -1380,21 +1435,25 @@ window.initializeMemorySystem = initializeMemorySystem;
 window.debugMemorySystem = debugMemorySystem;
 window.getCurrentUserId = getCurrentUserId;
 window.addEmergencyMemoryButton = addEmergencyMemoryButton;
+window.memoryInitialized = memoryInitialized;
+window.checkLoginAndInitialize = checkLoginAndInitialize;
 
-console.log("✅ Memory System Initialization u ngarkua!");
+console.log("✅ Fixed Memory System Initialization u ngarkua!");
 
 // ==================== 🧪 TESTI I SHPEJTË ====================
 
-// Testo menjëherë nëse sistemi është gati
+// Testo një herë pas 5 sekondash
 setTimeout(function() {
-    console.log('🧪 Running quick memory system test...');
-    debugMemorySystem();
-    
-    // Nëse jemi në chat screen, provo të inicializosh
-    const chatScreen = document.getElementById('chat-screen');
-    if (chatScreen && chatScreen.style.display !== 'none') {
-        console.log('🎯 Chat screen detected, attempting auto-init...');
-        initializeMemorySystem();
+    if (!memoryInitialized) {
+        console.log('🧪 Running one-time memory system test...');
+        debugMemorySystem();
+        
+        // Nëse jemi në chat screen, provo të inicializosh një herë
+        const chatScreen = document.getElementById('chat-screen');
+        if (chatScreen && chatScreen.style.display !== 'none') {
+            console.log('🎯 Chat screen detected, attempting one-time init...');
+            initializeMemorySystem();
+        }
     }
 }, 5000);
     
