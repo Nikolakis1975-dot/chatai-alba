@@ -639,27 +639,27 @@
     </header>
     
     <main id="chat"></main>
+
+    <!-- INPUT AREA - SHFAQET VETËM NË CHAT -->
+    <footer id="input-area">
+      <button id="emoji-btn">😊</button>
+      <div id="emoji-panel" class="hidden">
+          <span>😀</span><span>😂</span><span>😍</span><span>🔥</span><span>😎</span>
+          <span>🤔</span><span>😢</span><span>❤️</span><span>👍</span><span>👎</span>
+      </div>
+
+      <!-- 🎤 BUTONI I VOICE AI -->
+      <button id="voice-btn" 
+              onclick="voiceButtonClick(event)"
+              style="background:#2E86AB; color:white; border:none; border-radius:50%; width:45px; height:45px; margin-right:10px; cursor:pointer; font-size:18px;"
+              title="Kliko për të folur (Voice AI)">
+          🎤
+      </button> 
+
+      <input type="text" id="user-input" placeholder="Shkruaj mesazhin...">
+      <button id="send-btn">➤</button>
+    </footer>
   </div>
-
-  <!-- INPUT AREA - E FSHIHUR NË FILLIM, SHFAQET VETËM NË CHAT -->
-  <footer id="input-area">
-    <button id="emoji-btn">😊</button>
-    <div id="emoji-panel" class="hidden">
-        <span>😀</span><span>😂</span><span>😍</span><span>🔥</span><span>😎</span>
-        <span>🤔</span><span>😢</span><span>❤️</span><span>👍</span><span>👎</span>
-    </div>
-
-    <!-- 🎤 BUTONI I VOICE AI -->
-    <button id="voice-btn" 
-            onclick="voiceButtonClick(event)"
-            style="background:#2E86AB; color:white; border:none; border-radius:50%; width:45px; height:45px; margin-right:10px; cursor:pointer; font-size:18px;"
-            title="Kliko për të folur (Voice AI)">
-        🎤
-    </button> 
-
-    <input type="text" id="user-input" placeholder="Shkruaj mesazhin...">
-    <button id="send-btn">➤</button>
-  </footer>
 
   <!-- Modal për API Key -->
   <div id="api-key-modal" class="modal">
@@ -761,6 +761,117 @@
     function showSystemStats() {
       alert('📊 Statistikat e sistemit do të shfaqen së shpejti...');
       // Do të implementohet më vonë
+    }
+
+    // ==================== FUNKSIONI I KORRIGJUAR PËR LOGIN ====================
+
+    // ✅ FUNKSIONI I RISHKRUAR PËR LOGIN - FIX PËR MESAZHIN E GABIMIT
+    async function login() {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+
+      // Validimi bazë
+      if (!username || !password) {
+        alert('❌ Ju lutem plotësoni të dy fushat!');
+        return;
+      }
+
+      try {
+        // Shfaq loading
+        const loginBtn = document.querySelector('.login-btn');
+        const originalText = loginBtn.textContent;
+        loginBtn.textContent = '🔄 Po identifikohem...';
+        loginBtn.disabled = true;
+
+        console.log('🔐 Duke u identifikuar me:', username);
+
+        // ✅ PROVO PARË ME SERVERIN
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ 
+            username: username, 
+            password: password 
+          })
+        });
+
+        const data = await response.json();
+        console.log('📥 Përgjigja nga serveri:', data);
+
+        if (data.success) {
+          console.log('✅ Login i suksesshëm!');
+          
+          // Ruaj të dhënat e përdoruesit
+          const userData = {
+            username: username,
+            email: data.email || '',
+            is_verified: data.is_verified || false,
+            loginTime: new Date().toISOString()
+          };
+          
+          localStorage.setItem('currentUser', JSON.stringify(userData));
+          
+          // ✅ KALIMI NË CHAT SCREEN - PA MESAZH GABIMI
+          document.getElementById('login-screen').style.display = 'none';
+          document.getElementById('chat-screen').style.display = 'block';
+          document.getElementById('input-area').style.display = 'flex';
+          
+          console.log('🎉 U kalua në chat screen me sukses!');
+          
+          // Shto mesazh mirëseardhjeje
+          addMessage('🤖 ChatAI ALBA', `Mirë se erdhe, ${username}! Si mund të të ndihmoj?`, 'bot');
+          
+        } else {
+          // ✅ SHFAQ VETËM NËSE KA GABIM TË VËRTETË
+          console.log('❌ Login i dështuar:', data.message);
+          alert('❌ ' + (data.message || 'Përdoruesi ose fjalëkalimi është i gabuar'));
+        }
+
+      } catch (error) {
+        console.error('❌ Gabim në login:', error);
+        
+        // ✅ PROVO LOGIN FALLBACK - VETËM NËSE SERVERI NUK PËRGJIGJET
+        if (error.message.includes('Failed to fetch') || error.message.includes('Network')) {
+          console.log('🌐 Serveri nuk përgjigjet - duke përdorur fallback login...');
+          
+          // Fallback: kontrollo kredencialet lokale
+          const savedUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+          const user = savedUsers.find(u => u.username === username && u.password === password);
+          
+          if (user) {
+            // ✅ LOGIN FALLBACK I SUKSESSHËM
+            console.log('✅ Fallback login i suksesshëm!');
+            
+            const userData = {
+              username: username,
+              email: user.email || '',
+              is_verified: user.is_verified || false,
+              loginTime: new Date().toISOString()
+            };
+            
+            localStorage.setItem('currentUser', JSON.stringify(userData));
+            
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('chat-screen').style.display = 'block';
+            document.getElementById('input-area').style.display = 'flex';
+            
+            addMessage('🤖 ChatAI ALBA', `Mirë se erdhe, ${username}! (Mode Offline)`, 'bot');
+            
+          } else {
+            // ✅ FALLBACK LOGIN I DËSHTUAR - SHFAQ GABIM
+            alert('❌ Përdoruesi ose fjalëkalimi është i gabuar');
+          }
+        } else {
+          alert('❌ Problem me serverin. Provo përsëri më vonë.');
+        }
+      } finally {
+        // Rikthe butonin
+        const loginBtn = document.querySelector('.login-btn');
+        loginBtn.textContent = originalText;
+        loginBtn.disabled = false;
+      }
     }
 
     // ==================== SISTEMI I RI I VERIFIKIMIT EMAIL ====================
@@ -923,7 +1034,6 @@
       const apiBtn = document.getElementById('api-key-btn');
       const apiClose = apiModal.querySelector('.close');
       
-      // ✅ ZËVENDËSOJE PLOTËSISHT KËTË PJESË:
       apiBtn.onclick = async function() {
           apiModal.style.display = 'block';
           
@@ -939,9 +1049,54 @@
       apiClose.onclick = function() {
         apiModal.style.display = 'none';
       }
+
+      // Kontrollo nëse përdoruesi është tashmë i loguar
+      const currentUser = localStorage.getItem('currentUser');
+      if (currentUser) {
+        try {
+          const user = JSON.parse(currentUser);
+          // Kaloj direkt në chat nëse është loguar
+          document.getElementById('login-screen').style.display = 'none';
+          document.getElementById('chat-screen').style.display = 'block';
+          document.getElementById('input-area').style.display = 'flex';
+          
+          addMessage('🤖 ChatAI ALBA', `Mirë se erdhe përsëri, ${user.username}!`, 'bot');
+        } catch (e) {
+          console.log('Përdoruesi nuk është i loguar');
+        }
+      }
     });
 
-    // ✅ FUNKSION I KORRIGJUAR PËR RUAJTJE API KEY
+    // ==================== FUNKSIONE NDIHMËSE PËR CHAT ====================
+
+    function addMessage(sender, text, type) {
+      const chat = document.getElementById('chat');
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${type}`;
+      messageDiv.innerHTML = `
+        <div class="message-sender">${sender}</div>
+        <div class="message-text">${text}</div>
+      `;
+      chat.appendChild(messageDiv);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function logout() {
+      localStorage.removeItem('currentUser');
+      document.getElementById('chat-screen').style.display = 'none';
+      document.getElementById('login-screen').style.display = 'block';
+      document.getElementById('input-area').style.display = 'none';
+      
+      // Pastro chat
+      document.getElementById('chat').innerHTML = '';
+      
+      // Reset form
+      document.getElementById('username').value = '';
+      document.getElementById('password').value = '';
+    }
+
+    // ==================== FUNKSIONET PËR API KEY ====================
+
     async function saveApiKeyToServer() {
         try {
             const apiKey = document.getElementById('api-key-input').value.trim();
@@ -956,7 +1111,6 @@
             document.getElementById('api-key-status').textContent = "🔄 Po ruhet në server...";
             document.getElementById('api-key-status').className = "api-status";
 
-            // ✅ URL I KORRIGJUAR: /api/api-keys/save (JO /api/api-keys/api-keys/save)
             const response = await fetch('/api/api-keys/save', {
                 method: 'POST',
                 headers: {
@@ -976,7 +1130,6 @@
                 document.getElementById('api-key-status').textContent = "✅ " + data.message;
                 document.getElementById('api-key-status').className = "api-status valid";
                 
-                // Mbylle modalin pas 2 sekondash
                 setTimeout(() => {
                     document.getElementById('api-key-modal').style.display = 'none';
                 }, 2000);
@@ -993,13 +1146,11 @@
         }
     }
 
-    // ✅ FUNKSION I KORRIGJUAR PËR FSHIRJE API KEY
     async function deleteApiKeyFromServer() {
         try {
             document.getElementById('api-key-status').textContent = "🔄 Po fshihet nga serveri...";
             document.getElementById('api-key-status').className = "api-status";
 
-            // ✅ URL I KORRIGJUAR: /api/api-keys/delete
             const response = await fetch('/api/api-keys/delete', {
                 method: 'DELETE',
                 headers: {
@@ -1031,12 +1182,10 @@
         }
     }
 
-    // ✅ FUNKSION I KORRIGJUAR PËR STATUSIN E API KEY
     async function updateApiKeyStatus() {
         const statusElement = document.getElementById('api-key-status');
         
         try {
-            // ✅ URL I KORRIGJUAR: /api/api-keys/status/gemini
             const response = await fetch('/api/api-keys/status/gemini', {
                 credentials: 'include'
             });
@@ -1068,10 +1217,8 @@
         }
     }
 
-    // ✅ FUNKSION I KORRIGJUAR PËR MARRJE API KEY PËR CHATBOT
     async function getApiKeyFromServer() {
         try {
-            // ✅ URL I KORRIGJUAR: /api/api-keys/get/gemini
             const response = await fetch('/api/api-keys/get/gemini', {
                 credentials: 'include'
             });
@@ -1090,57 +1237,13 @@
         }
     }
 
-    // ✅ FUNKSION I RI PËR API KEY (PA LOCALSTORAGE)
-    async function saveApiKey() {
-        const apiKey = document.getElementById('api-key-input').value.trim();
-        
-        if (!apiKey) {
-            alert('❌ Ju lutem vendosni një API Key valid.');
-            return;
-        }
-
-        try {
-            // ✅ Përdor cookies - nuk dërgoj userId
-            const response = await fetch('/api/save', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                credentials: 'include', // ✅ Dërgon cookies
-                body: JSON.stringify({
-                    apiKey: apiKey,
-                    serviceName: 'gemini'
-                })
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                document.getElementById('api-key-status').textContent = "✅ " + data.message;
-                document.getElementById('api-key-status').className = "api-status valid";
-                
-                setTimeout(() => {
-                    document.getElementById('api-key-modal').style.display = 'none';
-                }, 2000);
-            } else {
-                document.getElementById('api-key-status').textContent = "❌ " + data.message;
-                document.getElementById('api-key-status').className = "api-status invalid";
-            }
-        } catch (error) {
-            console.error('Gabim në ruajtjen e API Key:', error);
-            document.getElementById('api-key-status').textContent = "❌ Problem me serverin.";
-            document.getElementById('api-key-status').className = "api-status invalid";
-        }
-    }
-  
-    // ==================== 🎤 VOICE AI - SISTEMI I PLOTË NË HTML ====================
-
-    console.log("✅ Voice AI u ngarkua direkt në HTML!");
+    // ==================== 🎤 VOICE AI ====================
 
     let mediaRecorder;
     let audioChunks = [];
     let isRecording = false;
     let recordingTimeout;
 
-    // ✅ FUNKSIONI KRYESOR
     function voiceButtonClick(event) {
         if (event) event.preventDefault();
         console.log("🎤 Butoni u klikua - isRecording:", isRecording);
@@ -1161,21 +1264,17 @@
             
             if (!voiceBtn || !userInput) {
                 console.error("❌ Elementet nuk u gjetën!");
-                alert("❌ Elementet e Voice AI nuk u gjetën! Kontrollo HTML strukturën.");
                 return;
             }
             
-            // Reset variables
             audioChunks = [];
             isRecording = true;
             
-            // Ndrysho pamjen e butonit
             voiceBtn.innerHTML = '🔴';
             voiceBtn.style.background = '#E74C3C';
             voiceBtn.title = 'Duke regjistruar... Kliko për të ndaluar';
             userInput.value = "🎤 Duke regjistruar... Folni në shqip!";
             
-            // Merr akses në mikrofon
             const stream = await navigator.mediaDevices.getUserMedia({ 
                 audio: {
                     sampleRate: 16000,
@@ -1185,32 +1284,24 @@
                 } 
             });
             
-            // Krijo recorder
             mediaRecorder = new MediaRecorder(stream);
             
             mediaRecorder.ondataavailable = (event) => {
                 if (event.data.size > 0) {
                     audioChunks.push(event.data);
-                    console.log("🔊 Audio data:", event.data.size, "bytes");
                 }
             };
             
             mediaRecorder.onstop = async () => {
-                console.log("⏹️ Regjistrimi u ndal - duke procesuar...");
                 await processRecording();
-                // Mbyll stream-in
                 stream.getTracks().forEach(track => track.stop());
             };
             
-            // Fillo record-in
             mediaRecorder.start();
             isRecording = true;
-            console.log("✅ RECORD-I FILLOI!");
             
-            // Auto-stop pas 7 sekondash
             recordingTimeout = setTimeout(() => {
                 if (isRecording) {
-                    console.log("⏰ Koha ka skaduar - duke ndaluar...");
                     stopRecording();
                 }
             }, 7000);
@@ -1229,19 +1320,16 @@
         console.log("🛑 Duke ndaluar record-in...");
         
         if (mediaRecorder && isRecording) {
-            // Clear timeout
             if (recordingTimeout) {
                 clearTimeout(recordingTimeout);
                 recordingTimeout = null;
             }
             
-            // Ndal recorder
             if (mediaRecorder.state === 'recording') {
                 mediaRecorder.stop();
             }
             
             isRecording = false;
-            console.log("✅ Record-i u ndal me sukses");
         }
     }
 
@@ -1249,13 +1337,11 @@
         const userInput = document.getElementById('user-input');
         
         try {
-            console.log("🔄 Duke procesuar audio...");
             if (userInput) {
                 userInput.value = "🎤 Po e transkriptoj zërin...";
             }
             
             if (audioChunks.length === 0) {
-                console.log("❌ Nuk u regjistrua asnjë audio");
                 if (userInput) {
                     userInput.value = "🎤 Nuk u regjistrua asnjë audio - provoni përsëri";
                 }
@@ -1264,17 +1350,11 @@
             }
             
             const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-            const audioSizeKB = Math.round(audioBlob.size / 1024);
-            
-            console.log("📊 Audio u regjistrua:", audioSizeKB, "KB");
-            
-            // ✅ DËRGO NË SERVER PËR TRANSCRIPTION
             const transcribedText = await sendToServerForTranscription(audioBlob);
             
             if (userInput) {
                 userInput.value = "🎤 " + transcribedText;
             }
-            console.log("✅ Teksti i transkriptuar:", transcribedText);
             
         } catch (error) {
             console.error("❌ Gabim në procesim:", error);
@@ -1285,21 +1365,16 @@
         
         resetButton();
         
-        // Dërgo automatikisht pas 1 sekonde
         setTimeout(() => {
             const sendBtn = document.getElementById('send-btn');
             if (sendBtn) {
                 sendBtn.click();
-                console.log("📤 Mesazhi u dërgua automatikisht!");
             }
         }, 1000);
     }
 
-    // ✅ FUNKSION PËR TË DËRGUAR AUDIO NË SERVER
     async function sendToServerForTranscription(audioBlob) {
         try {
-            console.log("📤 Duke dërguar audio për transkription...");
-            
             const formData = new FormData();
             formData.append('audio', audioBlob, 'voice_recording.webm');
             
@@ -1308,14 +1383,11 @@
                 body: formData
             });
             
-            console.log("📡 Statusi i përgjigjes:", response.status, response.statusText);
-            
             if (!response.ok) {
                 throw new Error(`Serveri ktheu ${response.status}: ${response.statusText}`);
             }
             
             const result = await response.json();
-            console.log("📝 Rezultati nga serveri:", result);
             
             if (result.success && result.transcript) {
                 return result.transcript;
@@ -1343,525 +1415,26 @@
             clearTimeout(recordingTimeout);
             recordingTimeout = null;
         }
-        
-        console.log("🔄 Butoni u rikthye në gjendjen normale");
     }
 
-    // ✅ INICIALIZIMI DHE DIAGNOSTIKIMI
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log("✅ DOM u ngarkua plotësisht");
-        
-        setTimeout(() => {
-            const voiceBtn = document.getElementById('voice-btn');
-            const userInput = document.getElementById('user-input');
-            const sendBtn = document.getElementById('send-btn');
-            
-            console.log("🔍 DIAGNOSTIKIMI I ELEMENTEVE:");
-            console.log("- Butoni voice-btn:", voiceBtn ? "✅ U gjet" : "❌ NUK U GJET");
-            console.log("- Input user-input:", userInput ? "✅ U gjet" : "❌ NUK U GJET");
-            console.log("- Butoni send-btn:", sendBtn ? "✅ U gjet" : "❌ NUK U GJET");
-            
-            if (voiceBtn && userInput && sendBtn) {
-                console.log("🎉 Të gjitha elementet u gjetën! Voice AI është gati!");
-            } else {
-                console.log("⚠️ Disa elemente mungojnë! Kontrollo HTML strukturën.");
-            }
-        }, 500);
-    });
+    // ==================== FUNKSIONE TË THJESHTA PËR AI MODES ====================
 
-    // 🧪 TEST MANUAL PËR DEBUGGING
-    window.testVoiceAI = function() {
-        console.log("🧪 TEST MANUAL I VOICE AI...");
-        voiceButtonClick({preventDefault: () => {}});
-    };
-
-    window.debugVoiceAI = function() {
-        console.log("🔍 DEBUG I VOICE AI:");
-        console.log("- isRecording:", isRecording);
-        console.log("- audioChunks length:", audioChunks.length);
-        console.log("- mediaRecorder state:", mediaRecorder ? mediaRecorder.state : "N/A");
-        console.log("- recordingTimeout:", recordingTimeout ? "Active" : "Inactive");
-    };
-
-    console.log("🎯 Voice AI sistem i plotë u inicializua!");
-
-    // ======================================================
-    // 🧠 SIMPLE & RELIABLE MEMORY INTEGRATION
-    // ======================================================
-
-    console.log("🧠 Duke nisur Simple Memory Integration...");
-
-    class SimpleMemoryIntegration {
-        constructor() {
-            this.initialized = false;
-            this.messageCount = 0;
-            this.init();
-        }
-        
-        async init() {
-            console.log("🔄 Duke inicializuar Simple Memory...");
-            
-            // Prit deri të ngarkohet LongTermMemoryManager
-            if (typeof LongTermMemoryManager === 'undefined') {
-                console.log("⏳ Duke pritur LongTermMemoryManager...");
-                setTimeout(() => this.init(), 1000);
-                return;
-            }
-            
-            // Krijo LTM instance
-            try {
-                const userId = this.getCurrentUserId();
-                window.ltmManager = new LongTermMemoryManager(userId, null);
-                await window.ltmManager.initialize();
-                console.log("✅ LTM u inicializua me sukses!");
-                
-                // Inicializo memory interface
-                this.initializeMemoryInterface();
-                this.startMonitoring();
-                this.initialized = true;
-                
-            } catch (error) {
-                console.error("❌ Gabim në inicializimin e LTM:", error);
-            }
-        }
-        
-        getCurrentUserId() {
-            try {
-                const savedUser = localStorage.getItem('currentUser');
-                if (savedUser) {
-                    const user = JSON.parse(savedUser);
-                    return user.username || 'user_' + Date.now();
-                }
-            } catch (e) {
-                console.error('Gabim në marrjen e user ID:', e);
-            }
-            return 'user_' + Date.now();
-        }
-        
-        initializeMemoryInterface() {
-            console.log("🎨 Duke inicializuar Memory Interface...");
-            
-            // Krijo memory status në header
-            this.createMemoryStatus();
-            
-            // Krijo memory dashboard
-            this.createMemoryDashboard();
-            
-            // Ngarko mesazhet ekzistuese
-            this.loadExistingMessages();
-            
-            console.log("✅ Memory Interface u inicializua!");
-        }
-        
-        createMemoryStatus() {
-            const header = document.querySelector('header');
-            if (!header) return;
-            
-            let memoryStatus = document.getElementById('memory-status');
-            if (!memoryStatus) {
-                memoryStatus = document.createElement('div');
-                memoryStatus.id = 'memory-status';
-                memoryStatus.style.cssText = `
-                    display: inline-block;
-                    margin-left: 15px;
-                    padding: 5px 10px;
-                    background: rgba(0,0,0,0.1);
-                    border-radius: 15px;
-                    font-size: 12px;
-                    border: 1px solid #00ff00;
-                `;
-                
-                const aiControls = document.querySelector('.ai-controls');
-                if (aiControls) {
-                    aiControls.parentNode.insertBefore(memoryStatus, aiControls.nextSibling);
-                } else {
-                    header.appendChild(memoryStatus);
-                }
-            }
-            
-            this.updateMemoryDisplay();
-        }
-        
-        createMemoryDashboard() {
-            const chat = document.getElementById('chat');
-            if (!chat) return;
-            
-            if (document.getElementById('memory-dashboard')) return;
-            
-            const dashboard = document.createElement('div');
-            dashboard.id = 'memory-dashboard';
-            dashboard.innerHTML = `
-                <div style="background: rgba(0,0,0,0.05); padding: 10px; border-radius: 8px; margin: 10px 0; border: 1px solid #ddd;">
-                    <h4 style="margin: 0 0 8px 0; color: #333;">🧠 RRUFE-TESLA Memory</h4>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px; color: #666;">
-                        <div>📊 Total: <span id="dash-total">0</span></div>
-                        <div>👤 User: <span id="dash-user">0</span></div>
-                        <div>🤖 AI: <span id="dash-ai">0</span></div>
-                        <div>💾 Kapacitet: <span id="dash-capacity">0%</span></div>
-                    </div>
-                </div>
-            `;
-            
-            chat.insertBefore(dashboard, chat.firstChild);
-        }
-        
-        updateMemoryDisplay() {
-            if (!window.ltmManager) return;
-            
-            const stats = window.ltmManager.getMemoryStats();
-            
-            // Update header
-            const memoryStatus = document.getElementById('memory-status');
-            if (memoryStatus) {
-                memoryStatus.innerHTML = `🧠 ${stats.total_messages} mesazhe | ${stats.capacity}`;
-            }
-            
-            // Update dashboard
-            const dashTotal = document.getElementById('dash-total');
-            const dashUser = document.getElementById('dash-user');
-            const dashAi = document.getElementById('dash-ai');
-            const dashCapacity = document.getElementById('dash-capacity');
-            
-            if (dashTotal) dashTotal.textContent = stats.total_messages;
-            if (dashUser) dashUser.textContent = stats.user_messages;
-            if (dashAi) dashAi.textContent = stats.ai_messages;
-            if (dashCapacity) dashCapacity.textContent = stats.capacity;
-        }
-        
-        loadExistingMessages() {
-            const chat = document.getElementById('chat');
-            if (!chat || !window.ltmManager) return;
-            
-            const messages = chat.querySelectorAll('.message');
-            console.log(`📨 Duke ngarkuar ${messages.length} mesazhe ekzistuese...`);
-            
-            messages.forEach(message => {
-                this.saveMessageToMemory(message);
-            });
-            
-            this.updateMemoryDisplay();
-        }
-        
-        saveMessageToMemory(messageElement) {
-            if (!window.ltmManager) return;
-            
-            const messageText = messageElement.querySelector('.message-text');
-            const sender = messageElement.classList.contains('user') ? 'user' : 
-                          messageElement.classList.contains('bot') ? 'ai' : null;
-            
-            if (messageText && sender) {
-                const text = messageText.textContent || messageText.innerText;
-                if (text.trim()) {
-                    if (sender === 'user') {
-                        window.ltmManager.addUserMessage(text);
-                    } else {
-                        window.ltmManager.addAIResponse(text);
-                    }
-                    this.messageCount++;
-                }
-            }
-        }
-        
-        startMonitoring() {
-            console.log("👀 Duke nisur monitorimin e mesazheve...");
-            const chat = document.getElementById('chat');
-            if (!chat) return;
-            
-            let lastChildCount = chat.children.length;
-            
-            // Monitoro për mesazhe të reja
-            setInterval(() => {
-                const currentCount = chat.children.length;
-                
-                if (currentCount > lastChildCount) {
-                    console.log(`🆕 U gjetën ${currentCount - lastChildCount} mesazhe të reja`);
-                    
-                    const newMessages = Array.from(chat.children).slice(lastChildCount);
-                    newMessages.forEach(message => {
-                        this.saveMessageToMemory(message);
-                    });
-                    
-                    this.updateMemoryDisplay();
-                    lastChildCount = currentCount;
-                }
-            }, 1000);
-            
-            // Monitoro butonin e dërgimit
-            this.monitorSendButton();
-        }
-        
-        monitorSendButton() {
-            const sendButton = document.getElementById('send-btn');
-            const userInput = document.getElementById('user-input');
-            
-            if (sendButton && userInput) {
-                sendButton.addEventListener('click', () => {
-                    const message = userInput.value.trim();
-                    if (message && window.ltmManager) {
-                        window.ltmManager.addUserMessage(message);
-                        this.updateMemoryDisplay();
-                    }
-                });
-                
-                userInput.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter' && window.ltmManager) {
-                        const message = userInput.value.trim();
-                        if (message) {
-                            window.ltmManager.addUserMessage(message);
-                            this.updateMemoryDisplay();
-                        }
-                    }
-                });
-            }
-        }
+    function activateSimpleAI() {
+        addMessage('🤖 Sistemi', '✅ Modaliteti Normal u aktivizua!', 'bot');
     }
 
-    // INICIALIZO SISTEMIN
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log("📄 DOM u ngarkua - duke nisur Simple Memory Integration...");
-        setTimeout(() => {
-            window.simpleMemoryIntegration = new SimpleMemoryIntegration();
-        }, 2000);
-    });
-
-    console.log("🧠 Simple Memory Integration Script u ngarkua!");
-
-    // ======================================================
-    // 🎯 ULTRA-EFFECTIVE MEMORY INTEGRATION
-    // ======================================================
-
-    console.log("🎯 Duke nisur Ultra-Effective Memory Integration...");
-
-    class UltraMemoryIntegration {
-        constructor() {
-            this.isMonitoring = false;
-            this.processedMessages = new Set();
-            this.start();
-        }
-        
-        start() {
-            console.log("🚀 Duke nisur monitorimin ultra-effectiv...");
-            
-            // 1. Prit deri të jetë gati LTM
-            this.waitForLTM().then(() => {
-                console.log("✅ LTM është gati, duke nisur monitorimin...");
-                
-                // 2. Ngarko mesazhet ekzistuese
-                this.loadExistingMessages();
-                
-                // 3. Nis monitorimin e vazhdueshëm
-                this.startAggressiveMonitoring();
-                
-                // 4. Monitoro butonin dhe input-in
-                this.monitorUserInteractions();
-                
-                this.isMonitoring = true;
-                console.log("✅ Ultra Memory Integration u aktivizua!");
-            });
-        }
-        
-        async waitForLTM() {
-            while (!window.ltmManager || !window.ltmManager.isInitialized) {
-                console.log("⏳ Duke pritur LTM...");
-                await new Promise(resolve => setTimeout(resolve, 500));
-            }
-            return true;
-        }
-        
-        loadExistingMessages() {
-            const chat = document.getElementById('chat');
-            if (!chat) return;
-            
-            const messages = chat.querySelectorAll('.message');
-            console.log(`📨 Duke ngarkuar ${messages.length} mesazhe ekzistuese...`);
-            
-            messages.forEach((message, index) => {
-                this.processMessage(message, `existing-${index}`);
-            });
-            
-            this.updateMemoryDisplay();
-        }
-        
-        startAggressiveMonitoring() {
-            // Monitoro çdo 500ms për mesazhe të reja
-            setInterval(() => {
-                this.monitorNewMessages();
-            }, 500);
-            
-            // Gjithashtu monitoro ndryshimet në DOM
-            this.observeDOMChanges();
-        }
-        
-        monitorNewMessages() {
-            const chat = document.getElementById('chat');
-            if (!chat || !window.ltmManager) return;
-            
-            const messages = chat.querySelectorAll('.message');
-            
-            messages.forEach((message, index) => {
-                const messageId = this.getMessageId(message, index);
-                
-                if (!this.processedMessages.has(messageId)) {
-                    console.log(`🆕 Mesazh i ri u zbulua: ${messageId}`);
-                    this.processMessage(message, messageId);
-                    this.processedMessages.add(messageId);
-                }
-            });
-        }
-        
-        getMessageId(message, index) {
-            // Krijo ID unik për mesazhin
-            const text = message.querySelector('.message-text')?.textContent || '';
-            const sender = message.classList.contains('user') ? 'user' : 
-                          message.classList.contains('bot') ? 'ai' : 'unknown';
-            
-            return `${sender}-${text.substring(0, 20)}-${index}`;
-        }
-        
-        processMessage(message, messageId) {
-            if (!window.ltmManager) return;
-            
-            const messageText = message.querySelector('.message-text');
-            const sender = message.classList.contains('user') ? 'user' : 
-                          message.classList.contains('bot') ? 'ai' : null;
-            
-            if (messageText && sender) {
-                const text = messageText.textContent || messageText.innerText;
-                
-                if (text && text.trim() && text.length > 1) {
-                    console.log(`💾 Duke procesuar mesazh ${sender}: ${text.substring(0, 40)}...`);
-                    
-                    try {
-                        if (sender === 'user') {
-                            window.ltmManager.addUserMessage(text);
-                        } else {
-                            window.ltmManager.addAIResponse(text);
-                        }
-                        
-                        // Update display menjëherë
-                        this.updateMemoryDisplay();
-                        
-                    } catch (error) {
-                        console.error("❌ Gabim në ruajtjen e mesazhit:", error);
-                    }
-                }
-            }
-        }
-        
-        observeDOMChanges() {
-            // Përdor MutationObserver për të kapur ndryshimet në DOM
-            const chat = document.getElementById('chat');
-            if (!chat) return;
-            
-            const observer = new MutationObserver((mutations) => {
-                mutations.forEach((mutation) => {
-                    if (mutation.type === 'childList') {
-                        mutation.addedNodes.forEach((node) => {
-                            if (node.nodeType === 1 && node.classList && 
-                                (node.classList.contains('message') || node.querySelector('.message'))) {
-                                
-                                const message = node.classList.contains('message') ? node : node.querySelector('.message');
-                                if (message) {
-                                    setTimeout(() => {
-                                        this.processMessage(message, `dom-${Date.now()}`);
-                                    }, 100);
-                                }
-                            }
-                        });
-                    }
-                });
-            });
-            
-            observer.observe(chat, { childList: true, subtree: true });
-            console.log("👀 MutationObserver u aktivizua!");
-        }
-        
-        monitorUserInteractions() {
-            const sendButton = document.getElementById('send-btn');
-            const userInput = document.getElementById('user-input');
-            
-            if (sendButton) {
-                sendButton.addEventListener('click', () => {
-                    this.handleUserMessage();
-                });
-            }
-            
-            if (userInput) {
-                userInput.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        this.handleUserMessage();
-                    }
-                });
-            }
-        }
-        
-        handleUserMessage() {
-            const userInput = document.getElementById('user-input');
-            if (userInput && window.ltmManager) {
-                const message = userInput.value.trim();
-                if (message) {
-                    console.log("🎯 Duke parandaluar mesazhin e user-it:", message);
-                    // Mesazhi do të kapet automatikisht nga monitorimi
-                }
-            }
-        }
-        
-        updateMemoryDisplay() {
-            if (!window.ltmManager) return;
-            
-            try {
-                const stats = window.ltmManager.getMemoryStats();
-                
-                // Update header
-                const memoryStatus = document.getElementById('memory-status');
-                if (memoryStatus) {
-                    memoryStatus.innerHTML = `🧠 ${stats.total_messages} mesazhe | ${stats.capacity}`;
-                }
-                
-                // Update dashboard
-                const dashTotal = document.getElementById('dash-total');
-                const dashUser = document.getElementById('dash-user');
-                const dashAi = document.getElementById('dash-ai');
-                const dashCapacity = document.getElementById('dash-capacity');
-                
-                if (dashTotal) dashTotal.textContent = stats.total_messages;
-                if (dashUser) dashUser.textContent = stats.user_messages;
-                if (dashAi) dashAi.textContent = stats.ai_messages;
-                if (dashCapacity) dashCapacity.textContent = stats.capacity;
-                
-                console.log(`📊 Memory updated: ${stats.total_messages} mesazhe`);
-                
-            } catch (error) {
-                console.error("❌ Gabim në update të display-it:", error);
-            }
-        }
+    function activateAdvancedAI() {
+        addMessage('🌌 Sistemi', '🚀 Modaliteti RRUFE u aktivizua!', 'bot');
     }
 
-    // INICIALIZO SISTEMIN
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log("📄 DOM u ngarkua - duke nisur Ultra Memory Integration...");
-        
-        // Jep kohë sistemeve të tjera të ngarkohen
-        setTimeout(() => {
-            window.ultraMemoryIntegration = new UltraMemoryIntegration();
-        }, 3000);
-    });
+    function activateDivineAI() {
+        addMessage('⚡ Sistemi', '✨ Modaliteti Divine u aktivizua!', 'bot');
+    }
 
-    // GJITHASHTU PROVO KUR WINDOW ËSHTË GATI
-    window.addEventListener('load', function() {
-        console.log("🔄 Window u ngarkua - duke kontrolluar memory integration...");
-        
-        setTimeout(() => {
-            if (!window.ultraMemoryIntegration) {
-                window.ultraMemoryIntegration = new UltraMemoryIntegration();
-            }
-        }, 5000);
-    });
-
-    console.log("🎯 Ultra Memory Integration Script u ngarkua!");
+    console.log("✅ ChatAI ALBA u inicializua me sukses!");
   </script>
 
-<!-- === 🚀 8 MODULET RRUFE-TESLA - VERSION FINAL === -->
+<!-- === 🚀 MODULET RRUFE-TESLA === -->
 <script src="./js/modules/quantumMemory.js"></script>
 <script src="./js/modules/bioNeuralNetwork.js"></script>
 <script src="./js/modules/temporalContext.js"></script>
@@ -1889,11 +1462,8 @@
 <script src="./js/modules/HUMAN_HEART_BRIDGE.js"></script>
 <script src="./js/modules/ENERGY_QUOTA_SYSTEM.js"></script>
 <script src="./js/modules/COSMIC_RESONANCE_MONITOR.js"></script>
-<!-- <script src="./js/modules/multilingualSystem.js"></script> -->
 
 <script src="./utils/LongTermMemoryManager.js"></script> 
-<!-- <script src="./js/chat.js"></script> -->
-<!-- ✅ LIDHJA KRYESORE -->
- <script src="./js/main.js"></script>
+<script src="./js/main.js"></script>
 </body>
 </html>
