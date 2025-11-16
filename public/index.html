@@ -171,6 +171,19 @@
       box-shadow: none;
     }
 
+    #login-screen #input-area {
+    display: none !important;
+}
+
+#chat-screen #input-area {
+    display: flex !important;
+}
+
+/* Sigurohu që input area është e fshehur në fillim */
+#input-area {
+    display: none;
+}
+
     /* ==================== 🎨 HEADER I RI - MOBILE OPTIMIZED ==================== */
     
     /* Header i ri me gradient */
@@ -638,8 +651,8 @@
     </div>
   </div>
 
-  <!-- INPUT AREA -->
-  <footer id="input-area">
+  <!-- INPUT AREA - E FSHIHUR NË FILLIM -->
+<footer id="input-area" style="display: none;">
     <button id="emoji-btn">😊</button>
     <div id="emoji-panel" class="hidden">
         <span>😀</span><span>😂</span><span>😍</span><span>🔥</span><span>😎</span>
@@ -656,7 +669,7 @@
 
     <input type="text" id="user-input" placeholder="Shkruaj mesazhin...">
     <button id="send-btn">➤</button>
-  </footer>
+</footer>
 
   <!-- Modal për API Key -->
   <div id="api-key-modal" class="modal">
