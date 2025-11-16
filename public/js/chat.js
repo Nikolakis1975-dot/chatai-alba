@@ -8,10 +8,10 @@ console.log("🎯 chat.js - RRUFE-TESLA 10.5 po ngarkohet...");
 // 📊 VARIABLA GLOBALE
 // ======================================================
 
-let currentUser = null;
-let chatHistory = [];
-let isTyping = false;
-window.currentAIMode = 'SIMPLE'; // SIMPLE, ADVANCED, DIVINE
+
+window.chatHistory = window.chatHistory || [];
+window.isTyping = window.isTyping || false;
+window.currentAIMode = window.currentAIMode || 'SIMPLE';
 
 // ======================================================
 // 🧠 LOCAL CHAT INTELLIGENCE SYSTEM
