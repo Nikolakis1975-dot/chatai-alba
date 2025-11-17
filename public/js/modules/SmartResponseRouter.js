@@ -1,5 +1,5 @@
 // ======================================================
-// 🧠 SmartResponseRouter - RRUFE-TESLA 10.5
+// 🧠 SmartResponseRouter.js - RRUFE-TESLA 10.5
 // ======================================================
 // SISTEM I RI I MENÇUR PËR ROUTING TË PËRGJIGJEVE
 // ======================================================
