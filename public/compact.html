@@ -1198,6 +1198,21 @@ const chatScreen = document.getElementById('chat-screen');
 if (chatScreen) {
     observer.observe(chatScreen, { attributes: true });
 }
+
+// ======================== FSHI BUTONIN ADMIN PANEL ===============================
+setTimeout(() => {
+    const header = document.querySelector('header');
+    if (header) {
+        const buttons = header.querySelectorAll('button');
+        buttons.forEach(button => {
+            if (button.textContent.includes('ADMIN PANEL') && 
+                !button.classList.contains('submenu-toggle')) {
+                console.log('🗑️ Duke fshirë butonin ADMIN PANEL');
+                button.remove();
+            }
+        });
+    }
+}, 3000);
     
   </script>
 
