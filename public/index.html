@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ChatAI ALBA - Version i Ri me Server</title>
-
+  <title>ChatAI ALBA - RRUFE TESLA 10.5</title>
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -170,10 +169,122 @@
       transform: none;
       box-shadow: none;
     }
+
+    /* 🆕 STILET E REJA PËR DROPDOWN MENU */
+    .dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .dropdown-btn {
+      background: #ffffff;
+      color: #5f6368;
+      border: 1px solid #e0e0e0;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+
+    .dropdown-btn:hover {
+      background: #f8f9fa;
+      border-color: #dadce0;
+    }
+
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      right: 0;
+      background-color: #ffffff;
+      min-width: 200px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      z-index: 1000;
+      border: 1px solid #e0e0e0;
+      margin-top: 5px;
+    }
+
+    .dropdown-content.show {
+      display: block;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    .dropdown-item {
+      display: block;
+      width: 100%;
+      padding: 12px 16px;
+      border: none;
+      background: none;
+      text-align: left;
+      cursor: pointer;
+      font-size: 14px;
+      color: #5f6368;
+      transition: background-color 0.2s;
+      border-bottom: 1px solid #f8f9fa;
+    }
+
+    .dropdown-item:last-child {
+      border-bottom: none;
+    }
+
+    .dropdown-item:hover {
+      background-color: #f8f9fa;
+      color: #202124;
+    }
+
+    .dropdown-item i {
+      margin-right: 8px;
+      width: 20px;
+      text-align: center;
+    }
+
+    /* Memory Status në Header */
+    #memory-status {
+      display: inline-block;
+      margin-left: 15px;
+      padding: 5px 10px;
+      background: rgba(0,0,0,0.1);
+      border-radius: 15px;
+      font-size: 12px;
+      border: 1px solid #00ff00;
+    }
+
+    /* AI Controls */
+    .ai-controls {
+      display: inline-block;
+      margin-right: 15px;
+    }
+
+    .ai-controls button {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 20px;
+      margin: 2px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .ai-controls button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    .ai-controls button:nth-child(2) {
+      background: #2196F3;
+    }
+
+    .ai-controls button:nth-child(3) {
+      background: #9C27B0;
+    }
   </style>
 </head>
 <body>
-  <!-- Login & Register - DESIGN I RI -->
+  <!-- LOGIN SCREEN -->
   <div id="login-screen">
     <div class="login-container">
       <div class="login-header">
@@ -258,45 +369,54 @@
         <span id="profile-name"></span>
       </div>
 
-     <!-- 🎯 BUTONAT E RINJ TË KONTROLLIT TË AI -->
-        <div class="ai-controls" style="display: inline-block; margin-right: 15px;">
-            <button onclick="activateSimpleAI()" style="background: #4CAF50; color: white; border: none; padding: 8px 12px; border-radius: 20px; margin: 2px; font-size: 12px; cursor: pointer;">🔹 Normal</button>
-            <button onclick="activateAdvancedAI()" style="background: #2196F3; color: white; border: none; padding: 8px 12px; border-radius: 20px; margin: 2px; font-size: 12px; cursor: pointer;">🌌 RRUFE</button>
-            <button onclick="activateDivineAI()" style="background: #9C27B0; color: white; border: none; padding: 8px 12px; border-radius: 20px; margin: 2px; font-size: 12px; cursor: pointer;">⚡ Divine</button>
+      <!-- 🎯 KONTROLLET E AI -->
+      <div class="ai-controls">
+        <button onclick="activateSimpleAI()">🔹 Normal</button>
+        <button onclick="activateAdvancedAI()">🌌 RRUFE</button>
+        <button onclick="activateDivineAI()">⚡ Divine</button>
       </div>
-      <!-- BUTONAT E MENAXHIMIT -->
-      <button id="verify-email-btn" onclick="verifyEmail()">📧 Verifiko Email</button>
-      <button id="change-photo">🖼️ Ndrysho Foto</button>
-      <button id="api-key-btn">🔑 API Key</button>
-      <button id="download-history">📥 Shkarko</button>
-      <button id="upload-history">📤 Ngarko</button>
-      <button id="clear-history">🗑️ Fshi</button>
-      <button onclick="logout()">🚪 Dil</button>     
+
+      <!-- 🆕 DROPDOWN MENU PËR TË GJITHA BUTONAT -->
+      <div class="dropdown">
+        <button class="dropdown-btn">☰ Menu</button>
+        <div class="dropdown-content" id="main-menu">
+          <button class="dropdown-item" onclick="verifyEmail()"><i>📧</i> Verifiko Email</button>
+          <button class="dropdown-item" onclick="changePhoto()"><i>🖼️</i> Ndrysho Foto</button>
+          <button class="dropdown-item" onclick="showApiKeyModal()"><i>🔑</i> API Key</button>
+          <button class="dropdown-item" onclick="downloadHistory()"><i>📥</i> Shkarko</button>
+          <button class="dropdown-item" onclick="uploadHistory()"><i>📤</i> Ngarko</button>
+          <button class="dropdown-item" onclick="clearHistory()"><i>🗑️</i> Fshi</button>
+          <button class="dropdown-item" onclick="showMemoryStats()"><i>🧠</i> Memory Stats</button>
+          <button class="dropdown-item" onclick="showAdminPanel()"><i>👑</i> Admin Panel</button>
+          <button class="dropdown-item" onclick="logout()" style="color: #ea4335;"><i>🚪</i> Dil</button>
+        </div>
+      </div>
     </header>
     
     <main id="chat"></main>
 
-  <!-- NË public/index.html - ZËVENDËSO BUTONIN -->
-<footer id="input-area">
-    <button id="emoji-btn">😊</button>
-    <div id="emoji-panel" class="hidden">
+    <!-- INPUT AREA - VETËM NË CHAT SCREEN -->
+    <footer id="input-area">
+      <button id="emoji-btn">😊</button>
+      <div id="emoji-panel" class="hidden">
         <span>😀</span><span>😂</span><span>😍</span><span>🔥</span><span>😎</span>
         <span>🤔</span><span>😢</span><span>❤️</span><span>👍</span><span>👎</span>
-    </div>
+      </div>
 
-  <!-- 🎤 BUTONI I VOICE AI -->
-    <button id="voice-btn" 
-            onclick="voiceButtonClick(event)"
-            style="background:#2E86AB; color:white; border:none; border-radius:50%; width:45px; height:45px; margin-right:10px; cursor:pointer; font-size:18px;"
-            title="Kliko për të folur (Voice AI)">
-        🎤
-    </button> 
+      <!-- 🎤 BUTONI I VOICE AI -->
+      <button id="voice-btn" 
+              onclick="voiceButtonClick(event)"
+              style="background:#2E86AB; color:white; border:none; border-radius:50%; width:45px; height:45px; margin-right:10px; cursor:pointer; font-size:18px;"
+              title="Kliko për të folur (Voice AI)">
+          🎤
+      </button> 
 
-    <input type="text" id="user-input" placeholder="Shkruaj mesazhin...">
-    <button id="send-btn">➤</button>
-</footer>
+      <input type="text" id="user-input" placeholder="Shkruaj mesazhin...">
+      <button id="send-btn">➤</button>
+    </footer>
+  </div>
 
-  <!-- Modal për API Key -->
+  <!-- MODAL PËR API KEY -->
   <div id="api-key-modal" class="modal">
     <div class="modal-content">
       <span class="close">&times;</span>
@@ -319,7 +439,7 @@
     </div>
   </div>
 
-  <!-- Modal për Verifikim Email-i -->
+  <!-- MODAL PËR VERIFIKIM EMAIL-I -->
   <div id="email-verification-modal" class="modal">
     <div class="modal-content">
       <span class="close">&times;</span>
@@ -337,17 +457,65 @@
 
   <script src="script.js"></script>
   <script>
+    // 🆕 FUNKSIONET PËR DROPDOWN MENU
+    document.addEventListener('DOMContentLoaded', function() {
+      // Toggle dropdown menu
+      const dropdownBtn = document.querySelector('.dropdown-btn');
+      const dropdownContent = document.getElementById('main-menu');
+      
+      dropdownBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        dropdownContent.classList.toggle('show');
+      });
+      
+      // Mbyll dropdown kur klikohet jashtë
+      document.addEventListener('click', function() {
+        dropdownContent.classList.remove('show');
+      });
+      
+      // Parandalon mbylljen kur klikohet brenda dropdown
+      dropdownContent.addEventListener('click', function(e) {
+        e.stopPropagation();
+      });
+    });
 
-        // ==================== SISTEMI I RI I VERIFIKIMIT EMAIL ====================
+    // 🆕 FUNKSIONE TË REJA PËR MENU
+    function showApiKeyModal() {
+      document.getElementById('api-key-modal').style.display = 'block';
+      updateApiKeyStatus();
+    }
+    
+    function changePhoto() {
+      document.getElementById('new-photo').click();
+    }
+    
+    function showMemoryStats() {
+      if (window.ltmManager) {
+        const stats = window.ltmManager.getMemoryStats();
+        alert(`🧠 Statistikat e Memories:\n\n📊 Total: ${stats.total_messages}\n👤 User: ${stats.user_messages}\n🤖 AI: ${stats.ai_messages}\n💾 Kapaciteti: ${stats.capacity}`);
+      } else {
+        alert('❌ Memory nuk është inicializuar!');
+      }
+    }
+    
+    function showAdminPanel() {
+      // Shfaq panelin e adminit nëse përdoruesi është admin
+      const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+      if (user.isAdmin) {
+        // Implemento logjikën e admin panel këtu
+        alert('👑 Admin Panel - Funksionaliteti do të implementohet!');
+      } else {
+        alert('❌ Ju nuk keni të drejta administratori!');
+      }
+    }
 
-    // Funksioni për regjistrim me email
+    // ==================== SISTEMI I VERIFIKIMIT EMAIL ====================
     async function registerWithEmail() {
       const username = document.getElementById('reg-username').value.trim();
       const email = document.getElementById('reg-email').value.trim();
       const password = document.getElementById('reg-password').value;
       const confirmPassword = document.getElementById('reg-confirm-password').value;
 
-      // Validimi
       if (!username || !email || !password || !confirmPassword) {
         alert('❌ Ju lutem plotësoni të gjitha fushat!');
         return;
@@ -364,28 +532,20 @@
       }
 
       try {
-        // Shfaq loading
         const registerBtn = document.querySelector('.login-btn');
         registerBtn.textContent = '🔄 Po regjistrohet...';
         registerBtn.disabled = true;
 
         const response = await fetch('/api/email/register-with-email', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ 
-            username: username, 
-            email: email, 
-            password: password 
-          })
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ username, email, password })
         });
 
         const data = await response.json();
 
         if (data.success) {
           alert('✅ ' + data.message + '\n\nKontrollo email-in për linkun e verifikimit!');
-          // Pastro formularin
           document.getElementById('reg-username').value = '';
           document.getElementById('reg-email').value = '';
           document.getElementById('reg-password').value = '';
@@ -397,14 +557,13 @@
         console.error('Gabim në regjistrim:', error);
         alert('❌ Problem me serverin. Provo përsëri më vonë.');
       } finally {
-        // Rikthe butonin
         const registerBtn = document.querySelector('.login-btn');
         registerBtn.textContent = '📧 Regjistrohu me Email';
         registerBtn.disabled = false;
       }
     }
 
-    // Funksioni për verifikim email (butoni në header)
+// Funksioni për verifikim email (butoni në header)
     async function verifyEmail() {
       try {
         const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
