@@ -310,6 +310,19 @@ header > button:not(.submenu-toggle):not(.ai-modes-compact button) {
 header > button[onclick="logout()"] {
     display: none !important;
 } 
+
+  /* 🚫 FSHI BUTONIN "ADMIN PANEL" */
+header > button:contains("ADMIN PANEL"),
+header > button[onclick*="showAdminPanel"],
+header > button:first-child:not(.submenu-toggle) {
+    display: none !important;
+}
+
+/* Ose përdor selektor më specifik */
+button[onclick*="showAdminPanel"],
+button:has-text("ADMIN PANEL") {
+    display: none !important;
+}
 </style>
   
 </head>
