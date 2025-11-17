@@ -292,6 +292,26 @@
       transform: translateY(-2px);
     }
   </style>
+  
+<style> 
+
+ /* 🚫 FSHI BUTONAT E VJETËR NË HEADER */
+header > button:not(.submenu-toggle):not(.ai-modes-compact button) {
+    display: none !important;
+}
+
+/* Fshi butonat specifikë */
+#verify-email-btn,
+#change-photo,
+#api-key-btn, 
+#download-history,
+#upload-history,
+#clear-history,
+header > button[onclick="logout()"] {
+    display: none !important;
+} 
+</style>
+  
 </head>
 <body>
   <!-- Login & Register - DESIGN I RI -->
