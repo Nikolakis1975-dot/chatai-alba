@@ -1,51 +1,83 @@
 // ======================================================
-// 🧠 SmartResponseRouter - RRUFE-TESLA 10.5
+// 🧠 SmartResponseRouter - RRUFE-TESLA 10.5 - VERSION I SIGURT
 // ======================================================
-// SISTEM I RI I MENÇUR PËR ROUTING TË PËRGJIGJEVE
+// SISTEM I RI I MENÇUR PËR ROUTING TË PËRGJIGJEVE - PA KONFLIKTE
 // ======================================================
 
-console.log("🚀 Duke ngarkuar SmartResponseRouter...");
+console.log("🚀 Duke ngarkuar SmartResponseRouter (Version i Sigurt)...");
 
 class SmartResponseRouter {
     constructor() {
-        this.name = "SmartResponseRouter";
-        this.version = "1.0";
+        this.name = "SmartResponseRouter-Safe";
+        this.version = "1.1-safe";
         this.initialized = false;
         this.config = {};
         this.messageHistory = [];
+        this.safeMode = true; // 🛡️ MOD I RI I SIGURISË
         
-        console.log(`🎯 ${this.name} v${this.version} u instancua`);
+        console.log(`🎯 ${this.name} v${this.version} u instancua (Safe Mode)`);
     }
 
-    // ==================== INICIALIZIMI ====================
+    // ==================== INICIALIZIM I SIGURT ====================
     
-    async initialize() {
+    async initializeSafely() {
         if (this.initialized) {
             console.log("⏩ SmartResponseRouter tashmë është inicializuar");
             return true;
         }
 
-        console.log("🔄 Duke inicializuar SmartResponseRouter...");
+        console.log("🛡️ Duke inicializuar SmartResponseRouter në mënyrë të sigurt...");
         
         try {
+            // 🚫 KONTROLLO NËSE SISTEMI ËSHTË GATI - MOS VEPRO PARAKOHTË
+            if (!this.isSystemReady()) {
+                console.log("⏳ Sistemi nuk është gati, duke pritur...");
+                setTimeout(() => this.initializeSafely(), 2000);
+                return false;
+            }
+            
             // Ngarko konfigurimin
             await this.loadConfiguration();
             
-            // Setup event listeners
-            this.setupEventListeners();
+            // 🚫 MOS KONFIGURO EVENT LISTENERS KËTU - do të bëhet nga main.js
+            console.log("🎧 Event listeners do të konfigurohen nga main.js");
             
             // Kontrollo statusin e API
             await this.checkAPIStatus();
             
             this.initialized = true;
-            console.log("✅ SmartResponseRouter u inicializua me sukses!");
+            console.log("✅ SmartResponseRouter u inicializua me sukses (Safe Mode)!");
             
             return true;
             
         } catch (error) {
-            console.error("❌ Gabim në inicializimin e SmartResponseRouter:", error);
+            console.error("❌ Gabim në inicializimin e sigurt:", error);
             return false;
         }
+    }
+
+    // 🛡️ FUNKSION I RI: KONTROLLO NËSE SISTEMI ËSHTË GATI
+    isSystemReady() {
+        const requiredElements = [
+            'user-input',
+            'send-btn', 
+            'chat-screen',
+            'chat'
+        ];
+        
+        const allReady = requiredElements.every(id => {
+            const element = document.getElementById(id);
+            const isReady = element !== null;
+            if (!isReady) {
+                console.log(`⏳ Elementi ${id} nuk është gati ende`);
+            }
+            return isReady;
+        });
+        
+        // Kontrollo gjithashtu nëse sistemi i vjetër është i gatshëm
+        const isOldSystemReady = typeof addMessage === 'function';
+        
+        return allReady && isOldSystemReady;
     }
 
     async loadConfiguration() {
@@ -78,10 +110,17 @@ class SmartResponseRouter {
                 enableLocalAI: true,
                 enableRrufeCommands: true,
                 fallbackEnabled: true
+            },
+            
+            // 🛡️ KONFIGURIM I RI I SIGURISË
+            safety: {
+                autoInitialize: false, // 🚫 MOS AUTO-INICIALIZO
+                checkSystemReady: true,
+                maxWaitTime: 10000
             }
         };
         
-        console.log("⚙️ Konfigurimi u ngarkua:", this.config);
+        console.log("⚙️ Konfigurimi i sigurt u ngarkua");
     }
 
     // ==================== ANALIZA E MESAZHEVE ====================
@@ -367,8 +406,9 @@ class SmartResponseRouter {
         console.log("🎯 Duke procesuar komandë RRUFE-TESLA:", message);
         
         try {
-            // PROVO SISTEMIN E VJETËR RRUFE-TESLA PARË
+            // 🛡️ PROVO SISTEMIN E VJETËR RRUFE-TESLA PARË - ME KONTROLL
             if (typeof window.processRrufeCommand === 'function') {
+                console.log("🔗 Duke përdorur sistemin ekzistues RRUFE-TESLA...");
                 const response = await window.processRrufeCommand(message);
                 if (response && !response.includes('duke u procesuar')) {
                     return response;
@@ -562,16 +602,17 @@ class SmartResponseRouter {
         );
     }
 
-    setupEventListeners() {
-        console.log("🎧 Duke konfiguruar event listeners...");
-        // Këtu mund të shtohen event listeners për komunikim me sistemet e tjera
-    }
+    // 🛡️ NUK KA EVENT LISTENERS KËTU - do të konfigurohen nga main.js
 
     // ==================== API PUBLIKE ====================
 
     async processUserMessage(message) {
         if (!this.initialized) {
-            await this.initialize();
+            console.log("⏳ SmartResponseRouter nuk është inicializuar, duke u inicializuar...");
+            const initialized = await this.initializeSafely();
+            if (!initialized) {
+                return "🔄 Sistemi po inicializohet, provoni përsëri...";
+            }
         }
         
         console.log(`🧠 SmartResponseRouter po proceson: "${message.substring(0, 50)}..."`);
@@ -600,13 +641,14 @@ class SmartResponseRouter {
             name: this.name,
             version: this.version,
             initialized: this.initialized,
+            safeMode: this.safeMode,
             messagesProcessed: this.messageHistory.length,
             config: this.config
         };
     }
 }
 
-// ==================== EKSPORTIMI ====================
+// ==================== EKSPORTIM I SIGURT ====================
 
 // Krijo instancë globale
 window.SmartResponseRouter = SmartResponseRouter;
@@ -614,23 +656,14 @@ window.SmartResponseRouter = SmartResponseRouter;
 // Krijo instancë default
 window.smartResponseRouter = new SmartResponseRouter();
 
-// Auto-inicializim
-document.addEventListener('DOMContentLoaded', function() {
-    console.log("📄 DOM u ngarkua - duke inicializuar SmartResponseRouter...");
-    
-    setTimeout(async () => {
-        await window.smartResponseRouter.initialize();
-        console.log("🎉 SmartResponseRouter është gati për përdorim!");
-    }, 2000);
-});
+// 🛡️ NUK KA AUTO-INICIALIZIM - prit thirrje manuale nga main.js
+console.log("✅ SmartResponseRouter (Version i Sigurt) u ngarkua - Duke pritur inicializim manual");
 
-console.log("✅ SmartResponseRouter.js u ngarkua!");
-
-// ==================== TESTIMI ====================
+// ==================== TESTIM I SIGURT ====================
 
 // Funksion për testim të shpejtë
 window.testSmartRouter = async function(message = "Pershendetje") {
-    console.log("🧪 TEST I SMART ROUTER:");
+    console.log("🧪 TEST I SMART ROUTER (Safe Mode):");
     const response = await window.smartResponseRouter.processUserMessage(message);
     console.log("📝 Përgjigja:", response);
     return response;
