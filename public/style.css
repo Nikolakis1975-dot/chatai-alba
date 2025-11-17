@@ -947,3 +947,164 @@ header button:last-child:hover {
     margin-bottom: 10px !important;
   }
 }
+
+/* 🆕 STILET PËR MENU DROPDOWN */
+.menu-container {
+  position: relative;
+  display: inline-block;
+}
+
+.menu-btn {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  padding: 8px 16px;
+  border-radius: 6px;
+  color: #5f6368;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.menu-btn:hover {
+  background: #f8f9fa;
+  border-color: #dadce0;
+}
+
+.menu-btn::after {
+  content: "▼";
+  font-size: 10px;
+  margin-left: 5px;
+}
+
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  min-width: 220px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  z-index: 1000;
+  margin-top: 5px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.dropdown-menu.show {
+  display: block;
+}
+
+.menu-item {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+  color: #5f6368;
+  transition: background 0.2s;
+  border-bottom: 1px solid #f5f5f5;
+  font-family: inherit;
+}
+
+.menu-item:last-child {
+  border-bottom: none;
+}
+
+.menu-item:hover {
+  background: #f8f9fa;
+  color: #202124;
+}
+
+.menu-divider {
+  height: 1px;
+  background: #e0e0e0;
+  margin: 5px 0;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 🆕 HEADER I OPTIMIZUAR */
+header {
+  background: #ffffff;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid #e0e0e0;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  flex-wrap: wrap;
+}
+
+/* 🆕 INPUT AREA - VETËM NË CHAT */
+#input-area {
+  display: flex;
+  align-items: center;
+  padding: 20px;
+  background: #ffffff;
+  border-top: 1px solid #e0e0e0;
+  position: relative;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ✅ SIGUROHU QË INPUT-I NUK SHFAQET NË LOGIN */
+#login-screen #input-area {
+  display: none !important;
+}
+
+/* 🆕 PËRSHTATJE PËR MOBILE */
+@media (max-width: 768px) {
+  .menu-btn {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+  
+  .dropdown-menu {
+    min-width: 180px;
+    right: -10px;
+  }
+  
+  .menu-item {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+  
+  header {
+    padding: 10px 15px;
+    gap: 8px;
+  }
+  
+  .ai-controls {
+    margin-right: 10px !important;
+  }
+  
+  .ai-controls button {
+    padding: 6px 10px !important;
+    font-size: 11px !important;
+    margin: 1px !important;
+  }
+}
+
+/* 🆕 STILET PËR MODALET E REJA */
+#system-info-modal .modal-content {
+  max-width: 600px;
+}
+
+#system-info-content {
+  max-height: 400px;
+  overflow-y: auto;
+}
