@@ -1,5 +1,5 @@
 // ======================================================
-// 🧠 SmartResponseRouter.js - RRUFE-TESLA 10.5
+// 🧠 SmartResponseRouter - RRUFE-TESLA 10.5
 // ======================================================
 // SISTEM I RI I MENÇUR PËR ROUTING TË PËRGJIGJEVE
 // ======================================================
@@ -182,54 +182,54 @@ class SmartResponseRouter {
     }
 
     isMathExpression(message) {
-    // Heq komandën /llogarit nëse ekziston
-    const cleanMessage = message.replace(/^\/llogarit\s*/i, '').trim();
-    
-    // Kontrollo për pyetje matematikore (version i përmirësuar)
-    const mathPatterns = [
-        /sa\s+bejn[ëe]?\s*\d+/i,           // "sa bejne 5"
-        /sa\s+është\s*\d+/i,              // "sa është 5"  
-        /llogarit\s+.+/i,                 // "llogarit diçka"
-        /^\d+[\s\d+\-*/().^%]+$/,         // shprehje e pastër matematikore
-        /[\d+\-*/().^%]+\s*[\+\-\*\/\^]\s*[\d+\-*/().^%]+/, // operatorë matematikorë
-        /sa\s+bën\s*.+/i,                 // "sa bën 5+5"
-        /sasia\s+.+/i,                    // "sasia e diçkaje"
-        /shuma\s+.+/i,                    // "shuma e"
-        /prodhimi\s+.+/i,                 // "prodhimi i"
-        /përqindja\s+.+/i,                // "përqindja e"
-        /\d+\s*[\+\-\*\/\^]\s*\d+/        // numër operator numër
-    ];
-    
-    const hasMathOperators = /[\d+\-*/().^%]/.test(cleanMessage);
-    const isPureMath = /^[\d+\-*/().^%\s]+$/.test(cleanMessage.replace(/\s/g, ''));
-    const hasMathQuestion = mathPatterns.some(pattern => pattern.test(cleanMessage.toLowerCase()));
-    const hasMathKeywords = /(llogarit|sasia|shuma|prodhim|përqindje|plus|minus|shum[ëe]|pjest[ëe]|fuqi)/i.test(cleanMessage);
-    
-    return (isPureMath && hasMathOperators) || hasMathQuestion || hasMathKeywords;
-}
+        // Heq komandën /llogarit nëse ekziston
+        const cleanMessage = message.replace(/^\/llogarit\s*/i, '').trim();
+        
+        // Kontrollo për pyetje matematikore (version i përmirësuar)
+        const mathPatterns = [
+            /sa\s+bejn[ëe]?\s*\d+/i,           // "sa bejne 5"
+            /sa\s+është\s*\d+/i,              // "sa është 5"  
+            /llogarit\s+.+/i,                 // "llogarit diçka"
+            /^\d+[\s\d+\-*/().^%]+$/,         // shprehje e pastër matematikore
+            /[\d+\-*/().^%]+\s*[\+\-\*\/\^]\s*[\d+\-*/().^%]+/, // operatorë matematikorë
+            /sa\s+bën\s*.+/i,                 // "sa bën 5+5"
+            /sasia\s+.+/i,                    // "sasia e diçkaje"
+            /shuma\s+.+/i,                    // "shuma e"
+            /prodhimi\s+.+/i,                 // "prodhimi i"
+            /përqindja\s+.+/i,                // "përqindja e"
+            /\d+\s*[\+\-\*\/\^]\s*\d+/        // numër operator numër
+        ];
+        
+        const hasMathOperators = /[\d+\-*/().^%]/.test(cleanMessage);
+        const isPureMath = /^[\d+\-*/().^%\s]+$/.test(cleanMessage.replace(/\s/g, ''));
+        const hasMathQuestion = mathPatterns.some(pattern => pattern.test(cleanMessage.toLowerCase()));
+        const hasMathKeywords = /(llogarit|sasia|shuma|prodhim|përqindje|plus|minus|shum[ëe]|pjest[ëe]|fuqi)/i.test(cleanMessage);
+        
+        return (isPureMath && hasMathOperators) || hasMathQuestion || hasMathKeywords;
+    }
 
-isGreeting(message) {
-    const greetings = [
-        'pershendetje', 'hello', 'hi', 'tung', 'ciao', 'mirëmëngjes', 
-        'mirëdita', 'mirëmbrëma', 'çkemi', 'tungjatjeta', 'good morning',
-        'good afternoon', 'good evening', 'hey', 'salut', 'bonjour'
-    ];
-    
-    // Kontrollo nëse mesazhi është kryesisht përshëndetje
-    const lowerMsg = message.toLowerCase().trim();
-    const isDirectGreeting = greetings.some(greet => 
-        lowerMsg === greet || 
-        lowerMsg.startsWith(greet + ' ') || 
-        lowerMsg.endsWith(' ' + greet) ||
-        lowerMsg.includes(' ' + greet + ' ')
-    );
-    
-    // Kontrollo për përshëndetje të thjeshta
-    const simpleGreetings = ['hi', 'hey', 'hello', 'tung', 'ciao'];
-    const isSimpleGreeting = simpleGreetings.some(greet => lowerMsg === greet);
-    
-    return isDirectGreeting || isSimpleGreeting;
-}
+    isGreeting(message) {
+        const greetings = [
+            'pershendetje', 'hello', 'hi', 'tung', 'ciao', 'mirëmëngjes', 
+            'mirëdita', 'mirëmbrëma', 'çkemi', 'tungjatjeta', 'good morning',
+            'good afternoon', 'good evening', 'hey', 'salut', 'bonjour'
+        ];
+        
+        // Kontrollo nëse mesazhi është kryesisht përshëndetje
+        const lowerMsg = message.toLowerCase().trim();
+        const isDirectGreeting = greetings.some(greet => 
+            lowerMsg === greet || 
+            lowerMsg.startsWith(greet + ' ') || 
+            lowerMsg.endsWith(' ' + greet) ||
+            lowerMsg.includes(' ' + greet + ' ')
+        );
+        
+        // Kontrollo për përshëndetje të thjeshta
+        const simpleGreetings = ['hi', 'hey', 'hello', 'tung', 'ciao'];
+        const isSimpleGreeting = simpleGreetings.some(greet => lowerMsg === greet);
+        
+        return isDirectGreeting || isSimpleGreeting;
+    }
 
     isComplexQuestion(message) {
         const complexKeywords = [
@@ -364,40 +364,40 @@ isGreeting(message) {
     }
 
     async processRrufeCommand(message) {
-    console.log("🎯 Duke procesuar komandë RRUFE-TESLA:", message);
-    
-    try {
-        // PROVO SISTEMIN E VJETËR RRUFE-TESLA PARË
-        if (typeof window.processRrufeCommand === 'function') {
-            const response = await window.processRrufeCommand(message);
-            if (response && !response.includes('duke u procesuar')) {
-                return response;
+        console.log("🎯 Duke procesuar komandë RRUFE-TESLA:", message);
+        
+        try {
+            // PROVO SISTEMIN E VJETËR RRUFE-TESLA PARË
+            if (typeof window.processRrufeCommand === 'function') {
+                const response = await window.processRrufeCommand(message);
+                if (response && !response.includes('duke u procesuar')) {
+                    return response;
+                }
             }
+            
+            // PROVO KOMANDAT EKZISTUESE
+            if (message.startsWith('/wiki ')) {
+                const query = message.replace('/wiki ', '').trim();
+                return `🌐 Informacione për "${query}" nga Wikipedia...`;
+            }
+            
+            if (message.startsWith('/moti ')) {
+                const query = message.replace('/moti ', '').trim();
+                return `🌍 Informacione moti për "${query}"...`;
+            }
+            
+            if (message === '/ndihmo') {
+                return `👑 **SISTEMI I KOMANDAVE - RRUFE-TESLA** 👑\n\n📋 KOMANDAT BAZE:\n• /ndihmo - Shfaq këtë listë\n• /wiki - Kërko Wikipedia\n• /moti - Informacion moti\n• /perkthim - Përkthim tekst\n• /meso - Mëso diçka të re\n\n🔧 **Sistemi i ri SmartRouter është aktiv!**`;
+            }
+            
+            // Fallback inteligjent
+            return `🔧 [RRUFE-TESLA] Komanda "${message}" po ekzekutohet nga sistemi i ri inteligjent...`;
+            
+        } catch (error) {
+            console.error("❌ Gabim në procesimin e komandës:", error);
+            return `🔧 [RRUFE-TESLA] Komanda "${message}" u pranua. Sistemi po punon në të...`;
         }
-        
-        // PROVO KOMANDAT EKZISTUESE
-        if (message.startsWith('/wiki ')) {
-            const query = message.replace('/wiki ', '').trim();
-            return `🌐 Informacione për "${query}" nga Wikipedia...`;
-        }
-        
-        if (message.startsWith('/moti ')) {
-            const query = message.replace('/moti ', '').trim();
-            return `🌍 Informacione moti për "${query}"...`;
-        }
-        
-        if (message === '/ndihmo') {
-            return `👑 **SISTEMI I KOMANDAVE - RRUFE-TESLA** 👑\n\n📋 KOMANDAT BAZE:\n• /ndihmo - Shfaq këtë listë\n• /wiki - Kërko Wikipedia\n• /moti - Informacion moti\n• /perkthim - Përkthim tekst\n• /meso - Mëso diçka të re\n\n🔧 **Sistemi i ri SmartRouter është aktiv!**`;
-        }
-        
-        // Fallback inteligjent
-        return `🔧 [RRUFE-TESLA] Komanda "${message}" po ekzekutohet nga sistemi i ri inteligjent...`;
-        
-    } catch (error) {
-        console.error("❌ Gabim në procesimin e komandës:", error);
-        return `🔧 [RRUFE-TESLA] Komanda "${message}" u pranua. Sistemi po punon në të...`;
     }
-}
 
     async processLocally(message) {
         console.log("🔧 Duke procesuar lokal:", message);
