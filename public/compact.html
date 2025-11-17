@@ -480,7 +480,7 @@
     <a href="index.html">🖥️ Kthehu në versionin standard</a>
   </div>
 
-  <!-- <script src="script.js"></script> -->
+  <script src="script.js"></script>
   <script>
     // ==================== SISTEMI I RI I VERIFIKIMIT EMAIL ====================
 
@@ -1094,22 +1094,77 @@
 
     console.log("✅ Compact version u ngarkua plotësisht!");
 
-    // ========= FSHI BUTONAT E VJETËR PASI TË NGARKOHET FAQJA ====================
-setTimeout(() => {
+  // ==================== 🎯 FSHI BUTONAT E VJETËR NË HEADER ====================
+
+function cleanupCompactHeader() {
+    console.log("🧹 Duke pastruar header-in kompakt...");
+    
     const header = document.querySelector('header');
-    if (header) {
-        // Fshi butonat specifikë
-        const oldButtons = header.querySelectorAll('button');
-        oldButtons.forEach(button => {
-            if (!button.classList.contains('submenu-toggle') && 
-                !button.classList.contains('ai-modes-compact') &&
-                button.id !== 'memory-status') {
-                button.remove();
+    if (!header) return;
+    
+    // Butonat që duhen mbajtur
+    const keepSelectors = [
+        '#user-profile',
+        '.compact-header',
+        '.admin-submenu', 
+        '.ai-modes-compact',
+        '#memory-status',
+        '.submenu-toggle'
+    ];
+    
+    // Fshi të gjithë butonat që nuk janë në listën e mbajtur
+    const allButtons = header.querySelectorAll('button');
+    allButtons.forEach(button => {
+        let shouldKeep = false;
+        
+        // Kontrollo nëse butoni është pjesë e elementeve që duhen mbajtur
+        keepSelectors.forEach(selector => {
+            if (button.closest(selector)) {
+                shouldKeep = true;
             }
         });
-        console.log('✅ Butonat e vjetër u fshinë nga header');
-    }
-}, 3000);
+        
+        // Kontrollo nëse është buton AI mode
+        if (button.textContent === '🔹' || button.textContent === '🌌' || button.textContent === '⚡') {
+            shouldKeep = true;
+        }
+        
+        // Kontrollo nëse është buton ADMIN
+        if (button.classList.contains('submenu-toggle')) {
+            shouldKeep = true;
+        }
+        
+        if (!shouldKeep) {
+            console.log(`🗑️ Duke fshirë butonin: ${button.textContent}`);
+            button.remove();
+        }
+    });
+    
+    console.log("✅ Header-i u pastrua!");
+}
+
+// Ekzekuto pasi të ngarkohet faqja
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(cleanupCompactHeader, 2000);
+});
+
+// Ekzekuto kur ndryshon display-i i chat-screen
+const observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+            const chatScreen = document.getElementById('chat-screen');
+            if (chatScreen && chatScreen.style.display !== 'none') {
+                setTimeout(cleanupCompactHeader, 1000);
+            }
+        }
+    });
+});
+
+// Vëzhgo ndryshimet në chat-screen
+const chatScreen = document.getElementById('chat-screen');
+if (chatScreen) {
+    observer.observe(chatScreen, { attributes: true });
+}
     
   </script>
 
