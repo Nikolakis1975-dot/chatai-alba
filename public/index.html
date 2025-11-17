@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ChatAI ALBA - RRUFE TESLA 10.5</title>
+  <title>ChatAI ALBA - Version i Ri me Server</title>
+
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,299 +12,168 @@
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
   <style>
-    /* STILET E MODALEVE */
+    /* Stili për modalin e API Key */
     .modal {
       display: none;
       position: fixed;
-      z-index: 10000;
+      z-index: 1000;
       left: 0;
       top: 0;
       width: 100%;
       height: 100%;
       background-color: rgba(0,0,0,0.5);
-      animation: fadeIn 0.3s ease;
     }
-
+    
     .modal-content {
-      background-color: #ffffff;
-      margin: 10% auto;
-      padding: 25px;
-      border-radius: 12px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-      width: 90%;
+      background-color: #fefefe;
+      margin: 15% auto;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      width: 80%;
       max-width: 500px;
-      border: 1px solid #e0e0e0;
-      position: relative;
-      animation: slideDown 0.3s ease;
     }
-
+    
     .close {
-      color: #5f6368;
+      color: #aaa;
       float: right;
       font-size: 28px;
       font-weight: bold;
       cursor: pointer;
-      line-height: 1;
-      transition: color 0.3s ease;
-      position: absolute;
-      right: 20px;
-      top: 15px;
     }
-
+    
     .close:hover {
-      color: #202124;
+      color: black;
     }
-
+    
     .api-key-form {
       margin-top: 20px;
     }
-
+    
     .api-key-form input {
       width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    
+    .api-key-form .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    
+    .api-key-form button {
+      flex: 1;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    
+    .api-key-form button.save-btn {
+      background-color: #4285f4;
+    }
+    
+    .api-key-form button.save-btn:hover {
+      background-color: #3367d6;
+    }
+    
+    .api-key-form button.delete-btn {
+      background-color: #ea4335;
+    }
+    
+    .api-key-form button.delete-btn:hover {
+      background-color: #d33426;
+    }
+    
+    .api-status {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+    
+    .api-status.valid {
+      background-color: #e6f4ea;
+      color: #137333;
+    }
+    
+    .api-status.invalid {
+      background-color: #fce8e6;
+      color: #c5221f;
+    }
+
+    /* Stili për formularin e ri të regjistrimit me email */
+    .email-input-group {
+      margin-bottom: 15px;
+    }
+
+    .email-input-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+      color: #333;
+    }
+
+    .email-input-group input {
+      width: 100%;
       padding: 12px;
-      margin: 12px 0;
-      border: 2px solid #e0e0e0;
+      border: 2px solid #e1e5e9;
       border-radius: 8px;
       font-size: 16px;
       transition: border-color 0.3s;
     }
 
-    .api-key-form input:focus {
+    .email-input-group input:focus {
       border-color: #4285f4;
       outline: none;
     }
 
-    .api-key-form .button-group {
-      display: flex;
-      gap: 12px;
-      margin-top: 20px;
-    }
-
-    .api-key-form button {
-      flex: 1;
-      color: white;
-      border: none;
-      padding: 12px 16px;
+    .verification-info {
+      background: #e8f4fd;
+      border: 1px solid #b3e0ff;
       border-radius: 8px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
-      transition: all 0.3s ease;
-    }
-
-    .api-key-form button.save-btn {
-      background-color: #4285f4;
-    }
-
-    .api-key-form button.save-btn:hover {
-      background-color: #3367d6;
-      transform: translateY(-1px);
-    }
-
-    .api-key-form button.delete-btn {
-      background-color: #ea4335;
-    }
-
-    .api-key-form button.delete-btn:hover {
-      background-color: #d33426;
-      transform: translateY(-1px);
-    }
-
-    .api-status {
-      margin-top: 15px;
       padding: 12px;
-      border-radius: 8px;
+      margin: 15px 0;
       font-size: 14px;
-      border: 1px solid transparent;
     }
 
-    .api-status.valid {
-      background-color: #e6f4ea;
-      color: #137333;
-      border-color: #34a853;
+    .verification-info h4 {
+      margin: 0 0 8px 0;
+      color: #0066cc;
     }
 
-    .api-status.invalid {
-      background-color: #fce8e6;
-      color: #c5221f;
-      border-color: #ea4335;
-    }
-
-    /* STILET E DROPDOWN MENU */
-    .dropdown {
-      position: relative;
-      display: inline-block;
-    }
-
-    .dropdown-btn {
-      background: #ffffff;
-      color: #5f6368;
-      border: 1px solid #e0e0e0;
-      padding: 10px 16px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .dropdown-btn:hover {
-      background: #f8f9fa;
-      border-color: #dadce0;
-    }
-
-    .dropdown-content {
-      display: none;
-      position: absolute;
-      right: 0;
-      background-color: #ffffff;
-      min-width: 220px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-      border-radius: 8px;
-      z-index: 1000;
-      border: 1px solid #e0e0e0;
-      margin-top: 8px;
-      overflow: hidden;
-    }
-
-    .dropdown-content.show {
-      display: block;
-      animation: fadeInUp 0.2s ease;
-    }
-
-    .dropdown-item {
-      display: flex;
-      align-items: center;
-      width: 100%;
-      padding: 12px 16px;
-      border: none;
-      background: none;
-      text-align: left;
-      cursor: pointer;
-      font-size: 14px;
-      color: #5f6368;
-      transition: all 0.2s ease;
-      border-bottom: 1px solid #f8f9fa;
-      gap: 10px;
-    }
-
-    .dropdown-item:last-child {
-      border-bottom: none;
-    }
-
-    .dropdown-item:hover {
-      background-color: #f8f9fa;
-      color: #202124;
-    }
-
-    .dropdown-item i {
-      width: 20px;
-      text-align: center;
-      font-size: 16px;
-    }
-
-    /* ANIMACIONET */
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    @keyframes slideDown {
-      from { 
-        opacity: 0;
-        transform: translateY(-20px);
-      }
-      to { 
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    /* MEMORY STATUS */
-    #memory-status {
-      display: inline-block;
-      margin-left: 15px;
-      padding: 6px 12px;
-      background: rgba(66, 133, 244, 0.1);
-      border-radius: 15px;
-      font-size: 12px;
-      border: 1px solid #4285f4;
-      color: #4285f4;
-      font-weight: 500;
-    }
-
-    /* AI CONTROLS */
-    .ai-controls {
-      display: inline-block;
-      margin-right: 15px;
-    }
-
-    .ai-controls button {
-      background: #4CAF50;
+    /* Stili për butonin e verifikimit */
+    #verify-email-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
       border: none;
-      padding: 8px 14px;
-      border-radius: 20px;
-      margin: 2px;
-      font-size: 12px;
+      padding: 10px 15px;
+      border-radius: 8px;
       cursor: pointer;
-      transition: all 0.3s ease;
-      font-weight: 500;
+      font-size: 14px;
+      margin-right: 10px;
+      transition: transform 0.2s;
     }
 
-    .ai-controls button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    #verify-email-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
     }
 
-    .ai-controls button:nth-child(2) {
-      background: #2196F3;
-    }
-
-    .ai-controls button:nth-child(3) {
-      background: #9C27B0;
-    }
-
-    /* EMAIL VERIFICATION STATUS */
-    .email-status {
-      display: inline-flex;
-      align-items: center;
-      padding: 4px 8px;
-      border-radius: 12px;
-      font-size: 11px;
-      font-weight: 500;
-      margin-left: 8px;
-    }
-
-    .email-status.verified {
-      background: #e6f4ea;
-      color: #137333;
-      border: 1px solid #34a853;
-    }
-
-    .email-status.unverified {
-      background: #fef7e0;
-      color: #f9ab00;
-      border: 1px solid #f9ab00;
+    #verify-email-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
     }
   </style>
 </head>
 <body>
-  <!-- LOGIN SCREEN -->
+  <!-- Login & Register - DESIGN I RI -->
   <div id="login-screen">
     <div class="login-container">
       <div class="login-header">
@@ -364,8 +234,8 @@
           <div class="file-upload">
             <label for="new-photo">Foto profili (opsionale)</label>
             <label class="file-input">
-              <input type="file" id="new-photo" accept="image/*" onchange="handlePhotoUpload(event)">
-              <span>📷 Kliko për të ngarkuar foto</span>
+              <input type="file" id="new-photo" accept="image/*">
+              <span>Kliko për të ngarkuar foto</span>
             </label>
           </div>
 
@@ -386,78 +256,50 @@
       <div id="user-profile">
         <img id="profile-pic" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%234285f4'%3E%3Cpath d='M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E" alt="Foto profili">
         <span id="profile-name"></span>
-        <span id="email-status" class="email-status"></span>
       </div>
 
-      <!-- 🎯 KONTROLLET E AI -->
-      <div class="ai-controls">
-        <button onclick="activateSimpleAI()">🔹 Normal</button>
-        <button onclick="activateAdvancedAI()">🌌 RRUFE</button>
-        <button onclick="activateDivineAI()">⚡ Divine</button>
+     <!-- 🎯 BUTONAT E RINJ TË KONTROLLIT TË AI -->
+        <div class="ai-controls" style="display: inline-block; margin-right: 15px;">
+            <button onclick="activateSimpleAI()" style="background: #4CAF50; color: white; border: none; padding: 8px 12px; border-radius: 20px; margin: 2px; font-size: 12px; cursor: pointer;">🔹 Normal</button>
+            <button onclick="activateAdvancedAI()" style="background: #2196F3; color: white; border: none; padding: 8px 12px; border-radius: 20px; margin: 2px; font-size: 12px; cursor: pointer;">🌌 RRUFE</button>
+            <button onclick="activateDivineAI()" style="background: #9C27B0; color: white; border: none; padding: 8px 12px; border-radius: 20px; margin: 2px; font-size: 12px; cursor: pointer;">⚡ Divine</button>
       </div>
-
-      <!-- 🆕 DROPDOWN MENU -->
-      <div class="dropdown">
-        <button class="dropdown-btn">☰ Menu</button>
-        <div class="dropdown-content" id="main-menu">
-          <button class="dropdown-item" onclick="verifyEmail()">
-            <i>📧</i> Verifiko Email
-          </button>
-          <button class="dropdown-item" onclick="changePhoto()">
-            <i>🖼️</i> Ndrysho Foto
-          </button>
-          <button class="dropdown-item" onclick="showApiKeyModal()">
-            <i>🔑</i> API Key
-          </button>
-          <button class="dropdown-item" onclick="downloadHistory()">
-            <i>📥</i> Shkarko
-          </button>
-          <button class="dropdown-item" onclick="uploadHistory()">
-            <i>📤</i> Ngarko
-          </button>
-          <button class="dropdown-item" onclick="clearHistory()">
-            <i>🗑️</i> Fshi
-          </button>
-          <button class="dropdown-item" onclick="showMemoryStats()">
-            <i>🧠</i> Memory Stats
-          </button>
-          <button class="dropdown-item" onclick="showAdminPanel()">
-            <i>👑</i> Admin Panel
-          </button>
-          <button class="dropdown-item" onclick="logout()" style="color: #ea4335;">
-            <i>🚪</i> Dil
-          </button>
-        </div>
-      </div>
+      <!-- BUTONAT E MENAXHIMIT -->
+      <button id="verify-email-btn" onclick="verifyEmail()">📧 Verifiko Email</button>
+      <button id="change-photo">🖼️ Ndrysho Foto</button>
+      <button id="api-key-btn">🔑 API Key</button>
+      <button id="download-history">📥 Shkarko</button>
+      <button id="upload-history">📤 Ngarko</button>
+      <button id="clear-history">🗑️ Fshi</button>
+      <button onclick="logout()">🚪 Dil</button>     
     </header>
     
     <main id="chat"></main>
 
-    <!-- INPUT AREA -->
-    <footer id="input-area">
-      <button id="emoji-btn">😊</button>
-      <div id="emoji-panel" class="hidden">
+  <!-- NË public/index.html - ZËVENDËSO BUTONIN -->
+<footer id="input-area">
+    <button id="emoji-btn">😊</button>
+    <div id="emoji-panel" class="hidden">
         <span>😀</span><span>😂</span><span>😍</span><span>🔥</span><span>😎</span>
         <span>🤔</span><span>😢</span><span>❤️</span><span>👍</span><span>👎</span>
-      </div>
+    </div>
 
-      <!-- 🎤 BUTONI I VOICE AI -->
-      <button id="voice-btn" 
-              onclick="voiceButtonClick(event)"
-              style="background:#2E86AB; color:white; border:none; border-radius:50%; width:45px; height:45px; margin-right:10px; cursor:pointer; font-size:18px;"
-              title="Kliko për të folur (Voice AI)">
-          🎤
-      </button> 
+  <!-- 🎤 BUTONI I VOICE AI -->
+    <button id="voice-btn" 
+            onclick="voiceButtonClick(event)"
+            style="background:#2E86AB; color:white; border:none; border-radius:50%; width:45px; height:45px; margin-right:10px; cursor:pointer; font-size:18px;"
+            title="Kliko për të folur (Voice AI)">
+        🎤
+    </button> 
 
-      <input type="text" id="user-input" placeholder="Shkruaj mesazhin...">
-      <button id="send-btn">➤</button>
-    </footer>
-  </div>
+    <input type="text" id="user-input" placeholder="Shkruaj mesazhin...">
+    <button id="send-btn">➤</button>
+</footer>
 
-  <!-- MODAL PËR API KEY -->
+  <!-- Modal për API Key -->
   <div id="api-key-modal" class="modal">
     <div class="modal-content">
-      <span class="close" onclick="closeModal('api-key-modal')">&times;</span>
+      <span class="close">&times;</span>
       <h2>Konfigurimi i API Key</h2>
       <p>Vendos API Key për Gemini për të aktivizuar funksionalitetin e plotë të chatbotit.</p>
       
@@ -477,17 +319,17 @@
     </div>
   </div>
 
-  <!-- MODAL PËR VERIFIKIM EMAIL-I -->
+  <!-- Modal për Verifikim Email-i -->
   <div id="email-verification-modal" class="modal">
     <div class="modal-content">
-      <span class="close" onclick="closeModal('email-verification-modal')">&times;</span>
+      <span class="close">&times;</span>
       <h2>📧 Verifikim Email-i</h2>
       
       <div id="verification-content">
         <p id="verification-message">Po dërgohet email-i i verifikimit...</p>
         <div class="button-group">
           <button class="save-btn" onclick="resendVerificationEmail()">🔄 Ridërgo Email</button>
-          <button class="delete-btn" onclick="closeModal('email-verification-modal')">Mbyll</button>
+          <button class="delete-btn" onclick="closeVerificationModal()">Mbyll</button>
         </div>
       </div>
     </div>
@@ -495,226 +337,8 @@
 
   <script src="script.js"></script>
   <script>
-    // 🆕 SISTEMI I MENU DHE MODALEVE
-    document.addEventListener('DOMContentLoaded', function() {
-      console.log("🎯 Duke inicializuar sistemin...");
-      
-      // Dropdown Menu
-      const dropdownBtn = document.querySelector('.dropdown-btn');
-      const dropdownContent = document.getElementById('main-menu');
-      
-      if (dropdownBtn && dropdownContent) {
-        dropdownBtn.addEventListener('click', function(e) {
-          e.stopPropagation();
-          dropdownContent.classList.toggle('show');
-        });
-        
-        // Mbyll dropdown kur klikohet jashtë
-        document.addEventListener('click', function() {
-          dropdownContent.classList.remove('show');
-        });
-        
-        // Parandalon mbylljen kur klikohet brenda dropdown
-        dropdownContent.addEventListener('click', function(e) {
-          e.stopPropagation();
-        });
-      }
 
-      // Modal Management
-      setupModals();
-      
-      // Kontrollo statusin e përdoruesit
-      checkUserStatus();
-    });
-
-    // 🆕 FUNKSIONET E REJA PËR MENU DHE MODALE
-    function setupModals() {
-      // Mbyll modal kur klikohet jashtë
-      window.onclick = function(event) {
-        const modals = document.querySelectorAll('.modal');
-        modals.forEach(modal => {
-          if (event.target === modal) {
-            modal.style.display = 'none';
-          }
-        });
-      }
-    }
-
-    function closeModal(modalId) {
-      document.getElementById(modalId).style.display = 'none';
-    }
-
-    function showApiKeyModal() {
-      document.getElementById('api-key-modal').style.display = 'block';
-      updateApiKeyStatus();
-    }
-
-    // 🆕 FUNKSIONI PËR VERIFIKIM EMAIL-I
-    async function checkUserStatus() {
-      try {
-        const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
-        
-        if (user.username) {
-          // Merr të dhënat e fundit nga serveri
-          const response = await fetch(`/api/user/status?username=${user.username}`, {
-            credentials: 'include'
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            if (data.success) {
-              updateEmailStatus(data.user);
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Gabim në kontrollimin e statusit:', error);
-      }
-    }
-
-    function updateEmailStatus(userData) {
-      const emailStatus = document.getElementById('email-status');
-      if (emailStatus && userData) {
-        if (userData.email_verified) {
-          emailStatus.textContent = '✅ Email i Verifikuar';
-          emailStatus.className = 'email-status verified';
-        } else if (userData.email) {
-          emailStatus.textContent = '📧 Email i Paregjistruar';
-          emailStatus.className = 'email-status unverified';
-        } else {
-          emailStatus.textContent = '❌ Pa Email';
-          emailStatus.className = 'email-status unverified';
-        }
-      }
-    }
-
-    // 🆕 FUNKSIONI PËR NDRYSHIM FOTOS
-    function handlePhotoUpload(event) {
-      const file = event.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const profilePic = document.getElementById('profile-pic');
-          if (profilePic) {
-            profilePic.src = e.target.result;
-            // Ruaj në localStorage për sesionin aktual
-            localStorage.setItem('userProfilePic', e.target.result);
-          }
-        };
-        reader.readAsDataURL(file);
-      }
-    }
-
-    function changePhoto() {
-      document.getElementById('new-photo').click();
-    }
-
-    // 🆕 FUNKSIONET E MENU-S
-    function showMemoryStats() {
-      if (window.ltmManager) {
-        const stats = window.ltmManager.getMemoryStats();
-        alert(`🧠 Statistikat e Memories:\n\n📊 Total: ${stats.total_messages}\n👤 User: ${stats.user_messages}\n🤖 AI: ${stats.ai_messages}\n💾 Kapaciteti: ${stats.capacity}`);
-      } else {
-        alert('❌ Memory nuk është inicializuar!');
-      }
-    }
-
-    function showAdminPanel() {
-      const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
-      if (user.isAdmin) {
-        // Shfaq admin panel
-        alert('👑 Admin Panel - Funksionaliteti do të implementohet!');
-      } else {
-        alert('❌ Ju nuk keni të drejta administratori!');
-      }
-    }
-
-    // 🆕 FUNKSIONI I KORRIGJUAR PËR VERIFIKIM EMAIL
-    async function verifyEmail() {
-      try {
-        const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
-        
-        if (!user.username) {
-          alert('❌ Nuk jeni i loguar!');
-          return;
-        }
-
-        // Merr të dhënat e fundit nga serveri
-        const response = await fetch(`/api/user/status?username=${user.username}`, {
-          credentials: 'include'
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success) {
-            const userData = data.user;
-            
-            if (!userData.email) {
-              alert('❌ Përdoruesi nuk ka email të regjistruar.');
-              return;
-            }
-
-            if (userData.email_verified) {
-              alert('✅ Email-i juaj është tashmë i verifikuar!');
-              updateEmailStatus(userData);
-              return;
-            }
-
-            // Shfaq modal për verifikim
-            document.getElementById('email-verification-modal').style.display = 'block';
-            document.getElementById('verification-message').textContent = 'Po dërgohet email-i i verifikimit...';
-
-            const verifyResponse = await fetch('/api/email/resend-verification', {
-              method: 'POST',
-              headers: {'Content-Type': 'application/json'},
-              body: JSON.stringify({ email: userData.email, username: userData.username })
-            });
-
-            const verifyData = await verifyResponse.json();
-
-            if (verifyData.success) {
-              document.getElementById('verification-message').textContent = '✅ ' + verifyData.message;
-            } else {
-              document.getElementById('verification-message').textContent = '❌ ' + verifyData.message;
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Gabim në verifikim:', error);
-        document.getElementById('verification-message').textContent = '❌ Problem me serverin. Provo përsëri më vonë.';
-      }
-    }
-
-    // 🆕 FUNKSIONI PËR RIDËRGIM EMAIL
-    async function resendVerificationEmail() {
-      try {
-        const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
-        
-        document.getElementById('verification-message').textContent = '🔄 Po dërgohet email-i...';
-
-        const response = await fetch('/api/email/resend-verification', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ 
-            email: user.email,
-            username: user.username 
-          })
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-          document.getElementById('verification-message').textContent = '✅ ' + data.message;
-        } else {
-          document.getElementById('verification-message').textContent = '❌ ' + data.message;
-        }
-      } catch (error) {
-        console.error('Gabim në ridërgim:', error);
-        document.getElementById('verification-message').textContent = '❌ Problem me serverin.';
-      }
-    }
-
-  // ==================== SISTEMI I RI I VERIFIKIMIT EMAIL ====================
+        // ==================== SISTEMI I RI I VERIFIKIMIT EMAIL ====================
 
     // Funksioni për regjistrim me email
     async function registerWithEmail() {
