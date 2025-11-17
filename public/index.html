@@ -447,7 +447,8 @@
   </div>
   <script src="script.js"></script>
   <script>
-    // 🆕 FUNKSIONET PËR MENU DROPDOWN
+    
+   // 🆕 FUNKSIONET PËR MENU DROPDOWN DHE MODALA
     function toggleMenu() {
       const menu = document.getElementById('main-menu');
       menu.classList.toggle('show');
@@ -455,7 +456,7 @@
 
     function openApiKeyModal() {
       document.getElementById('api-key-modal').style.display = 'block';
-      toggleMenu(); // Mbyll menu-n pas klikimit
+      toggleMenu();
     }
 
     function showSystemInfo() {
@@ -477,15 +478,203 @@
       document.getElementById('system-ai-mode').textContent = window.currentAIMode || 'Normal';
     }
 
+    // ✅ FUNKSIONET E REJA PËR MBYLLJEN E MODALAVE
+    function initializeModalCloseButtons() {
+      console.log("🔧 Duke inicializuar butonat e mbylljes së modalave...");
+      
+      // Modal API Key
+      const apiModal = document.getElementById('api-key-modal');
+      const apiClose = apiModal.querySelector('.close');
+      
+      apiClose.onclick = function() {
+        console.log("❌ Mbyllja e API Key modal u klikua");
+        apiModal.style.display = 'none';
+      }
+      
+      // Modal Verifikim Email
+      const emailModal = document.getElementById('email-verification-modal');
+      const emailClose = emailModal.querySelector('.close');
+      
+      emailClose.onclick = function() {
+        console.log("❌ Mbyllja e Email modal u klikua");
+        emailModal.style.display = 'none';
+      }
+      
+      // Modal System Info
+      const systemModal = document.getElementById('system-info-modal');
+      const systemClose = systemModal.querySelector('.close');
+      
+      systemClose.onclick = function() {
+        console.log("❌ Mbyllja e System Info modal u klikua");
+        systemModal.style.display = 'none';
+      }
+      
+      // Mbyll modalat kur klikohet jashtë
+      window.onclick = function(event) {
+        if (event.target == apiModal) {
+          apiModal.style.display = 'none';
+        }
+        if (event.target == emailModal) {
+          emailModal.style.display = 'none';
+        }
+        if (event.target == systemModal) {
+          systemModal.style.display = 'none';
+        }
+      }
+      
+      console.log("✅ Të gjithë butonat e mbylljes u inicializuan!");
+    }
+
+    // ✅ FUNKSION PËR MBYLLJEN E MODALIT TË VERIFIKIMIT EMAIL
+    function closeVerificationModal() {
+      document.getElementById('email-verification-modal').style.display = 'none';
+    }
+
+    // ✅ FUNKSION PËR NDRYSHIMIN E FOTOS
+    function changePhoto() {
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.accept = 'image/*';
+      
+      fileInput.onchange = function(e) {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            const profilePic = document.getElementById('profile-pic');
+            profilePic.src = e.target.result;
+            // Ruaj në localStorage
+            localStorage.setItem('userProfilePic', e.target.result);
+            alert('✅ Fotoja e profilit u përditësua me sukses!');
+          }
+          reader.readAsDataURL(file);
+        }
+      }
+      
+      fileInput.click();
+      toggleMenu(); // Mbyll menu-n
+    }
+
+    // ✅ FUNKSIONET PËR MENAXHIMIN E HISTORISË
+    function downloadHistory() {
+      if (window.chatHistory && window.chatHistory.length > 0) {
+        const dataStr = JSON.stringify(window.chatHistory, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(dataBlob);
+        link.download = `rrufe-tesla-chat-${new Date().toISOString().split('T')[0]}.json`;
+        link.click();
+        
+        alert('💾 Historia u eksportua në formatin JSON!');
+      } else {
+        alert('❌ Nuk ka histori për të shkarkuar!');
+      }
+      toggleMenu();
+    }
+
+    function uploadHistory() {
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.accept = '.json';
+      
+      fileInput.onchange = function(e) {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            try {
+              const historyData = JSON.parse(e.target.result);
+              if (Array.isArray(historyData)) {
+                window.chatHistory = historyData;
+                alert('✅ Historia u importua me sukses!');
+              } else {
+                alert('❌ Skedari nuk është në formatin e duhur!');
+              }
+            } catch (error) {
+              alert('❌ Gabim në leximin e skedarit!');
+            }
+          }
+          reader.readAsText(file);
+        }
+      }
+      
+      fileInput.click();
+      toggleMenu();
+    }
+
+    function clearHistory() {
+      if (confirm('⚠️ Jeni i sigurt që dëshironi të fshini të gjithë historinë?')) {
+        window.chatHistory = [];
+        const chat = document.getElementById('chat');
+        if (chat) {
+          chat.innerHTML = '';
+        }
+        alert('🗑️ E gjithë historia u fshi!');
+      }
+      toggleMenu();
+    }
+
+    function showMemoryStats() {
+      if (window.ltmManager) {
+        const stats = window.ltmManager.getMemoryStats();
+        const message = `🧠 **Statistikat e Memories:**
+
+📊 **Total Mesazhe:** ${stats.total_messages}
+👤 **Mesazhe User:** ${stats.user_messages}
+🤖 **Mesazhe AI:** ${stats.ai_messages}
+💾 **Kapaciteti:** ${stats.capacity}
+🕒 **Përditësuar:** ${stats.last_updated ? new Date(stats.last_updated).toLocaleTimeString() : 'N/A'}
+
+*Memoria ruan 50 mesazhet e fundit për kontekst optimal.*`;
+        
+        alert(message);
+      } else {
+        alert('❌ Long-Term Memory nuk është inicializuar!');
+      }
+      toggleMenu();
+    }
+
     // Mbyll menu-n kur klikohet jashtë
     document.addEventListener('click', function(event) {
       const menu = document.getElementById('main-menu');
       const menuBtn = document.querySelector('.menu-btn');
       
-      if (!menu.contains(event.target) && !menuBtn.contains(event.target)) {
+      if (menu && menuBtn && !menu.contains(event.target) && !menuBtn.contains(event.target)) {
         menu.classList.remove('show');
       }
     });
+
+    // ✅ INICIALIZIMI KUR FAQJA NGARKOHET
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log("📄 DOM u ngarkua - duke inicializuar modalat...");
+      
+      // Inicializo butonat e mbylljes
+      setTimeout(initializeModalCloseButtons, 1000);
+      
+      // Kontrollo nëse ka foto profili të ruajtur
+      const savedProfilePic = localStorage.getItem('userProfilePic');
+      if (savedProfilePic) {
+        const profilePic = document.getElementById('profile-pic');
+        if (profilePic) {
+          profilePic.src = savedProfilePic;
+        }
+      }
+    });
+
+    // ✅ TEST I BUTONAVE TË MBYLLJES
+    function testCloseButtons() {
+      console.log("🧪 Testimi i butonave të mbylljes...");
+      console.log("- API Key modal:", document.getElementById('api-key-modal') ? "✅ Ekziston" : "❌ Nuk ekziston");
+      console.log("- Email modal:", document.getElementById('email-verification-modal') ? "✅ Ekziston" : "❌ Nuk ekziston");
+      console.log("- System Info modal:", document.getElementById('system-info-modal') ? "✅ Ekziston" : "❌ Nuk ekziston");
+      
+      // Testo manualisht
+      initializeModalCloseButtons();
+    }
+
+    // Bëj funksionin e testit të disponueshëm globalisht
+    window.testCloseButtons = testCloseButtons;
 
 // ==================== SISTEMI I RI I VERIFIKIMIT EMAIL ====================
 
