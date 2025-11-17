@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ChatAI ALBA - RRUFE TESLA 10.5</title>
+  <title>ChatAI ALBA - Version i Ri me Server</title>
 
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
@@ -26,13 +26,12 @@
     
     .modal-content {
       background-color: #fefefe;
-      margin: 10% auto;
-      padding: 25px;
-      border-radius: 12px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      margin: 15% auto;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
       width: 80%;
       max-width: 500px;
-      position: relative;
     }
     
     .close {
@@ -41,20 +40,10 @@
       font-size: 28px;
       font-weight: bold;
       cursor: pointer;
-      transition: all 0.3s ease;
-      line-height: 1;
-      width: 30px;
-      height: 30px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
     }
     
     .close:hover {
-      color: #000;
-      background: #f5f5f5;
-      transform: scale(1.1);
+      color: black;
     }
     
     .api-key-form {
@@ -158,113 +147,28 @@
     }
 
     /* Stili për butonin e verifikimit */
-    .verified-badge {
-      background: #34a853 !important;
-      color: white !important;
-    }
-
-    .verified-badge:hover {
-      background: #2e8b47 !important;
-    }
-
-    /* 🆕 STILI PËR MENU DROPDOWN */
-    .menu-container {
-      position: relative;
-      display: inline-block;
-    }
-
-    .menu-btn {
-      background: #ffffff;
-      border: 1px solid #e0e0e0;
-      padding: 8px 16px;
-      border-radius: 6px;
-      color: #5f6368;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .menu-btn:hover {
-      background: #f8f9fa;
-      border-color: #dadce0;
-    }
-
-    .menu-btn::after {
-      content: "▼";
-      font-size: 10px;
-      margin-left: 5px;
-    }
-
-    .dropdown-menu {
-      display: none;
-      position: absolute;
-      top: 100%;
-      right: 0;
-      background: white;
-      min-width: 220px;
-      border: 1px solid #e0e0e0;
-      border-radius: 8px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-      z-index: 1000;
-      margin-top: 5px;
-    }
-
-    .dropdown-menu.show {
-      display: block;
-      animation: fadeIn 0.2s ease-out;
-    }
-
-    .menu-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      width: 100%;
-      padding: 12px 16px;
+    #verify-email-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
       border: none;
-      background: none;
-      text-align: left;
+      padding: 10px 15px;
+      border-radius: 8px;
       cursor: pointer;
       font-size: 14px;
-      color: #5f6368;
-      transition: all 0.2s ease;
-      border-bottom: 1px solid #f5f5f5;
-      font-family: inherit;
+      margin-right: 10px;
+      transition: transform 0.2s;
     }
 
-    .menu-item:last-child {
-      border-bottom: none;
+    #verify-email-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
     }
 
-    .menu-item:hover {
-      background: #f8f9fa;
-      color: #202124;
-      transform: translateX(5px);
-    }
-
-    .menu-divider {
-      height: 1px;
-      background: #e0e0e0;
-      margin: 5px 0;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes slideDown {
-      from {
-        opacity: 0;
-        transform: translateY(-50px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+    #verify-email-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
     }
   </style>
 </head>
@@ -354,82 +258,43 @@
         <span id="profile-name"></span>
       </div>
 
-      <!-- 🎯 BUTONAT E RINJ TË KONTROLLIT TË AI -->
-      <div class="ai-controls" style="display: inline-block; margin-right: 15px;">
-        <button onclick="activateSimpleAI()" style="background: #4CAF50; color: white; border: none; padding: 8px 12px; border-radius: 20px; margin: 2px; font-size: 12px; cursor: pointer;">🔹 Normal</button>
-        <button onclick="activateAdvancedAI()" style="background: #2196F3; color: white; border: none; padding: 8px 12px; border-radius: 20px; margin: 2px; font-size: 12px; cursor: pointer;">🌌 RRUFE</button>
-        <button onclick="activateDivineAI()" style="background: #9C27B0; color: white; border: none; padding: 8px 12px; border-radius: 20px; margin: 2px; font-size: 12px; cursor: pointer;">⚡ Divine</button>
+     <!-- 🎯 BUTONAT E RINJ TË KONTROLLIT TË AI -->
+        <div class="ai-controls" style="display: inline-block; margin-right: 15px;">
+            <button onclick="activateSimpleAI()" style="background: #4CAF50; color: white; border: none; padding: 8px 12px; border-radius: 20px; margin: 2px; font-size: 12px; cursor: pointer;">🔹 Normal</button>
+            <button onclick="activateAdvancedAI()" style="background: #2196F3; color: white; border: none; padding: 8px 12px; border-radius: 20px; margin: 2px; font-size: 12px; cursor: pointer;">🌌 RRUFE</button>
+            <button onclick="activateDivineAI()" style="background: #9C27B0; color: white; border: none; padding: 8px 12px; border-radius: 20px; margin: 2px; font-size: 12px; cursor: pointer;">⚡ Divine</button>
       </div>
-
-      <!-- 🆕 MENU DROPDOWN E UNIFIKUAR -->
-      <div class="menu-container">
-        <button class="menu-btn" onclick="toggleMenu()">☰ Menu</button>
-        <div class="dropdown-menu" id="main-menu">
-          <button class="menu-item" id="email-verification-menu-item" onclick="verifyEmail()">
-            <span>📧</span>
-            <span>Verifiko Email</span>
-          </button>
-          <button class="menu-item" onclick="changePhoto()">
-            <span>🖼️</span>
-            <span>Ndrysho Foto</span>
-          </button>
-          <button class="menu-item" onclick="openApiKeyModal()">
-            <span>🔑</span>
-            <span>API Key</span>
-          </button>
-          <div class="menu-divider"></div>
-          <button class="menu-item" onclick="downloadHistory()">
-            <span>📥</span>
-            <span>Shkarko Historinë</span>
-          </button>
-          <button class="menu-item" onclick="uploadHistory()">
-            <span>📤</span>
-            <span>Ngarko Historinë</span>
-          </button>
-          <button class="menu-item" onclick="clearHistory()">
-            <span>🗑️</span>
-            <span>Fshi Historinë</span>
-          </button>
-          <div class="menu-divider"></div>
-          <button class="menu-item" onclick="showMemoryStats()">
-            <span>🧠</span>
-            <span>Statistikat e Memories</span>
-          </button>
-          <button class="menu-item" onclick="showSystemInfo()">
-            <span>📊</span>
-            <span>Informacione Sistemi</span>
-          </button>
-          <div class="menu-divider"></div>
-          <button class="menu-item" onclick="logout()" style="color: #ea4335;">
-            <span>🚪</span>
-            <span>Dil nga Llogaria</span>
-          </button>
-        </div>
-      </div>
+      <!-- BUTONAT E MENAXHIMIT -->
+      <button id="verify-email-btn" onclick="verifyEmail()">📧 Verifiko Email</button>
+      <button id="change-photo">🖼️ Ndrysho Foto</button>
+      <button id="api-key-btn">🔑 API Key</button>
+      <button id="download-history">📥 Shkarko</button>
+      <button id="upload-history">📤 Ngarko</button>
+      <button id="clear-history">🗑️ Fshi</button>
+      <button onclick="logout()">🚪 Dil</button>     
     </header>
     
     <main id="chat"></main>
 
-    <!-- 🆕 INPUT AREA - VETËM NË CHAT SCREEN -->
-    <footer id="input-area">
-      <button id="emoji-btn">😊</button>
-      <div id="emoji-panel" class="hidden">
+  <!-- NË public/index.html - ZËVENDËSO BUTONIN -->
+<footer id="input-area">
+    <button id="emoji-btn">😊</button>
+    <div id="emoji-panel" class="hidden">
         <span>😀</span><span>😂</span><span>😍</span><span>🔥</span><span>😎</span>
         <span>🤔</span><span>😢</span><span>❤️</span><span>👍</span><span>👎</span>
-      </div>
+    </div>
 
-      <!-- 🎤 BUTONI I VOICE AI -->
-      <button id="voice-btn" 
-              onclick="voiceButtonClick(event)"
-              style="background:#2E86AB; color:white; border:none; border-radius:50%; width:45px; height:45px; margin-right:10px; cursor:pointer; font-size:18px;"
-              title="Kliko për të folur (Voice AI)">
+  <!-- 🎤 BUTONI I VOICE AI -->
+    <button id="voice-btn" 
+            onclick="voiceButtonClick(event)"
+            style="background:#2E86AB; color:white; border:none; border-radius:50%; width:45px; height:45px; margin-right:10px; cursor:pointer; font-size:18px;"
+            title="Kliko për të folur (Voice AI)">
         🎤
-      </button> 
+    </button> 
 
-      <input type="text" id="user-input" placeholder="Shkruaj mesazhin...">
-      <button id="send-btn">➤</button>
-    </footer>
-  </div>
+    <input type="text" id="user-input" placeholder="Shkruaj mesazhin...">
+    <button id="send-btn">➤</button>
+</footer>
 
   <!-- Modal për API Key -->
   <div id="api-key-modal" class="modal">
@@ -470,37 +335,19 @@
     </div>
   </div>
 
-  <!-- 🆕 MODAL PËR INFORMACIONE SISTEMI -->
-  <div id="system-info-modal" class="modal">
-    <div class="modal-content">
-      <span class="close">&times;</span>
-      <h2>📊 Informacione Sistemi</h2>
-      
-      <div id="system-info-content">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0;">
-          <div style="background: #e8f4fd; padding: 15px; border-radius: 8px;">
-            <h4>🧠 Memory Stats</h4>
-            <div id="system-memory-stats">Duke ngarkuar...</div>
-          </div>
-          <div style="background: #e6f4ea; padding: 15px; border-radius: 8px;">
-            <h4>🚀 Sistemi</h4>
-            <div>Version: RRUFE-TESLA 10.5</div>
-            <div>Status: Online</div>
-            <div>AI Mode: <span id="system-ai-mode">Normal</span></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
+  <script src="script.js"></script>
   <script>
-    // ==================== SISTEMI I VERIFIKIMIT EMAIL ====================
+
+        // ==================== SISTEMI I RI I VERIFIKIMIT EMAIL ====================
+
+    // Funksioni për regjistrim me email
     async function registerWithEmail() {
       const username = document.getElementById('reg-username').value.trim();
       const email = document.getElementById('reg-email').value.trim();
       const password = document.getElementById('reg-password').value;
       const confirmPassword = document.getElementById('reg-confirm-password').value;
 
+      // Validimi
       if (!username || !email || !password || !confirmPassword) {
         alert('❌ Ju lutem plotësoni të gjitha fushat!');
         return;
@@ -517,6 +364,7 @@
       }
 
       try {
+        // Shfaq loading
         const registerBtn = document.querySelector('.login-btn');
         registerBtn.textContent = '🔄 Po regjistrohet...';
         registerBtn.disabled = true;
@@ -537,6 +385,7 @@
 
         if (data.success) {
           alert('✅ ' + data.message + '\n\nKontrollo email-in për linkun e verifikimit!');
+          // Pastro formularin
           document.getElementById('reg-username').value = '';
           document.getElementById('reg-email').value = '';
           document.getElementById('reg-password').value = '';
@@ -548,217 +397,29 @@
         console.error('Gabim në regjistrim:', error);
         alert('❌ Problem me serverin. Provo përsëri më vonë.');
       } finally {
+        // Rikthe butonin
         const registerBtn = document.querySelector('.login-btn');
         registerBtn.textContent = '📧 Regjistrohu me Email';
         registerBtn.disabled = false;
       }
     }
 
-    // ==================== MENU DROPDOWN DHE MODALA ====================
-    function toggleMenu() {
-      const menu = document.getElementById('main-menu');
-      menu.classList.toggle('show');
-    }
-
-    function openApiKeyModal() {
-      document.getElementById('api-key-modal').style.display = 'block';
-      updateApiKeyStatus();
-      toggleMenu();
-    }
-
-    function showSystemInfo() {
-      document.getElementById('system-info-modal').style.display = 'block';
-      updateSystemInfo();
-      toggleMenu();
-    }
-
-    function updateSystemInfo() {
-      if (window.ltmManager) {
-        const stats = window.ltmManager.getMemoryStats();
-        document.getElementById('system-memory-stats').innerHTML = `
-          <div>Total: ${stats.total_messages}</div>
-          <div>User: ${stats.user_messages}</div>
-          <div>AI: ${stats.ai_messages}</div>
-          <div>Kapacitet: ${stats.capacity}</div>
-        `;
-      }
-      document.getElementById('system-ai-mode').textContent = window.currentAIMode || 'Normal';
-    }
-
-    // ✅ FUNKSIONET PËR MBYLLJEN E MODALAVE
-    function initializeModalCloseButtons() {
-      console.log("🔧 Duke inicializuar butonat e mbylljes së modalave...");
-      
-      // Modal API Key
-      const apiModal = document.getElementById('api-key-modal');
-      const apiClose = apiModal.querySelector('.close');
-      
-      apiClose.onclick = function() {
-        console.log("❌ Mbyllja e API Key modal u klikua");
-        apiModal.style.display = 'none';
-      }
-      
-      // Modal Verifikim Email
-      const emailModal = document.getElementById('email-verification-modal');
-      const emailClose = emailModal.querySelector('.close');
-      
-      emailClose.onclick = function() {
-        console.log("❌ Mbyllja e Email modal u klikua");
-        emailModal.style.display = 'none';
-      }
-      
-      // Modal System Info
-      const systemModal = document.getElementById('system-info-modal');
-      const systemClose = systemModal.querySelector('.close');
-      
-      systemClose.onclick = function() {
-        console.log("❌ Mbyllja e System Info modal u klikua");
-        systemModal.style.display = 'none';
-      }
-      
-      // Mbyll modalat kur klikohet jashtë
-      window.onclick = function(event) {
-        if (event.target == apiModal) {
-          apiModal.style.display = 'none';
-        }
-        if (event.target == emailModal) {
-          emailModal.style.display = 'none';
-        }
-        if (event.target == systemModal) {
-          systemModal.style.display = 'none';
-        }
-      }
-      
-      console.log("✅ Të gjithë butonat e mbylljes u inicializuan!");
-    }
-
-    function closeVerificationModal() {
-      document.getElementById('email-verification-modal').style.display = 'none';
-    }
-
-    // ✅ FUNKSIONET E MENU-S
-    function changePhoto() {
-      const fileInput = document.createElement('input');
-      fileInput.type = 'file';
-      fileInput.accept = 'image/*';
-      
-      fileInput.onchange = function(e) {
-        const file = e.target.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = function(e) {
-            const profilePic = document.getElementById('profile-pic');
-            profilePic.src = e.target.result;
-            localStorage.setItem('userProfilePic', e.target.result);
-            alert('✅ Fotoja e profilit u përditësua me sukses!');
-          }
-          reader.readAsDataURL(file);
-        }
-      }
-      
-      fileInput.click();
-      toggleMenu();
-    }
-
-    function downloadHistory() {
-      if (window.chatHistory && window.chatHistory.length > 0) {
-        const dataStr = JSON.stringify(window.chatHistory, null, 2);
-        const dataBlob = new Blob([dataStr], { type: 'application/json' });
-        
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(dataBlob);
-        link.download = `rrufe-tesla-chat-${new Date().toISOString().split('T')[0]}.json`;
-        link.click();
-        
-        alert('💾 Historia u eksportua në formatin JSON!');
-      } else {
-        alert('❌ Nuk ka histori për të shkarkuar!');
-      }
-      toggleMenu();
-    }
-
-    function uploadHistory() {
-      const fileInput = document.createElement('input');
-      fileInput.type = 'file';
-      fileInput.accept = '.json';
-      
-      fileInput.onchange = function(e) {
-        const file = e.target.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = function(e) {
-            try {
-              const historyData = JSON.parse(e.target.result);
-              if (Array.isArray(historyData)) {
-                window.chatHistory = historyData;
-                alert('✅ Historia u importua me sukses!');
-              } else {
-                alert('❌ Skedari nuk është në formatin e duhur!');
-              }
-            } catch (error) {
-              alert('❌ Gabim në leximin e skedarit!');
-            }
-          }
-          reader.readAsText(file);
-        }
-      }
-      
-      fileInput.click();
-      toggleMenu();
-    }
-
-    function clearHistory() {
-      if (confirm('⚠️ Jeni i sigurt që dëshironi të fshini të gjithë historinë?')) {
-        window.chatHistory = [];
-        const chat = document.getElementById('chat');
-        if (chat) {
-          chat.innerHTML = '';
-        }
-        alert('🗑️ E gjithë historia u fshi!');
-      }
-      toggleMenu();
-    }
-
-    function showMemoryStats() {
-      if (window.ltmManager) {
-        const stats = window.ltmManager.getMemoryStats();
-        const message = `🧠 **Statistikat e Memories:**
-
-📊 **Total Mesazhe:** ${stats.total_messages}
-👤 **Mesazhe User:** ${stats.user_messages}
-🤖 **Mesazhe AI:** ${stats.ai_messages}
-💾 **Kapaciteti:** ${stats.capacity}
-🕒 **Përditësuar:** ${stats.last_updated ? new Date(stats.last_updated).toLocaleTimeString() : 'N/A'}
-
-*Memoria ruan 50 mesazhet e fundit për kontekst optimal.*`;
-        
-        alert(message);
-      } else {
-        alert('❌ Long-Term Memory nuk është inicializuar!');
-      }
-      toggleMenu();
-    }
-
-    // ✅ FUNKSIONI PËR VERIFIKIM EMAIL NË MENU
+    // Funksioni për verifikim email (butoni në header)
     async function verifyEmail() {
       try {
         const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
         
         if (!user.email) {
           alert('❌ Përdoruesi nuk ka email të regjistruar.');
-          toggleMenu();
           return;
         }
 
-        // Nëse email-i është tashmë i verifikuar
         if (user.is_verified) {
           alert('✅ Email-i juaj është tashmë i verifikuar!');
-          updateEmailVerificationStatus(true);
-          toggleMenu();
           return;
         }
 
-        // Shfaq modal për verifikim
+        // Shfaq modal
         document.getElementById('email-verification-modal').style.display = 'block';
         document.getElementById('verification-message').textContent = 'Po dërgohet email-i i verifikimit...';
 
@@ -777,16 +438,13 @@
         } else {
           document.getElementById('verification-message').textContent = '❌ ' + data.message;
         }
-
-        toggleMenu();
       } catch (error) {
         console.error('Gabim në verifikim:', error);
         document.getElementById('verification-message').textContent = '❌ Problem me serverin. Provo përsëri më vonë.';
-        toggleMenu();
       }
     }
 
-    // ✅ FUNKSION PËR RIDËRGIM EMAIL-I
+    // Funksioni për ridërgim email-i
     async function resendVerificationEmail() {
       try {
         const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
@@ -814,495 +472,494 @@
       }
     }
 
-    // ✅ FUNKSION PËR UPDATE STATUSI EMAIL VERIFIKIMI
-    function updateEmailVerificationStatus(isVerified) {
-      const emailMenuItem = document.getElementById('email-verification-menu-item');
-      if (emailMenuItem) {
-        if (isVerified) {
-          emailMenuItem.innerHTML = '<span>✅</span><span>Email i Verifikuar</span>';
-          emailMenuItem.classList.add('verified-badge');
-          emailMenuItem.onclick = function() {
-            alert('✅ Email-i juaj është tashmë i verifikuar!');
-            toggleMenu();
-          };
-        } else {
-          emailMenuItem.innerHTML = '<span>📧</span><span>Verifiko Email</span>';
-          emailMenuItem.classList.remove('verified-badge');
-          emailMenuItem.onclick = verifyEmail;
-        }
-      }
+    // Funksioni për mbylljen e modalit
+    function closeVerificationModal() {
+      document.getElementById('email-verification-modal').style.display = 'none';
     }
 
-    // ✅ FUNKSION PËR KONTROLLIM E STATUSIT TË EMAILIT
-    async function checkEmailVerificationStatus() {
-      try {
-        const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
-        if (user.email) {
-          const response = await fetch(`/api/email/status?email=${encodeURIComponent(user.email)}`);
-          if (response.ok) {
-            const data = await response.json();
-            if (data.success) {
-              updateEmailVerificationStatus(data.is_verified);
-              
-              // Update user object në localStorage
-              user.is_verified = data.is_verified;
-              localStorage.setItem('currentUser', JSON.stringify(user));
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Gabim në kontrollimin e statusit të email-it:', error);
-      }
-    }
-
-    // Mbyll menu-n kur klikohet jashtë
-    document.addEventListener('click', function(event) {
-      const menu = document.getElementById('main-menu');
-      const menuBtn = document.querySelector('.menu-btn');
-      
-      if (menu && menuBtn && !menu.contains(event.target) && !menuBtn.contains(event.target)) {
-        menu.classList.remove('show');
-      }
-    });
-
-    // ✅ INICIALIZIMI KUR FAQJA NGARKOHET
+    // ==================== INICIALIZIMI ====================
     document.addEventListener('DOMContentLoaded', function() {
-      console.log("📄 DOM u ngarkua - duke inicializuar sistemin...");
+      // Modal për verifikim email
+      const verificationModal = document.getElementById('email-verification-modal');
+      const verificationClose = verificationModal.querySelector('.close');
       
-      // Inicializo butonat e mbylljes së modalave
-      setTimeout(initializeModalCloseButtons, 1000);
+      verificationClose.onclick = function() {
+        verificationModal.style.display = 'none';
+      }
       
-      // Kontrollo nëse ka foto profili të ruajtur
-      const savedProfilePic = localStorage.getItem('userProfilePic');
-      if (savedProfilePic) {
-        const profilePic = document.getElementById('profile-pic');
-        if (profilePic) {
-          profilePic.src = savedProfilePic;
+      window.onclick = function(event) {
+        if (event.target == verificationModal) {
+          verificationModal.style.display = 'none';
         }
       }
 
-      // Kontrollo statusin e email verifikimit nëse përdoruesi është loguar
-      const savedUser = localStorage.getItem('currentUser');
-      if (savedUser) {
-        try {
-          const user = JSON.parse(savedUser);
-          if (user.email) {
-            setTimeout(checkEmailVerificationStatus, 2000);
-          }
-        } catch (e) {
-          console.error('Gabim në parsing e user data:', e);
-        }
+      // Modal për API Key (ekzistues)
+      const apiModal = document.getElementById('api-key-modal');
+      const apiBtn = document.getElementById('api-key-btn');
+      const apiClose = apiModal.querySelector('.close');
+      
+      // ✅ ZËVENDËSOJE PLOTËSISHT KËTË PJESË:
+apiBtn.onclick = async function() {
+    apiModal.style.display = 'block';
+    
+    // Pastro input-in dhe shfaq loading
+    document.getElementById('api-key-input').value = "";
+    document.getElementById('api-key-status').textContent = "🔄 Po kontrollohet statusi...";
+    document.getElementById('api-key-status').className = "api-status";
+    
+    // Kontrollo statusin e API Key DIREKT NGA SERVERI
+    await updateApiKeyStatus();
+};
+      
+      apiClose.onclick = function() {
+        apiModal.style.display = 'none';
       }
     });
 
-    // ✅ TEST I BUTONAVE TË MBYLLJES
-    window.testCloseButtons = function() {
-      console.log("🧪 Testimi i butonave të mbylljes...");
-      initializeModalCloseButtons();
-    };
-
-    // ==================== API KEY FUNCTIONS ====================
-    async function updateApiKeyStatus() {
-      const statusElement = document.getElementById('api-key-status');
-      
-      try {
-        const response = await fetch('/api/api-keys/status/gemini', {
-          credentials: 'include'
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          
-          if (data.success && data.hasApiKey) {
-            statusElement.textContent = "✅ API Key është i konfiguruar në server";
-            statusElement.className = "api-status valid";
-            document.getElementById('api-key-input').value = "••••••••••••••••";
-          } else {
-            statusElement.textContent = "❌ Nuk ka API Key të konfiguruar. Chatboti nuk do të funksionojë plotësisht.";
-            statusElement.className = "api-status invalid";
-            document.getElementById('api-key-input').value = "";
-          }
-        } else {
-          statusElement.textContent = "❌ Gabim në kontrollimin e statusit (HTTP " + response.status + ")";
-          statusElement.className = "api-status invalid";
-        }
-      } catch (error) {
-        console.error('❌ Gabim në kontrollimin e statusit:', error);
-        statusElement.textContent = "❌ Problem me serverin: " + error.message;
-        statusElement.className = "api-status invalid";
-      }
-    }
-
-    async function saveApiKeyToServer() {
-      try {
+ // ✅ FUNKSION I KORRIGJUAR PËR RUAJTJE API KEY
+async function saveApiKeyToServer() {
+    try {
         const apiKey = document.getElementById('api-key-input').value.trim();
         
         if (!apiKey) {
-          document.getElementById('api-key-status').textContent = "❌ Ju lutem vendosni një API Key valid.";
-          document.getElementById('api-key-status').className = "api-status invalid";
-          return;
+            document.getElementById('api-key-status').textContent = "❌ Ju lutem vendosni një API Key valid.";
+            document.getElementById('api-key-status').className = "api-status invalid";
+            return;
         }
 
+        // Shfaq loading
         document.getElementById('api-key-status').textContent = "🔄 Po ruhet në server...";
         document.getElementById('api-key-status').className = "api-status";
 
+        // ✅ URL I KORRIGJUAR: /api/api-keys/save (JO /api/api-keys/api-keys/save)
         const response = await fetch('/api/api-keys/save', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            apiKey: apiKey,
-            serviceName: 'gemini'
-          })
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+                apiKey: apiKey,
+                serviceName: 'gemini'
+            })
         });
 
         const data = await response.json();
+        console.log('📥 Përgjigja nga serveri:', data);
 
         if (data.success) {
-          document.getElementById('api-key-status').textContent = "✅ " + data.message;
-          document.getElementById('api-key-status').className = "api-status valid";
-          
-          setTimeout(() => {
-            document.getElementById('api-key-modal').style.display = 'none';
-          }, 2000);
-          
+            document.getElementById('api-key-status').textContent = "✅ " + data.message;
+            document.getElementById('api-key-status').className = "api-status valid";
+            
+            // Mbylle modalin pas 2 sekondash
+            setTimeout(() => {
+                document.getElementById('api-key-modal').style.display = 'none';
+            }, 2000);
+            
         } else {
-          document.getElementById('api-key-status').textContent = "❌ " + data.message;
-          document.getElementById('api-key-status').className = "api-status invalid";
+            document.getElementById('api-key-status').textContent = "❌ " + data.message;
+            document.getElementById('api-key-status').className = "api-status invalid";
         }
 
-      } catch (error) {
+    } catch (error) {
         console.error('❌ Gabim në ruajtjen e API Key:', error);
         document.getElementById('api-key-status').textContent = "❌ Problem me serverin. Provo përsëri.";
         document.getElementById('api-key-status').className = "api-status invalid";
-      }
     }
+}
 
-    async function deleteApiKeyFromServer() {
-      try {
+// ✅ FUNKSION I KORRIGJUAR PËR FSHIRJE API KEY
+async function deleteApiKeyFromServer() {
+    try {
         document.getElementById('api-key-status').textContent = "🔄 Po fshihet nga serveri...";
         document.getElementById('api-key-status').className = "api-status";
 
+        // ✅ URL I KORRIGJUAR: /api/api-keys/delete
         const response = await fetch('/api/api-keys/delete', {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            serviceName: 'gemini'
-          })
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+                serviceName: 'gemini'
+            })
+        });
+
+        const data = await response.json();
+        console.log('📥 Përgjigja e fshirjes:', data);
+
+        if (data.success) {
+            document.getElementById('api-key-input').value = "";
+            document.getElementById('api-key-status').textContent = "✅ " + data.message;
+            document.getElementById('api-key-status').className = "api-status valid";
+            
+        } else {
+            document.getElementById('api-key-status').textContent = "❌ " + data.message;
+            document.getElementById('api-key-status').className = "api-status invalid";
+        }
+
+    } catch (error) {
+        console.error('❌ Gabim në fshirjen e API Key:', error);
+        document.getElementById('api-key-status').textContent = "❌ Problem me serverin.";
+        document.getElementById('api-key-status').className = "api-status invalid";
+    }
+}
+
+// ✅ FUNKSION I KORRIGJUAR PËR STATUSIN E API KEY
+async function updateApiKeyStatus() {
+    const statusElement = document.getElementById('api-key-status');
+    
+    try {
+        // ✅ URL I KORRIGJUAR: /api/api-keys/status/gemini
+        const response = await fetch('/api/api-keys/status/gemini', {
+            credentials: 'include'
+        });
+
+        console.log('🔍 Status response:', response.status);
+
+        if (response.ok) {
+            const data = await response.json();
+            console.log('📊 Status data:', data);
+            
+            if (data.success && data.hasApiKey) {
+                statusElement.textContent = "✅ API Key është i konfiguruar në server";
+                statusElement.className = "api-status valid";
+                document.getElementById('api-key-input').value = "••••••••••••••••";
+            } else {
+                statusElement.textContent = "❌ Nuk ka API Key të konfiguruar. Chatboti nuk do të funksionojë plotësisht.";
+                statusElement.className = "api-status invalid";
+                document.getElementById('api-key-input').value = "";
+            }
+        } else {
+            statusElement.textContent = "❌ Gabim në kontrollimin e statusit (HTTP " + response.status + ")";
+            statusElement.className = "api-status invalid";
+            console.error('❌ Status check failed:', response.status);
+        }
+    } catch (error) {
+        console.error('❌ Gabim në kontrollimin e statusit:', error);
+        statusElement.textContent = "❌ Problem me serverin: " + error.message;
+        statusElement.className = "api-status invalid";
+    }
+}
+// ✅ FUNKSION I KORRIGJUAR PËR MARRJE API KEY PËR CHATBOT
+async function getApiKeyFromServer() {
+    try {
+        // ✅ URL I KORRIGJUAR: /api/api-keys/get/gemini
+        const response = await fetch('/api/api-keys/get/gemini', {
+            credentials: 'include'
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            console.log('🔑 API Key nga serveri:', data);
+            if (data.success && data.apiKey) {
+                return data.apiKey;
+            }
+        }
+        return null;
+    } catch (error) {
+        console.error('❌ Gabim në marrjen e API Key:', error);
+        return null;
+    }
+}
+
+// ✅ FUNKSION I RI PËR API KEY (PA LOCALSTORAGE)
+async function saveApiKey() {
+    const apiKey = document.getElementById('api-key-input').value.trim();
+    
+    if (!apiKey) {
+        alert('❌ Ju lutem vendosni një API Key valid.');
+        return;
+    }
+
+    try {
+        // ✅ Përdor cookies - nuk dërgoj userId
+        const response = await fetch('/api/save', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            credentials: 'include', // ✅ Dërgon cookies
+            body: JSON.stringify({
+                apiKey: apiKey,
+                serviceName: 'gemini'
+            })
         });
 
         const data = await response.json();
 
         if (data.success) {
-          document.getElementById('api-key-input').value = "";
-          document.getElementById('api-key-status').textContent = "✅ " + data.message;
-          document.getElementById('api-key-status').className = "api-status valid";
-          
+            document.getElementById('api-key-status').textContent = "✅ " + data.message;
+            document.getElementById('api-key-status').className = "api-status valid";
+            
+            setTimeout(() => {
+                document.getElementById('api-key-modal').style.display = 'none';
+            }, 2000);
         } else {
-          document.getElementById('api-key-status').textContent = "❌ " + data.message;
-          document.getElementById('api-key-status').className = "api-status invalid";
+            document.getElementById('api-key-status').textContent = "❌ " + data.message;
+            document.getElementById('api-key-status').className = "api-status invalid";
         }
-
-      } catch (error) {
-        console.error('❌ Gabim në fshirjen e API Key:', error);
+    } catch (error) {
+        console.error('Gabim në ruajtjen e API Key:', error);
         document.getElementById('api-key-status').textContent = "❌ Problem me serverin.";
         document.getElementById('api-key-status').className = "api-status invalid";
-      }
     }
+}
+  
+// ==================== 🎤 VOICE AI - SISTEMI I PLOTË NË HTML ====================
 
-    // ==================== VOICE AI SYSTEM ====================
-    let mediaRecorder;
-    let audioChunks = [];
-    let isRecording = false;
-    let recordingTimeout;
+console.log("✅ Voice AI u ngarkua direkt në HTML!");
 
-    function voiceButtonClick(event) {
-      if (event) event.preventDefault();
-      
-      if (isRecording) {
+let mediaRecorder;
+let audioChunks = [];
+let isRecording = false;
+let recordingTimeout;
+
+// ✅ FUNKSIONI KRYESOR
+function voiceButtonClick(event) {
+    if (event) event.preventDefault();
+    console.log("🎤 Butoni u klikua - isRecording:", isRecording);
+    
+    if (isRecording) {
         stopRecording();
-      } else {
+    } else {
         startRecording();
-      }
     }
+}
 
-    async function startRecording() {
-      try {
+async function startRecording() {
+    try {
+        console.log("🚀 Duke filluar regjistrimin...");
+        
         const voiceBtn = document.getElementById('voice-btn');
         const userInput = document.getElementById('user-input');
         
         if (!voiceBtn || !userInput) {
-          alert("❌ Elementet e Voice AI nuk u gjetën!");
-          return;
+            console.error("❌ Elementet nuk u gjetën!");
+            alert("❌ Elementet e Voice AI nuk u gjetën! Kontrollo HTML strukturën.");
+            return;
         }
         
+        // Reset variables
         audioChunks = [];
         isRecording = true;
         
+        // Ndrysho pamjen e butonit
         voiceBtn.innerHTML = '🔴';
         voiceBtn.style.background = '#E74C3C';
         voiceBtn.title = 'Duke regjistruar... Kliko për të ndaluar';
         userInput.value = "🎤 Duke regjistruar... Folni në shqip!";
         
+        // Merr akses në mikrofon
         const stream = await navigator.mediaDevices.getUserMedia({ 
-          audio: {
-            sampleRate: 16000,
-            channelCount: 1,
-            echoCancellation: true,
-            noiseSuppression: true
-          } 
+            audio: {
+                sampleRate: 16000,
+                channelCount: 1,
+                echoCancellation: true,
+                noiseSuppression: true
+            } 
         });
         
+        // Krijo recorder
         mediaRecorder = new MediaRecorder(stream);
         
         mediaRecorder.ondataavailable = (event) => {
-          if (event.data.size > 0) {
-            audioChunks.push(event.data);
-          }
+            if (event.data.size > 0) {
+                audioChunks.push(event.data);
+                console.log("🔊 Audio data:", event.data.size, "bytes");
+            }
         };
         
         mediaRecorder.onstop = async () => {
-          await processRecording();
-          stream.getTracks().forEach(track => track.stop());
+            console.log("⏹️ Regjistrimi u ndal - duke procesuar...");
+            await processRecording();
+            // Mbyll stream-in
+            stream.getTracks().forEach(track => track.stop());
         };
         
+        // Fillo record-in
         mediaRecorder.start();
         isRecording = true;
+        console.log("✅ RECORD-I FILLOI!");
         
+        // Auto-stop pas 7 sekondash
         recordingTimeout = setTimeout(() => {
-          if (isRecording) {
-            stopRecording();
-          }
+            if (isRecording) {
+                console.log("⏰ Koha ka skaduar - duke ndaluar...");
+                stopRecording();
+            }
         }, 7000);
         
-      } catch (error) {
+    } catch (error) {
         console.error("❌ Gabim në regjistrim:", error);
         const userInput = document.getElementById('user-input');
         if (userInput) {
-          userInput.value = "❌ Gabim: " + error.message;
+            userInput.value = "❌ Gabim: " + error.message;
         }
         resetButton();
-      }
     }
+}
 
-    function stopRecording() {
-      if (mediaRecorder && isRecording) {
+function stopRecording() {
+    console.log("🛑 Duke ndaluar record-in...");
+    
+    if (mediaRecorder && isRecording) {
+        // Clear timeout
         if (recordingTimeout) {
-          clearTimeout(recordingTimeout);
-          recordingTimeout = null;
+            clearTimeout(recordingTimeout);
+            recordingTimeout = null;
         }
         
+        // Ndal recorder
         if (mediaRecorder.state === 'recording') {
-          mediaRecorder.stop();
+            mediaRecorder.stop();
         }
         
         isRecording = false;
-      }
+        console.log("✅ Record-i u ndal me sukses");
     }
+}
 
-    async function processRecording() {
-      const userInput = document.getElementById('user-input');
-      
-      try {
+async function processRecording() {
+    const userInput = document.getElementById('user-input');
+    
+    try {
+        console.log("🔄 Duke procesuar audio...");
         if (userInput) {
-          userInput.value = "🎤 Po e transkriptoj zërin...";
+            userInput.value = "🎤 Po e transkriptoj zërin...";
         }
         
         if (audioChunks.length === 0) {
-          if (userInput) {
-            userInput.value = "🎤 Nuk u regjistrua asnjë audio - provoni përsëri";
-          }
-          resetButton();
-          return;
+            console.log("❌ Nuk u regjistrua asnjë audio");
+            if (userInput) {
+                userInput.value = "🎤 Nuk u regjistrua asnjë audio - provoni përsëri";
+            }
+            resetButton();
+            return;
         }
         
         const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        const audioSizeKB = Math.round(audioBlob.size / 1024);
+        
+        console.log("📊 Audio u regjistrua:", audioSizeKB, "KB");
+        
+        // ✅ DËRGO NË SERVER PËR TRANSCRIPTION
         const transcribedText = await sendToServerForTranscription(audioBlob);
         
         if (userInput) {
-          userInput.value = "🎤 " + transcribedText;
+            userInput.value = "🎤 " + transcribedText;
         }
+        console.log("✅ Teksti i transkriptuar:", transcribedText);
         
-      } catch (error) {
+    } catch (error) {
         console.error("❌ Gabim në procesim:", error);
         if (userInput) {
-          userInput.value = "🎤 Gabim në transkriptim - çfarë pyetjeje bëtë?";
+            userInput.value = "🎤 Gabim në transkriptim - çfarë pyetjeje bëtë?";
         }
-      }
-      
-      resetButton();
-      
-      setTimeout(() => {
+    }
+    
+    resetButton();
+    
+    // Dërgo automatikisht pas 1 sekonde
+    setTimeout(() => {
         const sendBtn = document.getElementById('send-btn');
         if (sendBtn) {
-          sendBtn.click();
+            sendBtn.click();
+            console.log("📤 Mesazhi u dërgua automatikisht!");
         }
-      }, 1000);
-    }
+    }, 1000);
+}
 
-    async function sendToServerForTranscription(audioBlob) {
-      try {
+// ✅ FUNKSION PËR TË DËRGUAR AUDIO NË SERVER
+async function sendToServerForTranscription(audioBlob) {
+    try {
+        console.log("📤 Duke dërguar audio për transkription...");
+        
         const formData = new FormData();
         formData.append('audio', audioBlob, 'voice_recording.webm');
         
         const response = await fetch('/api/voice/transcribe', {
-          method: 'POST',
-          body: formData
+            method: 'POST',
+            body: formData
         });
         
+        console.log("📡 Statusi i përgjigjes:", response.status, response.statusText);
+        
         if (!response.ok) {
-          throw new Error(`Serveri ktheu ${response.status}: ${response.statusText}`);
+            throw new Error(`Serveri ktheu ${response.status}: ${response.statusText}`);
         }
         
         const result = await response.json();
+        console.log("📝 Rezultati nga serveri:", result);
         
         if (result.success && result.transcript) {
-          return result.transcript;
+            return result.transcript;
         } else {
-          throw new Error(result.message || 'Transkriptimi dështoi');
+            throw new Error(result.message || 'Transkriptimi dështoi');
         }
         
-      } catch (error) {
+    } catch (error) {
         console.error("❌ Gabim në transkription:", error);
         return "Dëgjova pyetjen tuaj - çfarë dëshironi të diskutoni?";
-      }
     }
+}
 
-    function resetButton() {
-      const voiceBtn = document.getElementById('voice-btn');
-      if (voiceBtn) {
+function resetButton() {
+    const voiceBtn = document.getElementById('voice-btn');
+    if (voiceBtn) {
         voiceBtn.innerHTML = '🎤';
         voiceBtn.style.background = '#2E86AB';
         voiceBtn.title = 'Kliko për të folur (Voice AI)';
-      }
-      
-      isRecording = false;
-      
-      if (recordingTimeout) {
+    }
+    
+    isRecording = false;
+    
+    if (recordingTimeout) {
         clearTimeout(recordingTimeout);
         recordingTimeout = null;
-      }
     }
+    
+    console.log("🔄 Butoni u rikthye në gjendjen normale");
+}
 
-    // ==================== AI MODE FUNCTIONS ====================
-    function activateSimpleAI() {
-      window.currentAIMode = 'SIMPLE';
-      if (typeof addMessage !== 'undefined') {
-        addMessage('🔹 **AI i Thjeshtë i aktivizuar** - Chat-i do të jetë i shpejtë dhe natyral!', 'system');
-      }
-    }
-
-    function activateAdvancedAI() {
-      window.currentAIMode = 'ADVANCED';
-      if (typeof addMessage !== 'undefined') {
-        addMessage('🌌 **RRUFE-TESLA i avancuar i aktivizuar** - Tani kam akses në memorie dhe fuqi të shtuar!', 'system');
-      }
-    }
-
-    function activateDivineAI() {
-      window.currentAIMode = 'DIVINE';
-      if (typeof addMessage !== 'undefined') {
-        addMessage('⚡ **AI Hyjnor i aktivizuar** - Divine Fusion aktiv! Të gjitha modulet janë operative!', 'system');
-      }
-    }
-
-    // ==================== LOGIN/LOGOUT FUNCTIONS ====================
-    function login() {
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value;
-
-      if (!username || !password) {
-        alert('❌ Ju lutem plotësoni të dy fushat!');
-        return;
-      }
-
-      // Simulim i login-it - në realitet do të bëhet me server
-      window.currentUser = {
-        username: username,
-        email: username + '@example.com', // Simulim
-        is_verified: username === 'admin' // Simulim - admin konsiderohet i verifikuar
-      };
-
-      localStorage.setItem('currentUser', JSON.stringify(window.currentUser));
-      
-      document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('chat-screen').style.display = 'block';
-      
-      // Update profile
-      const profileName = document.getElementById('profile-name');
-      if (profileName) {
-        profileName.textContent = window.currentUser.username;
-        if (window.currentUser.is_verified) {
-          updateEmailVerificationStatus(true);
-        }
-      }
-      
-      // Shto mesazh mirëseardhjeje
-      if (typeof addMessage !== 'undefined') {
-        addMessage(`👑 Mirë se erdhe ${username}! RRUFE-TESLA 10.5 është gati.`, 'bot');
-      }
-    }
-
-    function logout() {
-      window.currentUser = null;
-      localStorage.removeItem('currentUser');
-      window.chatHistory = [];
-      
-      document.getElementById('chat-screen').style.display = 'none';
-      document.getElementById('login-screen').style.display = 'block';
-      
-      const chat = document.getElementById('chat');
-      if (chat) {
-        chat.innerHTML = '';
-      }
-      
-      // Reset email verification status
-      updateEmailVerificationStatus(false);
-    }
-
-    // ==================== EMOJI SYSTEM ====================
-    function toggleEmojiPanel() {
-      const panel = document.getElementById('emoji-panel');
-      if (panel) {
-        panel.classList.toggle('hidden');
-      }
-    }
-
-    function addEmoji(emoji) {
-      const input = document.getElementById('user-input');
-      if (input) {
-        input.value += emoji;
-        input.focus();
-      }
-      toggleEmojiPanel();
-    }
-
-    // Inicializimi i emoji system
-    document.addEventListener('DOMContentLoaded', function() {
-      const emojiBtn = document.getElementById('emoji-btn');
-      const emojiPanel = document.getElementById('emoji-panel');
-      
-      if (emojiBtn && emojiPanel) {
-        emojiBtn.addEventListener('click', toggleEmojiPanel);
+// ✅ INICIALIZIMI DHE DIAGNOSTIKIMI
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("✅ DOM u ngarkua plotësisht");
+    
+    setTimeout(() => {
+        const voiceBtn = document.getElementById('voice-btn');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
         
-        const emojiSpans = emojiPanel.querySelectorAll('span');
-        emojiSpans.forEach(span => {
-          span.addEventListener('click', function() {
-            addEmoji(this.textContent);
-          });
-        });
-      }
-    });
+        console.log("🔍 DIAGNOSTIKIMI I ELEMENTEVE:");
+        console.log("- Butoni voice-btn:", voiceBtn ? "✅ U gjet" : "❌ NUK U GJET");
+        console.log("- Input user-input:", userInput ? "✅ U gjet" : "❌ NUK U GJET");
+        console.log("- Butoni send-btn:", sendBtn ? "✅ U gjet" : "❌ NUK U GJET");
+        
+        if (voiceBtn && userInput && sendBtn) {
+            console.log("🎉 Të gjitha elementet u gjetën! Voice AI është gati!");
+        } else {
+            console.log("⚠️ Disa elemente mungojnë! Kontrollo HTML strukturën.");
+        }
+    }, 500);
+});
 
-    console.log("✅ Sistemi i plotë u ngarkua me sukses!");
+// 🧪 TEST MANUAL PËR DEBUGGING
+window.testVoiceAI = function() {
+    console.log("🧪 TEST MANUAL I VOICE AI...");
+    voiceButtonClick({preventDefault: () => {}});
+};
 
+window.debugVoiceAI = function() {
+    console.log("🔍 DEBUG I VOICE AI:");
+    console.log("- isRecording:", isRecording);
+    console.log("- audioChunks length:", audioChunks.length);
+    console.log("- mediaRecorder state:", mediaRecorder ? mediaRecorder.state : "N/A");
+    console.log("- recordingTimeout:", recordingTimeout ? "Active" : "Inactive");
+};
 
- // ======================================================
+console.log("🎯 Voice AI sistem i plotë u inicializua!");
+
+// ======================================================
 // 🧠 SIMPLE & RELIABLE MEMORY INTEGRATION
 // ======================================================
 
@@ -1777,10 +1434,10 @@ window.addEventListener('load', function() {
 
 console.log("🎯 Ultra Memory Integration Script u ngarkua!");
 
+    
+   </script>
 
-  </script>
-
-<!-- === 🚀 MODULET RRUFE-TESLA === -->
+<!-- === 🚀 8 MODULET RRUFE-TESLA - VERSION FINAL === -->
 <script src="./js/modules/quantumMemory.js"></script>
 <script src="./js/modules/bioNeuralNetwork.js"></script>
 <script src="./js/modules/temporalContext.js"></script>
@@ -1808,8 +1465,11 @@ console.log("🎯 Ultra Memory Integration Script u ngarkua!");
 <script src="./js/modules/HUMAN_HEART_BRIDGE.js"></script>
 <script src="./js/modules/ENERGY_QUOTA_SYSTEM.js"></script>
 <script src="./js/modules/COSMIC_RESONANCE_MONITOR.js"></script>
+<!-- <script src="./js/modules/multilingualSystem.js"></script> -->
 
 <script src="./utils/LongTermMemoryManager.js"></script> 
-<script src="./js/main.js"></script>
+<!-- <script src="./js/chat.js"></script> -->
+<!-- ✅ LIDHJA KRYESORE -->
+ <script src="./js/main.js"></script>
 </body>
 </html>
