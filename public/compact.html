@@ -1093,6 +1093,24 @@
     setInterval(updateMemoryDisplay, 2000);
 
     console.log("✅ Compact version u ngarkua plotësisht!");
+
+    // ========= FSHI BUTONAT E VJETËR PASI TË NGARKOHET FAQJA ====================
+setTimeout(() => {
+    const header = document.querySelector('header');
+    if (header) {
+        // Fshi butonat specifikë
+        const oldButtons = header.querySelectorAll('button');
+        oldButtons.forEach(button => {
+            if (!button.classList.contains('submenu-toggle') && 
+                !button.classList.contains('ai-modes-compact') &&
+                button.id !== 'memory-status') {
+                button.remove();
+            }
+        });
+        console.log('✅ Butonat e vjetër u fshinë nga header');
+    }
+}, 3000);
+    
   </script>
 
 <!-- === 🚀 MODULET RRUFE-TESLA === -->
