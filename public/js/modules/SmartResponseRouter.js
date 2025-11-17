@@ -182,24 +182,54 @@ class SmartResponseRouter {
     }
 
     isMathExpression(message) {
-        // Heq komandën /llogarit nëse ekziston
-        const cleanMessage = message.replace(/^\/llogarit\s*/i, '');
-        
-        // Kontrollo nëse është shprehje matematikore e pastër
-        const mathRegex = /^[\d+\-*/().^%\s]+$/;
-        const hasMathOperators = /[\d+\-*/().^%]/.test(cleanMessage);
-        
-        return mathRegex.test(cleanMessage.replace(/\s/g, '')) && hasMathOperators;
-    }
+    // Heq komandën /llogarit nëse ekziston
+    const cleanMessage = message.replace(/^\/llogarit\s*/i, '').trim();
+    
+    // Kontrollo për pyetje matematikore (version i përmirësuar)
+    const mathPatterns = [
+        /sa\s+bejn[ëe]?\s*\d+/i,           // "sa bejne 5"
+        /sa\s+është\s*\d+/i,              // "sa është 5"  
+        /llogarit\s+.+/i,                 // "llogarit diçka"
+        /^\d+[\s\d+\-*/().^%]+$/,         // shprehje e pastër matematikore
+        /[\d+\-*/().^%]+\s*[\+\-\*\/\^]\s*[\d+\-*/().^%]+/, // operatorë matematikorë
+        /sa\s+bën\s*.+/i,                 // "sa bën 5+5"
+        /sasia\s+.+/i,                    // "sasia e diçkaje"
+        /shuma\s+.+/i,                    // "shuma e"
+        /prodhimi\s+.+/i,                 // "prodhimi i"
+        /përqindja\s+.+/i,                // "përqindja e"
+        /\d+\s*[\+\-\*\/\^]\s*\d+/        // numër operator numër
+    ];
+    
+    const hasMathOperators = /[\d+\-*/().^%]/.test(cleanMessage);
+    const isPureMath = /^[\d+\-*/().^%\s]+$/.test(cleanMessage.replace(/\s/g, ''));
+    const hasMathQuestion = mathPatterns.some(pattern => pattern.test(cleanMessage.toLowerCase()));
+    const hasMathKeywords = /(llogarit|sasia|shuma|prodhim|përqindje|plus|minus|shum[ëe]|pjest[ëe]|fuqi)/i.test(cleanMessage);
+    
+    return (isPureMath && hasMathOperators) || hasMathQuestion || hasMathKeywords;
+}
 
-    isGreeting(message) {
-        const greetings = [
-            'pershendetje', 'hello', 'hi', 'tung', 'ciao', 'mirëmëngjes', 
-            'mirëdita', 'mirëmbrëma', 'çkemi', 'tungjatjeta'
-        ];
-        
-        return greetings.some(greet => message.includes(greet));
-    }
+isGreeting(message) {
+    const greetings = [
+        'pershendetje', 'hello', 'hi', 'tung', 'ciao', 'mirëmëngjes', 
+        'mirëdita', 'mirëmbrëma', 'çkemi', 'tungjatjeta', 'good morning',
+        'good afternoon', 'good evening', 'hey', 'salut', 'bonjour'
+    ];
+    
+    // Kontrollo nëse mesazhi është kryesisht përshëndetje
+    const lowerMsg = message.toLowerCase().trim();
+    const isDirectGreeting = greetings.some(greet => 
+        lowerMsg === greet || 
+        lowerMsg.startsWith(greet + ' ') || 
+        lowerMsg.endsWith(' ' + greet) ||
+        lowerMsg.includes(' ' + greet + ' ')
+    );
+    
+    // Kontrollo për përshëndetje të thjeshta
+    const simpleGreetings = ['hi', 'hey', 'hello', 'tung', 'ciao'];
+    const isSimpleGreeting = simpleGreetings.some(greet => lowerMsg === greet);
+    
+    return isDirectGreeting || isSimpleGreeting;
+}
 
     isComplexQuestion(message) {
         const complexKeywords = [
