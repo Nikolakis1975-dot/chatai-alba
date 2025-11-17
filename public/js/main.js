@@ -844,3 +844,15 @@ if (originalLogin) {
         return result;
     };
 }
+
+// =========================== NË FUND TË main.js - ZËVENDËSO EVENT LISTENERS ================================
+
+// Butoni ➤
+document.getElementById('send-btn').addEventListener('click', unifiedSendMessage);
+
+// Enter në tastierë
+document.getElementById('user-input').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        unifiedSendMessage();
+    }
+});
