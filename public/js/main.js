@@ -713,13 +713,13 @@ function integrateMemoryWithMainSystem() {
 setTimeout(integrateMemoryWithMainSystem, 5000);
 
 // ======================================================
-// 🚀 MEMORY INTEGRATION PATCH - SHTO NË FUND TË main.js
+// 🚀 SMART RESPONSE ROUTER + MEMORY INTEGRATION PATCH
 // ======================================================
 
-function forceMemoryIntegration() {
-    console.log('🧠 FORCING MEMORY INTEGRATION...');
+function forceSmartIntegration() {
+    console.log('🧠🔄 FORCING SMART RESPONSE + MEMORY INTEGRATION...');
     
-    // Mbivendos sendMessage për të shtuar në memory
+    // Mbivendos sendMessage për të përdorur SmartResponseRouter dhe Memory
     if (typeof window.sendMessage !== 'undefined') {
         const originalSendMessage = window.sendMessage;
         
@@ -729,68 +729,118 @@ function forceMemoryIntegration() {
             
             if (!message) return;
             
-            console.log('💾 FORCE: Adding message to LTM:', message.substring(0, 50));
+            console.log('🎯 SMART INTEGRATION: Processing:', message.substring(0, 50));
             
-            // 🆕 FORCE ADD TO MEMORY - PARA procesimit
-            if (window.ltmManager) {
+            // 🧠 1. PROVO SMART RESPONSE ROUTER PARË
+            let smartResponse = null;
+            if (window.smartResponseRouter && window.smartResponseRouter.initialized) {
                 try {
-                    window.ltmManager.addUserMessage(message);
-                    console.log('✅ FORCE: User message added to LTM');
+                    console.log('🧠 Duke përdorur SmartResponseRouter...');
+                    smartResponse = await window.smartResponseRouter.processUserMessage(message);
+                    
+                    if (smartResponse && smartResponse.length > 5 && 
+                        !smartResponse.includes('undefined') && 
+                        !smartResponse.includes('null')) {
+                        console.log('✅ SMART: Got good response from SmartRouter');
+                    } else {
+                        console.log('⚠️ SMART: Response not good, using fallback');
+                        smartResponse = null;
+                    }
                 } catch (error) {
-                    console.log('❌ FORCE: Error adding user message:', error);
+                    console.log('❌ SMART: Error in SmartResponseRouter:', error);
+                    smartResponse = null;
                 }
             }
             
-            // Thirr funksionin origjinal
-            let originalResult;
-            try {
-                originalResult = await originalSendMessage.call(this);
-            } catch (error) {
-                console.log('❌ Error in original sendMessage:', error);
+            // 💾 2. FORCE ADD TO MEMORY - PARA procesimit
+            if (window.ltmManager) {
+                try {
+                    window.ltmManager.addUserMessage(message);
+                    console.log('💾 MEMORY: User message added to LTM');
+                } catch (error) {
+                    console.log('❌ MEMORY: Error adding user message:', error);
+                }
             }
             
-            // 🆕 FORCE ADD AI RESPONSE - PAS procesimit
+            // 🔄 3. EKZEKUTO SISTEMIN ORIGJINAL NËSE SMART ROUTER NUK FUNKSIONOI
+            let originalResult;
+            if (!smartResponse) {
+                console.log('🔄 Duke përdorur sistemin origjinal...');
+                try {
+                    originalResult = await originalSendMessage.call(this);
+                } catch (error) {
+                    console.log('❌ Error in original sendMessage:', error);
+                }
+            } else {
+                // 🎯 4. NËSE SMART ROUTER FUNKSIONOI, SHFAQ PËRGJIGJEN
+                console.log('🎯 Duke shfaqur përgjigjen nga SmartRouter...');
+                
+                // Shto mesazhin e përdoruesit nëse nuk është shtuar
+                if (typeof addMessage !== 'undefined') {
+                    addMessage(message, 'user');
+                }
+                
+                // Shto përgjigjen e SmartRouter
+                setTimeout(() => {
+                    if (typeof addMessage !== 'undefined') {
+                        addMessage(smartResponse, 'bot');
+                        console.log('✅ SMART: Response displayed in chat');
+                    }
+                    
+                    // 💾 Ruaj përgjigjen në memory
+                    if (window.ltmManager) {
+                        window.ltmManager.addAIResponse(smartResponse);
+                        console.log('💾 MEMORY: AI response added to LTM');
+                        
+                        // Update display
+                        if (typeof updateMemoryDisplay !== 'undefined') {
+                            updateMemoryDisplay();
+                        }
+                    }
+                }, 1000);
+            }
+            
+            // 💾 5. FORCE ADD AI RESPONSE - PAS procesimit (fallback)
             setTimeout(() => {
-                if (window.ltmManager) {
+                if (window.ltmManager && !smartResponse) {
                     try {
-                        // Gjej përgjigjen e fundit nga chatHistory
+                        // Gjej përgjigjen e fundit nga chatHistory (për sistemin origjinal)
                         if (window.chatHistory && window.chatHistory.length > 0) {
-                            const lastMessages = window.chatHistory.slice(-3); // Shiko 3 mesazhet e fundit
+                            const lastMessages = window.chatHistory.slice(-3);
                             const aiResponse = lastMessages.find(msg => msg.sender === 'bot');
                             
                             if (aiResponse && aiResponse.text) {
                                 window.ltmManager.addAIResponse(aiResponse.text);
-                                console.log('✅ FORCE: AI response added to LTM:', aiResponse.text.substring(0, 50));
+                                console.log('💾 MEMORY: AI response added from original system');
                                 
                                 // Update display
                                 if (typeof updateMemoryDisplay !== 'undefined') {
                                     updateMemoryDisplay();
-                                    console.log('✅ FORCE: Memory display updated');
                                 }
                             }
                         }
                     } catch (error) {
-                        console.log('❌ FORCE: Error adding AI response:', error);
+                        console.log('❌ MEMORY: Error adding AI response:', error);
                     }
                 }
-            }, 1500); // Prit 1.5 sekonda për të dhënë kohë përgjigjes
+            }, 1500);
             
             return originalResult;
         };
         
-        console.log('✅ FORCE: Memory Integration Patch ACTIVATED!');
+        console.log('✅🧠 SMART + MEMORY INTEGRATION PATCH ACTIVATED!');
     }
 }
 
 // Ekzekuto patch-in pas 5 sekondash
-setTimeout(forceMemoryIntegration, 5000);
+setTimeout(forceSmartIntegration, 5000);
 
 // Gjithashtu ekzekuto kur bëhet login
 const originalLogin = window.login;
 if (originalLogin) {
     window.login = function() {
         const result = originalLogin.apply(this, arguments);
-        setTimeout(forceMemoryIntegration, 2000);
+        setTimeout(forceSmartIntegration, 2000);
         return result;
     };
 }
