@@ -126,31 +126,49 @@ class SmartResponseRouter {
     // ==================== ANALIZA E MESAZHEVE ====================
 
     analyzeMessage(message) {
-        console.log("🔍 Duke analizuar mesazhin:", message.substring(0, 50));
-        
-        const analysis = {
-            type: 'unknown',
-            complexity: 'low',
-            language: 'albanian',
-            length: message.length,
-            containsQuestion: false,
-            requiresGemini: false,
-            isCommand: false,
-            isMath: false,
-            isGreeting: false,
-            category: 'general'
-        };
+    console.log("🔍 Duke analizuar mesazhin:", message.substring(0, 50));
+    
+    const analysis = {
+        type: 'unknown',
+        complexity: 'low',
+        language: 'albanian',
+        length: message.length,
+        containsQuestion: false,
+        requiresGemini: false,
+        isCommand: false,
+        isMath: false,
+        isGreeting: false,
+        category: 'general'
+    };
+
+    const lowerMsg = message.toLowerCase().trim();
+
+    // === 🆕 SHTO KËTË SEKSION TË RI ===
+    // 1. KONTROLLO PËR "SI JENI" & PYETJE SOCIALE
+    if (lowerMsg.includes('si jeni') || 
+        lowerMsg.includes('si je') || 
+        lowerMsg.includes('si kaloni') ||
+        lowerMsg.includes('si po shkoni') ||
+        lowerMsg === 'si jeni?' || 
+        lowerMsg === 'si je?') {
+        analysis.type = 'simple_question';
+        analysis.containsQuestion = true;
+        analysis.category = 'social';
+        analysis.complexity = 'low';
+        console.log("💬 U zbulua pyetje sociale");
+        return analysis; // Kthehu menjëherë
+    }
 
         const lowerMsg = message.toLowerCase().trim();
 
         // 1. KONTROLLO PËR KOMANDA RRUFE-TESLA
         if (this.isRrufeCommand(lowerMsg)) {
-            analysis.type = 'command';
-            analysis.isCommand = true;
-            analysis.category = 'rrufe_command';
-            analysis.complexity = 'low';
-            console.log("🎯 U zbulua komandë RRUFE-TESLA");
-        }
+        analysis.type = 'command';
+        analysis.isCommand = true;
+        analysis.category = 'rrufe_command';
+        analysis.complexity = 'low';
+        console.log("🎯 U zbulua komandë RRUFE-TESLA");
+    }
         
         // 2. KONTROLLO PËR MATEMATIKË
         else if (this.isMathExpression(message)) {
@@ -286,15 +304,23 @@ class SmartResponseRouter {
         return hasQuestionMark && (hasComplexKeyword || isLongQuestion);
     }
 
-    isSimpleQuestion(message) {
-        const simpleQuestionWords = ['ku', 'kur', 'kush', 'cila', 'cilët'];
-        const hasQuestionMark = message.includes('?');
-        const hasSimpleWord = simpleQuestionWords.some(word => 
-            message.startsWith(word + ' ') || message.includes(' ' + word + ' ')
-        );
+    // Ose shto në funksionin ekzistues isSimpleQuestion:
 
-        return hasQuestionMark && hasSimpleWord;
-    }
+isSimpleQuestion(message) {
+    const simpleQuestionWords = [
+        'ku', 'kur', 'kush', 'cila', 'cilët', 
+        'si jeni', 'si je', 'si kaloni', 'si shkoni' // 🆕 Shto këto
+    ];
+    
+    const hasQuestionMark = message.includes('?');
+    const hasSimpleWord = simpleQuestionWords.some(word => 
+        message.startsWith(word + ' ') || 
+        message.includes(' ' + word + ' ') ||
+        message === word + '?' // 🆕 Për "si jeni?"
+    );
+
+    return hasQuestionMark && hasSimpleWord;
+}
 
     // ==================== SISTEMI I ROUTINGUT ====================
 
