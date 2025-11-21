@@ -27,6 +27,9 @@ class ChatSystem {
             // Konfiguro event listeners
             this.setupEventListeners();
             
+            // Krijo chat container nëse nuk ekziston
+            this.ensureChatContainer();
+            
             this.initialized = true;
             console.log("✅ ChatSystem u inicializua me sukses!");
             
@@ -70,6 +73,7 @@ class ChatSystem {
                 if (message) {
                     this.handleUserMessage(message);
                     userInput.value = '';
+                    userInput.focus();
                 }
             });
             
@@ -81,6 +85,7 @@ class ChatSystem {
                     if (message) {
                         this.handleUserMessage(message);
                         userInput.value = '';
+                        userInput.focus();
                     }
                 }
             });
@@ -214,12 +219,40 @@ class ChatSystem {
     }
 
     addMessageToChat(message, sender) {
-        const chatScreen = document.getElementById('chat-screen');
+        console.log(`📝 Duke shtuar mesazh nga ${sender}...`);
+        
+        // ✅ GJENI CHAT CONTAINER-IN E DUHUR
+        let chatScreen = document.getElementById('chat-screen');
+        
+        // Nëse nuk gjendet, kërko në të gjithë dokumentin
         if (!chatScreen) {
-            console.error("❌ Chat screen nuk u gjet");
-            return;
+            console.log("🔍 'chat-screen' nuk u gjet, duke kërkuar alternative...");
+            
+            // Provo elementë të tjerë të mundshëm
+            const possibleContainers = [
+                'chat',
+                'messages',
+                'conversation',
+                'chat-container',
+                'message-area'
+            ];
+            
+            for (const containerId of possibleContainers) {
+                chatScreen = document.getElementById(containerId);
+                if (chatScreen) {
+                    console.log(`✅ U gjet alternative: ${containerId}`);
+                    break;
+                }
+            }
         }
         
+        // ✅ NËSE AKOMA NUK GJENDET, KRIJO NJË TË RI
+        if (!chatScreen) {
+            console.log("🏗️ Duke krijuar chat container të ri...");
+            chatScreen = this.createProperChatContainer();
+        }
+        
+        // Krijo elementin e mesazhit
         const messageElement = document.createElement('div');
         messageElement.className = `message ${sender}-message`;
         messageElement.innerHTML = `
@@ -229,10 +262,164 @@ class ChatSystem {
             <div class="message-time">${new Date().toLocaleTimeString()}</div>
         `;
         
+        // ✅ SHTO MESAZHIN NË CHAT SCREEN
         chatScreen.appendChild(messageElement);
+        
+        // Scroll në fund
         chatScreen.scrollTop = chatScreen.scrollHeight;
         
-        console.log(`📝 U shtua mesazh nga ${sender}: ${message.substring(0, 50)}...`);
+        console.log(`✅ U shtua mesazh nga ${sender} në chat-screen: ${message.substring(0, 50)}...`);
+    }
+
+    // ✅ FUNKSION I RI PËR TË KRIJUAR CHAT CONTAINER NË POZICIONIN E DUHUR
+    createProperChatContainer() {
+        console.log("📍 Duke krijuar chat container në pozicionin e duhur...");
+        
+        // Krijo container-in kryesor të chat-it
+        const chatContainer = document.createElement('div');
+        chatContainer.id = 'chat-screen';
+        chatContainer.className = 'chat-screen';
+        
+        // ✅ GJENI POZICIONIN E DUHUR - PARA INPUT FIELD
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        
+        let inserted = false;
+        
+        if (userInput && userInput.parentElement) {
+            // Vendos para input container
+            const inputContainer = userInput.parentElement;
+            const mainContainer = inputContainer.parentElement;
+            
+            // Vendos chat container para input container
+            mainContainer.insertBefore(chatContainer, inputContainer);
+            console.log("✅ Chat container u vendos para input field!");
+            inserted = true;
+        } 
+        
+        // Fallback: vendos në fillim të body
+        if (!inserted) {
+            document.body.prepend(chatContainer);
+            console.log("✅ Chat container u vendos në fillim të body!");
+        }
+        
+        // ✅ SHTO STILET NËSE NUK EKZISTOJNË
+        this.addChatStyles();
+        
+        return chatContainer;
+    }
+
+    // ✅ FUNKSION I RI PËR TË SIGURUAR CHAT CONTAINER
+    ensureChatContainer() {
+        if (!document.getElementById('chat-screen')) {
+            console.log("🔧 Duke siguruar chat container...");
+            this.createProperChatContainer();
+        }
+    }
+
+    // ✅ FUNKSION PËR TË SHTUAR STILET E CHAT-IT
+    addChatStyles() {
+        if (!document.getElementById('chat-fix-styles')) {
+            const style = document.createElement('style');
+            style.id = 'chat-fix-styles';
+            style.textContent = `
+                /* CHAT CONTAINER FIX */
+                #chat-screen {
+                    flex: 1;
+                    overflow-y: auto;
+                    padding: 15px;
+                    background: #f8fafc;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 12px;
+                    max-height: 400px;
+                    border-bottom: 1px solid #e2e8f0;
+                    margin-bottom: 10px;
+                }
+                
+                /* MESAZHET E USERIT */
+                .user-message {
+                    align-self: flex-end;
+                    background: #3B82F6;
+                    color: white;
+                    padding: 10px 14px;
+                    border-radius: 18px 18px 4px 18px;
+                    max-width: 70%;
+                    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+                }
+                
+                /* MESAZHET E BOTIT */
+                .bot-message {
+                    align-self: flex-start;
+                    background: white;
+                    color: #1f2937;
+                    padding: 10px 14px;
+                    border-radius: 18px 18px 18px 4px;
+                    max-width: 70%;
+                    border: 1px solid #e5e7eb;
+                    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+                }
+                
+                .message-content {
+                    font-size: 14px;
+                    line-height: 1.4;
+                }
+                
+                .message-time {
+                    font-size: 11px;
+                    opacity: 0.7;
+                    margin-top: 4px;
+                    text-align: right;
+                }
+                
+                /* THINKING INDICATOR */
+                .thinking-indicator {
+                    align-self: flex-start;
+                    padding: 10px 15px;
+                    margin: 5px 0;
+                    background: rgba(147, 51, 234, 0.1);
+                    border-radius: 15px;
+                    border: 1px solid rgba(147, 51, 234, 0.2);
+                    max-width: 70%;
+                }
+                
+                .thinking-content {
+                    display: flex;
+                    align-items: center;
+                    justify-content: flex-start;
+                    gap: 10px;
+                }
+                
+                .thinking-text {
+                    color: #9333EA;
+                    font-size: 14px;
+                    font-style: italic;
+                }
+                
+                .thinking-dots {
+                    display: flex;
+                    gap: 4px;
+                }
+                
+                .thinking-dots span {
+                    width: 6px;
+                    height: 6px;
+                    border-radius: 50%;
+                    background: #9333EA;
+                    animation: thinking-bounce 1.4s infinite ease-in-out;
+                }
+                
+                .thinking-dots span:nth-child(1) { animation-delay: -0.32s; }
+                .thinking-dots span:nth-child(2) { animation-delay: -0.16s; }
+                
+                @keyframes thinking-bounce {
+                    0%, 80%, 100% { transform: scale(0); }
+                    40% { transform: scale(1); }
+                }
+            `;
+            document.head.appendChild(style);
+            console.log("✅ Stilet e chat-it u shtuan!");
+        }
     }
 
     formatMessage(message) {
@@ -244,18 +431,19 @@ class ChatSystem {
     }
 
     showThinkingIndicator() {
-        const thinkingElement = document.getElementById('thinking');
-        if (thinkingElement) {
-            thinkingElement.style.display = 'block';
+        // ✅ SIGUROHU QË CHAT SCREEN EKZISTON
+        let chatScreen = document.getElementById('chat-screen');
+        if (!chatScreen) {
+            chatScreen = this.createProperChatContainer();
         }
         
-        // Krijo element nëse nuk ekziston
-        const chatScreen = document.getElementById('chat-screen');
-        if (chatScreen && !document.getElementById('thinking')) {
-            const thinkingDiv = document.createElement('div');
-            thinkingDiv.id = 'thinking';
-            thinkingDiv.className = 'thinking-indicator';
-            thinkingDiv.innerHTML = `
+        // Krijo ose shfaq thinking indicator
+        let thinkingElement = document.getElementById('thinking');
+        if (!thinkingElement) {
+            thinkingElement = document.createElement('div');
+            thinkingElement.id = 'thinking';
+            thinkingElement.className = 'thinking-indicator';
+            thinkingElement.innerHTML = `
                 <div class="thinking-content">
                     <span class="thinking-text">RRUFE-TESLA po mendon...</span>
                     <div class="thinking-dots">
@@ -265,10 +453,13 @@ class ChatSystem {
                     </div>
                 </div>
             `;
-            thinkingDiv.style.display = 'block';
-            chatScreen.appendChild(thinkingDiv);
-            chatScreen.scrollTop = chatScreen.scrollHeight;
+            chatScreen.appendChild(thinkingElement);
         }
+        
+        thinkingElement.style.display = 'block';
+        chatScreen.scrollTop = chatScreen.scrollHeight;
+        
+        console.log("🤔 Thinking indicator u shfaq!");
     }
 
     hideThinkingIndicator() {
@@ -333,7 +524,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 console.log("✅ chat.js (Version i Ri) u ngarkua!");
 
-// ==================== FUNKSIONE TESTIMI ====================
+// ==================== FUNKSIONE TESTIMI & DIAGNOSTIKIM ====================
 
 window.testChatSystem = function() {
     console.log("🧪 TEST I CHAT SYSTEM:");
@@ -361,62 +552,56 @@ window.showChatStatus = function() {
     }
 };
 
-// ==================== STYLE CSS PËR THINKING INDICATOR ====================
+// ==================== DIAGNOSTIKIM I CHAT CONTAINER ====================
 
-const addThinkingStyles = () => {
-    if (!document.getElementById('chat-thinking-styles')) {
-        const style = document.createElement('style');
-        style.id = 'chat-thinking-styles';
-        style.textContent = `
-            .thinking-indicator {
-                padding: 10px 15px;
-                margin: 10px;
-                background: rgba(147, 51, 234, 0.1);
-                border-radius: 15px;
-                border: 1px solid rgba(147, 51, 234, 0.2);
-                text-align: center;
+window.debugChatContainer = function() {
+    console.log("🔍 DIAGNOSTIKIM I CHAT CONTAINER:");
+    
+    const elements = {
+        'chat-screen': document.getElementById('chat-screen'),
+        'chat': document.getElementById('chat'),
+        'user-input': document.getElementById('user-input'),
+        'send-btn': document.getElementById('send-btn'),
+        '.message': document.querySelectorAll('.message'),
+        '.input-container': document.querySelector('.input-container')
+    };
+    
+    Object.entries(elements).forEach(([name, element]) => {
+        if (element) {
+            if (name === '.message') {
+                console.log(`✅ ${name}: ${element.length} elementë`);
+            } else {
+                console.log(`✅ ${name}: EKZISTON`, element);
             }
-            
-            .thinking-content {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 10px;
-            }
-            
-            .thinking-text {
-                color: #9333EA;
-                font-size: 14px;
-                font-style: italic;
-            }
-            
-            .thinking-dots {
-                display: flex;
-                gap: 4px;
-            }
-            
-            .thinking-dots span {
-                width: 6px;
-                height: 6px;
-                border-radius: 50%;
-                background: #9333EA;
-                animation: thinking-bounce 1.4s infinite ease-in-out;
-            }
-            
-            .thinking-dots span:nth-child(1) { animation-delay: -0.32s; }
-            .thinking-dots span:nth-child(2) { animation-delay: -0.16s; }
-            
-            @keyframes thinking-bounce {
-                0%, 80%, 100% { transform: scale(0); }
-                40% { transform: scale(1); }
-            }
-        `;
-        document.head.appendChild(style);
-    }
+        } else {
+            console.log(`❌ ${name}: NUK EKZISTON`);
+        }
+    });
+    
+    // Gjej të gjitha elementet që përmbajnë 'chat'
+    const allChatElements = document.querySelectorAll('[id*="chat"], [class*="chat"]');
+    console.log(`🔍 Të gjitha elementet me 'chat': ${allChatElements.length}`);
+    allChatElements.forEach(el => {
+        console.log(`   - ${el.id || el.className}: ${el.tagName}`);
+    });
 };
 
-// Shto stilet kur të ngarkohet faqja
-setTimeout(addThinkingStyles, 1000);
+// ==================== FORCE FIX PËR CHAT CONTAINER ====================
+
+window.forceFixChatContainer = function() {
+    console.log("🔧 FORCE FIX PËR CHAT CONTAINER...");
+    
+    // Fshi chat container ekzistues nëse ka
+    const oldChat = document.getElementById('chat-screen');
+    if (oldChat) {
+        oldChat.remove();
+        console.log("🗑️ U fshi chat container i vjetër");
+    }
+    
+    // Krijo të ri duke përdorur metodën e klasës
+    window.chatSystem.createProperChatContainer();
+    console.log("✅ Force fix u aplikua!");
+};
 
 // ==================== FIX MANUAL PËR ENTER KEY ====================
 
@@ -435,6 +620,7 @@ window.fixEnterKeyManual = function() {
                 if (message && window.chatSystem) {
                     window.chatSystem.handleUserMessage(message);
                     newInput.value = '';
+                    newInput.focus();
                 }
             }
         });
@@ -445,7 +631,21 @@ window.fixEnterKeyManual = function() {
     return false;
 };
 
-// Auto-fix pas 3 sekondash
+// ==================== AUTO-FIX & DIAGNOSTIKIM ====================
+
+// Auto-diagnostikim pas 2 sekondash
+setTimeout(() => {
+    console.log("🔍 AUTO-DIAGNOSTIKIM I CHAT-IT:");
+    window.debugChatContainer();
+    
+    // Sigurohu që chat container ekziston
+    if (!document.getElementById('chat-screen')) {
+        console.log("🔧 Auto-krijim i chat container...");
+        window.chatSystem.ensureChatContainer();
+    }
+}, 2000);
+
+// Auto-fix për Enter key pas 3 sekondash
 setTimeout(() => {
     if (!window.chatSystem?.initialized) {
         window.fixEnterKeyManual();
