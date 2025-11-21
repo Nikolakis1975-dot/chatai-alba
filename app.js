@@ -89,6 +89,7 @@ const tllActivationRoutes = require('./routes/tll-activation');
 const ContextMemoryService = require('./services/contextMemoryService');
 const contextMemoryRoutes = require('./routes/context-memory');
 const contextMemoryService = new ContextMemoryService();
+const knowledgeRoutes = require('./routes/knowledge');
 
 // ======================================================
 // 🆕 SHTESË E RE: RRUFE-TESLA 10.5 INTEGRIMI
@@ -115,6 +116,7 @@ app.use('/api/gemini-simple', geminiSimpleRoutes);
 app.use('/api/rrufe', rrufeRoutes);
 app.use('/api/context-memory', contextMemoryRoutes);
 app.use('/api/tll', tllActivationRoutes);
+app.use('/api/knowledge', knowledgeRoutes);
 
 // ======================================================
 // 5️⃣ Static files (Frontend)
