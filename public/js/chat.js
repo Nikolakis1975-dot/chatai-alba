@@ -62,20 +62,26 @@ class ChatSystem {
         // Gjej elementët e chat-it
         const userInput = document.getElementById('user-input');
         const sendBtn = document.getElementById('send-btn');
-        const chatScreen = document.getElementById('chat-screen');
         
         if (userInput && sendBtn) {
             // Event për butonin Send
             sendBtn.addEventListener('click', () => {
-                this.handleUserMessage(userInput.value.trim());
-                userInput.value = '';
+                const message = userInput.value.trim();
+                if (message) {
+                    this.handleUserMessage(message);
+                    userInput.value = '';
+                }
             });
             
-            // Event për Enter key
+            // Event për Enter key - VERSIONI I RI I KORIGJUAR
             userInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
-                    this.handleUserMessage(userInput.value.trim());
-                    userInput.value = '';
+                    e.preventDefault(); // ✅ PARANDALO REFRESH-IN E FAQES
+                    const message = userInput.value.trim();
+                    if (message) {
+                        this.handleUserMessage(message);
+                        userInput.value = '';
+                    }
                 }
             });
             
@@ -95,6 +101,9 @@ class ChatSystem {
         
         // Shto mesazhin e përdoruesit në chat
         this.addMessageToChat(message, 'user');
+        
+        // Shfaq "po mendon..." nëse ekziston
+        this.showThinkingIndicator();
         
         try {
             let response;
@@ -116,6 +125,9 @@ class ChatSystem {
                 response = await this.sendToServer(message);
             }
             
+            // Fshi "po mendon..."
+            this.hideThinkingIndicator();
+            
             // Shto përgjigjen në chat
             this.addMessageToChat(response, 'bot');
             
@@ -124,6 +136,10 @@ class ChatSystem {
             
         } catch (error) {
             console.error("❌ Gabim në procesimin e mesazhit:", error);
+            
+            // Fshi "po mendon..."
+            this.hideThinkingIndicator();
+            
             this.addMessageToChat("Më falni, pati një gabim në sistem. Provo përsëri.", 'bot');
         }
     }
@@ -161,41 +177,41 @@ class ChatSystem {
         }
     }
 
-   async learnFromInteraction(question, answer) {
-    try {
-        // 🎯 PROVO KNOWLEDGEINTEGRATION PARË
-        if (window.knowledgeIntegration && typeof window.knowledgeIntegration.learnFromInteraction === 'function') {
-            await window.knowledgeIntegration.learnFromInteraction(question, answer, {
-                category: 'conversation',
-                timestamp: new Date().toISOString(),
-                source: 'chat_system'
-            });
-            console.log("🎓 U mësua nga interaksioni!");
+    async learnFromInteraction(question, answer) {
+        try {
+            // 🎯 PROVO KNOWLEDGEINTEGRATION PARË
+            if (window.knowledgeIntegration && typeof window.knowledgeIntegration.learnFromInteraction === 'function') {
+                await window.knowledgeIntegration.learnFromInteraction(question, answer, {
+                    category: 'conversation',
+                    timestamp: new Date().toISOString(),
+                    source: 'chat_system'
+                });
+                console.log("🎓 U mësua nga interaksioni!");
+            }
+            // 🎯 PROVO KNOWLEDGEDISTILLER SI FALLBACK
+            else if (window.knowledgeDistiller && typeof window.knowledgeDistiller.learnFromInteraction === 'function') {
+                await window.knowledgeDistiller.learnFromInteraction(question, answer, {
+                    category: 'conversation'
+                });
+                console.log("🎓 U mësua nga interaksioni (fallback)!");
+            }
+            // 🔄 PROVO ADDKNOWLEDGE SI FALLBACK EMERGJENT
+            else if (window.knowledgeDistiller && typeof window.knowledgeDistiller.addKnowledge === 'function') {
+                const knowledgeKey = question.substring(0, 30).replace(/[^\w]/g, '_');
+                await window.knowledgeDistiller.addKnowledge(knowledgeKey, {
+                    question: question,
+                    answer: answer,
+                    learnedAt: new Date().toISOString()
+                }, 'conversation');
+                console.log("🎓 U mësua nga interaksioni (emergjent)!");
+            }
+            else {
+                console.log("ℹ️ Nuk ka sistem mësimi të disponueshëm");
+            }
+        } catch (error) {
+            console.error("❌ Gabim në mësimin nga interaksioni:", error);
         }
-        // 🎯 PROVO KNOWLEDGEDISTILLER SI FALLBACK
-        else if (window.knowledgeDistiller && typeof window.knowledgeDistiller.learnFromInteraction === 'function') {
-            await window.knowledgeDistiller.learnFromInteraction(question, answer, {
-                category: 'conversation'
-            });
-            console.log("🎓 U mësua nga interaksioni (fallback)!");
-        }
-        // 🔄 PROVO ADDKNOWLEDGE SI FALLBACK EMERGJENT
-        else if (window.knowledgeDistiller && typeof window.knowledgeDistiller.addKnowledge === 'function') {
-            const knowledgeKey = question.substring(0, 30).replace(/[^\w]/g, '_');
-            await window.knowledgeDistiller.addKnowledge(knowledgeKey, {
-                question: question,
-                answer: answer,
-                learnedAt: new Date().toISOString()
-            }, 'conversation');
-            console.log("🎓 U mësua nga interaksioni (emergjent)!");
-        }
-        else {
-            console.log("ℹ️ Nuk ka sistem mësimi të disponueshëm");
-        }
-    } catch (error) {
-        console.error("❌ Gabim në mësimin nga interaksioni:", error);
     }
-}
 
     addMessageToChat(message, sender) {
         const chatScreen = document.getElementById('chat-screen');
@@ -225,6 +241,41 @@ class ChatSystem {
             .replace(/\n/g, '<br>')
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
             .replace(/\*(.*?)\*/g, '<em>$1</em>');
+    }
+
+    showThinkingIndicator() {
+        const thinkingElement = document.getElementById('thinking');
+        if (thinkingElement) {
+            thinkingElement.style.display = 'block';
+        }
+        
+        // Krijo element nëse nuk ekziston
+        const chatScreen = document.getElementById('chat-screen');
+        if (chatScreen && !document.getElementById('thinking')) {
+            const thinkingDiv = document.createElement('div');
+            thinkingDiv.id = 'thinking';
+            thinkingDiv.className = 'thinking-indicator';
+            thinkingDiv.innerHTML = `
+                <div class="thinking-content">
+                    <span class="thinking-text">RRUFE-TESLA po mendon...</span>
+                    <div class="thinking-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+            `;
+            thinkingDiv.style.display = 'block';
+            chatScreen.appendChild(thinkingDiv);
+            chatScreen.scrollTop = chatScreen.scrollHeight;
+        }
+    }
+
+    hideThinkingIndicator() {
+        const thinkingElement = document.getElementById('thinking');
+        if (thinkingElement) {
+            thinkingElement.style.display = 'none';
+        }
     }
 
     isGenericResponse(response) {
@@ -282,7 +333,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 console.log("✅ chat.js (Version i Ri) u ngarkua!");
 
-// ==================== TESTIM ====================
+// ==================== FUNKSIONE TESTIMI ====================
 
 window.testChatSystem = function() {
     console.log("🧪 TEST I CHAT SYSTEM:");
@@ -309,3 +360,94 @@ window.showChatStatus = function() {
         console.log("📊 Detajet:", window.chatSystem.getStats());
     }
 };
+
+// ==================== STYLE CSS PËR THINKING INDICATOR ====================
+
+const addThinkingStyles = () => {
+    if (!document.getElementById('chat-thinking-styles')) {
+        const style = document.createElement('style');
+        style.id = 'chat-thinking-styles';
+        style.textContent = `
+            .thinking-indicator {
+                padding: 10px 15px;
+                margin: 10px;
+                background: rgba(147, 51, 234, 0.1);
+                border-radius: 15px;
+                border: 1px solid rgba(147, 51, 234, 0.2);
+                text-align: center;
+            }
+            
+            .thinking-content {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 10px;
+            }
+            
+            .thinking-text {
+                color: #9333EA;
+                font-size: 14px;
+                font-style: italic;
+            }
+            
+            .thinking-dots {
+                display: flex;
+                gap: 4px;
+            }
+            
+            .thinking-dots span {
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: #9333EA;
+                animation: thinking-bounce 1.4s infinite ease-in-out;
+            }
+            
+            .thinking-dots span:nth-child(1) { animation-delay: -0.32s; }
+            .thinking-dots span:nth-child(2) { animation-delay: -0.16s; }
+            
+            @keyframes thinking-bounce {
+                0%, 80%, 100% { transform: scale(0); }
+                40% { transform: scale(1); }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+};
+
+// Shto stilet kur të ngarkohet faqja
+setTimeout(addThinkingStyles, 1000);
+
+// ==================== FIX MANUAL PËR ENTER KEY ====================
+
+window.fixEnterKeyManual = function() {
+    const input = document.getElementById('user-input');
+    if (input) {
+        // Fshi event listeners të vjetër
+        const newInput = input.cloneNode(true);
+        input.parentNode.replaceChild(newInput, input);
+        
+        // Shto event listener të ri
+        newInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const message = newInput.value.trim();
+                if (message && window.chatSystem) {
+                    window.chatSystem.handleUserMessage(message);
+                    newInput.value = '';
+                }
+            }
+        });
+        
+        console.log("🔧 Enter key u rregullua manualisht!");
+        return true;
+    }
+    return false;
+};
+
+// Auto-fix pas 3 sekondash
+setTimeout(() => {
+    if (!window.chatSystem?.initialized) {
+        window.fixEnterKeyManual();
+    }
+}, 3000);
