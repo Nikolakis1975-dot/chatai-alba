@@ -761,25 +761,6 @@ document.addEventListener('DOMContentLoaded', function() {
 // =============================================== KOWNLEGDE =======================================
 // ==================== 🎯 INTEGRIMI I KNOWLEDGEDISTILLER ====================
 // Shto këtë në FUND të main.js ose në një skedar të veçantë
-
-// class KnowledgeIntegration {
-//    constructor() {
-//        this.initialized = false;
-//        this.initialize();
-//    }
-      
-    async waitForKnowledgeDistiller() {
-        return new Promise((resolve) => {
-            const check = () => {
-                if (window.knowledgeDistiller && window.knowledgeDistiller.initialized) {
-                    resolve(true);
-                } else {
-                    setTimeout(check, 1000);
-                }
-            };
-            check();
-        });
-    }
     
     interceptSendButton() {
         console.log("🎯 Duke interceptuar butonin e dërgimit...");
