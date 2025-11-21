@@ -365,16 +365,16 @@ determineBestRoute(analysis) {
     }
 }
 
-        // 2. MATEMATIKË - Procesim lokal i shpejtë
+        //  MATEMATIKË 
         if (analysis.isMath) {
-            console.log("🧮 Rrugë e zgjedhur: LOCAL_MATH");
-            return {
-                route: this.config.routes.LOCAL,
-                priority: 'high', 
-                reason: 'Llogaritje matematikore',
-                timeout: 3000
-            };
-        }
+    console.log("🧮 Rrugë e zgjedhur: LOCAL_MATH");
+    return {
+        route: this.config.routes.LOCAL,
+        priority: 'high', 
+        reason: 'Llogaritje matematikore',
+        timeout: 3000
+    };
+}
 
         // 3. PËRSHËNDETJE - Përgjigje lokale e shpejtë
         if (analysis.isGreeting) {
