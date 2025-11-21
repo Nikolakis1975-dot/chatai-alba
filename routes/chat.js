@@ -253,6 +253,13 @@ async function processWithSmartLogic(message) {
     if (lowerMessage.includes('mirëmbrëma') || lowerMessage.includes('mirembrema')) {
         return "Mirëmbrëma! 🌙 Mbrëmje e mbarë! Si mund t'ju shërbej?";
     }
+
+    // 🎯 SHTO KËTË NË FUNKSIONIN processWithSmartLogic
+if (lowerMessage.includes('lamtumirë') || lowerMessage.includes('mirupafshim') ||
+    lowerMessage.includes('bye') || lowerMessage.includes('goodbye') ||
+    lowerMessage.includes('shëndet')) {
+    return "Mirupafshim! 😊 Ishte kënaqësi të flisja me ju! Shpresoj të flasim sërish shpejt!";
+}
     
     // 🎯 LAMTUMIRË
     if (lowerMessage.includes('mirupafshim') || lowerMessage.includes('lamtumirë') ||
