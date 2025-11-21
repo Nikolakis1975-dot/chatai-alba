@@ -312,7 +312,9 @@ window.showChatStatus = function() {
 
 // ==================== OVERRIDE I SISTEMIT TË VJETËR ====================
 
-// 🎯 KAPËRCE SENDMESSAGE TË VJETËR
+console.log("🚀 Duke aplikuar override për sistemin e vjetër...");
+
+// 🎯 KAPËRCE SENDMESSAGE TË VJETËR - VERSION I PLOTË
 if (typeof sendMessage !== 'undefined') {
     console.log("🔧 Duke kapërcyer sendMessage të vjetër...");
     
@@ -320,60 +322,79 @@ if (typeof sendMessage !== 'undefined') {
     const oldSendMessage = sendMessage;
     
     // Override me versionin e ri
-    window.sendMessage = async function(message) {
-        console.log("🎯 sendMessage override - Duke përdorur SmartResponseRouter...");
+    window.sendMessage = async function() {
+        const input = document.getElementById("user-input");
+        const text = input ? input.value.trim() : "";
         
-        // PRIORITET I PARË: SMART RESPONSE ROUTER
+        if (!text) return;
+        
+        console.log("🎯 sendMessage OVERRIDE - Mesazhi:", text.substring(0, 50));
+        
+        // Pastro input
+        if (input) input.value = "";
+        
+        // Shto mesazhin e përdoruesit në chat
+        if (typeof addMessage === 'function') {
+            addMessage(text, 'user');
+        }
+        
+        // 🎯 PRIORITET I PARË: SMART RESPONSE ROUTER
         if (window.smartResponseRouter && window.smartResponseRouter.initialized) {
             try {
-                const response = await window.smartResponseRouter.processUserMessage(message);
+                console.log("🎯 Duke përdorur SmartResponseRouter në override...");
+                const response = await window.smartResponseRouter.processUserMessage(text);
                 
-                // Nëse morëm përgjigje të mirë, ktheje
+                // Nëse morëm përgjigje të mirë
                 if (response && !response.includes("E kuptoj!") && !response.includes("Përdorni /ndihmo")) {
-                    console.log("✅ SmartResponseRouter dha përgjigje të mirë në override");
+                    console.log("✅ SmartResponseRouter dha përgjigje të mirë:", response.substring(0, 50));
                     
-                    // Shto përgjigjen në chat (duke imituar sistemin e vjetër)
+                    // Shto përgjigjen në chat
                     if (typeof addMessage === 'function') {
                         addMessage(response, 'bot');
                     }
                     
-                    return response;
+                    // 🧠 MËSO NGA INTERAKSIONI
+                    if (window.knowledgeDistiller) {
+                        try {
+                            const knowledgeKey = text.substring(0, 30).replace(/[^\w]/g, '_');
+                            await window.knowledgeDistiller.addKnowledge(knowledgeKey, {
+                                question: text,
+                                answer: response,
+                                learnedAt: new Date().toISOString()
+                            }, 'conversation');
+                            console.log("🎓 U mësua nga interaksioni në override!");
+                        } catch (learnError) {
+                            console.error("❌ Gabim në mësim:", learnError);
+                        }
+                    }
+                    
+                    return; // NDALO KËTU - mos vazhdo me sistemin e vjetër
                 }
             } catch (error) {
                 console.error("❌ Gabim në SmartResponseRouter override:", error);
             }
         }
         
-        // FALLBACK: Sistemi i vjetër
-        console.log("🔄 Duke përdorur sendMessage të vjetër...");
-        return await oldSendMessage(message);
+        // 🔄 FALLBACK: Sistemi i vjetër
+        console.log("🔄 Duke përdorur sendMessage të vjetër si fallback...");
+        return await oldSendMessage();
     };
     
-    console.log("✅ sendMessage override u aplikua!");
+    console.log("✅ sendMessage override u aplikua me sukses!");
 }
 
-// 🎯 KAPËRCE ÇDO FUNKSION TJETËR TË PROCESIMIT
-if (typeof processUserMessage !== 'undefined') {
-    console.log("🔧 Duke kapërcyer processUserMessage...");
-    
-    const oldProcessUserMessage = processUserMessage;
-    
-    window.processUserMessage = async function(message) {
-        console.log("🎯 processUserMessage override...");
-        
-        if (window.smartResponseRouter) {
-            try {
-                const response = await window.smartResponseRouter.processUserMessage(message);
-                if (response && !response.includes("E kuptoj!")) {
-                    return response;
-                }
-            } catch (error) {
-                console.error("❌ Gabim në processUserMessage override:", error);
+// 🎯 KAPËRCE EDHE EVENT LISTENER-ËT E TASTIERËS
+document.addEventListener('DOMContentLoaded', function() {
+    const input = document.getElementById('user-input');
+    if (input) {
+        // Kapërce event listener-in e vjetër për Enter key
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // Parandaloj veprimin e vjetër
+                sendMessage(); // Thirr override-in tonë
             }
-        }
-        
-        return await oldProcessUserMessage(message);
-    };
-}
+        }, true); // Use capture për të kapërcyer të vjetrën
+    }
+});
 
-console.log("✅ Të gjitha override-t u aplikuan!");
+console.log("🎉 OVERRIDE I PLOTË U APLIKUA! Tani çdo mesazh do të përdorë SmartResponseRouter!");
