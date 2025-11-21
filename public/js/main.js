@@ -656,70 +656,13 @@ setTimeout(() => {
 console.log('✅ NOUS_CORE u çaktivizua - login-i duhet të funksionojë tani');
 
 // ======================================================
-// 🚀 MEMORY INTEGRATION PATCH - SHTO NË FUND TË main.js
-// ======================================================
-
-function integrateMemoryWithMainSystem() {
-    console.log('🧠 Duke integruar Memory System me main.js...');
-    
-    // Mbivendos integrimin ekzistues
-    if (window.rrufePlatform && window.rrufePlatform.integrateWithExisting) {
-        const originalIntegrate = window.rrufePlatform.integrateWithExisting;
-        
-        window.rrufePlatform.integrateWithExisting = function() {
-            // Thirr integrimin origjinal
-            originalIntegrate.call(this);
-            
-            // Pastaj shto memory integration
-            console.log('💾 Duke shtuar Memory Integration patch...');
-            
-            const originalSendMessage = window.sendMessage;
-            if (originalSendMessage) {
-                window.sendMessage = async function() {
-                    const input = document.getElementById('user-input');
-                    const message = input ? input.value.trim() : '';
-                    
-                    if (!message) return;
-                    
-                    // 🆕 Shto në memory PARA se të procesojë
-                    if (window.ltmManager) {
-                        window.ltmManager.addUserMessage(message);
-                    }
-                    
-                    // Thirr funksionin origjinal
-                    await originalSendMessage.call(this);
-                    
-                    // 🆕 Shto përgjigjen në memory PASI të përgjigjet
-                    setTimeout(() => {
-                        if (window.ltmManager && window.chatHistory) {
-                            const lastMsg = window.chatHistory[window.chatHistory.length - 1];
-                            if (lastMsg && lastMsg.sender === 'bot') {
-                                window.ltmManager.addAIResponse(lastMsg.text);
-                                if (typeof updateMemoryDisplay !== 'undefined') {
-                                    updateMemoryDisplay();
-                                }
-                            }
-                        }
-                    }, 1000);
-                };
-                
-                console.log('✅ Memory Integration Patch u aktivizua!');
-            }
-        };
-    }
-}
-
-// Ekzekuto patch-in
-setTimeout(integrateMemoryWithMainSystem, 5000);
-
-// ======================================================
-// 🚀 SMART RESPONSE ROUTER + MEMORY INTEGRATION PATCH
+// 🚀 SMART RESPONSE ROUTER + MEMORY INTEGRATION PATCH - VERSION I RI PRIMARY
 // ======================================================
 
 function forceSmartIntegration() {
-    console.log('🧠🔄 FORCING SMART RESPONSE + MEMORY INTEGRATION...');
+    console.log('🧠🔄 FORCING SMART RESPONSE ROUTER AS PRIMARY...');
     
-    // Mbivendos sendMessage për të përdorur SmartResponseRouter dhe Memory
+    // Mbivendos sendMessage për të përdorur SmartResponseRouter si PRIMARY
     if (typeof window.sendMessage !== 'undefined') {
         const originalSendMessage = window.sendMessage;
         
@@ -729,106 +672,78 @@ function forceSmartIntegration() {
             
             if (!message) return;
             
-            console.log('🎯 SMART INTEGRATION: Processing:', message.substring(0, 50));
+            console.log('🎯 SMART PRIMARY: Processing:', message);
             
-            // 🧠 1. PROVO SMART RESPONSE ROUTER PARË
+            // Pastro input menjëherë
+            if (input) input.value = "";
+            
+            // Shto mesazhin e përdoruesit
+            if (typeof addMessage === 'function') {
+                addMessage(message, 'user');
+            }
+            
+            // 🎯 PRIORITET I PARË: SMART RESPONSE ROUTER
             let smartResponse = null;
             if (window.smartResponseRouter && window.smartResponseRouter.initialized) {
                 try {
-                    console.log('🧠 Duke përdorur SmartResponseRouter...');
+                    console.log('🧠 Duke përdorur SmartResponseRouter si PRIMARY...');
                     smartResponse = await window.smartResponseRouter.processUserMessage(message);
                     
-                    if (smartResponse && smartResponse.length > 5 && 
-                        !smartResponse.includes('undefined') && 
-                        !smartResponse.includes('null')) {
-                        console.log('✅ SMART: Got good response from SmartRouter');
-                    } else {
-                        console.log('⚠️ SMART: Response not good, using fallback');
-                        smartResponse = null;
-                    }
-                } catch (error) {
-                    console.log('❌ SMART: Error in SmartResponseRouter:', error);
-                    smartResponse = null;
-                }
-            }
-            
-            // 💾 2. FORCE ADD TO MEMORY - PARA procesimit
-            if (window.ltmManager) {
-                try {
-                    window.ltmManager.addUserMessage(message);
-                    console.log('💾 MEMORY: User message added to LTM');
-                } catch (error) {
-                    console.log('❌ MEMORY: Error adding user message:', error);
-                }
-            }
-            
-            // 🔄 3. EKZEKUTO SISTEMIN ORIGJINAL NËSE SMART ROUTER NUK FUNKSIONOI
-            let originalResult;
-            if (!smartResponse) {
-                console.log('🔄 Duke përdorur sistemin origjinal...');
-                try {
-                    originalResult = await originalSendMessage.call(this);
-                } catch (error) {
-                    console.log('❌ Error in original sendMessage:', error);
-                }
-            } else {
-                // 🎯 4. NËSE SMART ROUTER FUNKSIONOI, SHFAQ PËRGJIGJEN
-                console.log('🎯 Duke shfaqur përgjigjen nga SmartRouter...');
-                
-                // Shto mesazhin e përdoruesit nëse nuk është shtuar
-                if (typeof addMessage !== 'undefined') {
-                    addMessage(message, 'user');
-                }
-                
-                // Shto përgjigjen e SmartRouter
-                setTimeout(() => {
-                    if (typeof addMessage !== 'undefined') {
-                        addMessage(smartResponse, 'bot');
-                        console.log('✅ SMART: Response displayed in chat');
-                    }
-                    
-                    // 💾 Ruaj përgjigjen në memory
-                    if (window.ltmManager) {
-                        window.ltmManager.addAIResponse(smartResponse);
-                        console.log('💾 MEMORY: AI response added to LTM');
+                    // Kontrollo nëse përgjigja është e mirë
+                    if (smartResponse && smartResponse.length > 10 && 
+                        !smartResponse.includes('E kuptoj!') && 
+                        !smartResponse.includes('Përdorni /ndihmo')) {
                         
-                        // Update display
-                        if (typeof updateMemoryDisplay !== 'undefined') {
-                            updateMemoryDisplay();
+                        console.log('✅ SMART PRIMARY: Got good response:', smartResponse.substring(0, 50));
+                        
+                        // Shto përgjigjen në chat
+                        if (typeof addMessage === 'function') {
+                            addMessage(smartResponse, 'bot');
                         }
-                    }
-                }, 1000);
-            }
-            
-            // 💾 5. FORCE ADD AI RESPONSE - PAS procesimit (fallback)
-            setTimeout(() => {
-                if (window.ltmManager && !smartResponse) {
-                    try {
-                        // Gjej përgjigjen e fundit nga chatHistory (për sistemin origjinal)
-                        if (window.chatHistory && window.chatHistory.length > 0) {
-                            const lastMessages = window.chatHistory.slice(-3);
-                            const aiResponse = lastMessages.find(msg => msg.sender === 'bot');
-                            
-                            if (aiResponse && aiResponse.text) {
-                                window.ltmManager.addAIResponse(aiResponse.text);
-                                console.log('💾 MEMORY: AI response added from original system');
-                                
-                                // Update display
-                                if (typeof updateMemoryDisplay !== 'undefined') {
-                                    updateMemoryDisplay();
-                                }
+                        
+                        // 💾 Ruaj në memory
+                        if (window.ltmManager) {
+                            window.ltmManager.addAIResponse(smartResponse);
+                            if (typeof updateMemoryDisplay !== 'undefined') {
+                                updateMemoryDisplay();
                             }
                         }
-                    } catch (error) {
-                        console.log('❌ MEMORY: Error adding AI response:', error);
+                        
+                        // 🧠 Mëso nga interaksioni
+                        if (window.knowledgeDistiller) {
+                            try {
+                                await window.knowledgeDistiller.addKnowledge(
+                                    'smart_' + Date.now(),
+                                    { question: message, answer: smartResponse },
+                                    'conversation'
+                                );
+                                console.log('🎓 U mësua nga interaksioni Smart!');
+                            } catch (learnError) {
+                                console.log('❌ Gabim në mësim:', learnError);
+                            }
+                        }
+                        
+                        return; // ✅ DIL KËTU - MOS PËRDOR SISTEMIN E VJETËR!
+                    } else {
+                        console.log('⚠️ SMART PRIMARY: Response not good, using fallback');
                     }
+                } catch (error) {
+                    console.log('❌ SMART PRIMARY: Error in SmartResponseRouter:', error);
                 }
-            }, 1500);
+            } else {
+                console.log('❌ SMART PRIMARY: SmartResponseRouter not available');
+            }
             
-            return originalResult;
+            // 🔄 FALLBACK: Sistemi i vjetër
+            console.log('🔄 SMART PRIMARY: Using fallback to original system...');
+            try {
+                await originalSendMessage.call(this);
+            } catch (error) {
+                console.log('❌ Error in fallback:', error);
+            }
         };
         
-        console.log('✅🧠 SMART + MEMORY INTEGRATION PATCH ACTIVATED!');
+        console.log('✅🧠 SMART PRIMARY INTEGRATION ACTIVATED! SmartResponseRouter është PRIMARY!');
     }
 }
 
@@ -845,15 +760,25 @@ if (originalLogin) {
     };
 }
 
-// =========================== NË FUND TË main.js - ZËVENDËSO EVENT LISTENERS ================================
+// =========================== NË FUND TË main.js - PËRDOR sendMessage TË RI ================================
 
-// Butoni ➤
-document.getElementById('send-btn').addEventListener('click', unifiedSendMessage);
-
-// Enter në tastierë
-document.getElementById('user-input').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        unifiedSendMessage();
+// Butoni ➤ - Përdor sendMessage të ri me SmartResponseRouter
+document.addEventListener('DOMContentLoaded', function() {
+    const sendBtn = document.getElementById('send-btn');
+    if (sendBtn) {
+        sendBtn.addEventListener('click', sendMessage);
+        console.log('✅ Send button configured with SmartResponseRouter');
+    }
+    
+    // Enter në tastierë
+    const userInput = document.getElementById('user-input');
+    if (userInput) {
+        userInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+        console.log('✅ Enter key configured with SmartResponseRouter');
     }
 });
 
@@ -1079,3 +1004,9 @@ function addKnowledgeButton() {
 setTimeout(addKnowledgeButton, 3000);
 
 console.log("✅ Knowledge Integration Script u ngarkua!");
+
+// ======================================================
+// 🎯 FINAL ACTIVATION - SMART RESPONSE ROUTER PRIMARY
+// ======================================================
+
+console.log('🚀 RRUFE-TESLA me SmartResponseRouter PRIMARY u ngarkua plotësisht!');
