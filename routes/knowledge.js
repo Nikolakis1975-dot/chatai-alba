@@ -1,4 +1,4 @@
-// ============================================= knowledge =======================================
+// routes/knowledge.js
 const express = require('express');
 const router = express.Router();
 const db = require('../database'); // Përshtat sipas strukturës sate të database
@@ -13,7 +13,7 @@ router.get('/database/status', (req, res) => {
         res.json({ 
             success: true, 
             database: 'connected',
-            type: 'SQLite',
+            type: 'SQLite', 
             path: '/tmp/chat.db',
             timestamp: new Date().toISOString()
         });
@@ -186,7 +186,7 @@ router.get('/search', async (req, res) => {
         const results = [];
         const searchTerms = query.toLowerCase().split(' ');
         
-        // Implemento logjikën e kërkimit (e njëjtë si në frontend)
+        // Implemento logjikën e kërkimit
         Object.entries(knowledgeData).forEach(([cat, entries]) => {
             if (category && category !== cat) return;
             
