@@ -224,6 +224,18 @@ async function processWithSmartLogic(message) {
         lowerMessage.includes('si ndiheni') || lowerMessage.includes('si ndihesh')) {
         return "Jam shumë mirë, faleminderit që pyetët! 😊 Çfarë mund të bëj për ju?";
     }
+
+    // 🎯 SHTO KËTO RREGULLA TË REJA PËR PYETJE KOMPLEKSE
+if (lowerMessage.includes('shpjego') || lowerMessage.includes('shpjegomë') || 
+    lowerMessage.includes('shpjegoni') || lowerMessage.includes('çfarë është') ||
+    lowerMessage.includes('si funksionon') || lowerMessage.includes('na tregoni') ||
+    lowerMessage.includes('mëso më shumë') || lowerMessage.includes('detaje')) {
+    
+    console.log('🎯 U zbulua pyetje komplekse për Gemini:', message);
+    
+    // Kthe signal që ky mesazh duhet të shkojë te Gemini
+    return "GEMINI_REDIRECT"; // Ose ndonjë signal tjetër
+}
     
     // 🎯 MATEMATIKË
     if (lowerMessage.includes('sa është') || lowerMessage.includes('sa bejnë') || 
