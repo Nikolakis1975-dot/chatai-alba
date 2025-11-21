@@ -209,12 +209,26 @@ async function processWithSmartLogic(message) {
     
     console.log('🔍 SmartLogic duke analizuar:', lowerMessage);
     
-    // 🎯 PËRSHËNDETJE
-    if (lowerMessage.includes('përshëndetje') || lowerMessage.includes('pershendetje') || 
-        lowerMessage.includes('hello') || lowerMessage.includes('hi') || 
-        lowerMessage.includes('tungjatjeta') || lowerMessage.includes('tung') ||
-        lowerMessage.includes('ciao') || lowerMessage.includes('salut')) {
-        return "Hello! Gëzohem që ju shoh! Çfarë mund të bëj për ju?";
+    // 🎯 PYETJE KOMPLEKSE - DËRGO TE GEMINI
+    if (lowerMessage.includes('çfarë është') || lowerMessage.includes('si funksionon') ||
+        lowerMessage.includes('shpjego') || lowerMessage.includes('shpjegomë') ||
+        lowerMessage.includes('detaje') || lowerMessage.includes('mëso më shumë') ||
+        lowerMessage.includes('blockchain') || lowerMessage.includes('inteligjencë artificiale') ||
+        lowerMessage.includes('machine learning') || lowerMessage.includes('deep learning') ||
+        lowerMessage.includes('teknologji') || lowerMessage.includes('shkenc') ||
+        lowerMessage.length > 30) { // Pyetje të gjata
+        
+        console.log('🎯 Pyetje komplekse - duke dërguar te Gemini...');
+        
+        try {
+            // Provo të gjesh dhe përdorësh rrugën e gemini
+            const geminiRoute = await callGeminiAPI(message);
+            if (geminiRoute && geminiRoute.success) {
+                return geminiRoute.response;
+            }
+        } catch (error) {
+            console.log('❌ Gabim në Gemini:', error);
+        }
     }
     
     // 🎯 PYETJE SOCIALE - "SI JENI?"
@@ -281,6 +295,52 @@ if (lowerMessage.includes('lamtumirë') || lowerMessage.includes('mirupafshim') 
     }
     
     return null; // Nëse nuk gjen rrugë të mirë, kthehu në fallback
+}
+
+
+// ✅ FUNKSION I RI PËR TË THIRRUR GEMINI
+async function callGeminiAPI(message) {
+    try {
+        console.log('📡 Duke thirrur Gemini API për:', message.substring(0, 50));
+        
+        // Provo rrugë të ndryshme të mundshme
+        const possibleRoutes = [
+            '/api/gemini/chat',
+            '/api/gemini/message', 
+            '/api/gemini',
+            '/gemini/chat',
+            '/chat/gemini'
+        ];
+        
+        for (const route of possibleRoutes) {
+            try {
+                const response = await fetch(route, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        message: message,
+                        userId: 1
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('✅ Gemini u gjet në:', route);
+                    return data;
+                }
+            } catch (error) {
+                // Vazhdo te rruga tjetër
+                continue;
+            }
+        }
+        
+        console.log('❌ Asnjë rrugë Gemini nuk u gjet');
+        return null;
+        
+    } catch (error) {
+        console.log('❌ Gabim në thirrjen e Gemini:', error);
+        return null;
+    }
 }
 
 // ✅ FUNKSION PËR LLOGARITJE MATEMATIKE
