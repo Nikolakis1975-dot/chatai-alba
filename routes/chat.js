@@ -147,14 +147,11 @@ function getSimpleNaturalResponse(message) {
  //   }
 // });
 
-// ✅ RUTA PËR MESAZHET E DREJTPËRDREDHURA (PËR FRONTEND)
-
-// ✅ RUTA E THJESHTUAR PËR MESAZHE - PUNON ME URËN
 router.post('/message', async (req, res) => {
     try {
         const { message, userId = 1 } = req.body;
         
-        console.log('🔍 routes/chat/message: Marrë mesazh për urë:', message?.substring(0, 50));
+        console.log('🔍 routes/chat/message: Marrë mesazh:', message?.substring(0, 50));
 
         if (!message || message.trim() === '') {
             return res.json({
@@ -163,8 +160,21 @@ router.post('/message', async (req, res) => {
             });
         }
 
-        // ✅ PERDOR DIRECT COMMAND SERVICE (JO URËN, SE URËRA ËSHTË NË APP.JS)
-        console.log('🎯 routes/chat/message: Duke thirrur CommandService direkt...');
+        // 🎯 PRIORITET I PARË: SMART RESPONSE ROUTER LOGJIKË
+        console.log('🎯 Duke procesuar me SmartResponseRouter logjikë...');
+        
+        const smartResponse = await processWithSmartLogic(message);
+        
+        if (smartResponse && !isGenericResponse(smartResponse)) {
+            console.log('✅ SmartLogic dha përgjigje të mirë:', smartResponse.substring(0, 50));
+            return res.json({
+                success: true,
+                response: smartResponse
+            });
+        }
+
+        // 🔄 FALLBACK: COMMAND SERVICE (SISTEMI I VJETËR)
+        console.log('🔄 Duke përdorur CommandService si fallback...');
         const CommandService = require('../services/commandService');
         
         // Merr përdoruesin
@@ -177,7 +187,7 @@ router.post('/message', async (req, res) => {
 
         const result = await CommandService.processCommand('', user, message);
         
-        console.log('📊 routes/chat/message: Rezultati:', {
+        console.log('📊 Rezultati nga CommandService:', {
             success: result.success,
             messageLength: result.response?.length || 0
         });
@@ -192,6 +202,113 @@ router.post('/message', async (req, res) => {
         });
     }
 });
+
+// ✅ FUNKSIONI I RI PËR SMART RESPONSE LOGJIKË
+async function processWithSmartLogic(message) {
+    const lowerMessage = message.toLowerCase().trim();
+    
+    console.log('🔍 SmartLogic duke analizuar:', lowerMessage);
+    
+    // 🎯 PËRSHËNDETJE
+    if (lowerMessage.includes('përshëndetje') || lowerMessage.includes('pershendetje') || 
+        lowerMessage.includes('hello') || lowerMessage.includes('hi') || 
+        lowerMessage.includes('tungjatjeta') || lowerMessage.includes('tung') ||
+        lowerMessage.includes('ciao') || lowerMessage.includes('salut')) {
+        return "Hello! Gëzohem që ju shoh! Çfarë mund të bëj për ju?";
+    }
+    
+    // 🎯 PYETJE SOCIALE - "SI JENI?"
+    if (lowerMessage.includes('si je') || lowerMessage.includes('si jeni') || 
+        lowerMessage.includes('si kaloni') || lowerMessage.includes('si po kaloni') ||
+        lowerMessage === 'si je?' || lowerMessage === 'si jeni?' ||
+        lowerMessage.includes('si ndiheni') || lowerMessage.includes('si ndihesh')) {
+        return "Jam shumë mirë, faleminderit që pyetët! 😊 Çfarë mund të bëj për ju?";
+    }
+    
+    // 🎯 MATEMATIKË
+    if (lowerMessage.includes('sa është') || lowerMessage.includes('sa bejnë') || 
+        lowerMessage.includes('sa ben') || lowerMessage.match(/\d+\s*[\+\-\*\/]\s*\d+/)) {
+        try {
+            const mathResult = evaluateMathExpression(message);
+            if (mathResult) {
+                return mathResult;
+            }
+        } catch (error) {
+            console.log('❌ Gabim në llogaritje:', error);
+        }
+    }
+    
+    // 🎯 FALEMINDERIT
+    if (lowerMessage.includes('faleminderit') || lowerMessage.includes('rrofsh') || 
+        lowerMessage.includes('thanks') || lowerMessage.includes('thank you') ||
+        lowerMessage.includes('flm')) {
+        return "S'ka përse! 😊 Gjithmonë i lumtur të ndihmoj!";
+    }
+    
+    // 🎯 MIRËMËNGJES/MIRËMBRËMA
+    if (lowerMessage.includes('mirëmëngjes') || lowerMessage.includes('miremengjes')) {
+        return "Mirëmëngjes! ☀️ Fillim të mbarë të ditës! Si mund t'ju ndihmoj sot?";
+    }
+    
+    if (lowerMessage.includes('mirëmbrëma') || lowerMessage.includes('mirembrema')) {
+        return "Mirëmbrëma! 🌙 Mbrëmje e mbarë! Si mund t'ju shërbej?";
+    }
+    
+    // 🎯 LAMTUMIRË
+    if (lowerMessage.includes('mirupafshim') || lowerMessage.includes('lamtumirë') ||
+        lowerMessage.includes('bye') || lowerMessage.includes('goodbye') ||
+        lowerMessage.includes('shëndet')) {
+        return "Mirupafshim! 😊 Ishte kënaqësi të flisja me ju!";
+    }
+    
+    return null; // Nëse nuk gjen rrugë të mirë, kthehu në fallback
+}
+
+// ✅ FUNKSION PËR LLOGARITJE MATEMATIKE
+function evaluateMathExpression(text) {
+    try {
+        // Gjej shprehjet matematikore
+        const mathMatch = text.match(/(\d+)\s*([\+\-\*\/])\s*(\d+)/);
+        if (!mathMatch) return null;
+        
+        const num1 = parseInt(mathMatch[1]);
+        const operator = mathMatch[2];
+        const num2 = parseInt(mathMatch[3]);
+        
+        let result;
+        switch(operator) {
+            case '+': result = num1 + num2; break;
+            case '-': result = num1 - num2; break;
+            case '*': result = num1 * num2; break;
+            case '/': 
+                if (num2 === 0) return "❌ Nuk mund të pjesëtohet me zero!";
+                result = num1 / num2; 
+                break;
+            default: return null;
+        }
+        
+        return `🧮 Rezultati: ${num1} ${operator} ${num2} = ${result}`;
+    } catch (error) {
+        return null;
+    }
+}
+
+// ✅ KONTROLLO NËSE PËRGJIGJA ËSHTË GJENERIKE
+function isGenericResponse(response) {
+    if (!response) return true;
+    
+    const genericPatterns = [
+        'e kuptoj',
+        'përdorni /ndihmo', 
+        'nuk kuptova',
+        'nuk jam i sigurt',
+        'mund të përsërisni'
+    ];
+    
+    return genericPatterns.some(pattern => 
+        response.toLowerCase().includes(pattern)
+    );
+}
 
 // ✅ KODI EKZISTUES - MERR HISTORINË E BISEDËS
 // ✅ RUTA E RE PËR PANELIN E NDIHMËS ME BUTONA - Shto në routes/chat.js ekzistues
