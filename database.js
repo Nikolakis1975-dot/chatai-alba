@@ -190,6 +190,22 @@ function initializeDatabase() {
         }
     });
 
+// 🆕 TABELA E RE: USER_KNOWLEDGE - PËR KNOWLEDGE DISTILLER
+db.run(`CREATE TABLE IF NOT EXISTS user_knowledge (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    knowledge_data TEXT NOT NULL,
+    version TEXT DEFAULT '1.0',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`, (err) => {
+    if (err) {
+        console.error('❌ Gabim në tabelën user_knowledge:', err);
+    } else {
+        console.log('✅ Tabela user_knowledge u inicializua - Knowledge Distiller');
+    }
+});
+
     // Tabela e feedback-ut
     db.run(`CREATE TABLE IF NOT EXISTS feedback (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
