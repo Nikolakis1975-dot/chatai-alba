@@ -219,95 +219,100 @@ class ChatSystem {
     }
 
     addMessageToChat(message, sender) {
-        console.log(`📝 Duke shtuar mesazh nga ${sender}...`);
-        
-        // ✅ GJENI CHAT CONTAINER-IN E DUHUR
-        let chatScreen = document.getElementById('chat-screen');
-        
-        // Nëse nuk gjendet, kërko në të gjithë dokumentin
-        if (!chatScreen) {
-            console.log("🔍 'chat-screen' nuk u gjet, duke kërkuar alternative...");
-            
-            // Provo elementë të tjerë të mundshëm
-            const possibleContainers = [
-                'chat',
-                'messages',
-                'conversation',
-                'chat-container',
-                'message-area'
-            ];
-            
-            for (const containerId of possibleContainers) {
-                chatScreen = document.getElementById(containerId);
-                if (chatScreen) {
-                    console.log(`✅ U gjet alternative: ${containerId}`);
-                    break;
-                }
-            }
-        }
-        
-        // ✅ NËSE AKOMA NUK GJENDET, KRIJO NJË TË RI
-        if (!chatScreen) {
-            console.log("🏗️ Duke krijuar chat container të ri...");
-            chatScreen = this.createProperChatContainer();
-        }
-        
-        // Krijo elementin e mesazhit
-        const messageElement = document.createElement('div');
-        messageElement.className = `message ${sender}-message`;
-        messageElement.innerHTML = `
-            <div class="message-content">
-                ${this.formatMessage(message)}
-            </div>
-            <div class="message-time">${new Date().toLocaleTimeString()}</div>
-        `;
-        
-        // ✅ SHTO MESAZHIN NË CHAT SCREEN
-        chatScreen.appendChild(messageElement);
-        
-        // Scroll në fund
-        chatScreen.scrollTop = chatScreen.scrollHeight;
-        
-        console.log(`✅ U shtua mesazh nga ${sender} në chat-screen: ${message.substring(0, 50)}...`);
+    console.log(`📝 Duke shtuar mesazh nga ${sender}...`);
+    
+    // ✅ PËRDOR TË NJËJTIN SISTEM SI KOMANDA /NDIHMO
+    if (typeof addMessage === 'function') {
+        console.log("✅ Duke përdorur addMessage ekzistuese...");
+        addMessage(message, sender);
+        return;
     }
+    
+    // ✅ ALTERNATIVE: PËRDOR TË NJËJTIN LOGJIKË SI addMessage
+    console.log("🔄 Duke përdorur sistemin alternative...");
+    
+    // Gjej chat container ekzistues (i njëjti që përdor /ndihmo)
+    let chatContainer = document.getElementById('chat');
+    
+    // Nëse nuk gjendet, kërko container të tjerë
+    if (!chatContainer) {
+        chatContainer = document.querySelector('.chat-messages, .messages, .conversation, [class*="message"]');
+    }
+    
+    // Nëse përsëri nuk gjendet, krijo një të ri
+    if (!chatContainer) {
+        console.log("🏗️ Duke krijuar chat container të ri...");
+        chatContainer = this.createChatContainerLikeHelp();
+    }
+    
+    // Krijo elementin e mesazhit (i njëjti stil si /ndihmo)
+    const messageElement = document.createElement('div');
+    messageElement.className = `message ${sender}-message`;
+    messageElement.innerHTML = `
+        <div class="message-content">
+            ${this.formatMessage(message)}
+        </div>
+        <div class="message-time">${new Date().toLocaleTimeString()}</div>
+    `;
+    
+    // Shto mesazhin në container
+    chatContainer.appendChild(messageElement);
+    
+    // Scroll në fund
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+    
+    console.log(`✅ U shtua mesazh nga ${sender}: ${message.substring(0, 50)}...`);
+}
 
-    // ✅ FUNKSION I RI PËR TË KRIJUAR CHAT CONTAINER NË POZICIONIN E DUHUR
-    createProperChatContainer() {
-        console.log("📍 Duke krijuar chat container në pozicionin e duhur...");
+// ✅ FUNKSION I RI QË KRIJON CHAT CONTAINER SI AI I /NDIHMO
+createChatContainerLikeHelp() {
+    console.log("📍 Duke krijuar chat container si /ndihmo...");
+    
+    // Krijo container të ri
+    const chatContainer = document.createElement('div');
+    chatContainer.id = 'chat';
+    chatContainer.className = 'chat-messages';
+    chatContainer.style.cssText = `
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        background: #f8fafc;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        max-height: 500px;
+        border-bottom: 1px solid #e2e8f0;
+    `;
+    
+    // ✅ GJENI POZICIONIN E SAKTË (të njëjtin ku shfaqet /ndihmo)
+    const existingChat = document.querySelector('#chat, .chat-messages, .messages');
+    if (existingChat) {
+        // Zëvendëso ekzistuesin
+        existingChat.parentNode.replaceChild(chatContainer, existingChat);
+        console.log("✅ U zëvendësua chat container ekzistues!");
+    } else {
+        // Vendos në pozicionin e duhur
+        const mainContent = document.querySelector('main') || 
+                           document.querySelector('.container') || 
+                           document.querySelector('.app-content') || 
+                           document.body;
         
-        // Krijo container-in kryesor të chat-it
-        const chatContainer = document.createElement('div');
-        chatContainer.id = 'chat-screen';
-        chatContainer.className = 'chat-screen';
+        // Gjej input container për të vendosur përpara tij
+        const inputContainer = document.querySelector('.input-container') || 
+                              document.getElementById('user-input')?.parentElement;
         
-        // ✅ GJENI POZICIONIN E DUHUR - PARA INPUT FIELD
-        const userInput = document.getElementById('user-input');
-        const sendBtn = document.getElementById('send-btn');
-        
-        let inserted = false;
-        
-        if (userInput && userInput.parentElement) {
-            // Vendos para input container
-            const inputContainer = userInput.parentElement;
-            const mainContainer = inputContainer.parentElement;
-            
-            // Vendos chat container para input container
-            mainContainer.insertBefore(chatContainer, inputContainer);
+        if (inputContainer && inputContainer.parentElement) {
+            inputContainer.parentElement.insertBefore(chatContainer, inputContainer);
             console.log("✅ Chat container u vendos para input field!");
-            inserted = true;
-        } 
-        
-        // Fallback: vendos në fillim të body
-        if (!inserted) {
-            document.body.prepend(chatContainer);
-            console.log("✅ Chat container u vendos në fillim të body!");
+        } else {
+            // Vendos në fillim të main content
+            mainContent.prepend(chatContainer);
+            console.log("✅ Chat container u vendos në fillim të main content!");
         }
-        
-        // ✅ SHTO STILET NËSE NUK EKZISTOJNË
-        this.addChatStyles();
-        
-        return chatContainer;
     }
+    
+    return chatContainer;
+}
 
     // ✅ FUNKSION I RI PËR TË SIGURUAR CHAT CONTAINER
     ensureChatContainer() {
@@ -431,36 +436,43 @@ class ChatSystem {
     }
 
     showThinkingIndicator() {
-        // ✅ SIGUROHU QË CHAT SCREEN EKZISTON
-        let chatScreen = document.getElementById('chat-screen');
-        if (!chatScreen) {
-            chatScreen = this.createProperChatContainer();
-        }
-        
-        // Krijo ose shfaq thinking indicator
-        let thinkingElement = document.getElementById('thinking');
-        if (!thinkingElement) {
-            thinkingElement = document.createElement('div');
-            thinkingElement.id = 'thinking';
-            thinkingElement.className = 'thinking-indicator';
-            thinkingElement.innerHTML = `
-                <div class="thinking-content">
-                    <span class="thinking-text">RRUFE-TESLA po mendon...</span>
-                    <div class="thinking-dots">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </div>
-                </div>
-            `;
-            chatScreen.appendChild(thinkingElement);
-        }
-        
-        thinkingElement.style.display = 'block';
-        chatScreen.scrollTop = chatScreen.scrollHeight;
-        
-        console.log("🤔 Thinking indicator u shfaq!");
+    console.log("🤔 Duke shfaqur thinking indicator...");
+    
+    // ✅ PËRDOR TË NJËJTIN CHAT CONTAINER
+    let chatContainer = document.getElementById('chat');
+    if (!chatContainer) {
+        chatContainer = document.querySelector('.chat-messages, .messages, .conversation');
     }
+    
+    if (!chatContainer) {
+        console.log("❌ Nuk u gjet chat container, duke krijuar...");
+        chatContainer = this.createChatContainerLikeHelp();
+    }
+    
+    // Krijo ose shfaq thinking indicator
+    let thinkingElement = document.getElementById('thinking');
+    if (!thinkingElement) {
+        thinkingElement = document.createElement('div');
+        thinkingElement.id = 'thinking';
+        thinkingElement.className = 'thinking-indicator';
+        thinkingElement.innerHTML = `
+            <div class="thinking-content">
+                <span class="thinking-text">RRUFE-TESLA po mendon...</span>
+                <div class="thinking-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        `;
+        chatContainer.appendChild(thinkingElement);
+    }
+    
+    thinkingElement.style.display = 'block';
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+    
+    console.log("✅ Thinking indicator u shfaq!");
+}
 
     hideThinkingIndicator() {
         const thinkingElement = document.getElementById('thinking');
@@ -650,4 +662,46 @@ setTimeout(() => {
     if (!window.chatSystem?.initialized) {
         window.fixEnterKeyManual();
     }
+}, 3000);
+
+// ==================== DIAGNOSTIKIM I POZICIONIT TË /NDIHMO ====================
+
+window.findHelpMessagePosition = function() {
+    console.log("🔍 DUKE KËRKUAR POZICIONIN E /NDIHMO:");
+    
+    // Gjej të gjitha mesazhet e /ndihmo
+    const helpMessages = document.querySelectorAll('.message, .bot-message, .user-message, [class*="message"]');
+    
+    console.log(`📊 Gjetëm ${helpMessages.length} mesazhe:`);
+    
+    helpMessages.forEach((msg, index) => {
+        const content = msg.textContent || msg.innerText;
+        const container = msg.closest('#chat, .chat-messages, .messages, .conversation, div');
+        
+        console.log(`--- Mesazhi ${index + 1} ---`);
+        console.log(`Përmbajtja: ${content.substring(0, 50)}...`);
+        console.log(`Container: ${container?.id || container?.className || 'N/A'}`);
+        console.log(`HTML: ${msg.outerHTML.substring(0, 100)}...`);
+        console.log(`Parent: ${msg.parentElement?.id || msg.parentElement?.className}`);
+    });
+    
+    // Gjej të gjitha containerët e mundshëm
+    const containers = document.querySelectorAll('#chat, .chat-messages, .messages, .conversation, [id*="chat"], [class*="chat"], [class*="message"]');
+    
+    console.log(`🔍 Gjetëm ${containers.length} containerë të mundshëm:`);
+    
+    containers.forEach((container, index) => {
+        console.log(`Container ${index + 1}:`);
+        console.log(`  ID: ${container.id || 'N/A'}`);
+        console.log(`  Class: ${container.className || 'N/A'}`);
+        console.log(`  Tag: ${container.tagName}`);
+        console.log(`  Children: ${container.children.length}`);
+        console.log(`  Position: ${container.getBoundingClientRect().top}px from top`);
+    });
+};
+
+// Auto-diagnostikim
+setTimeout(() => {
+    console.log("🔍 AUTO-DIAGNOSTIKIM I POZICIONIT:");
+    window.findHelpMessagePosition();
 }, 3000);
