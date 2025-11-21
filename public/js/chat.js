@@ -1,5 +1,5 @@
 // ======================================================
-// 🧠 chat.js - RRUFE-TESLA 10.5 - SISTEM I RI I PLOTË
+// 🧠 chat - RRUFE-TESLA 10.5 - SISTEM I RI I PLOTË
 // ======================================================
 // INTEGRIM I PLOTË ME SMART RESPONSE ROUTER & KNOWLEDGE DISTILLER
 // ======================================================
