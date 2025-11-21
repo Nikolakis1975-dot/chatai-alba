@@ -393,4 +393,111 @@ router.get('/ltm-health', (req, res) => {
     });
 });
 
+// ============================= ✅ RUTË E THJESHTË PA AUTH - PERFEKTE PËR RRUFE-TESLA ===============================
+router.post('/simple-chat', async (req, res) => {
+    try {
+        const { message, userId = 1 } = req.body;
+        
+        console.log('🤖 [GEMINI_SIMPLE] Mesazhi:', message?.substring(0, 50));
+
+        if (!message || message.trim() === '') {
+            return res.json({ 
+                success: false, 
+                error: '❌ Mesazhi është i zbrazët' 
+            });
+        }
+
+        // Merr API Key për user default (userId = 1)
+        db.get(
+            'SELECT api_key FROM api_keys WHERE user_id = ? AND service_name = ?',
+            [userId, 'gemini'],
+            async (err, row) => {
+                if (err) {
+                    console.error('❌ Gabim në database:', err);
+                    return res.json({ 
+                        success: false, 
+                        error: '❌ Gabim në server' 
+                    });
+                }
+
+                if (!row || !row.api_key) {
+                    return res.json({ 
+                        success: false, 
+                        error: '❌ API Key i Gemini nuk është konfiguruar' 
+                    });
+                }
+
+                try {
+                    // Dekripto API Key
+                    const apiKey = encryption.decrypt(row.api_key);
+                    console.log('🔓 API Key u dekriptua');
+                    
+                    // ✅ THIRR GEMINI API DIRECT
+                    const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+                    
+                    console.log('🌐 Duke thirrur Gemini API...');
+                    
+                    const geminiResponse = await fetch(apiUrl, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-goog-api-key": apiKey
+                        },
+                        body: JSON.stringify({
+                            contents: [{
+                                parts: [{
+                                    text: message
+                                }]
+                            }],
+                            generationConfig: {
+                                temperature: 0.7,
+                                topK: 40,
+                                topP: 0.95,
+                                maxOutputTokens: 1024,
+                            }
+                        })
+                    });
+
+                    if (!geminiResponse.ok) {
+                        const errorText = await geminiResponse.text();
+                        console.error('❌ Gabim nga Gemini API:', errorText);
+                        throw new Error(`Gemini API: ${geminiResponse.status}`);
+                    }
+
+                    const data = await geminiResponse.json();
+                    console.log('📨 Përgjigja e papërpunuar:', data);
+
+                    // Nxjerr përgjigjen
+                    const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                    
+                    if (responseText) {
+                        console.log('✅ Gemini u përgjigj me sukses');
+                        res.json({
+                            success: true,
+                            response: responseText,
+                            source: 'gemini-ai'
+                        });
+                    } else {
+                        console.error('❌ Struktura e papritur:', data);
+                        throw new Error('Nuk u mor përgjigje e pritshme');
+                    }
+
+                } catch (geminiError) {
+                    console.error('❌ Gabim në Gemini:', geminiError);
+                    res.json({ 
+                        success: false, 
+                        error: '❌ ' + geminiError.message 
+                    });
+                }
+            }
+        );
+    } catch (error) {
+        console.error('❌ Gabim i përgjithshëm:', error);
+        res.json({ 
+            success: false, 
+            error: '❌ Gabim në server' 
+        });
+    }
+});
+
 module.exports = router;
