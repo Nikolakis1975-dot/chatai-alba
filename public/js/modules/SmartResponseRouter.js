@@ -339,85 +339,63 @@ if (message.length > 25 &&
     }
 
     // ==================== SISTEMI I ROUTINGUT ====================
- 
+
 determineBestRoute(analysis) {
     console.log("🛣️ Duke përcaktuar rrugën më të mirë për:", analysis.type);
     
-    switch(analysis.type) {
-        case 'complex_question':
-            console.log("🎯 Pyetje komplekse - duke zgjedhur GEMINI");
-            return 'GEMINI_COMPLEX';
-            
-        case 'simple_question':
-            return 'LOCAL_SMART';
-            
-        case 'math':
-            return 'LOCAL_MATH';
-            
-        case 'greeting':
-            return 'LOCAL_GREETING';
-            
-        case 'command':
-            return 'RRUFE_COMMAND';
-            
-        default:
-            return 'FALLBACK';
-    }
-}
-
-        //  MATEMATIKË 
-        if (analysis.isMath) {
-    console.log("🧮 Rrugë e zgjedhur: LOCAL_MATH");
-    return {
-        route: this.config.routes.LOCAL,
-        priority: 'high', 
-        reason: 'Llogaritje matematikore',
-        timeout: 3000
-    };
-}
-
-        // 3. PËRSHËNDETJE - Përgjigje lokale e shpejtë
-        if (analysis.isGreeting) {
-            console.log("👋 Rrugë e zgjedhur: LOCAL_GREETING");
-            return {
-                route: this.config.routes.LOCAL,
-                priority: 'high',
-                reason: 'Përshëndetje',
-                timeout: 2000
-            };
-        }
-
-        // 4. PYRJE KOMPLEKSE - Gemini për përgjigje të cilësisë së lartë
-        if (analysis.requiresGemini && this.config.quality.enableGemini) {
-            console.log("💭 Rrugë e zgjedhur: GEMINI_COMPLEX");
-            return {
-                route: this.config.routes.GEMINI,
-                priority: 'high',
-                reason: 'Pyetje komplekse',
-                timeout: 15000
-            };
-        }
-
-        // 5. PYRJE TË THJESHTA - Procesim lokal inteligjent
-        if (analysis.containsQuestion) {
-            console.log("❓ Rrugë e zgjedhur: LOCAL_SMART");
-            return {
-                route: this.config.routes.LOCAL,
-                priority: 'medium',
-                reason: 'Pyetje e thjeshtë',
-                timeout: 5000
-            };
-        }
-
-        // 6. FALLBACK - Rrugë default
-        console.log("🔀 Rrugë e zgjedhur: FALLBACK");
+    // 1. MATEMATIKË - Procesim lokal i shpejtë
+    if (analysis.isMath) {
+        console.log("🧮 Rrugë e zgjedhur: LOCAL_MATH");
         return {
-            route: this.config.routes.FALLBACK,
-            priority: 'low',
-            reason: 'Mesazh bisedor',
-            timeout: 4000
+            route: this.config.routes.LOCAL,
+            priority: 'high', 
+            reason: 'Llogaritje matematikore',
+            timeout: 3000
         };
     }
+
+    // 2. PËRSHËNDETJE - Përgjigje lokale e shpejtë
+    if (analysis.isGreeting) {
+        console.log("👋 Rrugë e zgjedhur: LOCAL_GREETING");
+        return {
+            route: this.config.routes.LOCAL,
+            priority: 'high',
+            reason: 'Përshëndetje',
+            timeout: 2000
+        };
+    }
+
+    // 3. PYRJE KOMPLEKSE - Gemini për përgjigje të cilësisë së lartë
+    if (analysis.requiresGemini && this.config.quality.enableGemini) {
+        console.log("💭 Rrugë e zgjedhur: GEMINI_COMPLEX");
+        return {
+            route: this.config.routes.GEMINI,
+            priority: 'high',
+            reason: 'Pyetje komplekse',
+            timeout: 15000
+        };
+    }
+
+    // 4. PYRJE TË THJESHTA - Procesim lokal inteligjent
+    if (analysis.containsQuestion) {
+        console.log("❓ Rrugë e zgjedhur: LOCAL_SMART");
+        return {
+            route: this.config.routes.LOCAL,
+            priority: 'medium',
+            reason: 'Pyetje e thjeshtë',
+            timeout: 5000
+        };
+    }
+
+    // 5. FALLBACK - Rrugë default
+    console.log("🔀 Rrugë e zgjedhur: FALLBACK");
+    return {
+        route: this.config.routes.FALLBACK,
+        priority: 'low',
+        reason: 'Mesazh bisedor',
+        timeout: 4000
+    };
+}
 
     // ==================== EKZEKUTIMI I ROUTINGUT ====================
 
