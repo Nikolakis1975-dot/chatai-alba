@@ -148,6 +148,39 @@ class SmartResponseRouter {
             return analysis;
         }
 
+
+     // 🎯 PYETJE KOMPLEKSE ME "SHPJEGO", "ÇFARË ËSHTË", "SI FUNKSIONON"
+ if (lowerMsg.includes('shpjego') || lowerMsg.includes('shpjegomë') || 
+    lowerMsg.includes('shpjegoni') || lowerMsg.includes('çfarë është') ||
+    lowerMsg.includes('si funksionon') || lowerMsg.includes('na tregoni') ||
+    lowerMsg.includes('mëso më shumë') || lowerMsg.includes('detaje') ||
+    lowerMsg.includes('teknologji') || lowerMsg.includes('teknologji') ||
+    lowerMsg.includes('shkenc') || lowerMsg.includes('inteligjenc') ||
+    lowerMsg.includes('blockchain') || lowerMsg.includes('bitcoin') ||
+    lowerMsg.includes('ai ') || lowerMsg.includes(' artificial') ||
+    lowerMsg.includes('machine learning') || lowerMsg.includes('deep learning')) {
+    
+    analysis.type = 'complex_question';
+    analysis.containsQuestion = true;
+    analysis.requiresGemini = true;
+    analysis.category = 'technology';
+    analysis.complexity = 'high';
+    console.log("💭 U zbulua pyetje komplekse për Gemini");
+    return analysis;
+}
+
+// 🎯 PYETJE TË GJATA (më shumë se 25 karaktere)
+if (message.length > 25 && 
+    (lowerMsg.includes('?') || lowerMsg.includes('çfarë') || lowerMsg.includes('si'))) {
+    analysis.type = 'complex_question';
+    analysis.containsQuestion = true;
+    analysis.requiresGemini = true;
+    analysis.category = 'general';
+    analysis.complexity = 'medium';
+    console.log("💭 Pyetje e gjatë - duke e dërguar te Gemini");
+    return analysis;
+}
+
         // 1. KONTROLLO PËR KOMANDA RRUFE-TESLA
         if (this.isRrufeCommand(lowerMsg)) {
             analysis.type = 'command';
@@ -306,20 +339,31 @@ class SmartResponseRouter {
     }
 
     // ==================== SISTEMI I ROUTINGUT ====================
-
-    determineBestRoute(message, analysis) {
-        console.log("🛣️ Duke përcaktuar rrugën më të mirë për:", analysis.type);
-
-        // 1. KOMANDA RRUFE-TESLA - Gjithmonë prioritet i lartë
-        if (analysis.isCommand) {
-            console.log("🎯 Rrugë e zgjedhur: RRUFE_COMMAND");
-            return {
-                route: this.config.routes.RRUFE,
-                priority: 'high',
-                reason: 'Komandë RRUFE-TESLA',
-                timeout: 5000
-            };
-        }
+ 
+determineBestRoute(analysis) {
+    console.log("🛣️ Duke përcaktuar rrugën më të mirë për:", analysis.type);
+    
+    switch(analysis.type) {
+        case 'complex_question':
+            console.log("🎯 Pyetje komplekse - duke zgjedhur GEMINI");
+            return 'GEMINI_COMPLEX';
+            
+        case 'simple_question':
+            return 'LOCAL_SMART';
+            
+        case 'math':
+            return 'LOCAL_MATH';
+            
+        case 'greeting':
+            return 'LOCAL_GREETING';
+            
+        case 'command':
+            return 'RRUFE_COMMAND';
+            
+        default:
+            return 'FALLBACK';
+    }
+}
 
         // 2. MATEMATIKË - Procesim lokal i shpejtë
         if (analysis.isMath) {
@@ -377,39 +421,32 @@ class SmartResponseRouter {
 
     // ==================== EKZEKUTIMI I ROUTINGUT ====================
 
-    async executeRoute(routeConfig, message) {
-        console.log(`🔄 Duke ekzekutuar rrugën: ${routeConfig.route}`);
-        
-        try {
-            let response;
+    // NË executeRoute FUNKSION - Sigurohu që ka:
+async executeRoute(routeType, message) {
+    console.log("🔄 Duke ekzekutuar rrugën:", routeType);
+    
+    switch(routeType) {
+        case 'GEMINI_COMPLEX':
+            console.log("🧠 Duke dërguar te Gemini për pyetje komplekse...");
+            return await this.processWithGemini(message);
             
-            switch (routeConfig.route) {
-                case this.config.routes.RRUFE:
-                    response = await this.processRrufeCommand(message);
-                    break;
-                    
-                case this.config.routes.LOCAL:
-                    response = await this.processLocally(message);
-                    break;
-                    
-                case this.config.routes.GEMINI:
-                    response = await this.processWithGemini(message);
-                    break;
-                    
-                case this.config.routes.FALLBACK:
-                default:
-                    response = await this.processFallback(message);
-                    break;
-            }
+        case 'LOCAL_SMART':
+            return await this.processLocally(message);
             
-            console.log(`✅ Rrugë ${routeConfig.route} u ekzekutua me sukses`);
-            return response;
+        case 'LOCAL_MATH':
+            return await this.solveMath(message);
             
-        } catch (error) {
-            console.error(`❌ Gabim në rrugën ${routeConfig.route}:`, error);
+        case 'LOCAL_GREETING':
+            return await this.processLocally(message);
+            
+        case 'RRUFE_COMMAND':
+            return await this.processRrufeCommand(message);
+            
+        case 'FALLBACK':
+        default:
             return await this.processFallback(message);
-        }
     }
+}
 
     async processRrufeCommand(message) {
         console.log("🎯 Duke procesuar komandë RRUFE-TESLA:", message);
