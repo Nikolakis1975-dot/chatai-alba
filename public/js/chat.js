@@ -161,20 +161,41 @@ class ChatSystem {
         }
     }
 
-    async learnFromInteraction(question, answer) {
-        try {
-            if (window.knowledgeIntegration) {
-                await window.knowledgeIntegration.learnFromInteraction(question, answer, {
-                    category: 'conversation',
-                    timestamp: new Date().toISOString(),
-                    source: 'chat_system'
-                });
-                console.log("🎓 U mësua nga interaksioni!");
-            }
-        } catch (error) {
-            console.error("❌ Gabim në mësimin nga interaksioni:", error);
+   async learnFromInteraction(question, answer) {
+    try {
+        // 🎯 PROVO KNOWLEDGEINTEGRATION PARË
+        if (window.knowledgeIntegration && typeof window.knowledgeIntegration.learnFromInteraction === 'function') {
+            await window.knowledgeIntegration.learnFromInteraction(question, answer, {
+                category: 'conversation',
+                timestamp: new Date().toISOString(),
+                source: 'chat_system'
+            });
+            console.log("🎓 U mësua nga interaksioni!");
         }
+        // 🎯 PROVO KNOWLEDGEDISTILLER SI FALLBACK
+        else if (window.knowledgeDistiller && typeof window.knowledgeDistiller.learnFromInteraction === 'function') {
+            await window.knowledgeDistiller.learnFromInteraction(question, answer, {
+                category: 'conversation'
+            });
+            console.log("🎓 U mësua nga interaksioni (fallback)!");
+        }
+        // 🔄 PROVO ADDKNOWLEDGE SI FALLBACK EMERGJENT
+        else if (window.knowledgeDistiller && typeof window.knowledgeDistiller.addKnowledge === 'function') {
+            const knowledgeKey = question.substring(0, 30).replace(/[^\w]/g, '_');
+            await window.knowledgeDistiller.addKnowledge(knowledgeKey, {
+                question: question,
+                answer: answer,
+                learnedAt: new Date().toISOString()
+            }, 'conversation');
+            console.log("🎓 U mësua nga interaksioni (emergjent)!");
+        }
+        else {
+            console.log("ℹ️ Nuk ka sistem mësimi të disponueshëm");
+        }
+    } catch (error) {
+        console.error("❌ Gabim në mësimin nga interaksioni:", error);
     }
+}
 
     addMessageToChat(message, sender) {
         const chatScreen = document.getElementById('chat-screen');
