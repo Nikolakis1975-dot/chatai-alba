@@ -310,75 +310,47 @@ window.showChatStatus = function() {
     }
 };
 
-// ==================== OVERRIDE I THJESHTË DHE I SIGURT ====================
+// ==================== ALTERNATIVE - INTEGRIM PA OVERRIDE ====================
 
-console.log("🚀 Duke aplikuar override të thjeshtë...");
+console.log("🔧 Duke integruar pa override...");
 
-// 🎯 KAPËRCE VETËM PROCESIMIN E MESAZHEVE, JO GJITHÇKA
-if (typeof sendMessage !== 'undefined') {
-    console.log("🔧 Duke kapërcyer sendMessage...");
+// 🎯 SHTO BUTONIN "TEST SMART ROUTER" PËR TESTIM
+function addTestButton() {
+    const chatContainer = document.querySelector('.chat-container') || document.body;
     
-    const oldSendMessage = sendMessage;
+    const testButton = document.createElement('button');
+    testButton.textContent = "🧠 Test SmartRouter";
+    testButton.style.cssText = `
+        position: fixed; 
+        top: 10px; 
+        right: 10px; 
+        z-index: 1000; 
+        background: #4CAF50; 
+        color: white; 
+        border: none; 
+        padding: 10px; 
+        border-radius: 5px; 
+        cursor: pointer;
+    `;
     
-    window.sendMessage = async function() {
-        const input = document.getElementById("user-input");
-        const message = input ? input.value.trim() : "";
+    testButton.onclick = async function() {
+        const testMessage = "Pershendetje";
+        console.log("🧪 TEST MANUAL:", testMessage);
         
-        if (!message) return;
-        
-        console.log("🎯 OVERRIDE - Mesazhi:", message);
-        
-        // Pastro input
-        if (input) input.value = "";
-        
-        // Shto mesazhin e përdoruesit (si gjithmonë)
-        if (typeof addMessage === 'function') {
-            addMessage(message, 'user');
-        }
-        
-        // 🎯 PROVO SMART RESPONSE ROUTER PARË
-        let response = null;
-        
-        if (window.smartResponseRouter && window.smartResponseRouter.initialized) {
-            try {
-                console.log("🎯 Duke përdorur SmartResponseRouter...");
-                response = await window.smartResponseRouter.processUserMessage(message);
-                console.log("✅ SmartResponseRouter përgjigjja:", response?.substring(0, 50));
-            } catch (error) {
-                console.error("❌ Gabim në SmartResponseRouter:", error);
-            }
-        }
-        
-        // 🔄 NËSE SMART ROUTER NUK FUNKSIONOI, PËRDOR TË VJETRËN
-        if (!response || response.includes("E kuptoj!") || response.includes("Përdorni /ndihmo")) {
-            console.log("🔄 Duke përdorur sistemin e vjetër...");
+        if (window.smartResponseRouter) {
+            const response = await window.smartResponseRouter.processUserMessage(testMessage);
+            console.log("📝 Përgjigja:", response);
             
-            // Kthehu në funksionin e vjetër
-            return oldSendMessage();
-        }
-        
-        // ✅ NËSE SMART ROUTER FUNKSIONOI, SHTO PËRGJIGJEN
-        console.log("✅ Duke përdorur përgjigjen e SmartResponseRouter");
-        if (typeof addMessage === 'function') {
-            addMessage(response, 'bot');
-        }
-        
-        // 🧠 MËSO NGA INTERAKSIONI
-        if (window.knowledgeDistiller) {
-            try {
-                await window.knowledgeDistiller.addKnowledge(
-                    message.substring(0, 20).replace(/[^\w]/g, '_'),
-                    { question: message, answer: response },
-                    'conversation'
-                );
-                console.log("🎓 U mësua nga interaksioni!");
-            } catch (learnError) {
-                console.log("ℹ️ Nuk u mësua (gabim i vogël):", learnError.message);
+            if (typeof addMessage === 'function') {
+                addMessage(testMessage, 'user');
+                addMessage(response, 'bot');
             }
         }
     };
     
-    console.log("✅ Override i thjeshtë u aplikua!");
+    chatContainer.appendChild(testButton);
+    console.log("✅ Butoni i testit u shtua!");
 }
 
-console.log("🎉 OVERRIDE I RI U NGARKUA! Tani do të funksionojë!");
+// Shto butonin kur DOM të jetë gati
+document.addEventListener('DOMContentLoaded', addTestButton);
