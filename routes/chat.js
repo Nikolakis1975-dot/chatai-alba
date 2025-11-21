@@ -154,7 +154,7 @@ router.post('/message', async (req, res) => {
     try {
         const { message, userId = 1 } = req.body;
         
-        console.log('🔍 routes/chat/message: Marrë mesazh për urë:', message?.substring(0, 50));
+        console.log('🔍 routes/chat/message: Marrë mesazh:', message?.substring(0, 50));
 
         if (!message || message.trim() === '') {
             return res.json({
@@ -163,9 +163,26 @@ router.post('/message', async (req, res) => {
             });
         }
 
-        // ✅ PERDOR DIRECT COMMAND SERVICE (JO URËN, SE URËRA ËSHTË NË APP.JS)
-        console.log('🎯 routes/chat/message: Duke thirrur CommandService direkt...');
-        const CommandService = require('../services/commandService');
+        // 🎯 **PRIORITET I RI: SMART RESPONSE ROUTER NË FRONTEND**
+        console.log('🎯 routes/chat/message: Duke dërguar mesazhin për procesim në frontend...');
+        
+        // Kthe një përgjigje që tregon frontend-it të përdorë SmartResponseRouter
+        return res.json({
+            success: true,
+            response: "PROCESS_WITH_SMART_ROUTER", // 🆕 Signal për frontend
+            message: message,
+            userId: userId,
+            useSmartRouter: true // 🆗 Flag për frontend
+        });
+
+    } catch (error) {
+        console.error('❌ routes/chat/message: Gabim i përgjithshëm:', error);
+        return res.json({
+            success: false,
+            response: '❌ Gabim në server. Provo përsëri.'
+        });
+    }
+});
         
         // Merr përdoruesin
         const db = require('../database');
