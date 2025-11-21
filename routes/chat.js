@@ -185,7 +185,7 @@ router.post('/message', async (req, res) => {
 });
         
         // Merr përdoruesin
-        const db = require('../database');
+       // const db = require('../database');
         const user = await new Promise((resolve) => {
             db.get('SELECT * FROM users WHERE id = ?', [userId], (err, user) => {
                 resolve(user || { id: userId, username: 'user' + userId });
