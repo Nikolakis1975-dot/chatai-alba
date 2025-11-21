@@ -310,47 +310,110 @@ window.showChatStatus = function() {
     }
 };
 
-// ==================== ALTERNATIVE - INTEGRIM PA OVERRIDE ====================
+// ==================== OVERRIDE I FORTË - KAPËRCE TË GJITHA ====================
 
-console.log("🔧 Duke integruar pa override...");
+console.log("🚀 Duke aplikuar override të fortë...");
 
-// 🎯 SHTO BUTONIN "TEST SMART ROUTER" PËR TESTIM
-function addTestButton() {
-    const chatContainer = document.querySelector('.chat-container') || document.body;
+// 🎯 KAPËRCE KOMPLET SENDMESSAGE
+if (typeof sendMessage !== 'undefined') {
+    console.log("🔧 Duke ZËVENDËSUAR plotësisht sendMessage...");
     
-    const testButton = document.createElement('button');
-    testButton.textContent = "🧠 Test SmartRouter";
-    testButton.style.cssText = `
-        position: fixed; 
-        top: 10px; 
-        right: 10px; 
-        z-index: 1000; 
-        background: #4CAF50; 
-        color: white; 
-        border: none; 
-        padding: 10px; 
-        border-radius: 5px; 
-        cursor: pointer;
-    `;
-    
-    testButton.onclick = async function() {
-        const testMessage = "Pershendetje";
-        console.log("🧪 TEST MANUAL:", testMessage);
+    window.sendMessage = async function() {
+        const input = document.getElementById("user-input");
+        const message = input ? input.value.trim() : "";
         
-        if (window.smartResponseRouter) {
-            const response = await window.smartResponseRouter.processUserMessage(testMessage);
-            console.log("📝 Përgjigja:", response);
+        if (!message) {
+            console.log("❌ Mesazh bosh");
+            return;
+        }
+        
+        console.log("🎯 OVERRIDE I FORTË - Mesazhi:", message);
+        
+        // Pastro input menjëherë
+        if (input) input.value = "";
+        
+        // Shto mesazhin e përdoruesit
+        if (typeof addMessage === 'function') {
+            addMessage(message, 'user');
+        }
+        
+        // 🎯 PRIORITET I PARË DHE I VETËM: SMART RESPONSE ROUTER
+        if (window.smartResponseRouter && window.smartResponseRouter.initialized) {
+            try {
+                console.log("🎯 Duke përdorur EKSKLUZIVISHT SmartResponseRouter...");
+                const response = await window.smartResponseRouter.processUserMessage(message);
+                
+                console.log("✅ Përgjigja e SmartResponseRouter:", response.substring(0, 80));
+                
+                // Shto përgjigjen në chat
+                if (typeof addMessage === 'function') {
+                    addMessage(response, 'bot');
+                }
+                
+                // 🧠 MËSO NGA INTERAKSIONI
+                if (window.knowledgeDistiller) {
+                    try {
+                        await window.knowledgeDistiller.addKnowledge(
+                            'chat_' + Date.now(),
+                            { question: message, answer: response, timestamp: new Date().toISOString() },
+                            'conversation'
+                        );
+                        console.log("🎓 U mësua nga interaksioni!");
+                    } catch (learnError) {
+                        console.log("ℹ️ Gabim i vogël në mësim:", learnError.message);
+                    }
+                }
+                
+                return; // ✅ DIL KËTU - MOS PËRDOR SISTEMIN E VJETËR!
+                
+            } catch (error) {
+                console.error("❌ Gabim kritik në SmartResponseRouter:", error);
+            }
+        }
+        
+        // 🚨 NËSE SMART ROUTER DËSHTON, SHKO TE SERVERI
+        console.log("🚨 SmartRouter dështoi, duke përdorur serverin...");
+        try {
+            const response = await fetch('/api/chat/message', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: message, userId: 1 })
+            });
             
+            const data = await response.json();
+            
+            if (data.success && data.response && typeof addMessage === 'function') {
+                addMessage(data.response, 'bot');
+            }
+        } catch (fetchError) {
+            console.error("❌ Gabim në server:", fetchError);
             if (typeof addMessage === 'function') {
-                addMessage(testMessage, 'user');
-                addMessage(response, 'bot');
+                addMessage("Më falni, pati një gabim në sistem.", 'bot');
             }
         }
     };
     
-    chatContainer.appendChild(testButton);
-    console.log("✅ Butoni i testit u shtua!");
+    console.log("✅ OVERRIDE I FORTË u aplikua! Tani çdo mesazh do të përdorë SmartResponseRouter!");
 }
 
-// Shto butonin kur DOM të jetë gati
-document.addEventListener('DOMContentLoaded', addTestButton);
+// 🎯 KAPËRCE EDHE ENTER KEY
+document.addEventListener('DOMContentLoaded', function() {
+    const input = document.getElementById('user-input');
+    if (input) {
+        // Fshi event listeners e vjetra
+        const newInput = input.cloneNode(true);
+        input.parentNode.replaceChild(newInput, input);
+        
+        // Shto event listener të ri
+        newInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+        
+        console.log("✅ Event listener i ri u konfigurua!");
+    }
+});
+
+console.log("🎉 OVERRIDE I FORTË U AKTIVIZUA! Tani RRUFE-TESLA do të përdorë sistemin e ri!");
