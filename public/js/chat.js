@@ -309,3 +309,71 @@ window.showChatStatus = function() {
         console.log("📊 Detajet:", window.chatSystem.getStats());
     }
 };
+
+// ==================== OVERRIDE I SISTEMIT TË VJETËR ====================
+
+// 🎯 KAPËRCE SENDMESSAGE TË VJETËR
+if (typeof sendMessage !== 'undefined') {
+    console.log("🔧 Duke kapërcyer sendMessage të vjetër...");
+    
+    // Ruaj funksionin e vjetër
+    const oldSendMessage = sendMessage;
+    
+    // Override me versionin e ri
+    window.sendMessage = async function(message) {
+        console.log("🎯 sendMessage override - Duke përdorur SmartResponseRouter...");
+        
+        // PRIORITET I PARË: SMART RESPONSE ROUTER
+        if (window.smartResponseRouter && window.smartResponseRouter.initialized) {
+            try {
+                const response = await window.smartResponseRouter.processUserMessage(message);
+                
+                // Nëse morëm përgjigje të mirë, ktheje
+                if (response && !response.includes("E kuptoj!") && !response.includes("Përdorni /ndihmo")) {
+                    console.log("✅ SmartResponseRouter dha përgjigje të mirë në override");
+                    
+                    // Shto përgjigjen në chat (duke imituar sistemin e vjetër)
+                    if (typeof addMessage === 'function') {
+                        addMessage(response, 'bot');
+                    }
+                    
+                    return response;
+                }
+            } catch (error) {
+                console.error("❌ Gabim në SmartResponseRouter override:", error);
+            }
+        }
+        
+        // FALLBACK: Sistemi i vjetër
+        console.log("🔄 Duke përdorur sendMessage të vjetër...");
+        return await oldSendMessage(message);
+    };
+    
+    console.log("✅ sendMessage override u aplikua!");
+}
+
+// 🎯 KAPËRCE ÇDO FUNKSION TJETËR TË PROCESIMIT
+if (typeof processUserMessage !== 'undefined') {
+    console.log("🔧 Duke kapërcyer processUserMessage...");
+    
+    const oldProcessUserMessage = processUserMessage;
+    
+    window.processUserMessage = async function(message) {
+        console.log("🎯 processUserMessage override...");
+        
+        if (window.smartResponseRouter) {
+            try {
+                const response = await window.smartResponseRouter.processUserMessage(message);
+                if (response && !response.includes("E kuptoj!")) {
+                    return response;
+                }
+            } catch (error) {
+                console.error("❌ Gabim në processUserMessage override:", error);
+            }
+        }
+        
+        return await oldProcessUserMessage(message);
+    };
+}
+
+console.log("✅ Të gjitha override-t u aplikuan!");
