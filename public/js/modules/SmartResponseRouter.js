@@ -1,21 +1,21 @@
 // ======================================================
-// 🧠 SmartResponseRouter - RRUFE-TESLA 10.5 - VERSION I SIGURT
+// 🧠 SmartResponseRouter - RRUFE-TESLA 10.5 - VERSION I PLOTË I KORRIGJUAR
 // ======================================================
-// SISTEM I RI I MENÇUR PËR ROUTING TË PËRGJIGJEVE - PA KONFLIKTE
+// SISTEM I RI I MENÇUR PËR ROUTING TË PËRGJIGJEVE - PA GABIME
 // ======================================================
 
-console.log("🚀 Duke ngarkuar SmartResponseRouter (Version i Sigurt)...");
+console.log("🚀 Duke ngarkuar SmartResponseRouter (Version i Korrigjuar)...");
 
 class SmartResponseRouter {
     constructor() {
-        this.name = "SmartResponseRouter-Safe";
-        this.version = "1.1-safe";
+        this.name = "SmartResponseRouter-Pro";
+        this.version = "1.2-stable";
         this.initialized = false;
         this.config = {};
         this.messageHistory = [];
-        this.safeMode = true; // 🛡️ MOD I RI I SIGURISË
+        this.safeMode = true;
         
-        console.log(`🎯 ${this.name} v${this.version} u instancua (Safe Mode)`);
+        console.log(`🎯 ${this.name} v${this.version} u instancua`);
     }
 
     // ==================== INICIALIZIM I SIGURT ====================
@@ -29,24 +29,19 @@ class SmartResponseRouter {
         console.log("🛡️ Duke inicializuar SmartResponseRouter në mënyrë të sigurt...");
         
         try {
-            // 🚫 KONTROLLO NËSE SISTEMI ËSHTË GATI - MOS VEPRO PARAKOHTË
             if (!this.isSystemReady()) {
                 console.log("⏳ Sistemi nuk është gati, duke pritur...");
                 setTimeout(() => this.initializeSafely(), 2000);
                 return false;
             }
             
-            // Ngarko konfigurimin
             await this.loadConfiguration();
-            
-            // 🚫 MOS KONFIGURO EVENT LISTENERS KËTU - do të bëhet nga main.js
             console.log("🎧 Event listeners do të konfigurohen nga main.js");
             
-            // Kontrollo statusin e API
             await this.checkAPIStatus();
             
             this.initialized = true;
-            console.log("✅ SmartResponseRouter u inicializua me sukses (Safe Mode)!");
+            console.log("✅ SmartResponseRouter u inicializua me sukses!");
             
             return true;
             
@@ -56,7 +51,6 @@ class SmartResponseRouter {
         }
     }
 
-    // 🛡️ FUNKSION I RI: KONTROLLO NËSE SISTEMI ËSHTË GATI
     isSystemReady() {
         const requiredElements = [
             'user-input',
@@ -74,7 +68,6 @@ class SmartResponseRouter {
             return isReady;
         });
         
-        // Kontrollo gjithashtu nëse sistemi i vjetër është i gatshëm
         const isOldSystemReady = typeof addMessage === 'function';
         
         return allReady && isOldSystemReady;
@@ -82,7 +75,6 @@ class SmartResponseRouter {
 
     async loadConfiguration() {
         this.config = {
-            // Rrjedhat e procesimit
             routes: {
                 GEMINI: 'gemini',
                 LOCAL: 'local', 
@@ -90,21 +82,18 @@ class SmartResponseRouter {
                 FALLBACK: 'fallback'
             },
             
-            // Prioritete të routingut
             priorities: {
                 high: ['rrufe', 'gemini', 'local'],
                 medium: ['gemini', 'local', 'rrufe'],
                 low: ['local', 'rrufe', 'gemini']
             },
             
-            // Kufijtë e përgjigjeve
             limits: {
                 maxLocalLength: 100,
                 minGeminiComplexity: 15,
                 responseTimeout: 10000
             },
             
-            // Cilësia e përgjigjeve
             quality: {
                 enableGemini: true,
                 enableLocalAI: true,
@@ -112,63 +101,61 @@ class SmartResponseRouter {
                 fallbackEnabled: true
             },
             
-            // 🛡️ KONFIGURIM I RI I SIGURISË
             safety: {
-                autoInitialize: false, // 🚫 MOS AUTO-INICIALIZO
+                autoInitialize: false,
                 checkSystemReady: true,
                 maxWaitTime: 10000
             }
         };
         
-        console.log("⚙️ Konfigurimi i sigurt u ngarkua");
+        console.log("⚙️ Konfigurimi u ngarkua");
     }
 
-    // ==================== ANALIZA E MESAZHEVE ====================
+    // ==================== ANALIZA E MESAZHEVE - E KORRIGJUAR ====================
 
     analyzeMessage(message) {
-    console.log("🔍 Duke analizuar mesazhin:", message.substring(0, 50));
-    
-    const analysis = {
-        type: 'unknown',
-        complexity: 'low',
-        language: 'albanian',
-        length: message.length,
-        containsQuestion: false,
-        requiresGemini: false,
-        isCommand: false,
-        isMath: false,
-        isGreeting: false,
-        category: 'general'
-    };
-
-    const lowerMsg = message.toLowerCase().trim();
-
-    // === 🆕 SHTO KËTË SEKSION TË RI ===
-    // 1. KONTROLLO PËR "SI JENI" & PYETJE SOCIALE
-    if (lowerMsg.includes('si jeni') || 
-        lowerMsg.includes('si je') || 
-        lowerMsg.includes('si kaloni') ||
-        lowerMsg.includes('si po shkoni') ||
-        lowerMsg === 'si jeni?' || 
-        lowerMsg === 'si je?') {
-        analysis.type = 'simple_question';
-        analysis.containsQuestion = true;
-        analysis.category = 'social';
-        analysis.complexity = 'low';
-        console.log("💬 U zbulua pyetje sociale");
-        return analysis; // Kthehu menjëherë
-    }
+        console.log("🔍 Duke analizuar mesazhin:", message.substring(0, 50));
+        
+        const analysis = {
+            type: 'unknown',
+            complexity: 'low',
+            language: 'albanian',
+            length: message.length,
+            containsQuestion: false,
+            requiresGemini: false,
+            isCommand: false,
+            isMath: false,
+            isGreeting: false,
+            category: 'general'
+        };
 
         const lowerMsg = message.toLowerCase().trim();
 
+        // === 🎯 SEKSIONI I RI PËR PYETJE SOCIALE ===
+        if (lowerMsg.includes('si jeni') || 
+            lowerMsg.includes('si je') || 
+            lowerMsg.includes('si kaloni') ||
+            lowerMsg.includes('si po shkoni') ||
+            lowerMsg === 'si jeni?' || 
+            lowerMsg === 'si je?' ||
+            lowerMsg === 'si jeni' ||
+            lowerMsg === 'si je') {
+            analysis.type = 'simple_question';
+            analysis.containsQuestion = true;
+            analysis.category = 'social';
+            analysis.complexity = 'low';
+            console.log("💬 U zbulua pyetje sociale");
+            return analysis;
+        }
+
         // 1. KONTROLLO PËR KOMANDA RRUFE-TESLA
         if (this.isRrufeCommand(lowerMsg)) {
-        analysis.type = 'command';
-        analysis.isCommand = true;
-        analysis.category = 'rrufe_command';
-        analysis.complexity = 'low';
-        console.log("🎯 U zbulua komandë RRUFE-TESLA");
-    }
+            analysis.type = 'command';
+            analysis.isCommand = true;
+            analysis.category = 'rrufe_command';
+            analysis.complexity = 'low';
+            console.log("🎯 U zbulua komandë RRUFE-TESLA");
+        }
         
         // 2. KONTROLLO PËR MATEMATIKË
         else if (this.isMathExpression(message)) {
@@ -215,7 +202,6 @@ class SmartResponseRouter {
             console.log("💬 U zbulua mesazh bisedor");
         }
 
-        // Ruaj analizën në histori
         this.messageHistory.push({
             message: message,
             analysis: analysis,
@@ -225,7 +211,7 @@ class SmartResponseRouter {
         return analysis;
     }
 
-    // ==================== FUNKSIONE SHQYTËZUESE ====================
+    // ==================== FUNKSIONE SHQYTËZUESE - TË PËRMIRËSUARA ====================
 
     isRrufeCommand(message) {
         const rrufeCommands = [
@@ -239,22 +225,20 @@ class SmartResponseRouter {
     }
 
     isMathExpression(message) {
-        // Heq komandën /llogarit nëse ekziston
         const cleanMessage = message.replace(/^\/llogarit\s*/i, '').trim();
         
-        // Kontrollo për pyetje matematikore (version i përmirësuar)
         const mathPatterns = [
-            /sa\s+bejn[ëe]?\s*\d+/i,           // "sa bejne 5"
-            /sa\s+është\s*\d+/i,              // "sa është 5"  
-            /llogarit\s+.+/i,                 // "llogarit diçka"
-            /^\d+[\s\d+\-*/().^%]+$/,         // shprehje e pastër matematikore
-            /[\d+\-*/().^%]+\s*[\+\-\*\/\^]\s*[\d+\-*/().^%]+/, // operatorë matematikorë
-            /sa\s+bën\s*.+/i,                 // "sa bën 5+5"
-            /sasia\s+.+/i,                    // "sasia e diçkaje"
-            /shuma\s+.+/i,                    // "shuma e"
-            /prodhimi\s+.+/i,                 // "prodhimi i"
-            /përqindja\s+.+/i,                // "përqindja e"
-            /\d+\s*[\+\-\*\/\^]\s*\d+/        // numër operator numër
+            /sa\s+bejn[ëe]?\s*\d+/i,
+            /sa\s+është\s*\d+/i,  
+            /llogarit\s+.+/i,
+            /^\d+[\s\d+\-*/().^%]+$/,
+            /[\d+\-*/().^%]+\s*[\+\-\*\/\^]\s*[\d+\-*/().^%]+/,
+            /sa\s+bën\s*.+/i,
+            /sasia\s+.+/i,
+            /shuma\s+.+/i,
+            /prodhimi\s+.+/i,
+            /përqindja\s+.+/i,
+            /\d+\s*[\+\-\*\/\^]\s*\d+/
         ];
         
         const hasMathOperators = /[\d+\-*/().^%]/.test(cleanMessage);
@@ -272,7 +256,6 @@ class SmartResponseRouter {
             'good afternoon', 'good evening', 'hey', 'salut', 'bonjour'
         ];
         
-        // Kontrollo nëse mesazhi është kryesisht përshëndetje
         const lowerMsg = message.toLowerCase().trim();
         const isDirectGreeting = greetings.some(greet => 
             lowerMsg === greet || 
@@ -281,7 +264,6 @@ class SmartResponseRouter {
             lowerMsg.includes(' ' + greet + ' ')
         );
         
-        // Kontrollo për përshëndetje të thjeshta
         const simpleGreetings = ['hi', 'hey', 'hello', 'tung', 'ciao'];
         const isSimpleGreeting = simpleGreetings.some(greet => lowerMsg === greet);
         
@@ -304,23 +286,24 @@ class SmartResponseRouter {
         return hasQuestionMark && (hasComplexKeyword || isLongQuestion);
     }
 
-    // Ose shto në funksionin ekzistues isSimpleQuestion:
+    isSimpleQuestion(message) {
+        const simpleQuestionWords = [
+            'ku', 'kur', 'kush', 'cila', 'cilët', 
+            'si jeni', 'si je', 'si kaloni', 'si shkoni',
+            'sa herë', 'cilën', 'cili', 'për sa', 'deri kur',
+            'nga', 'përse', 'pse', 'a mund', 'a duhet'
+        ];
+        
+        const hasQuestionMark = message.includes('?');
+        const hasSimpleWord = simpleQuestionWords.some(word => 
+            message.startsWith(word + ' ') || 
+            message.includes(' ' + word + ' ') ||
+            message === word + '?' ||
+            message === word
+        );
 
-isSimpleQuestion(message) {
-    const simpleQuestionWords = [
-        'ku', 'kur', 'kush', 'cila', 'cilët', 
-        'si jeni', 'si je', 'si kaloni', 'si shkoni' // 🆕 Shto këto
-    ];
-    
-    const hasQuestionMark = message.includes('?');
-    const hasSimpleWord = simpleQuestionWords.some(word => 
-        message.startsWith(word + ' ') || 
-        message.includes(' ' + word + ' ') ||
-        message === word + '?' // 🆕 Për "si jeni?"
-    );
-
-    return hasQuestionMark && hasSimpleWord;
-}
+        return hasQuestionMark && hasSimpleWord;
+    }
 
     // ==================== SISTEMI I ROUTINGUT ====================
 
@@ -432,7 +415,6 @@ isSimpleQuestion(message) {
         console.log("🎯 Duke procesuar komandë RRUFE-TESLA:", message);
         
         try {
-            // 🛡️ PROVO SISTEMIN E VJETËR RRUFE-TESLA PARË - ME KONTROLL
             if (typeof window.processRrufeCommand === 'function') {
                 console.log("🔗 Duke përdorur sistemin ekzistues RRUFE-TESLA...");
                 const response = await window.processRrufeCommand(message);
@@ -441,7 +423,6 @@ isSimpleQuestion(message) {
                 }
             }
             
-            // PROVO KOMANDAT EKZISTUESE
             if (message.startsWith('/wiki ')) {
                 const query = message.replace('/wiki ', '').trim();
                 return `🌐 Informacione për "${query}" nga Wikipedia...`;
@@ -456,7 +437,6 @@ isSimpleQuestion(message) {
                 return `👑 **SISTEMI I KOMANDAVE - RRUFE-TESLA** 👑\n\n📋 KOMANDAT BAZE:\n• /ndihmo - Shfaq këtë listë\n• /wiki - Kërko Wikipedia\n• /moti - Informacion moti\n• /perkthim - Përkthim tekst\n• /meso - Mëso diçka të re\n\n🔧 **Sistemi i ri SmartRouter është aktiv!**`;
             }
             
-            // Fallback inteligjent
             return `🔧 [RRUFE-TESLA] Komanda "${message}" po ekzekutohet nga sistemi i ri inteligjent...`;
             
         } catch (error) {
@@ -468,7 +448,6 @@ isSimpleQuestion(message) {
     async processLocally(message) {
         console.log("🔧 Duke procesuar lokal:", message);
         
-        // Përdor inteligjencën lokale të RRUFE-TESLA
         const analysis = this.analyzeMessage(message);
         
         if (analysis.isMath) {
@@ -484,11 +463,22 @@ isSimpleQuestion(message) {
             return greetings[Math.floor(Math.random() * greetings.length)];
         }
         
+        // 🎯 PËRGJIGJE TË REJA PËR PYETJE SOCIALE
+        if (analysis.category === 'social' && analysis.containsQuestion) {
+            const socialResponses = [
+                "Jam shumë mirë, faleminderit që pyetët! 😊 Po ju?",
+                "Gjithçka shkon mirë këtu! Si kaloni ju?",
+                "Jam në formë të shkëlqyer! Faleminderit për pyetjen!",
+                "Punoj mirë dhe jam gati t'ju ndihmoj! Si jeni ju sot?",
+                "Shumë mirë faleminderit! Gëzohem që ju intereson! 😊"
+            ];
+            return socialResponses[Math.floor(Math.random() * socialResponses.length)];
+        }
+        
         if (analysis.containsQuestion) {
             return "Kjo është një pyetje interesante! Për përgjigje më të detajuara, sigurohuni që keni konfiguruar API Key për Gemini.";
         }
         
-        // Përgjigje default inteligjente
         const smartResponses = [
             "Interesante! Çfarë mendoni ju për këtë?",
             "Po dëgjoj... vazhdoni ju lutem!",
@@ -503,15 +493,12 @@ isSimpleQuestion(message) {
     async processWithGemini(message) {
         console.log("🧠 Duke procesuar me Gemini:", message.substring(0, 50));
         
-        // Kontrollo nëse Gemini është i disponueshëm
         if (!await this.checkAPIStatus()) {
             console.log("❌ Gemini nuk është i disponueshëm, duke përdorur fallback");
             return await this.processFallback(message);
         }
         
         try {
-            // Simulim i thirrjes në Gemini
-            // Në versionin real, do të integrohet me API-n ekzistuese
             const response = await this.callGeminiAPI(message);
             
             if (response && !this.isGenericResponse(response)) {
@@ -530,7 +517,6 @@ isSimpleQuestion(message) {
     async processFallback(message) {
         console.log("🔄 Duke përdorur fallback për:", message);
         
-        // Fallback inteligjent bazuar në analizën e mesazhit
         const analysis = this.analyzeMessage(message);
         
         if (analysis.isMath) {
@@ -552,16 +538,10 @@ isSimpleQuestion(message) {
 
     solveMath(expression) {
         try {
-            // Heq komandën /llogarit nëse ekziston
             let mathExpr = expression.replace(/^\/llogarit\s*/i, '').trim();
-            
-            // Pastro shprehjen
             let cleanExpr = mathExpr.replace(/[^0-9+\-*/().^]/g, '');
-            
-            // Zëvendëso ^ me ** për fuqi
             cleanExpr = cleanExpr.replace(/\^/g, '**');
             
-            // Llogarit me siguri
             const result = Function(`"use strict"; return (${cleanExpr})`)();
             
             return `🧮 **${mathExpr}** = **${result}**`;
@@ -574,7 +554,6 @@ isSimpleQuestion(message) {
 
     async checkAPIStatus() {
         try {
-            // Kontrollo nëse ka API Key të konfiguruar
             const response = await fetch('/api/api-keys/status/gemini', {
                 credentials: 'include'
             });
@@ -595,17 +574,15 @@ isSimpleQuestion(message) {
     }
 
     async callGeminiAPI(message) {
-        // Simulim i thirrjes në Gemini
-        // Në versionin real, do të zëvendësohet me API-n ekzistuese
         console.log("📡 [SIMULIM] Duke thirrur Gemini API...");
         
-        // Simuloj një vonesë
         await new Promise(resolve => setTimeout(resolve, 1000));
         
-        // Përgjigje simulimi inteligjente
         const simulatedResponses = {
             'si jeni': "Jam shumë mirë, faleminderit që pyetët! 😊 Çfarë mund të bëj për ju?",
+            'si je': "Jam shumë mirë, faleminderit! Gëzohem që ju shoh! 😊",
             'sa eshte ora': `🕒 Ora aktuale është: ${new Date().toLocaleTimeString('sq-AL')}`,
+            'si funksionon ai': "Inteligjenca Artificiale funksionon duke përdorur algoritme të avancuara...",
             'default': "Kjo është një pyetje interesante. Për përgjigje më të detajuara, më tregoni më shumë kontekst."
         };
         
@@ -628,8 +605,6 @@ isSimpleQuestion(message) {
         );
     }
 
-    // 🛡️ NUK KA EVENT LISTENERS KËTU - do të konfigurohen nga main.js
-
     // ==================== API PUBLIKE ====================
 
     async processUserMessage(message) {
@@ -644,13 +619,8 @@ isSimpleQuestion(message) {
         console.log(`🧠 SmartResponseRouter po proceson: "${message.substring(0, 50)}..."`);
         
         try {
-            // 1. Analizo mesazhin
             const analysis = this.analyzeMessage(message);
-            
-            // 2. Përcakto rrugën më të mirë
             const routeConfig = this.determineBestRoute(message, analysis);
-            
-            // 3. Ekzekuto rrugën
             const response = await this.executeRoute(routeConfig, message);
             
             console.log("✅ Përgjigja u gjenerua me sukses");
@@ -674,23 +644,40 @@ isSimpleQuestion(message) {
     }
 }
 
-// ==================== EKSPORTIM I SIGURT ====================
+// ==================== EKSPORTIM ====================
 
-// Krijo instancë globale
 window.SmartResponseRouter = SmartResponseRouter;
-
-// Krijo instancë default
 window.smartResponseRouter = new SmartResponseRouter();
 
-// 🛡️ NUK KA AUTO-INICIALIZIM - prit thirrje manuale nga main.js
-console.log("✅ SmartResponseRouter (Version i Sigurt) u ngarkua - Duke pritur inicializim manual");
+console.log("✅ SmartResponseRouter (Version i Korrigjuar) u ngarkua - Duke pritur inicializim manual");
 
-// ==================== TESTIM I SIGURT ====================
+// ==================== TESTIM ====================
 
-// Funksion për testim të shpejtë
 window.testSmartRouter = async function(message = "Pershendetje") {
-    console.log("🧪 TEST I SMART ROUTER (Safe Mode):");
+    console.log("🧪 TEST I SMART ROUTER:");
     const response = await window.smartResponseRouter.processUserMessage(message);
     console.log("📝 Përgjigja:", response);
     return response;
 };
+
+// 🎯 FUNKSION I RI PËR TESTIME TË SHPEJTA
+window.testSocialQuestions = async function() {
+    console.log("🧪 TEST PYRJE SOCIALE:");
+    
+    const socialTests = [
+        "Si jeni?",
+        "Si je?",
+        "Si kaloni?",
+        "Si jeni sot?",
+        "Si po shkoni?",
+        "Si jeni",
+        "Si je"
+    ];
+    
+    for (let question of socialTests) {
+        const response = await window.smartResponseRouter.processUserMessage(question);
+        console.log(`"${question}" → "${response}"`);
+    }
+};
+
+console.log("🎉 SmartResponseRouter është gati për përdorim!");
