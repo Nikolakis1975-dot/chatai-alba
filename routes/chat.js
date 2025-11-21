@@ -239,6 +239,17 @@ async function processWithSmartLogic(message) {
         return "Jam shumë mirë, faleminderit që pyetët! 😊 Çfarë mund të bëj për ju?";
     }
 
+    // Shto këto rrugë në funksionin processWithSmartLogic
+if (lowerMessage.includes('liber') || lowerMessage.includes('libra') || 
+    lowerMessage.includes('libri') || lowerMessage.includes('libër')) {
+    return "📚 Unë mund t'ju ndihmoj me informacion rreth librave! Çfarë lloj libri po kërkoni? Fiction, shkencor, historik, apo diçka tjetër?";
+}
+
+if (lowerMessage.includes('cfare') || lowerMessage.includes('çfarë') || 
+    lowerMessage.includes('cka') || lowerMessage.includes('çka')) {
+    return "🤔 Mund t'ju ndihmoj me shumë çështje! Çfarë saktësisht dëshironi të dini? Teknologji, shkencë, programim, apo diçka tjetër?";
+}
+
     // 🎯 SHTO KËTO RREGULLA TË REJA PËR PYETJE KOMPLEKSE
 if (lowerMessage.includes('shpjego') || lowerMessage.includes('shpjegomë') || 
     lowerMessage.includes('shpjegoni') || lowerMessage.includes('çfarë është') ||
