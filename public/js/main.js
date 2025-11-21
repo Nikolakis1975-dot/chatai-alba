@@ -767,20 +767,7 @@ document.addEventListener('DOMContentLoaded', function() {
 //        this.initialized = false;
 //        this.initialize();
 //    }
-    
-    async initialize() {
-        console.log("🧠 Duke inicializuar Knowledge Integration...");
-        
-        // Prit deri të jetë gati KnowledgeDistiller
-        await this.waitForKnowledgeDistiller();
-        
-        // Intercept butonin e dërgimit
-        this.interceptSendButton();
-        
-        this.initialized = true;
-        console.log("✅ Knowledge Integration u inicializua!");
-    }
-    
+      
     async waitForKnowledgeDistiller() {
         return new Promise((resolve) => {
             const check = () => {
