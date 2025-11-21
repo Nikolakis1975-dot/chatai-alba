@@ -573,37 +573,67 @@ class SmartResponseRouter {
         }
     }
 
-    async callGeminiAPI(message) {
-        console.log("📡 [SIMULIM] Duke thirrur Gemini API...");
-        
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        const simulatedResponses = {
-            'si jeni': "Jam shumë mirë, faleminderit që pyetët! 😊 Çfarë mund të bëj për ju?",
-            'si je': "Jam shumë mirë, faleminderit! Gëzohem që ju shoh! 😊",
-            'sa eshte ora': `🕒 Ora aktuale është: ${new Date().toLocaleTimeString('sq-AL')}`,
-            'si funksionon ai': "Inteligjenca Artificiale funksionon duke përdorur algoritme të avancuara...",
-            'default': "Kjo është një pyetje interesante. Për përgjigje më të detajuara, më tregoni më shumë kontekst."
-        };
-        
-        return simulatedResponses[message.toLowerCase()] || simulatedResponses.default;
-    }
+     // =================================== callGeminiAPI =================================
 
-    isGenericResponse(response) {
-        const genericPatterns = [
-            'nuk e kuptova',
-            'mund të përsërisni',
-            'nuk kam përgjigje',
-            'nuk jam i sigurt',
-            'më falni',
-            'do të doja të ndihmoja',
-            'nuk mund të jap një përgjigje'
+    async callGeminiAPI(message) {
+    console.log("📡 [GEMINI_API] Duke thirrur Gemini API të vërtetë...");
+    
+    try {
+        // 🎯 PROVO RUGËT E NDRYSHME TË GEMINI
+        const routesToTry = [
+            '/api/gemini/simple-chat',  // Rruga e re pa auth
+            '/api/gemini/ask',          // Rruga ekzistuese me auth
+            '/api/gemini/public-chat'   // Rruga alternative
         ];
         
-        return genericPatterns.some(pattern => 
-            response.toLowerCase().includes(pattern)
-        );
+        for (const route of routesToTry) {
+            try {
+                console.log(`🔗 Duke provuar rrugën: ${route}`);
+                
+                const response = await fetch(route, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        userId: this.getCurrentUserId() || 1
+                    })
+                });
+
+                console.log(`📊 Statusi për ${route}:`, response.status);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log("📝 Përgjigja nga serveri:", data);
+                    
+                    if (data.success && data.response) {
+                        console.log('✅ Gemini API funksionoi në:', route);
+                        console.log('💬 Përgjigja e vërtetë:', data.response.substring(0, 100));
+                        return data.response;
+                    } else if (data.error) {
+                        console.log('❌ Gabim nga serveri:', data.error);
+                        continue;
+                    }
+                } else {
+                    console.log(`⚠️ ${route} ktheu status: ${response.status}`);
+                    continue;
+                }
+            } catch (error) {
+                console.log(`❌ ${route} dështoi:`, error.message);
+                continue;
+            }
+        }
+        
+        // Nëse asnjë rrugë nuk funksionoi
+        throw new Error('❌ Të gjitha rrugët e Gemini API dështuan');
+        
+    } catch (error) {
+        console.error("❌ Gabim kritik në callGeminiAPI:", error);
+        throw error;
     }
+}
 
     // ==================== API PUBLIKE ====================
 
