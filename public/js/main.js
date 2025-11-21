@@ -656,13 +656,12 @@ setTimeout(() => {
 console.log('✅ NOUS_CORE u çaktivizua - login-i duhet të funksionojë tani');
 
 // ======================================================
-// 🚀 SMART RESPONSE ROUTER + MEMORY INTEGRATION PATCH - VERSION I RI PRIMARY
+// 🚀 SMART RESPONSE ROUTER PRIMARY - VERSION I RI I THJESHTË
 // ======================================================
 
 function forceSmartIntegration() {
-    console.log('🧠🔄 FORCING SMART RESPONSE ROUTER AS PRIMARY...');
+    console.log('🧠🔄 MAKING SMART RESPONSE ROUTER PRIMARY...');
     
-    // Mbivendos sendMessage për të përdorur SmartResponseRouter si PRIMARY
     if (typeof window.sendMessage !== 'undefined') {
         const originalSendMessage = window.sendMessage;
         
@@ -672,9 +671,9 @@ function forceSmartIntegration() {
             
             if (!message) return;
             
-            console.log('🎯 SMART PRIMARY: Processing:', message);
+            console.log('🎯 SMART ROUTER PRIMARY - Message:', message);
             
-            // Pastro input menjëherë
+            // Pastro input
             if (input) input.value = "";
             
             // Shto mesazhin e përdoruesit
@@ -683,59 +682,32 @@ function forceSmartIntegration() {
             }
             
             // 🎯 PRIORITET I PARË: SMART RESPONSE ROUTER
-            let smartResponse = null;
             if (window.smartResponseRouter && window.smartResponseRouter.initialized) {
                 try {
-                    console.log('🧠 Duke përdorur SmartResponseRouter si PRIMARY...');
-                    smartResponse = await window.smartResponseRouter.processUserMessage(message);
+                    console.log('🎯 Using SmartResponseRouter as PRIMARY...');
+                    const response = await window.smartResponseRouter.processUserMessage(message);
                     
                     // Kontrollo nëse përgjigja është e mirë
-                    if (smartResponse && smartResponse.length > 10 && 
-                        !smartResponse.includes('E kuptoj!') && 
-                        !smartResponse.includes('Përdorni /ndihmo')) {
+                    if (response && response.length > 10 && 
+                        !response.includes('E kuptoj!') && 
+                        !response.includes('Përdorni /ndihmo')) {
                         
-                        console.log('✅ SMART PRIMARY: Got good response:', smartResponse.substring(0, 50));
+                        console.log('✅ SMART ROUTER Response:', response.substring(0, 60));
                         
                         // Shto përgjigjen në chat
                         if (typeof addMessage === 'function') {
-                            addMessage(smartResponse, 'bot');
+                            addMessage(response, 'bot');
                         }
                         
-                        // 💾 Ruaj në memory
-                        if (window.ltmManager) {
-                            window.ltmManager.addAIResponse(smartResponse);
-                            if (typeof updateMemoryDisplay !== 'undefined') {
-                                updateMemoryDisplay();
-                            }
-                        }
-                        
-                        // 🧠 Mëso nga interaksioni
-                        if (window.knowledgeDistiller) {
-                            try {
-                                await window.knowledgeDistiller.addKnowledge(
-                                    'smart_' + Date.now(),
-                                    { question: message, answer: smartResponse },
-                                    'conversation'
-                                );
-                                console.log('🎓 U mësua nga interaksioni Smart!');
-                            } catch (learnError) {
-                                console.log('❌ Gabim në mësim:', learnError);
-                            }
-                        }
-                        
-                        return; // ✅ DIL KËTU - MOS PËRDOR SISTEMIN E VJETËR!
-                    } else {
-                        console.log('⚠️ SMART PRIMARY: Response not good, using fallback');
+                        return; // ✅ STOP KËTU - MOS PËRDOR SISTEMIN E VJETËR
                     }
                 } catch (error) {
-                    console.log('❌ SMART PRIMARY: Error in SmartResponseRouter:', error);
+                    console.log('❌ Error in SmartResponseRouter:', error);
                 }
-            } else {
-                console.log('❌ SMART PRIMARY: SmartResponseRouter not available');
             }
             
             // 🔄 FALLBACK: Sistemi i vjetër
-            console.log('🔄 SMART PRIMARY: Using fallback to original system...');
+            console.log('🔄 Falling back to original system...');
             try {
                 await originalSendMessage.call(this);
             } catch (error) {
@@ -743,9 +715,13 @@ function forceSmartIntegration() {
             }
         };
         
-        console.log('✅🧠 SMART PRIMARY INTEGRATION ACTIVATED! SmartResponseRouter është PRIMARY!');
+        console.log('✅ SMART ROUTER PRIMARY ACTIVATED!');
     }
 }
+
+// Ekzekuto menjëherë
+setTimeout(forceSmartIntegration, 2000);
+
 
 // Ekzekuto patch-in pas 5 sekondash
 setTimeout(forceSmartIntegration, 5000);
@@ -782,15 +758,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// =============================================== KOWNLEGDE ==================================================
+// =============================================== KOWNLEGDE =======================================
 // ==================== 🎯 INTEGRIMI I KNOWLEDGEDISTILLER ====================
 // Shto këtë në FUND të main.js ose në një skedar të veçantë
 
-class KnowledgeIntegration {
-    constructor() {
-        this.initialized = false;
-        this.initialize();
-    }
+// class KnowledgeIntegration {
+//    constructor() {
+//        this.initialized = false;
+//        this.initialize();
+//    }
     
     async initialize() {
         console.log("🧠 Duke inicializuar Knowledge Integration...");
