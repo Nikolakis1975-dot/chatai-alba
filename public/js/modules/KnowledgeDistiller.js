@@ -22,12 +22,9 @@ class KnowledgeDistiller {
         console.log("🔄 Duke inicializuar KnowledgeDistiller me SQLite...");
         
         try {
-            // Kontrollo nëse databaza është e disponueshme
+            // Provo SQLite parë
             await this.checkDatabaseConnection();
-            
-            // Ngarko njohuritë nga SQLite
             await this.loadKnowledgeFromDatabase();
-            
             this.initialized = true;
             console.log("✅ KnowledgeDistiller u inicializua me SQLite!");
             
@@ -36,22 +33,30 @@ class KnowledgeDistiller {
             console.log("🔄 Duke përdorur fallback në localStorage...");
             this.databaseEnabled = false;
             this.loadKnowledgeFromLocalStorage();
+            this.initialized = true;
         }
     }
 
     async checkDatabaseConnection() {
         try {
-            const response = await fetch('/api/database/status');
+            console.log("🔗 Duke kontrolluar lidhjen me SQLite...");
+            const response = await fetch('/api/knowledge/database/status');
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
             const data = await response.json();
             
-            if (data.success && data.database === 'connected') {
-                console.log("🗄️ SQLite Database është e lidhur!");
-                return true;
-            } else {
-                throw new Error('Database not connected');
+            if (!data.success) {
+                throw new Error('Database status check failed');
             }
+            
+            console.log("🗄️ SQLite Database është e lidhur!", data);
+            return true;
+            
         } catch (error) {
-            console.error("❌ Databaza nuk është e disponueshme:", error);
+            console.error("❌ Databaza nuk është e disponueshme:", error.message);
             throw error;
         }
     }
@@ -62,27 +67,29 @@ class KnowledgeDistiller {
             
             const response = await fetch('/api/knowledge/load', {
                 method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
                 credentials: 'include'
             });
             
-            if (response.ok) {
-                const data = await response.json();
-                if (data.success && data.knowledge) {
-                    this.knowledgeBase = data.knowledge;
-                    console.log(`✅ U ngarkuan ${Object.keys(this.knowledgeBase).length} njohuri nga SQLite`);
-                } else {
-                    console.log("ℹ️ Nuk ka të dhëna në databazë, duke filluar nga zero");
-                    this.knowledgeBase = {};
-                }
-            } else {
+            if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
             
+            const data = await response.json();
+            
+            if (data.success) {
+                this.knowledgeBase = data.knowledge || {};
+                const categories = Object.keys(this.knowledgeBase).length;
+                const totalEntries = Object.values(this.knowledgeBase).reduce(
+                    (sum, category) => sum + Object.keys(category).length, 0
+                );
+                
+                console.log(`✅ U ngarkuan ${categories} kategori me ${totalEntries} njohuri nga SQLite`);
+            } else {
+                throw new Error(data.error || 'Unknown error loading knowledge');
+            }
+            
         } catch (error) {
-            console.error("❌ Gabim në ngarkimin nga SQLite:", error);
+            console.error("❌ Gabim në ngarkimin nga SQLite:", error.message);
             throw error;
         }
     }
@@ -94,7 +101,12 @@ class KnowledgeDistiller {
             const stored = localStorage.getItem('rrufe_knowledge');
             if (stored) {
                 this.knowledgeBase = JSON.parse(stored);
-                console.log(`✅ U ngarkuan ${Object.keys(this.knowledgeBase).length} njohuri nga localStorage`);
+                const categories = Object.keys(this.knowledgeBase).length;
+                const totalEntries = Object.values(this.knowledgeBase).reduce(
+                    (sum, category) => sum + Object.keys(category).length, 0
+                );
+                
+                console.log(`✅ U ngarkuan ${categories} kategori me ${totalEntries} njohuri nga localStorage`);
             } else {
                 this.knowledgeBase = {};
                 console.log("ℹ️ Nuk ka të dhëna në localStorage, duke filluar nga zero");
@@ -129,6 +141,11 @@ class KnowledgeDistiller {
     async saveToDatabase() {
         try {
             const userId = this.getCurrentUserId();
+            const totalEntries = Object.values(this.knowledgeBase).reduce(
+                (sum, category) => sum + Object.keys(category).length, 0
+            );
+            
+            console.log(`💾 Duke ruajtur ${totalEntries} njohuri në SQLite për user: ${userId}`);
             
             const response = await fetch('/api/knowledge/save', {
                 method: 'POST',
@@ -145,7 +162,7 @@ class KnowledgeDistiller {
             });
             
             if (!response.ok) {
-                throw new Error(`Database error: ${response.status}`);
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
             
             const result = await response.json();
@@ -154,10 +171,11 @@ class KnowledgeDistiller {
                 throw new Error(result.error || 'Unknown database error');
             }
             
+            console.log("✅ Ruajtja në SQLite u krye me sukses!");
             return result;
             
         } catch (error) {
-            console.error("❌ Gabim në ruajtjen në databazë:", error);
+            console.error("❌ Gabim në ruajtjen në databazë:", error.message);
             throw error;
         }
     }
@@ -172,7 +190,7 @@ class KnowledgeDistiller {
     }
 
     async addKnowledge(key, value, category = 'general') {
-        console.log(`🧠 Duke shtuar njohuri: ${key}`);
+        console.log(`🧠 Duke shtuar njohuri: ${key} në kategorinë: ${category}`);
         
         if (!this.knowledgeBase[category]) {
             this.knowledgeBase[category] = {};
@@ -187,6 +205,7 @@ class KnowledgeDistiller {
         // Ruaj automatikisht
         await this.saveKnowledge();
         
+        console.log(`✅ Njohuria "${key}" u shtua me sukses!`);
         return true;
     }
 
@@ -210,6 +229,10 @@ class KnowledgeDistiller {
         if (this.knowledgeBase[category] && this.knowledgeBase[category][key]) {
             // Rrit numrin e përdorimeve
             this.knowledgeBase[category][key].usageCount++;
+            
+            // Ruaj ndryshimet
+            this.saveKnowledge().catch(console.error);
+            
             return this.knowledgeBase[category][key].value;
         }
         return null;
@@ -344,14 +367,15 @@ window.testKnowledgeDistiller = async function() {
     console.log("📊 Stats:", stats);
     
     // Test shtimi i njohurive
-    await window.knowledgeDistiller.addKnowledge('test_key', {
-        question: 'Test pyetje',
-        answer: 'Test përgjigje',
-        type: 'test'
+    await window.knowledgeDistiller.addKnowledge('test_sqlite', {
+        question: 'A funksionon SQLite?',
+        answer: 'Po! Tani njohuritë ruhen në SQLite Database! 🎉',
+        type: 'test',
+        timestamp: new Date().toISOString()
     }, 'test');
     
     // Test kërkimi
-    const results = window.knowledgeDistiller.searchKnowledge('test');
+    const results = window.knowledgeDistiller.searchKnowledge('sqlite');
     console.log("🔍 Rezultatet e kërkimit:", results);
     
     return stats;
