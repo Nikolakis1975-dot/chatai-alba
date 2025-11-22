@@ -371,50 +371,6 @@ determineBestRoute(analysis) {
     }
 }
 
-
-    // 2. PËRSHËNDETJE - Përgjigje lokale e shpejtë
-    if (analysis.isGreeting) {
-        console.log("👋 Rrugë e zgjedhur: LOCAL_GREETING");
-        return {
-            route: this.config.routes.LOCAL,
-            priority: 'high',
-            reason: 'Përshëndetje',
-            timeout: 2000
-        };
-    }
-
-    // 3. PYRJE KOMPLEKSE - Gemini për përgjigje të cilësisë së lartë
-    if (analysis.requiresGemini && this.config.quality.enableGemini) {
-        console.log("💭 Rrugë e zgjedhur: GEMINI_COMPLEX");
-        return {
-            route: this.config.routes.GEMINI,
-            priority: 'high',
-            reason: 'Pyetje komplekse',
-            timeout: 15000
-        };
-    }
-
-    // 4. PYRJE TË THJESHTA - Procesim lokal inteligjent
-    if (analysis.containsQuestion) {
-        console.log("❓ Rrugë e zgjedhur: LOCAL_SMART");
-        return {
-            route: this.config.routes.LOCAL,
-            priority: 'medium',
-            reason: 'Pyetje e thjeshtë',
-            timeout: 5000
-        };
-    }
-
-    // 5. FALLBACK - Rrugë default
-    console.log("🔀 Rrugë e zgjedhur: FALLBACK");
-    return {
-        route: this.config.routes.FALLBACK,
-        priority: 'low',
-        reason: 'Mesazh bisedor',
-        timeout: 4000
-    };
-}
-
     // ==================== EKZEKUTIMI I ROUTINGUT ====================
 
    async executeRoute(routeType, message) {
