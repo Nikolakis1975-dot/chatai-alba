@@ -259,7 +259,7 @@ class ChatSystem {
     } catch (error) {
         console.error("❌ Gabim në mësimin nga interaksioni:", error);
     }
-},
+}
 
 // ✅ FUNKSION I RI: Gjenero çelës unik për njohuri
 generateKnowledgeKey(question) {
