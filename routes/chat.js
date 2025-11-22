@@ -203,13 +203,13 @@ router.post('/message', async (req, res) => {
     }
 });
 
-// ✅ FUNKSIONI I RI PËR SMART RESPONSE LOGJIKË
+// ✅ FUNKSIONI I KORIGJUAR PËR SMART RESPONSE LOGJIKË
 async function processWithSmartLogic(message) {
     const lowerMessage = message.toLowerCase().trim();
     
     console.log('🔍 SmartLogic duke analizuar:', lowerMessage);
     
-    // 🎯 PYETJE KOMPLEKSE - DËRGO TE GEMINI
+    // 🎯 PRIORITETI 1: PYETJE KOMPLEKSE - DËRGO TE GEMINI
     if (lowerMessage.includes('çfarë është') || lowerMessage.includes('si funksionon') ||
         lowerMessage.includes('shpjego') || lowerMessage.includes('shpjegomë') ||
         lowerMessage.includes('detaje') || lowerMessage.includes('mëso më shumë') ||
@@ -221,7 +221,6 @@ async function processWithSmartLogic(message) {
         console.log('🎯 Pyetje komplekse - duke dërguar te Gemini...');
         
         try {
-            // Provo të gjesh dhe përdorësh rrugën e gemini
             const geminiRoute = await callGeminiAPI(message);
             if (geminiRoute && geminiRoute.success) {
                 return geminiRoute.response;
@@ -231,23 +230,54 @@ async function processWithSmartLogic(message) {
         }
     }
     
-    // 🎯 PYETJE SOCIALE - "SI JENI?"
-    if (lowerMessage.includes('si je') || lowerMessage.includes('si jeni') || 
-        lowerMessage.includes('si kaloni') || lowerMessage.includes('si po kaloni') ||
-        lowerMessage === 'si je?' || lowerMessage === 'si jeni?' ||
-        lowerMessage.includes('si ndiheni') || lowerMessage.includes('si ndihesh')) {
-        return "Jam shumë mirë, faleminderit që pyetët! 😊 Çfarë mund të bëj për ju?";
+    // 🎯 PRIORITETI 2: PYETJE SOCIALE
+    if (lowerMessage.includes('si jeni') || lowerMessage.includes('si je') || 
+        lowerMessage.includes('si kaloni') || lowerMessage.includes('si po shkoni') ||
+        lowerMessage.includes('si ndiheni') || lowerMessage.includes('si ndihesh') ||
+        lowerMessage === 'si je?' || lowerMessage === 'si jeni?') {
+        return "Jam shumë mirë, faleminderit që pyetët! 😊 Si mund t'ju ndihmoj sot?";
     }
-
-    // Shto këto rrugë në funksionin processWithSmartLogic
-if (lowerMessage.includes('liber') || lowerMessage.includes('libra') || 
-    lowerMessage.includes('libri') || lowerMessage.includes('libër')) {
-    return "📚 Unë mund t'ju ndihmoj me informacion rreth librave! Çfarë lloj libri po kërkoni? Fiction, shkencor, historik, apo diçka tjetër?";
-}
-
-if (lowerMessage.includes('cfare') || lowerMessage.includes('çfarë') || 
-    lowerMessage.includes('cka') || lowerMessage.includes('çka')) {
-    return "🤔 Mund t'ju ndihmoj me shumë çështje! Çfarë saktësisht dëshironi të dini? Teknologji, shkencë, programim, apo diçka tjetër?";
+    
+    // 🎯 PRIORITETI 3: OFRIM NDIHMESE
+    if (lowerMessage.includes('mun') || lowerMessage.includes('mund') || 
+        lowerMessage.includes('ndihm') || lowerMessage.includes('help') ||
+        lowerMessage.includes('ndihmo')) {
+        return "Sigurisht! Mund t'ju ndihmoj me shumë çështje. Çfarë saktësisht keni nevojë?";
+    }
+    
+    // 🎯 PRIORITETI 4: LIBRA DHE LEKTIM
+    if (lowerMessage.includes('liber') || lowerMessage.includes('libra') || 
+        lowerMessage.includes('libri') || lowerMessage.includes('lexoj') ||
+        lowerMessage.includes('libër')) {
+        return "📚 Interesante! Çfarë lloj libri po kërkoni? Fiction, shkencor, historik, apo diçka tjetër?";
+    }
+    
+    // 🎯 PRIORITETI 5: PYETJE TË PËRGJITHSHME
+    if (lowerMessage.includes('cfare') || lowerMessage.includes('çfarë') || 
+        lowerMessage.includes('cka') || lowerMessage.includes('çka') ||
+        lowerMessage.includes('cfarë')) {
+        return "🤔 Mund t'ju ndihmoj me shumë çështje! Çfarë saktësisht dëshironi të dini? Teknologji, shkencë, programim, apo diçka tjetër?";
+    }
+    
+    // 🎯 PRIORITETI 6: FALEMINDERIT
+    if (lowerMessage.includes('faleminderit') || lowerMessage.includes('rrofsh') || 
+        lowerMessage.includes('thanks') || lowerMessage.includes('thank you') ||
+        lowerMessage.includes('flm')) {
+        return "S'ka përse! 😊 Gjithmonë i lumtur të ndihmoj!";
+    }
+    
+    // 🎯 PRIORITETI 7: MIRËMËNGJES/MIRËMBRËMA
+    if (lowerMessage.includes('mirëmëngjes') || lowerMessage.includes('miremengjes')) {
+        return "Mirëmëngjes! ☀️ Fillim të mbarë të ditës! Si mund t'ju ndihmoj sot?";
+    }
+    
+    if (lowerMessage.includes('mirëmbrëma') || lowerMessage.includes('mirembrema')) {
+        return "Mirëmbrëma! 🌙 Mbrëmje e mbarë! Si mund t'ju shërbej?";
+    }
+    
+    // 🔄 NËSE NUK GJENDET RUGË E MIRË, KTHEHU NULL
+    console.log('🔍 Nuk u gjet rrugë e mirë në SmartLogic');
+    return null;
 }
 
     // 🎯 SHTO KËTO RREGULLA TË REJA PËR PYETJE KOMPLEKSE
