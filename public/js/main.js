@@ -694,6 +694,12 @@ function forceSmartIntegration() {
             
             console.log('🎯 SMART ROUTER PRIMARY - Message:', message);
             
+            // 🚨 KONTROLLO PARË NËSE ËSHTË KOMANDË E RËNDËSISHME RRUFE
+            const importantCommands = ['/ndihmo', '/apikey', '/users', '/stats', '/admin', '/panel'];
+            const isImportantCommand = importantCommands.some(cmd => 
+                message.toLowerCase().startsWith(cmd.toLowerCase())
+            );
+            
             // Pastro input
             if (input) input.value = "";
             
@@ -702,7 +708,21 @@ function forceSmartIntegration() {
                 addMessage(message, 'user');
             }
             
-            // 🎯 PRIORITET I PARË: SMART RESPONSE ROUTER
+            // 🚨 NËSE ËSHTË KOMANDË E RËNDËSISHME, PËRDOR SISTEMIN EKZISTUES
+            if (isImportantCommand && typeof window.processRrufeCommand === 'function') {
+                console.log('🔗 Komandë e rëndësishme - duke e dërguar te sistemi ekzistues:', message);
+                try {
+                    const response = await window.processRrufeCommand(message);
+                    if (response && typeof addMessage === 'function') {
+                        addMessage(response, 'bot');
+                    }
+                    return; // STOP KËTU
+                } catch (error) {
+                    console.log('❌ Error in important command:', error);
+                }
+            }
+            
+            // 🎯 PRIORITET I PARË: SMART RESPONSE ROUTER (për mesazhet e tjera)
             if (window.smartResponseRouter && window.smartResponseRouter.initialized) {
                 try {
                     console.log('🎯 Using SmartResponseRouter as PRIMARY...');
