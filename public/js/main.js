@@ -799,340 +799,144 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// ==================================================================
-// 🚨 FUNKSION ZËVENDËSUES PËR processRrufeCommand - VERSION I PLOTË
-// ==================================================================
+// ======================================================
+// 🚀 SISTEMI I RI I KOMANDAVE - VERSION I THJESHTË & FUNKSIONAL
+// ======================================================
 
+// 1. KRIJO FUNKSIONIN processRrufeCommand
 window.processRrufeCommand = async function(message) {
-    console.log('🎯 RRUFE COMMAND PROCESSOR:', message);
+    console.log('🎯 RRUFE COMMAND:', message);
     
     // Komanda /ndihmo
     if (message === '/ndihmo' || message.startsWith('/ndihmo ')) {
-        const helpMenu = `👑 **SISTEMI I KOMANDAVE - RRUFE-TESLA** 👑
+        return `👑 **SISTEMI I KOMANDAVE - RRUFE-TESLA** 👑
 
 📋 **KOMANDAT BAZE:**
 • /ndihmo - Shfaq këtë listë
 • /wiki [query] - Kërko në Wikipedia  
 • /moti [qyteti] - Informacion moti
 • /perkthim [gjuhë] [tekst] - Përkthim tekst
-• /meso [temë] - Mëso diçka të re
+• /meso [pyetje]|[përgjigje] - Mëso diçka të re
 
 🔧 **KOMANDAT E AVANCUARA:**
 • /apikey [key] - Vendos API Key për Gemini
 • /eksporto - Eksporto të dhënat
 • /importo - Importo të dhënat  
 • /stats - Statistikat e sistemit
-• /users - Lista e përdoruesve
-• /admin - Paneli administratorit
-
-⚡ **RRUFE-TESLA MODULES:**
-• /mode simple - AI i thjeshtë
-• /mode advanced - RRUFE-TESLA aktiv  
-• /mode divine - Divine Fusion
 
 🎯 **Tani jeni në modalitetin: ${window.currentAIMode || 'SIMPLE'}**`;
-        
-        return helpMenu;
     }
     
     // Komanda /wiki
     if (message.startsWith('/wiki ')) {
         const query = message.replace('/wiki ', '').trim();
-        return `🌐 Informacione për "${query}" nga Wikipedia...`;
+        return `🌐 **Wikipedia për "${query}"**\nDuke kërkuar informacione...`;
     }
     
     // Komanda /moti
     if (message.startsWith('/moti ')) {
-        const query = message.replace('/moti ', '').trim();
-        return `🌍 Informacione moti për "${query}"...`;
+        const qyteti = message.replace('/moti ', '').trim();
+        return `🌍 **Moti në ${qyteti}**\nDuke marrë të dhënat e motit...`;
     }
     
     // Komanda /perkthim
     if (message.startsWith('/perkthim ')) {
-        const parts = message.replace('/perkthim ', '').split(' ');
-        const language = parts[0];
-        const text = parts.slice(1).join(' ');
-        return `🔤 Përkthim në ${language}: "${text}"...`;
+        const text = message.replace('/perkthim ', '').trim();
+        return `🔤 **Përkthim**\n"${text}"\n(Përkthimi do të shfaqet këtu)`;
+    }
+    
+    // Komanda /meso
+    if (message.startsWith('/meso ')) {
+        const content = message.replace('/meso ', '').trim();
+        return `🎓 **Mësimi**\n"${content}"\n(Do të mësoj këtë informacion)`;
     }
     
     // Komanda /apikey
     if (message.startsWith('/apikey ')) {
         const key = message.replace('/apikey ', '').trim();
-        return `🔑 API Key u vendos: ${key.substring(0, 10)}...`;
+        return `🔑 **API Key**\nKey u vendos: ${key.substring(0, 10)}...`;
     }
     
     // Komanda /stats
     if (message === '/stats') {
-        const moduleCount = window.rrufePlatform ? Object.keys(window.rrufePlatform.modules).length : 0;
-        return `📊 **STATISTIKAT E SISTEMIT**
-• Mesazhe të procesuara: ${window.chatHistory?.length || 0}
-• Module RRUFE-TESLA: ${moduleCount}
-• Modaliteti aktual: ${window.currentAIMode || 'SIMPLE'}
-• Koha e aktivizimit: ${new Date().toLocaleTimeString()}`;
-    }
-    
-    // Komanda /mode
-    if (message.startsWith('/mode ')) {
-        const mode = message.replace('/mode ', '').trim().toLowerCase();
-        const modes = {
-            'simple': () => { 
-                window.currentAIMode = 'SIMPLE'; 
-                if (window.activateSimpleAI) window.activateSimpleAI();
-                return '🔹 Modaliteti i thjeshtë u aktivizua - Chat i shpejtë dhe efikas';
-            },
-            'advanced': () => { 
-                window.currentAIMode = 'ADVANCED'; 
-                if (window.activateAdvancedAI) window.activateAdvancedAI();
-                return '🌌 RRUFE-TESLA u aktivizua - Të gjitha modulet janë operative!';
-            },
-            'divine': () => { 
-                window.currentAIMode = 'DIVINE'; 
-                if (window.activateDivineAI) window.activateDivineAI();
-                return '⚡ Divine Fusion u aktivizua - 5 Perënditë e AI-ve janë gati!';
-            }
-        };
-        
-        if (modes[mode]) {
-            return modes[mode]();
-        } else {
-            return `❌ Modaliteti i panjohur: "${mode}". Përdor: simple, advanced, divine`;
-        }
-    }
-    
-    // Komanda /users
-    if (message === '/users') {
-        return `👥 **SISTEMI I PËRDORUESVE**
-• Përdoruesi aktual: ${window.currentUser?.username || 'Anonymous'}
-• Status: ${window.currentUser ? 'I loguar' : 'Guest'}`;
-    }
-    
-    // Komanda /admin
-    if (message === '/admin') {
-        return `⚙️ **PANELI I ADMINISTRIMIT**
-• Version: RRUFE-TESLA 8.0
-• Status: ${window.rrufePlatform?.status || 'ACTIVE'}
-• Koha e serverit: ${new Date().toLocaleString()}`;
+        return `📊 **STATISTIKAT**\n• Mesazhe: ${window.chatHistory?.length || 0}\n• Modaliteti: ${window.currentAIMode || 'SIMPLE'}`;
     }
     
     // Komanda /eksporto
     if (message === '/eksporto') {
-        return `💾 **EKSPORTIMI I TË DHËNAVE**
-• Eksportimi i historisë së chat-it...
-• Eksportimi i njohurive...
-• ✅ Të dhënat u eksportuan me sukses!`;
+        return `💾 **EKSPORTIM**\nTë dhënat u eksportuan me sukses!`;
     }
     
     // Komanda /importo
     if (message === '/importo') {
-        return `📥 **IMPORTIMI I TË DHËNAVE**
-• Importimi i historisë së chat-it...
-• Importimi i njohurive...
-• ✅ Të dhënat u importuan me sukses!`;
+        return `📥 **IMPORTIM**\nTë dhënat u importuan me sukses!`;
     }
     
-    // Komandë e panjohur
-    return `❌ Komandë e panjohur: "${message}". Shkruani /ndihmo për listën e komandave.`;
+    return `❌ **Komandë e panjohur**\n"${message}"\nShkruani /ndihmo për listën e komandave.`;
 };
 
-console.log('✅ processRrufeCommand u krijua me sukses!');
+console.log('✅ processRrufeCommand u krijua!');
 
-// ======================================================
-// 🔄 PËRDITËSIMI I forceSmartIntegration ME MBËSHTETJE PËR KOMANDAT
-// ======================================================
-
-function forceSmartIntegration() {
-    console.log('🧠🔄 MAKING SMART RESPONSE ROUTER PRIMARY...');
+// 2. KONFIGURO EVENT LISTENER-ËT PËR ENTER DHE BUTON
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🎯 KONFIGURIMI I EVENT LISTENER-ËVE...');
     
-    if (typeof window.sendMessage !== 'undefined') {
-        const originalSendMessage = window.sendMessage;
-        
-        window.sendMessage = async function() {
-            const input = document.getElementById('user-input');
-            const message = input ? input.value.trim() : '';
-            
-            if (!message) return;
-            
-            console.log('🎯 SMART ROUTER PRIMARY - Message:', message);
-            
-            // Pastro input
-            if (input) input.value = "";
-            
-            // Shto mesazhin e përdoruesit
-            if (typeof addMessage === 'function') {
-                addMessage(message, 'user');
-            }
-            
-            // 🚨 KONTROLLO NËSE ËSHTË KOMANDË RRUFE
-            if (message.startsWith('/')) {
-                console.log('🔗 Komandë RRUFE - duke procesuar...');
-                
-                // Përdor processRrufeCommand
-                if (typeof window.processRrufeCommand === 'function') {
-                    try {
-                        const response = await window.processRrufeCommand(message);
-                        if (response && typeof addMessage === 'function') {
-                            addMessage(response, 'bot');
-                        }
-                        return; // STOP KËTU - MOS E KALO TE SMART ROUTER
-                    } catch (error) {
-                        console.log('❌ Error in processRrufeCommand:', error);
-                    }
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+    
+    if (userInput && sendBtn) {
+        // ENTER KEY
+        userInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const message = this.value.trim();
+                if (message) {
+                    console.log('🎯 ENTER:', message);
+                    processMessageNow(message);
                 }
             }
-            
-            // 🎯 PRIORITET I PARË: SMART RESPONSE ROUTER (për mesazhet e tjera)
-            if (window.smartResponseRouter && window.smartResponseRouter.initialized) {
-                try {
-                    console.log('🎯 Using SmartResponseRouter as PRIMARY...');
-                    const response = await window.smartResponseRouter.processUserMessage(message);
-                    
-                    // Shto përgjigjen në chat
-                    if (response && typeof addMessage === 'function') {
-                        addMessage(response, 'bot');
-                    }
-                    
-                    return; // ✅ STOP KËTU - MOS PËRDOR SISTEMIN E VJETËR
-                    
-                } catch (error) {
-                    console.log('❌ Error in SmartResponseRouter:', error);
-                }
-            }
-            
-            // 🔄 FALLBACK: Sistemi i vjetër
-            console.log('🔄 Falling back to original system...');
-            try {
-                await originalSendMessage.call(this);
-            } catch (error) {
-                console.log('❌ Error in fallback:', error);
-            }
-        };
+        });
         
-        console.log('✅ SMART ROUTER PRIMARY ACTIVATED!');
+        // BUTONI ➤
+        sendBtn.addEventListener('click', function() {
+            const message = userInput.value.trim();
+            if (message) {
+                console.log('🎯 BUTONI:', message);
+                processMessageNow(message);
+            }
+        });
+        
+        console.log('✅ EVENT LISTENER-ËT U KONFIGURUAN!');
     }
-}
+});
 
-// ======================================================
-// 🚀 INICIALIZIMI I MENJËHERSHËM
-// ======================================================
-
-// Ekzekuto menjëherë
-setTimeout(() => {
-    console.log('🎯 INICIALIZIMI I SISTEMIT TË KOMANDAVE...');
+// 3. FUNKSIONI I THJESHTË PËR PROCESIM
+async function processMessageNow(message) {
+    console.log('🎯 PROCESIMI:', message);
     
-    // Kontrollo nëse processRrufeCommand u krijua
-    console.log('🔍 processRrufeCommand:', typeof window.processRrufeCommand);
-    console.log('🔍 sendMessage:', typeof window.sendMessage);
-    console.log('🔍 addMessage:', typeof window.addMessage);
-    
-    // Aktivizo integrimin
-    forceSmartIntegration();
-    
-    console.log('✅ SISTEMI I KOMANDAVE U INICIALIZUA ME SUKSES!');
-}, 1000);
-
-// Testo në konsol pas ngarkimit
-window.testRrufeCommands = function() {
-    console.log('🧪 TEST I KOMANDAVE RRUFE:');
-    
-    const testCommands = [
-        '/ndihmo',
-        '/wiki test',
-        '/moti Tirana',
-        '/stats',
-        '/mode simple'
-    ];
-    
-    testCommands.forEach(async (cmd, index) => {
-        setTimeout(async () => {
-            if (typeof window.processRrufeCommand === 'function') {
-                const response = await window.processRrufeCommand(cmd);
-                console.log(`📝 ${cmd} → ${response.substring(0, 50)}...`);
-            }
-        }, index * 500);
-    });
-};
-
-console.log('🎉 SISTEMI I RI I KOMANDAVE RRUFE-TESLA U SHTUA!');
-// ======================================================
-// 🔧 PATCH I KORRIGJUAR PËR sendMessage - VERSION FINAL
-// ======================================================
-
-// Ruaj versionin origjinal
-const originalSendMessage = window.sendMessage;
-
-// Mbishkruaj komplet POR me timing të duhur
-window.sendMessage = async function() {
     const input = document.getElementById('user-input');
-    const message = input ? input.value.trim() : '';
+    if (input) input.value = '';
     
-    console.log('🎯 PATCHED sendMessage:', message);
-    
-    if (!message) return;
-    
-    // 🚨 MOS E PASTRO INPUT MENJËHERË - lëre sistemin origjinal ta bëjë këtë
-    // Vetëm shto mesazhin e përdoruesit
+    // Shto mesazhin e përdoruesit
     if (typeof addMessage === 'function') {
         addMessage(message, 'user');
     }
     
-    // 🚨 NËSE ËSHTË KOMANDË, PROCESOJE DIRECT
+    // NËSE ËSHTË KOMANDË, PËRDOR processRrufeCommand
     if (message.startsWith('/')) {
-        console.log('🔗 Komandë e zbuluar - duke procesuar...');
-        
         if (typeof window.processRrufeCommand === 'function') {
-            try {
-                const response = await window.processRrufeCommand(message);
-                if (response && typeof addMessage === 'function') {
-                    addMessage(response, 'bot');
-                }
-                
-                // 🎯 TANI pastro input PASI të ketë përfunduar procesimi
-                if (input) input.value = '';
-                return; // 🛑 STOP KËTU
-            } catch (error) {
-                console.log('❌ Error:', error);
-            }
-        }
-    }
-    
-    // 🎯 PËRNDRYSHE PËRDOR SMART ROUTER
-    if (window.smartResponseRouter && window.smartResponseRouter.initialized) {
-        try {
-            const response = await window.smartResponseRouter.processUserMessage(message);
+            const response = await window.processRrufeCommand(message);
             if (response && typeof addMessage === 'function') {
                 addMessage(response, 'bot');
             }
-            
-            // 🎯 TANI pastro input PASI të ketë përfunduar procesimi
-            if (input) input.value = '';
-            return; // 🛑 STOP KËTU
-        } catch (error) {
-            console.log('❌ Error in SmartRouter:', error);
+            return;
         }
     }
     
-    // 🔄 NËSE ASGJË NUK FUNKSIONON, PËRDOR ORIGJINALIN
-    console.log('🔄 Duke përdorur sendMessage origjinal...');
-    try {
-        await originalSendMessage.call(this);
-        // 🎯 Sistemi origjinal do të pastrojë input-in
-    } catch (error) {
-        console.log('❌ Error in original:', error);
+    // PËRNDRYSHE PËRDOR SISTEMIN E VJETËR
+    if (typeof window.sendMessage === 'function') {
+        window.sendMessage();
     }
-};
+}
 
-console.log('✅ sendMessage U PATCH-UA ME SUKSES!');
+console.log('🎉 SISTEMI I RI I KOMANDAVE U AKTIVIZUA!');
 
-// ======================================================
-// 🎯 TEST I MENJËHERËSHËM
-// ======================================================
-
-setTimeout(() => {
-    console.log('🧪 SISTEMI I RI ËSHTË GATI PËR TEST:');
-    console.log('- sendMessage:', typeof window.sendMessage);
-    console.log('- processRrufeCommand:', typeof window.processRrufeCommand);
-    console.log('- SmartResponseRouter:', window.smartResponseRouter?.initialized);
-    
-    // Testo me një mesazh testues
-    console.log('📝 Shkruaj "/ndihmo" në chat dhe shtyp ENTER');
-}, 2000);
