@@ -801,13 +801,6 @@ saveToLocalStorage(question, answer) {
     }
 } // ← ✅ NUK KA PRESJE KËTU!
 
-// ==================== EKSPORTIM ====================
-
-window.SmartResponseRouter = SmartResponseRouter;
-window.smartResponseRouter = new SmartResponseRouter();
-
-console.log("✅ SmartResponseRouter (Version i Korrigjuar) u ngarkua - Duke pritur inicializim manual");
-
 // ==================== TESTIM ====================
 
 window.testSmartRouter = async function(message = "Pershendetje") {
@@ -838,3 +831,24 @@ window.testSocialQuestions = async function() {
 };
 
 console.log("🎉 SmartResponseRouter është gati për përdorim!");
+
+    // ==================== FUND I SKEDËS SMART RESPONSE ROUTER ====================
+
+
+// ========================================= Krijo instancë globale ======================================
+window.SmartResponseRouter = SmartResponseRouter;
+
+// Krijo instancën
+window.smartResponseRouter = new SmartResponseRouter();
+
+console.log("✅ SmartResponseRouter (Version i Korrigjuar) u ngarkua - Duke pritur inicializim manual");
+
+// Auto-inicializim
+setTimeout(() => {
+    if (window.smartResponseRouter && !window.smartResponseRouter.initialized) {
+        console.log("🔄 Auto-inicializim i SmartResponseRouter...");
+        window.smartResponseRouter.initializeSafely().then(success => {
+            console.log(success ? "✅ Auto-inicializimi u krye" : "❌ Auto-inicializimi dështoi");
+        });
+    }
+}, 2000);
