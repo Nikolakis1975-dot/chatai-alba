@@ -115,34 +115,67 @@ class ChatSystem {
         let response;
         const trimmedMsg = message.trim().toLowerCase();
         
-        // ✅ ✅ ✅ KONTROLLO PARË NËSE ËSHTË /ndihmo
+// ======================== ✅ ✅ ✅ KONTROLLO PARË NËSE ËSHTË ndihmo ==============================
         if (trimmedMsg === '/ndihmo' || trimmedMsg === '/help') {
-            console.log("🎯 U zbulua komanda /ndihmo - duke ekzekutuar direkt");
-            response = `🎯 **RRUFE-TESLA - MENUJA KRYESORE**
+    console.log("🎯 U zbulua komanda /ndihmo - duke ekzekutuar direkt");
+    response = `🎯 **RRUFE-TESLA - KOMANDAT E DISPONUESHME**
 
-**🔧 KOMANDAT:**
-• **/ndihmo** - Shfaq këtë menü
+**🌤️  INFORMACION & MOTI:**
+• **/moti [qyteti]** - Informacion moti për qytetin
+• **/moti_detajsh [qyteti]** - Moti i detajshëm
+
+**📚 NJOHURI & WIKI:**
+• **/wiki [temë]** - Informacion nga Wikipedia
+• **/kerko [pyetje]** - Kërkim i gjërë në internet
+• **/meso [pyetje]** - Mëso diçka të re
+
+**🔧 UTILITETE:**
+• **/perkthim [tekst]** - Përkthim në gjuhë të ndryshme
+• **/eksport [format]** - Eksporto të dhëna
+• **/import [file]** - Importo të dhëna
+• **/fshi [id]** - Fshi njohuri specifike
+
+**⚙️ SISTEMI:**
 • **/stats** - Statistikat e sistemit
-• **/mode** - Ndrysho modin e punës
+• **/mode [normal|rrufe]** - Ndrysho modin
 • **/reset** - Ristejo bisedën
+• **/learn [on/off]** - Kontrollo mësimin
 
-**💡 SHEMBUJ PYTJESH:**
-• "Çfarë është AI?" - Shpjegime të detajuara
-• "Si funksionon blockchain?" - Teknologji
-• "Sa është 15 + 25?" - Llogaritje
-• "Përshëndetje" - Përshëndetje
+**💬 KOMANDAT E THJESHTA:**
+• **Përshëndetje** - Fillo bisedën
+• **Si jeni?** - Kontrollo gjendjen
+• **Faleminderit** - Përfundo mirë
 
-**🧠 Sistemi mëson automatikisht** nga çdo bisedë!`;
-        }
-        // ✅ KONTROLLO NËSE ËSHTË /stats
-        else if (trimmedMsg === '/stats' || trimmedMsg === '/statistikat') {
-            console.log("📊 U zbulua komanda /stats - duke ekzekutuar direkt");
-            response = `📊 **STATISTIKAT E RRUFE-TESLA:**
+**🧠 RRUFE-TESLA VEÇORITË:**
+• Mëson automatikisht nga çdo pyetje
+• Kurse para duke ruajtur përgjigjet
+• Përdor Gemini për pyetje komplekse
+• Database SQLite për ruajtje të përhershme
+
+**💡 SHEMBUJ:**
+• /moti Tirana
+• /wiki Albert Einstein
+• /perkthim "Hello world"
+• /stats
+
+🚀 **Shkruaj një komandë për të filluar!**`;
+}
+     
+// ========================✅ KONTROLLO NËSE ËSHTË ===================================
+     
+else if (trimmedMsg === '/stats' || trimmedMsg === '/statistikat') {
+    console.log("📊 U zbulua komanda /stats - duke ekzekutuar direkt");
+    response = `📊 **STATISTIKAT E RRUFE-TESLA**
+
 • Sistemi: ${this.initialized ? '🟢 AKTIV' : '🔴 JOAKTIV'}
-• Version: ${this.version}
-• Gjuhë: Shqip 🇦🇱`;
-        }
-        // ✅ KONTROLLO NËSE ËSHTË PËRSHËNDETJE
+• Version: ${this.version} 
+• Gjuhë: Shqip 🇦🇱
+• Koha: ${new Date().toLocaleTimeString()}
+
+🧠 **Sistemi po funksionon normal!**`;
+}
+
+// ================================  ✅ KONTROLLO NËSE ËSHTË PËRSHËNDETJE ==========================
         else if (message.toLowerCase().includes('përshëndetje') || 
                  message.toLowerCase().includes('pershendetje') ||
                  message.toLowerCase().includes('hello') || 
