@@ -148,38 +148,37 @@ class SmartResponseRouter {
             return analysis;
         }
 
+        // 🎯 PYETJE KOMPLEKSE ME "SHPJEGO", "ÇFARË ËSHTË", "SI FUNKSIONON"
+        if (lowerMsg.includes('shpjego') || lowerMsg.includes('shpjegomë') || 
+            lowerMsg.includes('shpjegoni') || lowerMsg.includes('çfarë është') ||
+            lowerMsg.includes('si funksionon') || lowerMsg.includes('na tregoni') ||
+            lowerMsg.includes('mëso më shumë') || lowerMsg.includes('detaje') ||
+            lowerMsg.includes('teknologji') || lowerMsg.includes('teknologji') ||
+            lowerMsg.includes('shkenc') || lowerMsg.includes('inteligjenc') ||
+            lowerMsg.includes('blockchain') || lowerMsg.includes('bitcoin') ||
+            lowerMsg.includes('ai ') || lowerMsg.includes(' artificial') ||
+            lowerMsg.includes('machine learning') || lowerMsg.includes('deep learning')) {
+            
+            analysis.type = 'complex_question';
+            analysis.containsQuestion = true;
+            analysis.requiresGemini = true;
+            analysis.category = 'technology';
+            analysis.complexity = 'high';
+            console.log("💭 U zbulua pyetje komplekse për Gemini");
+            return analysis;
+        }
 
-     // 🎯 PYETJE KOMPLEKSE ME "SHPJEGO", "ÇFARË ËSHTË", "SI FUNKSIONON"
- if (lowerMsg.includes('shpjego') || lowerMsg.includes('shpjegomë') || 
-    lowerMsg.includes('shpjegoni') || lowerMsg.includes('çfarë është') ||
-    lowerMsg.includes('si funksionon') || lowerMsg.includes('na tregoni') ||
-    lowerMsg.includes('mëso më shumë') || lowerMsg.includes('detaje') ||
-    lowerMsg.includes('teknologji') || lowerMsg.includes('teknologji') ||
-    lowerMsg.includes('shkenc') || lowerMsg.includes('inteligjenc') ||
-    lowerMsg.includes('blockchain') || lowerMsg.includes('bitcoin') ||
-    lowerMsg.includes('ai ') || lowerMsg.includes(' artificial') ||
-    lowerMsg.includes('machine learning') || lowerMsg.includes('deep learning')) {
-    
-    analysis.type = 'complex_question';
-    analysis.containsQuestion = true;
-    analysis.requiresGemini = true;
-    analysis.category = 'technology';
-    analysis.complexity = 'high';
-    console.log("💭 U zbulua pyetje komplekse për Gemini");
-    return analysis;
-}
-
-// 🎯 PYETJE TË GJATA (më shumë se 25 karaktere)
-if (message.length > 25 && 
-    (lowerMsg.includes('?') || lowerMsg.includes('çfarë') || lowerMsg.includes('si'))) {
-    analysis.type = 'complex_question';
-    analysis.containsQuestion = true;
-    analysis.requiresGemini = true;
-    analysis.category = 'general';
-    analysis.complexity = 'medium';
-    console.log("💭 Pyetje e gjatë - duke e dërguar te Gemini");
-    return analysis;
-}
+        // 🎯 PYETJE TË GJATA (më shumë se 25 karaktere)
+        if (message.length > 25 && 
+            (lowerMsg.includes('?') || lowerMsg.includes('çfarë') || lowerMsg.includes('si'))) {
+            analysis.type = 'complex_question';
+            analysis.containsQuestion = true;
+            analysis.requiresGemini = true;
+            analysis.category = 'general';
+            analysis.complexity = 'medium';
+            console.log("💭 Pyetje e gjatë - duke e dërguar te Gemini");
+            return analysis;
+        }
 
         // 1. KONTROLLO PËR KOMANDA RRUFE-TESLA
         if (this.isRrufeCommand(lowerMsg)) {
@@ -339,76 +338,127 @@ if (message.length > 25 &&
     }
 
     // ==================== SISTEMI I ROUTINGUT ====================
-determineBestRoute(analysis) {
-    console.log("🛣️ Duke përcaktuar rrugën më të mirë për:", analysis.type);
-    
-    // ✅ KORRIGJIMI: Përdor analysis.type direkt
-    switch(analysis.type) {
-        case 'complex_question':
-            console.log("🎯 Pyetje komplekse - duke zgjedhur GEMINI");
-            return 'GEMINI_COMPLEX';
-            
-        case 'simple_question':
-            console.log("❓ Pyetje e thjeshtë - duke zgjedhur LOCAL_SMART");
-            return 'LOCAL_SMART';
-            
-        case 'math':
-            console.log("🧮 Matematikë - duke zgjedhur LOCAL_MATH");
-            return 'LOCAL_MATH';
-            
-        case 'greeting':
-            console.log("👋 Përshëndetje - duke zgjedhur LOCAL_GREETING");
-            return 'LOCAL_GREETING';
-            
-        case 'command':
-            console.log("🎯 Komandë RRUFE - duke zgjedhur RRUFE_COMMAND");
-            return 'RRUFE_COMMAND';
-            
-        case 'conversation':
-        default:
-            console.log("🔀 Bisedë - duke zgjedhur FALLBACK");
-            return 'FALLBACK';
+
+    determineBestRoute(message, analysis) {
+        console.log("🛣️ Duke përcaktuar rrugën më të mirë për:", analysis.type);
+
+        // 🚨 KORRIGJIM KRITIK: Për /ndihmo, përdor FALLBACK në vend të RRUFE_COMMAND
+        if (analysis.isCommand && (message === '/ndihmo' || message.startsWith('/ndihmo '))) {
+            console.log("🔗 /ndihmo do të trajtohet nga sistemi ekzistues (FALLBACK)");
+            return {
+                route: this.config.routes.FALLBACK,
+                priority: 'high',
+                reason: 'Komandë /ndihmo - trajtuar nga sistemi ekzistues',
+                timeout: 5000
+            };
+        }
+
+        // 1. KOMANDA RRUFE-TESLA - Gjithmonë prioritet i lartë
+        if (analysis.isCommand) {
+            console.log("🎯 Rrugë e zgjedhur: RRUFE_COMMAND");
+            return {
+                route: this.config.routes.RRUFE,
+                priority: 'high',
+                reason: 'Komandë RRUFE-TESLA',
+                timeout: 5000
+            };
+        }
+
+        // 2. MATEMATIKË - Procesim lokal i shpejtë
+        if (analysis.isMath) {
+            console.log("🧮 Rrugë e zgjedhur: LOCAL_MATH");
+            return {
+                route: this.config.routes.LOCAL,
+                priority: 'high', 
+                reason: 'Llogaritje matematikore',
+                timeout: 3000
+            };
+        }
+
+        // 3. PËRSHËNDETJE - Përgjigje lokale e shpejtë
+        if (analysis.isGreeting) {
+            console.log("👋 Rrugë e zgjedhur: LOCAL_GREETING");
+            return {
+                route: this.config.routes.LOCAL,
+                priority: 'high',
+                reason: 'Përshëndetje',
+                timeout: 2000
+            };
+        }
+
+        // 4. PYRJE KOMPLEKSE - Gemini për përgjigje të cilësisë së lartë
+        if (analysis.requiresGemini && this.config.quality.enableGemini) {
+            console.log("💭 Rrugë e zgjedhur: GEMINI_COMPLEX");
+            return {
+                route: this.config.routes.GEMINI,
+                priority: 'high',
+                reason: 'Pyetje komplekse',
+                timeout: 15000
+            };
+        }
+
+        // 5. PYRJE TË THJESHTA - Procesim lokal inteligjent
+        if (analysis.containsQuestion) {
+            console.log("❓ Rrugë e zgjedhur: LOCAL_SMART");
+            return {
+                route: this.config.routes.LOCAL,
+                priority: 'medium',
+                reason: 'Pyetje e thjeshtë',
+                timeout: 5000
+            };
+        }
+
+        // 6. FALLBACK - Rrugë default
+        console.log("🔀 Rrugë e zgjedhur: FALLBACK");
+        return {
+            route: this.config.routes.FALLBACK,
+            priority: 'low',
+            reason: 'Mesazh bisedor',
+            timeout: 4000
+        };
     }
-}
 
     // ==================== EKZEKUTIMI I ROUTINGUT ====================
 
-   async executeRoute(routeType, message) {
-    console.log("🔄 Duke ekzekutuar rrugën:", routeType);
-    
-    // ✅ KORRIGJIMI: Përdor string direkt në switch
-    switch(routeType) {
-        case 'GEMINI_COMPLEX':
-            console.log("🧠 Duke dërguar te Gemini për pyetje komplekse...");
-            return await this.processWithGemini(message);
+    async executeRoute(routeConfig, message) {
+        console.log(`🔄 Duke ekzekutuar rrugën: ${routeConfig.route}`);
+        
+        try {
+            let response;
             
-        case 'LOCAL_SMART':
-            console.log("💡 Duke procesuar lokal...");
-            return await this.processLocally(message);
+            switch (routeConfig.route) {
+                case this.config.routes.RRUFE:
+                    response = await this.processRrufeCommand(message);
+                    break;
+                    
+                case this.config.routes.LOCAL:
+                    response = await this.processLocally(message);
+                    break;
+                    
+                case this.config.routes.GEMINI:
+                    response = await this.processWithGemini(message);
+                    break;
+                    
+                case this.config.routes.FALLBACK:
+                default:
+                    response = await this.processFallback(message);
+                    break;
+            }
             
-        case 'LOCAL_MATH':
-            console.log("🧮 Duke zgjidhur matematikën...");
-            return await this.solveMath(message);
+            console.log(`✅ Rrugë ${routeConfig.route} u ekzekutua me sukses`);
+            return response;
             
-        case 'LOCAL_GREETING':
-            console.log("👋 Duke përgjigjur përshëndetjes...");
-            return await this.processLocally(message);
-            
-        case 'RRUFE_COMMAND':
-            console.log("🎯 Duke ekzekutuar komandën RRUFE...");
-            return await this.processRrufeCommand(message);
-            
-        case 'FALLBACK':
-        default:
-            console.log("🔀 Duke përdorur fallback...");
+        } catch (error) {
+            console.error(`❌ Gabim në rrugën ${routeConfig.route}:`, error);
             return await this.processFallback(message);
+        }
     }
-}
 
     async processRrufeCommand(message) {
         console.log("🎯 Duke procesuar komandë RRUFE-TESLA:", message);
         
         try {
+            // 🛡️ PROVO SISTEMIN E VJETËR RRUFE-TESLA PARË - ME KONTROLL
             if (typeof window.processRrufeCommand === 'function') {
                 console.log("🔗 Duke përdorur sistemin ekzistues RRUFE-TESLA...");
                 const response = await window.processRrufeCommand(message);
@@ -417,6 +467,7 @@ determineBestRoute(analysis) {
                 }
             }
             
+            // 🚨 KORRIGJIM: FSHI PJESËN E /ndihmo - lëre sistemin ekzistues ta trajtojë
             if (message.startsWith('/wiki ')) {
                 const query = message.replace('/wiki ', '').trim();
                 return `🌐 Informacione për "${query}" nga Wikipedia...`;
@@ -427,10 +478,7 @@ determineBestRoute(analysis) {
                 return `🌍 Informacione moti për "${query}"...`;
             }
             
-            if (message === '/ndihmo') {
-                return `👑 **SISTEMI I KOMANDAVE - RRUFE-TESLA** 👑\n\n📋 KOMANDAT BAZE:\n• /ndihmo - Shfaq këtë listë\n• /wiki - Kërko Wikipedia\n• /moti - Informacion moti\n• /perkthim - Përkthim tekst\n• /meso - Mëso diçka të re\n\n🔧 **Sistemi i ri SmartRouter është aktiv!**`;
-            }
-            
+            // 🚨 KORRIGJIM: NUK KA MË /ndihmo KËTU - do të trajtohet nga sistemi ekzistues
             return `🔧 [RRUFE-TESLA] Komanda "${message}" po ekzekutohet nga sistemi i ri inteligjent...`;
             
         } catch (error) {
@@ -567,67 +615,94 @@ determineBestRoute(analysis) {
         }
     }
 
-     // =================================== callGeminiAPI =================================
-
     async callGeminiAPI(message) {
-    console.log("📡 [GEMINI_API] Duke thirrur Gemini API të vërtetë...");
-    
-    try {
-        // 🎯 PROVO RUGËT E NDRYSHME TË GEMINI
-        const routesToTry = [
-            '/api/gemini/simple-chat',  // Rruga e re pa auth
-            '/api/gemini/ask',          // Rruga ekzistuese me auth
-            '/api/gemini/public-chat'   // Rruga alternative
-        ];
+        console.log("📡 [GEMINI_API] Duke thirrur Gemini API të vërtetë...");
         
-        for (const route of routesToTry) {
-            try {
-                console.log(`🔗 Duke provuar rrugën: ${route}`);
-                
-                const response = await fetch(route, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        message: message,
-                        userId: this.getCurrentUserId() || 1
-                    })
-                });
-
-                console.log(`📊 Statusi për ${route}:`, response.status);
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log("📝 Përgjigja nga serveri:", data);
+        try {
+            // 🎯 PROVO RUGËT E NDRYSHME TË GEMINI
+            const routesToTry = [
+                '/api/gemini/simple-chat',  // Rruga e re pa auth
+                '/api/gemini/ask',          // Rruga ekzistuese me auth
+                '/api/gemini/public-chat'   // Rruga alternative
+            ];
+            
+            for (const route of routesToTry) {
+                try {
+                    console.log(`🔗 Duke provuar rrugën: ${route}`);
                     
-                    if (data.success && data.response) {
-                        console.log('✅ Gemini API funksionoi në:', route);
-                        console.log('💬 Përgjigja e vërtetë:', data.response.substring(0, 100));
-                        return data.response;
-                    } else if (data.error) {
-                        console.log('❌ Gabim nga serveri:', data.error);
+                    const response = await fetch(route, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            message: message,
+                            userId: this.getCurrentUserId() || 1
+                        })
+                    });
+
+                    console.log(`📊 Statusi për ${route}:`, response.status);
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        console.log("📝 Përgjigja nga serveri:", data);
+                        
+                        if (data.success && data.response) {
+                            console.log('✅ Gemini API funksionoi në:', route);
+                            console.log('💬 Përgjigja e vërtetë:', data.response.substring(0, 100));
+                            return data.response;
+                        } else if (data.error) {
+                            console.log('❌ Gabim nga serveri:', data.error);
+                            continue;
+                        }
+                    } else {
+                        console.log(`⚠️ ${route} ktheu status: ${response.status}`);
                         continue;
                     }
-                } else {
-                    console.log(`⚠️ ${route} ktheu status: ${response.status}`);
+                } catch (error) {
+                    console.log(`❌ ${route} dështoi:`, error.message);
                     continue;
                 }
-            } catch (error) {
-                console.log(`❌ ${route} dështoi:`, error.message);
-                continue;
             }
+            
+            // Nëse asnjë rrugë nuk funksionoi
+            throw new Error('❌ Të gjitha rrugët e Gemini API dështuan');
+            
+        } catch (error) {
+            console.error("❌ Gabim kritik në callGeminiAPI:", error);
+            throw error;
         }
-        
-        // Nëse asnjë rrugë nuk funksionoi
-        throw new Error('❌ Të gjitha rrugët e Gemini API dështuan');
-        
-    } catch (error) {
-        console.error("❌ Gabim kritik në callGeminiAPI:", error);
-        throw error;
     }
-}
+
+    getCurrentUserId() {
+        try {
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                const user = JSON.parse(savedUser);
+                return user.username || user.id || 'anonymous';
+            }
+        } catch (e) {
+            console.error('Gabim në marrjen e user ID:', e);
+        }
+        return 'anonymous';
+    }
+
+    isGenericResponse(response) {
+        const genericPatterns = [
+            'nuk e kuptova',
+            'mund të përsërisni',
+            'nuk kam përgjigje',
+            'nuk jam i sigurt',
+            'më falni',
+            'do të doja të ndihmoja',
+            'nuk mund të jap një përgjigje'
+        ];
+        
+        return genericPatterns.some(pattern => 
+            response.toLowerCase().includes(pattern)
+        );
+    }
 
     // ==================== API PUBLIKE ====================
 
