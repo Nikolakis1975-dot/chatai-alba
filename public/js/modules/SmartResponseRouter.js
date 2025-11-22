@@ -631,7 +631,8 @@ determineBestRoute(analysis) {
 
     // ==================== API PUBLIKE ====================
 
-    async processUserMessage(message) {
+    // ✅ VERSIONI I KORIGJUAR - FSHI PRESJEN E FUNDIT
+async processUserMessage(message) {
     if (!this.initialized) {
         console.log("⏳ SmartResponseRouter nuk është inicializuar, duke u inicializuar...");
         const initialized = await this.initializeSafely();
@@ -647,7 +648,7 @@ determineBestRoute(analysis) {
         const routeConfig = this.determineBestRoute(message, analysis);
         const response = await this.executeRoute(routeConfig, message);
         
-        // ✅ ✅ ✅ RREGULLIMI I RI: RUAJ PËRGJIGJEN NGA GEMINI
+        // ✅ RREGULLIMI I RI: RUAJ PËRGJIGJEN NGA GEMINI
         await this.saveGeminiResponseIfNeeded(message, response, routeConfig);
         
         console.log("✅ Përgjigja u gjenerua me sukses");
@@ -657,9 +658,9 @@ determineBestRoute(analysis) {
         console.error("❌ Gabim në procesimin e mesazhit:", error);
         return "Më falni, pati një gabim në sistem. Provo përsëri.";
     }
-},
+} // ← ✅ NUK KA PRESJE KËTU!
 
-// ✅ ✅ ✅ FUNKSION I RI: Ruaj përgjigjet nga Gemini
+// ✅ FUNKSIONET E REJA PA PRESJE TË FUNDIT
 async saveGeminiResponseIfNeeded(question, answer, routeConfig) {
     try {
         // Kontrollo nëse është përgjigje e mirë për tu ruajtur
@@ -673,7 +674,7 @@ async saveGeminiResponseIfNeeded(question, answer, routeConfig) {
                 await window.chatSystem.learnFromInteraction(question, answer, {
                     source: 'smart_router',
                     route: routeConfig.route,
-                    complexity: analysis?.complexity || 'medium',
+                    complexity: 'medium',
                     category: this.detectCategory(question)
                 });
                 console.log("✅ U ruajt në chatSystem");
@@ -700,9 +701,8 @@ async saveGeminiResponseIfNeeded(question, answer, routeConfig) {
     } catch (error) {
         console.error("❌ Gabim në ruajtjen e përgjigjes:", error);
     }
-},
+} // ← ✅ NUK KA PRESJE KËTU!
 
-// ✅ FUNKSION I RI: Vendos nëse duhet të ruajë përgjigjen
 shouldSaveResponse(question, answer, routeConfig) {
     // Kontrollo nëse përgjigja ka përmbajtje
     if (!answer || answer.length < 50) {
@@ -730,15 +730,14 @@ shouldSaveResponse(question, answer, routeConfig) {
     // Kontrollo nëse vjen nga Gemini ose rrugë komplekse
     const isFromGemini = routeConfig.route === this.config.routes.GEMINI ||
                          routeConfig.route.includes('GEMINI') ||
-                         routeConfig.reason?.includes('komplekse');
+                         (routeConfig.reason && routeConfig.reason.includes('komplekse'));
     
     // Kontrollo nëse pyetja është e përsëritshme
     const isRepeatableQuestion = this.isRepeatableQuestion(question);
     
     return isFromGemini && isRepeatableQuestion && !isGeneric;
-},
+} // ← ✅ NUK KA PRESJE KËTU!
 
-// ✅ FUNKSION I RI: Kontrollo nëse pyetja është e përsëritshme
 isRepeatableQuestion(question) {
     const lowerQuestion = question.toLowerCase();
     
@@ -757,18 +756,16 @@ isRepeatableQuestion(question) {
     return repeatablePatterns.some(pattern => 
         lowerQuestion.includes(pattern)
     );
-},
+} // ← ✅ NUK KA PRESJE KËTU!
 
-// ✅ FUNKSION I RI: Gjenero çelës unik për njohuri
 generateKnowledgeKey(question) {
     return question
         .toLowerCase()
         .substring(0, 25)
         .replace(/[^\w\s]/g, '')
         .replace(/\s+/g, '_') + '_' + Math.random().toString(36).substr(2, 5);
-},
+} // ← ✅ NUK KA PRESJE KËTU!
 
-// ✅ FUNKSION I RI: Zbuloni kategorinë
 detectCategory(question) {
     const lowerQ = question.toLowerCase();
     if (lowerQ.includes('ai') || lowerQ.includes('teknologji') || lowerQ.includes('programim') || lowerQ.includes('kompjuter')) {
@@ -784,9 +781,8 @@ detectCategory(question) {
     } else {
         return 'general';
     }
-},
+} // ← ✅ NUK KA PRESJE KËTU!
 
-// ✅ FUNKSION I RI: Ruaj në localStorage si fallback
 saveToLocalStorage(question, answer) {
     try {
         const key = 'rrufe_gemini_' + this.generateKnowledgeKey(question);
@@ -803,7 +799,7 @@ saveToLocalStorage(question, answer) {
         console.error("❌ Gabim në localStorage:", e);
         return false;
     }
-}
+} // ← ✅ NUK KA PRESJE KËTU!
 
 // ==================== EKSPORTIM ====================
 
