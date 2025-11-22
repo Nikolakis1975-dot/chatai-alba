@@ -18,25 +18,27 @@ class ChatSystem {
     }
 
     async initialize() {
-        console.log("🔄 Duke inicializuar sistemin e ri të chat-it...");
+    console.log("🔄 Duke inicializuar sistemin e ri të chat-it...");
+    
+    try {
+        // Prit deri të jenë të gatshëm të gjitha modulet
+        await this.waitForModules();
         
-        try {
-            // Prit deri të jenë të gatshëm të gjitha modulet
-            await this.waitForModules();
-            
-            // Konfiguro event listeners
-            this.setupEventListeners();
-            
-            // Krijo chat container nëse nuk ekziston
-            this.ensureChatContainer();
-            
-            this.initialized = true;
-            console.log("✅ ChatSystem u inicializua me sukses!");
-            
-        } catch (error) {
-            console.error("❌ Gabim në inicializimin e ChatSystem:", error);
-        }
+        // Konfiguro event listeners
+        this.setupEventListeners();
+        
+        // Krijo chat container nëse nuk ekziston
+        this.ensureChatContainer();
+        
+        this.initialized = true;
+        console.log("✅ ChatSystem u inicializua me sukses!");
+        
+    } catch (error) {
+        console.error("❌ Gabim në inicializimin e ChatSystem:", error);
+        // 🔄 PROVO RITRY
+        setTimeout(() => this.initialize(), 3000);
     }
+}
 
     async waitForModules() {
         return new Promise((resolve) => {
@@ -98,56 +100,74 @@ class ChatSystem {
     }
 
     async handleUserMessage(message) {
-        if (!message || message.trim() === '') {
+    if (!message || message.trim() === '') {
+        console.log("❌ Mesazhi është bosh");
+        return;
+    }
+    
+    console.log(`💬 Duke procesuar mesazhin: "${message}"`);
+    
+    // ✅ KONTIROLLO NËSE JEMI INITIALIZUAR
+    if (!this.initialized) {
+        console.log("🔄 ChatSystem nuk është inicializuar, duke u përpjekur...");
+        await this.initialize();
+        if (!this.initialized) {
+            this.addMessageToChat("Sistemi po inicializohet, provoni përsëri pas 2 sekondash.", 'bot');
             return;
         }
+    }
+    
+    // Shto mesazhin e përdoruesit në chat
+    this.addMessageToChat(message, 'user');
+    
+    // Shfaq "po mendon..." nëse ekziston
+    this.showThinkingIndicator();
+    
+    try {
+        let response;
         
-        console.log(`💬 Duke procesuar mesazhin: "${message}"`);
-        
-        // Shto mesazhin e përdoruesit në chat
-        this.addMessageToChat(message, 'user');
-        
-        // Shfaq "po mendon..." nëse ekziston
-        this.showThinkingIndicator();
-        
-        try {
-            let response;
+        // 🎯 PRIORITET I PARË: SMART RESPONSE ROUTER
+        if (this.smartRouterEnabled && window.smartResponseRouter && window.smartResponseRouter.initialized) {
+            console.log("🎯 Duke përdorur SmartResponseRouter...");
+            response = await window.smartResponseRouter.processUserMessage(message);
             
-            // 🎯 PRIORITET I PARË: SMART RESPONSE ROUTER
-            if (this.smartRouterEnabled && window.smartResponseRouter) {
-                console.log("🎯 Duke përdorur SmartResponseRouter...");
-                response = await window.smartResponseRouter.processUserMessage(message);
-                
-                // Nëse SmartRouter dha përgjigje të mirë
-                if (response && !this.isGenericResponse(response)) {
-                    console.log("✅ SmartResponseRouter dha përgjigje të mirë");
-                } else {
-                    console.log("🔄 SmartResponseRouter dha përgjigje gjenerike, duke provuar serverin...");
-                    response = await this.sendToServer(message);
-                }
+            // Nëse SmartRouter dha përgjigje të mirë
+            if (response && !this.isGenericResponse(response)) {
+                console.log("✅ SmartResponseRouter dha përgjigje të mirë");
             } else {
-                // 🔄 FALLBACK: Dërgo te serveri
+                console.log("🔄 SmartResponseRouter dha përgjigje gjenerike, duke provuar serverin...");
                 response = await this.sendToServer(message);
             }
-            
-            // Fshi "po mendon..."
-            this.hideThinkingIndicator();
-            
+        } else {
+            // 🔄 FALLBACK: Dërgo te serveri
+            console.log("🔄 Duke përdorur fallback te serveri...");
+            response = await this.sendToServer(message);
+        }
+        
+        // Fshi "po mendon..."
+        this.hideThinkingIndicator();
+        
+        // ✅ KONTIROLLO NËSE KA PËRGJIGJE
+        if (response && response.trim() !== '') {
             // Shto përgjigjen në chat
             this.addMessageToChat(response, 'bot');
             
             // 🧠 MËSO NGA INTERAKSIONI
             await this.learnFromInteraction(message, response);
-            
-        } catch (error) {
-            console.error("❌ Gabim në procesimin e mesazhit:", error);
-            
-            // Fshi "po mendon..."
-            this.hideThinkingIndicator();
-            
-            this.addMessageToChat("Më falni, pati një gabim në sistem. Provo përsëri.", 'bot');
+        } else {
+            console.error("❌ Përgjigja është bosh");
+            this.addMessageToChat("Më falni, nuk mora asnjë përgjigje nga sistemi. Provo përsëri.", 'bot');
         }
+        
+    } catch (error) {
+        console.error("❌ Gabim në procesimin e mesazhit:", error);
+        
+        // Fshi "po mendon..."
+        this.hideThinkingIndicator();
+        
+        this.addMessageToChat("Më falni, pati një gabim në sistem. Provo përsëri.", 'bot');
     }
+}
 
     async sendToServer(message) {
         try {
