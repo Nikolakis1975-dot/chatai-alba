@@ -61,43 +61,54 @@ class ChatSystem {
         });
     }
 
+   // ================================ setupEventListeners =============================
+
     setupEventListeners() {
-        console.log("🎧 Duke konfiguruar event listeners...");
+    console.log("🎧 Duke konfiguruar event listeners...");
+    
+    // Gjej elementët e chat-it
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+    
+    if (userInput && sendBtn) {
+        console.log("✅ Elementët u gjetën, duke konfiguruar listeners...");
         
-        // Gjej elementët e chat-it
-        const userInput = document.getElementById('user-input');
-        const sendBtn = document.getElementById('send-btn');
+        // Event për butonin Send
+        sendBtn.addEventListener('click', () => {
+            console.log("🖱️ Butoni u klikua");
+            const message = userInput.value.trim();
+            if (message) {
+                this.handleUserMessage(message);
+                userInput.value = '';
+                userInput.focus();
+            }
+        });
         
-        if (userInput && sendBtn) {
-            // Event për butonin Send
-            sendBtn.addEventListener('click', () => {
+        // Event për Enter key - VERSIONI I RI I FORTUAR
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // ✅ PARANDALO REFRESH-IN E FAQES
+                console.log("🎹 Enter u shtyp");
                 const message = userInput.value.trim();
                 if (message) {
                     this.handleUserMessage(message);
                     userInput.value = '';
                     userInput.focus();
                 }
-            });
-            
-            // Event për Enter key - VERSIONI I RI I KORIGJUAR
-            userInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault(); // ✅ PARANDALO REFRESH-IN E FAQES
-                    const message = userInput.value.trim();
-                    if (message) {
-                        this.handleUserMessage(message);
-                        userInput.value = '';
-                        userInput.focus();
-                    }
-                }
-            });
-            
-            console.log("✅ Event listeners u konfiguruan");
-        } else {
-            console.log("⏳ Elementët e chat-it nuk janë gati ende");
-            setTimeout(() => this.setupEventListeners(), 2000);
-        }
+            }
+        });
+        
+        console.log("✅ Event listeners u konfiguruan me sukses!");
+    } else {
+        console.log("❌ Elementët e chat-it nuk u gjetën:", {
+            userInput: userInput ? "✅ EKZISTON" : "❌ NUK EKZISTON",
+            sendBtn: sendBtn ? "✅ EKZISTON" : "❌ NUK EKZISTON"
+        });
+        
+        // 🔄 PROVO PËRSËRI PAS 1 SEKONDË
+        setTimeout(() => this.setupEventListeners(), 1000);
     }
+}
 
     async handleUserMessage(message) {
     if (!message || message.trim() === '') {
