@@ -1,5 +1,26 @@
+// ✅ KONTROLLO NËSE SISTEMI ËSHTË STABIL PARA SE TË NDRYSHOSH sendMessage
+function safeSendMessageOverride() {
+    // Kontrollo nëse chat-i po funksionon normalisht
+    if (!window.chatSystem || !window.chatSystem.initialized) {
+        console.log('❌ ChatSystem nuk është gati - duke anuluar mbishkrimin');
+        return;
+    }
+    
+    // Kontrollo nëse komandat po funksionojnë
+    if (typeof window.sendMessage === 'undefined') {
+        console.log('❌ sendMessage nuk ekziston - duke anuluar');
+        return;
+    }
+    
+    console.log('✅ Sistemi është stabil - duke vazhduar me integrimin');
+    // ... vetëm atëherë ekzekuto kodin e mbishkrimit
+}
+
+// Në vend që të ekzekutosh direkt, kontrollo parë
+setTimeout(safeSendMessageOverride, 3000);
+
 // ======================================================
-// 🚀 RRUFE-TESLA 8.0 - MAIN PLATFORM LOADER
+// 🚀 RRUFE-TESLA 10.5 - MAIN PLATFORM LOADER
 // ======================================================
 
 console.log('🚀 RRUFE-TESLA 8.0 Platform po ngarkohet...');
