@@ -777,28 +777,6 @@ if (originalLogin) {
     };
 }
 
-// =========================== NË FUND TË main.js - PËRDOR sendMessage TË RI ================================
-
-// Butoni ➤ - Përdor sendMessage të ri me SmartResponseRouter
-document.addEventListener('DOMContentLoaded', function() {
-    const sendBtn = document.getElementById('send-btn');
-    if (sendBtn) {
-        sendBtn.addEventListener('click', sendMessage);
-        console.log('✅ Send button configured with SmartResponseRouter');
-    }
-    
-    // Enter në tastierë
-    const userInput = document.getElementById('user-input');
-    if (userInput) {
-        userInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
-        });
-        console.log('✅ Enter key configured with SmartResponseRouter');
-    }
-});
-
 // ======================================================
 // 🚀 SISTEMI I RI I KOMANDAVE - VERSION I THJESHTË & FUNKSIONAL
 // ======================================================
