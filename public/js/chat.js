@@ -97,57 +97,95 @@ class ChatSystem {
         }
     }
 
-    async handleUserMessage(message) {
-        if (!message || message.trim() === '') {
-            return;
+    
+   async handleUserMessage(message) {
+    if (!message || message.trim() === '') {
+        return;
+    }
+    
+    console.log(`💬 Duke procesuar mesazhin: "${message}"`);
+    
+    // Shto mesazhin e përdoruesit në chat
+    this.addMessageToChat(message, 'user');
+    
+    // Shfaq "po mendon..." nëse ekziston
+    this.showThinkingIndicator();
+    
+    try {
+        let response;
+        const trimmedMsg = message.trim().toLowerCase();
+        
+        // ✅ ✅ ✅ KONTROLLO PARË NËSE ËSHTË /ndihmo
+        if (trimmedMsg === '/ndihmo' || trimmedMsg === '/help') {
+            console.log("🎯 U zbulua komanda /ndihmo - duke ekzekutuar direkt");
+            response = `🎯 **RRUFE-TESLA - MENUJA KRYESORE**
+
+**🔧 KOMANDAT:**
+• **/ndihmo** - Shfaq këtë menü
+• **/stats** - Statistikat e sistemit
+• **/mode** - Ndrysho modin e punës
+• **/reset** - Ristejo bisedën
+
+**💡 SHEMBUJ PYTJESH:**
+• "Çfarë është AI?" - Shpjegime të detajuara
+• "Si funksionon blockchain?" - Teknologji
+• "Sa është 15 + 25?" - Llogaritje
+• "Përshëndetje" - Përshëndetje
+
+**🧠 Sistemi mëson automatikisht** nga çdo bisedë!`;
         }
-        
-        console.log(`💬 Duke procesuar mesazhin: "${message}"`);
-        
-        // Shto mesazhin e përdoruesit në chat
-        this.addMessageToChat(message, 'user');
-        
-        // Shfaq "po mendon..." nëse ekziston
-        this.showThinkingIndicator();
-        
-        try {
-            let response;
+        // ✅ KONTROLLO NËSE ËSHTË /stats
+        else if (trimmedMsg === '/stats' || trimmedMsg === '/statistikat') {
+            console.log("📊 U zbulua komanda /stats - duke ekzekutuar direkt");
+            response = `📊 **STATISTIKAT E RRUFE-TESLA:**
+• Sistemi: ${this.initialized ? '🟢 AKTIV' : '🔴 JOAKTIV'}
+• Version: ${this.version}
+• Gjuhë: Shqip 🇦🇱`;
+        }
+        // ✅ KONTROLLO NËSE ËSHTË PËRSHËNDETJE
+        else if (message.toLowerCase().includes('përshëndetje') || 
+                 message.toLowerCase().includes('pershendetje') ||
+                 message.toLowerCase().includes('hello') || 
+                 message.toLowerCase().includes('hi')) {
+            console.log("👋 U zbulua përshëndetje - duke ekzekutuar direkt");
+            const greetings = [
+                "Përshëndetje! 😊 Si mund t'ju ndihmoj sot?",
+                "Hello! 👋 Mirë se ju gjetëm!",
+                "Mirëdita! ☀️ Çfarë mund të bëj për ju?"
+            ];
+            response = greetings[Math.floor(Math.random() * greetings.length)];
+        }
+        // 🔄 TJERA - DËRGO TE SMART ROUTER (si më parë)
+        else {
+            console.log("🔀 Duke dërguar te SmartResponseRouter...");
             
-            // 🎯 PRIORITET I PARË: SMART RESPONSE ROUTER
+            // Provo SmartResponseRouter
             if (this.smartRouterEnabled && window.smartResponseRouter) {
-                console.log("🎯 Duke përdorur SmartResponseRouter...");
                 response = await window.smartResponseRouter.processUserMessage(message);
-                
-                // Nëse SmartRouter dha përgjigje të mirë
-                if (response && !this.isGenericResponse(response)) {
-                    console.log("✅ SmartResponseRouter dha përgjigje të mirë");
-                } else {
-                    console.log("🔄 SmartResponseRouter dha përgjigje gjenerike, duke provuar serverin...");
-                    response = await this.sendToServer(message);
-                }
             } else {
-                // 🔄 FALLBACK: Dërgo te serveri
+                // Fallback nëse SmartRouter nuk është gati
                 response = await this.sendToServer(message);
             }
-            
-            // Fshi "po mendon..."
-            this.hideThinkingIndicator();
-            
-            // Shto përgjigjen në chat
-            this.addMessageToChat(response, 'bot');
-            
-            // 🧠 MËSO NGA INTERAKSIONI
-            await this.learnFromInteraction(message, response);
-            
-        } catch (error) {
-            console.error("❌ Gabim në procesimin e mesazhit:", error);
-            
-            // Fshi "po mendon..."
-            this.hideThinkingIndicator();
-            
-            this.addMessageToChat("Më falni, pati një gabim në sistem. Provo përsëri.", 'bot');
         }
+        
+        // Fshi "po mendon..."
+        this.hideThinkingIndicator();
+        
+        // Shto përgjigjen në chat
+        this.addMessageToChat(response, 'bot');
+        
+        // 🧠 MËSO NGA INTERAKSIONI
+        await this.learnFromInteraction(message, response);
+        
+    } catch (error) {
+        console.error("❌ Gabim në procesimin e mesazhit:", error);
+        
+        // Fshi "po mendon..."
+        this.hideThinkingIndicator();
+        
+        this.addMessageToChat("Më falni, pati një gabim në sistem. Provo përsëri.", 'bot');
     }
+}
 
     async sendToServer(message) {
         try {
