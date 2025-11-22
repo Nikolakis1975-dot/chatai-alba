@@ -339,20 +339,38 @@ if (message.length > 25 &&
     }
 
     // ==================== SISTEMI I ROUTINGUT ====================
-
 determineBestRoute(analysis) {
     console.log("🛣️ Duke përcaktuar rrugën më të mirë për:", analysis.type);
     
-    // 1. MATEMATIKË - Procesim lokal i shpejtë
-    if (analysis.isMath) {
-        console.log("🧮 Rrugë e zgjedhur: LOCAL_MATH");
-        return {
-            route: this.config.routes.LOCAL,
-            priority: 'high', 
-            reason: 'Llogaritje matematikore',
-            timeout: 3000
-        };
+    // ✅ KORRIGJIMI: Përdor analysis.type direkt
+    switch(analysis.type) {
+        case 'complex_question':
+            console.log("🎯 Pyetje komplekse - duke zgjedhur GEMINI");
+            return 'GEMINI_COMPLEX';
+            
+        case 'simple_question':
+            console.log("❓ Pyetje e thjeshtë - duke zgjedhur LOCAL_SMART");
+            return 'LOCAL_SMART';
+            
+        case 'math':
+            console.log("🧮 Matematikë - duke zgjedhur LOCAL_MATH");
+            return 'LOCAL_MATH';
+            
+        case 'greeting':
+            console.log("👋 Përshëndetje - duke zgjedhur LOCAL_GREETING");
+            return 'LOCAL_GREETING';
+            
+        case 'command':
+            console.log("🎯 Komandë RRUFE - duke zgjedhur RRUFE_COMMAND");
+            return 'RRUFE_COMMAND';
+            
+        case 'conversation':
+        default:
+            console.log("🔀 Bisedë - duke zgjedhur FALLBACK");
+            return 'FALLBACK';
     }
+}
+
 
     // 2. PËRSHËNDETJE - Përgjigje lokale e shpejtë
     if (analysis.isGreeting) {
@@ -399,29 +417,34 @@ determineBestRoute(analysis) {
 
     // ==================== EKZEKUTIMI I ROUTINGUT ====================
 
-    // NË executeRoute FUNKSION - Sigurohu që ka:
-async executeRoute(routeType, message) {
+   async executeRoute(routeType, message) {
     console.log("🔄 Duke ekzekutuar rrugën:", routeType);
     
+    // ✅ KORRIGJIMI: Përdor string direkt në switch
     switch(routeType) {
         case 'GEMINI_COMPLEX':
             console.log("🧠 Duke dërguar te Gemini për pyetje komplekse...");
             return await this.processWithGemini(message);
             
         case 'LOCAL_SMART':
+            console.log("💡 Duke procesuar lokal...");
             return await this.processLocally(message);
             
         case 'LOCAL_MATH':
+            console.log("🧮 Duke zgjidhur matematikën...");
             return await this.solveMath(message);
             
         case 'LOCAL_GREETING':
+            console.log("👋 Duke përgjigjur përshëndetjes...");
             return await this.processLocally(message);
             
         case 'RRUFE_COMMAND':
+            console.log("🎯 Duke ekzekutuar komandën RRUFE...");
             return await this.processRrufeCommand(message);
             
         case 'FALLBACK':
         default:
+            console.log("🔀 Duke përdorur fallback...");
             return await this.processFallback(message);
     }
 }
