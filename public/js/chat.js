@@ -107,74 +107,227 @@ class ChatSystem {
     }
 
     async handleUserMessage(message) {
-        if (!message || message.trim() === '') {
-            console.log("❌ Mesazhi është bosh");
-            return;
-        }
-        
-        console.log(`💬 Duke procesuar mesazhin: "${message}"`);
-        
-        // Kontrollo nëse jemi inicializuar
-        if (!this.initialized) {
-            console.log("🔄 ChatSystem nuk është inicializuar, duke u përpjekur...");
-            await this.initialize();
-            if (!this.initialized) {
-                this.addMessageToChat("Sistemi po inicializohet, provoni përsëri pas 2 sekondash.", 'bot');
-                return;
-            }
-        }
-        
-        // Shto mesazhin e përdoruesit në chat
-        this.addMessageToChat(message, 'user');
-        
-        // Shfaq "po mendon..."
-        this.showThinkingIndicator();
-        
-        try {
-            let response;
-            
-            // 🎯 PRIORITET I PARË: SMART RESPONSE ROUTER
-            if (this.smartRouterEnabled && window.smartResponseRouter && window.smartResponseRouter.initialized) {
-                console.log("🎯 Duke përdorur SmartResponseRouter...");
-                response = await window.smartResponseRouter.processUserMessage(message);
-                
-                // Nëse SmartRouter dha përgjigje të mirë
-                if (response && !this.isGenericResponse(response)) {
-                    console.log("✅ SmartResponseRouter dha përgjigje të mirë");
-                } else {
-                    console.log("🔄 SmartResponseRouter dha përgjigje gjenerike, duke provuar serverin...");
-                    response = await this.sendToServer(message);
-                }
-            } else {
-                // 🔄 FALLBACK: Dërgo te serveri
-                console.log("🔄 Duke përdorur fallback te serveri...");
-                response = await this.sendToServer(message);
-            }
-            
-            // Fshi "po mendon..."
-            this.hideThinkingIndicator();
-            
-            // Kontrollo nëse ka përgjigje
-            if (response && response.trim() !== '') {
-                // Shto përgjigjen në chat
-                this.addMessageToChat(response, 'bot');
-                
-                // Mëso nga interaksioni
-                await this.learnFromInteraction(message, response);
-            } else {
-                console.error("❌ Përgjigja është bosh");
-                this.addMessageToChat("Më falni, nuk mora asnjë përgjigje nga sistemi. Provo përsëri.", 'bot');
-            }
-            
-        } catch (error) {
-            console.error("❌ Gabim në procesimin e mesazhit:", error);
-            
-            // Fshi "po mendon..."
-            this.hideThinkingIndicator();
-            
-            this.addMessageToChat("Më falni, pati një gabim në sistem. Provo përsëri.", 'bot');
-        }
+    if (!message || message.trim() === '') {
+        console.log("❌ Mesazhi është bosh");
+        return;
     }
+    
+    console.log(`💬 Duke procesuar mesazhin: "${message}"`);
+    
+    // Shto mesazhin e përdoruesit në chat
+    this.addMessageToChat(message, 'user');
+    
+    // Shfaq "po mendon..."
+    this.showThinkingIndicator();
+    
+    try {
+        let response;
+        
+        // 🎯 KOMANDA /NDIHMO - KONTROLLO MË PARË
+        if (message.toLowerCase().trim() === '/ndihmo' || message.toLowerCase().trim() === '/help') {
+            console.log("🎯 U zbulua komanda /ndihmo");
+            response = this.getHelpResponse();
+        }
+        // 👋 PËRSHËNDETJE
+        else if (this.isGreeting(message)) {
+            console.log("👋 U zbulua përshëndetje");
+            response = this.getGreetingResponse();
+        }
+        // 🧮 MATEMATIKË
+        else if (this.isMathQuestion(message)) {
+            console.log("🧮 U zbulua pyetje matematikore");
+            response = this.solveMath(message);
+        }
+        // 🧠 PYETJE KOMPLEKSE
+        else if (this.isComplexQuestion(message)) {
+            console.log("💭 U zbulua pyetje komplekse");
+            response = await this.processComplexQuestion(message);
+        }
+        // 🔄 PËRGJIGJE STANDARDE
+        else {
+            console.log("🔀 Duke përdorur përgjigje standarde");
+            response = this.getStandardResponse(message);
+        }
+        
+        console.log("📤 Përgjigja e gjeneruar:", response.substring(0, 50) + "...");
+        
+        // Fshi "po mendon..."
+        this.hideThinkingIndicator();
+        
+        // Shto përgjigjen
+        this.addMessageToChat(response, 'bot');
+        
+        // Ruaj në njohuri
+        await this.learnFromInteraction(message, response);
+        
+    } catch (error) {
+        console.error("❌ Gabim në procesimin e mesazhit:", error);
+        this.hideThinkingIndicator();
+        this.addMessageToChat("Më falni, pati një gabim në sistem. Provo përsëri.", 'bot');
+    }
+}
+
+// ✅ FUNKSIONET E REJA QË DUHEN SHTUAR:
+
+// 1. Funksioni për /ndihmo
+getHelpResponse() {
+    return `🎯 **RRUFE-TESLA - KOMANDAT:**
+    
+• **/ndihmo** - Shfaq këtë ndihmë
+• **/stats** - Statistikat e sistemit
+• **/mode** - Ndrysho modin e punës
+• **/reset** - Ristejo bisedën
+
+💡 **Shembuj pyetjesh:**
+• "Çfarë është AI?"
+• "Si funksionon blockchain?"
+• "Shpjego machine learning"
+• "Sa është 15 + 25?"
+
+🧠 **Sistemi mëson automatikisht** nga çdo bisedë!`;
+}
+
+// 2. Kontrollo përshëndetje
+isGreeting(message) {
+    const greetings = ['përshëndetje', 'hello', 'hi', 'mirëdita', 'ciao', 'hey'];
+    return greetings.some(greet => message.toLowerCase().includes(greet));
+}
+
+// 3. Përgjigje përshëndetjeje
+getGreetingResponse() {
+    const greetings = [
+        "Përshëndetje! 😊 Si mund t'ju ndihmoj sot?",
+        "Hello! 👋 Mirë se ju gjetëm!",
+        "Mirëdita! ☀️ Çfarë mund të bëj për ju?",
+        "Tungjatjeta! 🎯 Si mund të ndihmoj?"
+    ];
+    return greetings[Math.floor(Math.random() * greetings.length)];
+}
+
+// 4. Kontrollo pyetje matematikore
+isMathQuestion(message) {
+    const mathPatterns = ['sa është', 'sa bëjnë', '+', '-', '*', '/', 'llogarit', 'kalkul'];
+    return mathPatterns.some(pattern => 
+        message.toLowerCase().includes(pattern)
+    ) || /\d+[\+\-\*\/]\d+/.test(message);
+}
+
+// 5. Zgjidh matematikën
+solveMath(message) {
+    try {
+        console.log("🧮 Duke zgjidhur matematikën...");
+        
+        let expression = '';
+        const lowerMsg = message.toLowerCase();
+        
+        // Nxjerr shprehjen matematikore
+        if (lowerMsg.includes('sa është')) {
+            expression = message.split('sa është')[1].replace('?', '').trim();
+        } else if (lowerMsg.includes('sa bëjnë')) {
+            expression = message.split('sa bëjnë')[1].replace('?', '').trim();
+        } else {
+            // Provoj të gjej shprehjen direkt
+            expression = message.replace(/[^\d\+\-\*\/\.\(\)]/g, '').trim();
+        }
+        
+        if (!expression) {
+            return "Nuk mund ta gjej shprehjen matematikore. Provoni: 'Sa është 5 + 3?'";
+        }
+        
+        // Sigurohu që shprehja është e sigurt
+        if (!/^[\d\+\-\*\/\.\(\)\s]+$/.test(expression)) {
+            return "Shprehja matematikore përmban karaktere të pasigurta.";
+        }
+        
+        // Llogarit rezultatin
+        const result = eval(expression);
+        
+        return `🧮 **${message}** = **${result}**`;
+        
+    } catch (error) {
+        console.error("❌ Gabim në matematikë:", error);
+        return "Nuk mund ta zgjidh këtë shprehje matematikore. Ju lutem provoni një shprehje më të thjeshtë.";
+    }
+}
+
+// 6. Kontrollo pyetje komplekse
+isComplexQuestion(message) {
+    const complexPatterns = [
+        'çfarë është', 'si funksionon', 'shpjego', 
+        'shpjegomë', 'detaje', 'mëso më shumë',
+        'ai', 'blockchain', 'teknologji', 'shkenc'
+    ];
+    return complexPatterns.some(pattern => 
+        message.toLowerCase().includes(pattern)
+    );
+}
+
+// 7. Proceso pyetje komplekse
+async processComplexQuestion(message) {
+    console.log("🌐 Duke procesuar pyetje komplekse...");
+    
+    // Simuloj një vonesë të vogël
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    const lowerMsg = message.toLowerCase();
+    
+    if (lowerMsg.includes('çfarë është ai') || lowerMsg.includes('cfare eshte ai')) {
+        return `🤖 **AI (Inteligjenca Artificiale)** është një fushë e shkencës kompjuterike që fokusohet në krijimin e sistemeve që mund të kryejnë detyra që normalisht kërkojnë inteligjencë njerëzore.
+
+**Llojet kryesore:**
+• **Machine Learning** - Mësimi nga të dhënat
+• **Deep Learning** - Rrjetet neuronale  
+• **NLP** - Përpunimi i gjuhës natyrore
+• **Computer Vision** - Njohja e imazheve
+
+💡 **RRUFE-TESLA** është një shembull i AI!`;
+    }
+    
+    if (lowerMsg.includes('blockchain')) {
+        return `⛓️ **Blockchain** është një teknologji e re që ruan të dhëna në mënyrë të decentralizuar dhe të sigurt.
+
+**Karakteristikat kryesore:**
+• **Decentralizim** - Nuk kontrollohet nga një qendër e vetme
+• **Transparencë** - Të gjitha transaksionet janë publike
+• **Siguri** - E pamundur të falsifikohen të dhënat
+• **Imutabilitet** - Të dhënat nuk mund të ndryshohen
+
+💰 Përdoret kryesisht për kriptomonedha si Bitcoin.`;
+    }
+    
+    // Përgjigje e përgjithshme për pyetje komplekse
+    return `🧠 **${message}**
+
+Kjo është një pyetje shumë interesante! Për përgjigje më të detajuara dhe të përditësuara, unë rekomandoj të konsultoni burime specializuese.
+
+💡 **Ndihmë:**
+• Përdorni /ndihmo për më shumë komanda
+• Pyetni më specifikisht për çështje teknike`;
+}
+
+// 8. Përgjigje standarde
+getStandardResponse(message) {
+    const lowerMsg = message.toLowerCase();
+    
+    if (lowerMsg.includes('si jeni') || lowerMsg.includes('si je')) {
+        return "Jam shumë mirë, faleminderit që pyetët! 😊 Si mund t'ju ndihmoj sot?";
+    }
+    
+    if (lowerMsg.includes('faleminderit') || lowerMsg.includes('rrofsh') || lowerMsg.includes('flm')) {
+        return "S'ka përse! 😊 Gjithmonë i lumtur të ndihmoj!";
+    }
+    
+    if (lowerMsg.includes('libër') || lowerMsg.includes('libra')) {
+        return "📚 Interesante! Çfarë lloj libri po kërkoni? Fiction, shkencor, historik, apo diçka tjetër?";
+    }
+    
+    if (lowerMsg.includes('cfare') || lowerMsg.includes('çfarë') || lowerMsg.includes('cka') || lowerMsg.includes('çka')) {
+        return "🤔 Mund t'ju ndihmoj me shumë çështje! Çfarë saktësisht dëshironi të dini? Teknologji, shkencë, programim, apo diçka tjetër?";
+    }
+    
+    return "E kuptoj! 😊 Përdorni /ndihmo për të parë të gjitha komandat e mia.";
+}
+
 
     async sendToServer(message) {
         try {
