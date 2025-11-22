@@ -182,41 +182,94 @@ class ChatSystem {
         }
     }
 
-    async learnFromInteraction(question, answer) {
-        try {
-            // 🎯 PROVO KNOWLEDGEINTEGRATION PARË
-            if (window.knowledgeIntegration && typeof window.knowledgeIntegration.learnFromInteraction === 'function') {
-                await window.knowledgeIntegration.learnFromInteraction(question, answer, {
-                    category: 'conversation',
-                    timestamp: new Date().toISOString(),
-                    source: 'chat_system'
-                });
-                console.log("🎓 U mësua nga interaksioni!");
-            }
-            // 🎯 PROVO KNOWLEDGEDISTILLER SI FALLBACK
-            else if (window.knowledgeDistiller && typeof window.knowledgeDistiller.learnFromInteraction === 'function') {
-                await window.knowledgeDistiller.learnFromInteraction(question, answer, {
-                    category: 'conversation'
-                });
-                console.log("🎓 U mësua nga interaksioni (fallback)!");
-            }
-            // 🔄 PROVO ADDKNOWLEDGE SI FALLBACK EMERGJENT
-            else if (window.knowledgeDistiller && typeof window.knowledgeDistiller.addKnowledge === 'function') {
-                const knowledgeKey = question.substring(0, 30).replace(/[^\w]/g, '_');
+   // ================================ FUKSIONI learnFromInteraction =====================
+   async learnFromInteraction(question, answer, metadata = {}) {
+    console.log("🎓 Duke u përpjekur të mësoj nga interaksioni...");
+    
+    try {
+        // ✅ RREGULLIMI I RI: Ruaj të GJITHA përgjigjet nga Gemini
+        if (answer && answer.length > 10) { // Sigurohu që përgjigja ka përmbajtje
+            const knowledgeKey = this.generateKnowledgeKey(question);
+            
+            // 🎯 PROVO KNOWLEDGEDISTILLER PARË
+            if (window.knowledgeDistiller && typeof window.knowledgeDistiller.addKnowledge === 'function') {
                 await window.knowledgeDistiller.addKnowledge(knowledgeKey, {
                     question: question,
                     answer: answer,
-                    learnedAt: new Date().toISOString()
-                }, 'conversation');
-                console.log("🎓 U mësua nga interaksioni (emergjent)!");
+                    learnedAt: new Date().toISOString(),
+                    source: metadata.source || 'chat_system',
+                    category: this.detectCategory(question),
+                    usageCount: 0
+                }, 'gemini_learned');
+                
+                console.log("💾 U ruajt në KnowledgeDistiller:", knowledgeKey);
+                return;
             }
+            
+            // 🔄 PROVO KNOWLEDGEINTEGRATION SI FALLBACK
+            else if (window.knowledgeIntegration && typeof window.knowledgeIntegration.learnFromInteraction === 'function') {
+                await window.knowledgeIntegration.learnFromInteraction(question, answer, {
+                    category: 'gemini_learned',
+                    timestamp: new Date().toISOString(),
+                    source: 'gemini_api'
+                });
+                console.log("💾 U ruajt në KnowledgeIntegration");
+                return;
+            }
+            
+            // 🆘 PROVO LOCALSTORAGE SI EMERGJENCY
             else {
-                console.log("ℹ️ Nuk ka sistem mësimi të disponueshëm");
+                this.saveToLocalStorage(question, answer);
+                console.log("💾 U ruajt në LocalStorage (fallback)");
             }
-        } catch (error) {
-            console.error("❌ Gabim në mësimin nga interaksioni:", error);
+        } else {
+            console.log("ℹ️ Përgjigja shumë e shkurtër për tu ruajtur");
         }
+    } catch (error) {
+        console.error("❌ Gabim në mësimin nga interaksioni:", error);
     }
+},
+
+// ✅ FUNKSION I RI: Gjenero çelës unik për njohuri
+generateKnowledgeKey(question) {
+    return question
+        .toLowerCase()
+        .substring(0, 30)
+        .replace(/[^\w\s]/g, '')
+        .replace(/\s+/g, '_') + '_' + Date.now();
+},
+
+// ✅ FUNKSION I RI: Zbuloni kategorinë automatikisht
+detectCategory(question) {
+    const lowerQ = question.toLowerCase();
+    if (lowerQ.includes('ai') || lowerQ.includes('teknologji') || lowerQ.includes('programim')) {
+        return 'technology';
+    } else if (lowerQ.includes('shkenc') || lowerQ.includes('fizik') || lowerQ.includes('kim')) {
+        return 'science';
+    } else if (lowerQ.includes('libër') || lowerQ.includes('edukim') || lowerQ.includes('shkoll')) {
+        return 'education';
+    } else {
+        return 'general';
+    }
+},
+
+// ✅ FUNKSION I RI: Ruaj në localStorage si fallback
+saveToLocalStorage(question, answer) {
+    try {
+        const key = 'rrufe_knowledge_' + this.generateKnowledgeKey(question);
+        const knowledge = {
+            question: question,
+            answer: answer,
+            timestamp: new Date().toISOString(),
+            category: this.detectCategory(question)
+        };
+        localStorage.setItem(key, JSON.stringify(knowledge));
+    } catch (e) {
+        console.error("❌ Gabim në localStorage:", e);
+    }
+}
+
+  // ===================================== addMessageToChat ===============================
 
     addMessageToChat(message, sender) {
     console.log(`📝 Duke shtuar mesazh nga ${sender}...`);
