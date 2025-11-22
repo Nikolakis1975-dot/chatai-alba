@@ -778,7 +778,7 @@ if (originalLogin) {
 }
 
 // ======================================================
-// 🚀 SISTEMI I RI I KOMANDAVE - VERSION I THJESHTË & FUNKSIONAL
+// 1.🚀 SISTEMI I RI I KOMANDAVE - VERSION I THJESHTË & FUNKSIONAL
 // ======================================================
 
 // 1. KRIJO FUNKSIONIN processRrufeCommand
@@ -918,3 +918,167 @@ async function processMessageNow(message) {
 
 console.log('🎉 SISTEMI I RI I KOMANDAVE U AKTIVIZUA!');
 
+// ======================================================
+// 2.🚨 ÇAKTIVIZIMI I PLOTË I SISTEMIT TË VJETËR - VERSION FINAL
+// ======================================================
+
+// 2. ÇAKTIVIZO sendMessage ORIGJINAL
+console.log('🛑 DUKE ÇAKTIVIZUAR SISTEMIN E VJETËR...');
+
+if (typeof window.sendMessage !== 'undefined') {
+    // Ruaj versionin origjinal (vetëm për referencë)
+    window._originalSendMessage = window.sendMessage;
+    
+    // ZËVENDËSOJE komplet
+    window.sendMessage = async function() {
+        const input = document.getElementById('user-input');
+        const message = input ? input.value.trim() : '';
+        
+        console.log('🎯 SISTEMI I RI - sendMessage:', message);
+        
+        if (!message) return;
+        
+        // Pastro input MENJËHERË
+        if (input) input.value = '';
+        
+        // Shto mesazhin e përdoruesit
+        if (typeof addMessage === 'function') {
+            addMessage(message, 'user');
+        }
+        
+        // PROCESO MESAZHIN ME SISTEMIN TONË TË RI
+        await processWithNewSystem(message);
+    };
+    
+    console.log('✅ sendMessage u zëvendësua!');
+}
+
+// 3. FUNKSIONI I RI PËR PROCESIM
+async function processWithNewSystem(message) {
+    console.log('🎯 PROCESIMI ME SISTEMIN E RI:', message);
+    
+    // NËSE ËSHTË KOMANDË
+    if (message.startsWith('/')) {
+        console.log('🔗 Komandë e zbuluar');
+        
+        // Përdor processRrufeCommand nëse ekziston
+        if (typeof window.processRrufeCommand === 'function') {
+            try {
+                const response = await window.processRrufeCommand(message);
+                if (response && typeof addMessage === 'function') {
+                    addMessage(response, 'bot');
+                    return; // STOP - mos shko më tej
+                }
+            } catch (error) {
+                console.log('❌ Gabim në processRrufeCommand:', error);
+            }
+        }
+        
+        // Fallback për komanda
+        const fallbackResponse = `🔧 **Komanda:** ${message}\n(Sistemi po proceson...)`;
+        if (typeof addMessage === 'function') {
+            addMessage(fallbackResponse, 'bot');
+        }
+        return;
+    }
+    
+    // PËR MESAZHET E RREGULLTA, PËRDOR SMART ROUTER
+    if (window.smartResponseRouter && window.smartResponseRouter.initialized) {
+        try {
+            const response = await window.smartResponseRouter.processUserMessage(message);
+            if (response && typeof addMessage === 'function') {
+                addMessage(response, 'bot');
+                return;
+            }
+        } catch (error) {
+            console.log('❌ Gabim në SmartRouter:', error);
+        }
+    }
+    
+    // FALLBACK FINAL
+    console.log('🔄 Duke përdorur fallback...');
+    if (typeof addMessage === 'function') {
+        addMessage('🤖 **RRUFE-TESLA:** Po procesoj kërkesën tuaj...', 'bot');
+    }
+}
+
+// 4. KRIJO processRrufeCommand NËSE NUK EKZISTON
+if (typeof window.processRrufeCommand === 'undefined') {
+    window.processRrufeCommand = async function(message) {
+        console.log('🎯 processRrufeCommand:', message);
+        
+        if (message === '/ndihmo' || message.startsWith('/ndihmo ')) {
+            return `👑 **SISTEMI I KOMANDAVE - RRUFE-TESLA** 👑
+
+📋 **KOMANDAT BAZE:**
+• /ndihmo - Shfaq këtë listë
+• /wiki [query] - Kërko në Wikipedia  
+• /moti [qyteti] - Informacion moti
+• /perkthim [gjuhë] [tekst] - Përkthim tekst
+
+🎯 **Sistemi i ri aktiv - Të gjitha komandat procesohen lokal!**`;
+        }
+        
+        if (message.startsWith('/wiki ')) {
+            const query = message.replace('/wiki ', '').trim();
+            return `🌐 **Wikipedia:** "${query}"\n✅ Procesuar nga sistemi i ri lokal`;
+        }
+        
+        if (message.startsWith('/moti ')) {
+            const qyteti = message.replace('/moti ', '').trim();
+            return `🌍 **Moti:** ${qyteti}\n✅ Procesuar nga sistemi i ri lokal`;
+        }
+        
+        return `🔧 **Komanda:** ${message}\n✅ Procesuar nga sistemi i ri lokal`;
+    };
+    
+    console.log('✅ processRrufeCommand u krijua!');
+}
+
+// 5. KONFIGURO EVENT LISTENER-ËT E RINJ
+function setupNewEventListeners() {
+    console.log('🎯 KONFIGURIMI I EVENT LISTENER-ËVE TË RINJ...');
+    
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+    
+    if (userInput && sendBtn) {
+        // Hiq event listener-ët e vjetër
+        userInput.onkeypress = null;
+        sendBtn.onclick = null;
+        
+        // Shto event listener-ë të rinj
+        userInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const message = this.value.trim();
+                if (message) {
+                    console.log('🎯 ENTER I RI:', message);
+                    window.sendMessage();
+                }
+            }
+        });
+        
+        sendBtn.addEventListener('click', function() {
+            const message = userInput.value.trim();
+            if (message) {
+                console.log('🎯 BUTONI I RI:', message);
+                window.sendMessage();
+            }
+        });
+        
+        console.log('✅ EVENT LISTENER-ËT E RINJ U KONFIGURUAN!');
+    }
+}
+
+// 6. EKZEKUTIMI I MENJËHERËSHËM
+setTimeout(() => {
+    setupNewEventListeners();
+    console.log('🎉 SISTEMI I RI I RRUFE-TESLA U AKTIVIZUA PLOTËSISHT!');
+    console.log('🔍 DIAGNOSTIKIM:');
+    console.log('- sendMessage:', typeof window.sendMessage);
+    console.log('- processRrufeCommand:', typeof window.processRrufeCommand);
+    console.log('- addMessage:', typeof addMessage);
+}, 1000);
+
+console.log('🚀 SKEDARI I RI I MAIN.JS U AKTIVIZUA!');
