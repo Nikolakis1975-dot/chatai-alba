@@ -632,39 +632,176 @@ determineBestRoute(analysis) {
     // ==================== API PUBLIKE ====================
 
     async processUserMessage(message) {
-        if (!this.initialized) {
-            console.log("⏳ SmartResponseRouter nuk është inicializuar, duke u inicializuar...");
-            const initialized = await this.initializeSafely();
-            if (!initialized) {
-                return "🔄 Sistemi po inicializohet, provoni përsëri...";
-            }
-        }
-        
-        console.log(`🧠 SmartResponseRouter po proceson: "${message.substring(0, 50)}..."`);
-        
-        try {
-            const analysis = this.analyzeMessage(message);
-            const routeConfig = this.determineBestRoute(message, analysis);
-            const response = await this.executeRoute(routeConfig, message);
-            
-            console.log("✅ Përgjigja u gjenerua me sukses");
-            return response;
-            
-        } catch (error) {
-            console.error("❌ Gabim në procesimin e mesazhit:", error);
-            return "Më falni, pati një gabim në sistem. Provo përsëri.";
+    if (!this.initialized) {
+        console.log("⏳ SmartResponseRouter nuk është inicializuar, duke u inicializuar...");
+        const initialized = await this.initializeSafely();
+        if (!initialized) {
+            return "🔄 Sistemi po inicializohet, provoni përsëri...";
         }
     }
+    
+    console.log(`🧠 SmartResponseRouter po proceson: "${message.substring(0, 50)}..."`);
+    
+    try {
+        const analysis = this.analyzeMessage(message);
+        const routeConfig = this.determineBestRoute(message, analysis);
+        const response = await this.executeRoute(routeConfig, message);
+        
+        // ✅ ✅ ✅ RREGULLIMI I RI: RUAJ PËRGJIGJEN NGA GEMINI
+        await this.saveGeminiResponseIfNeeded(message, response, routeConfig);
+        
+        console.log("✅ Përgjigja u gjenerua me sukses");
+        return response;
+        
+    } catch (error) {
+        console.error("❌ Gabim në procesimin e mesazhit:", error);
+        return "Më falni, pati një gabim në sistem. Provo përsëri.";
+    }
+},
 
-    getStats() {
-        return {
-            name: this.name,
-            version: this.version,
-            initialized: this.initialized,
-            safeMode: this.safeMode,
-            messagesProcessed: this.messageHistory.length,
-            config: this.config
+// ✅ ✅ ✅ FUNKSION I RI: Ruaj përgjigjet nga Gemini
+async saveGeminiResponseIfNeeded(question, answer, routeConfig) {
+    try {
+        // Kontrollo nëse është përgjigje e mirë për tu ruajtur
+        const shouldSave = this.shouldSaveResponse(question, answer, routeConfig);
+        
+        if (shouldSave) {
+            console.log("💾 Duke ruajtur përgjigjen në sistemin e njohurive...");
+            
+            // 🎯 PROVO CHATSYSTEM PARË
+            if (window.chatSystem && typeof window.chatSystem.learnFromInteraction === 'function') {
+                await window.chatSystem.learnFromInteraction(question, answer, {
+                    source: 'smart_router',
+                    route: routeConfig.route,
+                    complexity: analysis?.complexity || 'medium',
+                    category: this.detectCategory(question)
+                });
+                console.log("✅ U ruajt në chatSystem");
+            }
+            // 🔄 PROVO KNOWLEDGEDISTILLER DIRECT
+            else if (window.knowledgeDistiller && typeof window.knowledgeDistiller.addKnowledge === 'function') {
+                const knowledgeKey = this.generateKnowledgeKey(question);
+                await window.knowledgeDistiller.addKnowledge(knowledgeKey, {
+                    question: question,
+                    answer: answer,
+                    learnedAt: new Date().toISOString(),
+                    source: 'gemini_api',
+                    category: this.detectCategory(question),
+                    usageCount: 0
+                }, 'smart_learned');
+                console.log("✅ U ruajt në KnowledgeDistiller:", knowledgeKey);
+            }
+            // 🆘 PROVO LOCALSTORAGE SI FALLBACK
+            else {
+                this.saveToLocalStorage(question, answer);
+                console.log("✅ U ruajt në localStorage (fallback)");
+            }
+        }
+    } catch (error) {
+        console.error("❌ Gabim në ruajtjen e përgjigjes:", error);
+    }
+},
+
+// ✅ FUNKSION I RI: Vendos nëse duhet të ruajë përgjigjen
+shouldSaveResponse(question, answer, routeConfig) {
+    // Kontrollo nëse përgjigja ka përmbajtje
+    if (!answer || answer.length < 50) {
+        return false; // Përgjigje shumë e shkurtër
+    }
+    
+    // Kontrollo nëse është përgjigje gjenerike
+    const genericResponses = [
+        'e kuptoj',
+        'përdorni /ndihmo', 
+        'nuk kuptova',
+        'mund të përsërisni',
+        'nuk jam i sigurt',
+        'kjo është një pyetje interesante'
+    ];
+    
+    const isGeneric = genericResponses.some(phrase => 
+        answer.toLowerCase().includes(phrase)
+    );
+    
+    if (isGeneric) {
+        return false; // Mos ruaj përgjigje gjenerike
+    }
+    
+    // Kontrollo nëse vjen nga Gemini ose rrugë komplekse
+    const isFromGemini = routeConfig.route === this.config.routes.GEMINI ||
+                         routeConfig.route.includes('GEMINI') ||
+                         routeConfig.reason?.includes('komplekse');
+    
+    // Kontrollo nëse pyetja është e përsëritshme
+    const isRepeatableQuestion = this.isRepeatableQuestion(question);
+    
+    return isFromGemini && isRepeatableQuestion && !isGeneric;
+},
+
+// ✅ FUNKSION I RI: Kontrollo nëse pyetja është e përsëritshme
+isRepeatableQuestion(question) {
+    const lowerQuestion = question.toLowerCase();
+    
+    // Pyetje të përsëritshme (që njerëzit i bëjnë shpesh)
+    const repeatablePatterns = [
+        'çfarë është',
+        'si funksionon',
+        'shpjego',
+        'kush është',
+        'ku ndodhet',
+        'kur u krijua',
+        'pse',
+        'si bëhet'
+    ];
+    
+    return repeatablePatterns.some(pattern => 
+        lowerQuestion.includes(pattern)
+    );
+},
+
+// ✅ FUNKSION I RI: Gjenero çelës unik për njohuri
+generateKnowledgeKey(question) {
+    return question
+        .toLowerCase()
+        .substring(0, 25)
+        .replace(/[^\w\s]/g, '')
+        .replace(/\s+/g, '_') + '_' + Math.random().toString(36).substr(2, 5);
+},
+
+// ✅ FUNKSION I RI: Zbuloni kategorinë
+detectCategory(question) {
+    const lowerQ = question.toLowerCase();
+    if (lowerQ.includes('ai') || lowerQ.includes('teknologji') || lowerQ.includes('programim') || lowerQ.includes('kompjuter')) {
+        return 'technology';
+    } else if (lowerQ.includes('shkenc') || lowerQ.includes('fizik') || lowerQ.includes('kim') || lowerQ.includes('biologji')) {
+        return 'science';
+    } else if (lowerQ.includes('libër') || lowerQ.includes('edukim') || lowerQ.includes('shkoll') || lowerQ.includes('universitet')) {
+        return 'education';
+    } else if (lowerQ.includes('shëndet') || lowerQ.includes('mjekësi') || lowerQ.includes('spital')) {
+        return 'health';
+    } else if (lowerQ.includes('histori') || lowerQ.includes('kultur') || lowerQ.includes('art')) {
+        return 'culture';
+    } else {
+        return 'general';
+    }
+},
+
+// ✅ FUNKSION I RI: Ruaj në localStorage si fallback
+saveToLocalStorage(question, answer) {
+    try {
+        const key = 'rrufe_gemini_' + this.generateKnowledgeKey(question);
+        const knowledge = {
+            question: question,
+            answer: answer,
+            timestamp: new Date().toISOString(),
+            category: this.detectCategory(question),
+            source: 'gemini_forced'
         };
+        localStorage.setItem(key, JSON.stringify(knowledge));
+        return true;
+    } catch (e) {
+        console.error("❌ Gabim në localStorage:", e);
+        return false;
     }
 }
 
