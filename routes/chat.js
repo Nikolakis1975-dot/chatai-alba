@@ -74,12 +74,87 @@ function getSimpleNaturalResponse(message) {
     return "E kuptoj! 😊 Përdorni /ndihmo për të parë të gjitha komandat e mia, ose më tregoni më shumë se çfarë keni nevojë.";
 }
 
-// ✅ RUTA KRYESORE PËR MESAZHET
+// ✅ RUTA KRYESORE PËR MESAZHET - TRAJTON TË GJITHA MESAZHET
+// router.post('/', async (req, res) => {
+ //   try {
+   //     const { message, userId } = req.body;
+   //     
+   //     console.log('🔍 routes/chat: Marrë mesazh:', message?.substring(0, 50));
+//
+    //    if (!message) {
+    //        return res.status(constants.HTTP_STATUS.BAD_REQUEST).json({
+   //             success: false,
+   //             response: '❌ Ju lutem shkruani një mesazh'
+  //          });
+  //      }
+//
+     //   // ✅ SË PARI PROVO ME COMMAND SERVICE (SISTEMI I RI)
+     //   try {
+     //       const user = await getUserById(userId || 1);
+    //        
+     //       if (user) {
+     //           console.log('🎯 routes/chat: Duke thirrur CommandService...');
+     //           const result = await CommandService.processCommand('chat', user, message);
+     //           
+    //            // ✅ NËSE COMMAND SERVICE E TRAJTON, KTHEJ PËRGJIGJEN
+    //            if (result.success) {
+   //                 console.log('✅ routes/chat: CommandService e trajtoi mesazhin');
+   //                 return res.status(constants.HTTP_STATUS.OK).json(result);
+   //             }
+   //         }
+  //      } catch (cmdError) {
+  //          console.error('❌ routes/chat: Gabim në CommandService:', cmdError.message);
+  //      }
+//
+    //    // ✅ NËSE COMMAND SERVICE NUK E TRAJTON, SHKO TE SISTEMI I VJETËR (GEMINI)
+     //   console.log('🔄 routes/chat: CommandService nuk e trajtoi, duke shkuar te Gemini...');
+    //    
+     //   try {
+    //        // Kontrollo nëse ka API Key
+    //        const hasApiKey = await checkApiKey(userId || 1);
+    //        
+    //        if (!hasApiKey) {
+     //           // ✅ NËSE NUK KA API KEY, KTHE PËRGJIGJE BAZË
+     //           console.log('ℹ️ routes/chat: Nuk ka API Key, duke kthyer përgjigje bazë');
+     //           return res.status(constants.HTTP_STATUS.OK).json({
+     //               success: true,
+     //               response: getSimpleNaturalResponse(message)
+     //           });
+    //        }
+    //        
+    //        // Nëse ka API Key, shko te Gemini
+    //        console.log('🔑 routes/chat: Ka API Key, duke shkuar te Gemini...');
+   //         const geminiResponse = await require('./gemini').processMessage(message, userId || 1);
+   //         return res.status(constants.HTTP_STATUS.OK).json({
+   //             success: true,
+    //            response: geminiResponse
+   //         });
+   //         
+  //      } catch (geminiError) {
+  //          console.error('❌ routes/chat: Gabim në Gemini:', geminiError);
+  //          return res.status(constants.HTTP_STATUS.OK).json({
+ //               success: true,
+ //               response: getSimpleNaturalResponse(message)
+  //          });
+//        }
+//
+//    } catch (error) {
+//        console.error('❌ routes/chat: Gabim i përgjithshëm:', error);
+//        return res.status(constants.HTTP_STATUS.INTERNAL_ERROR).json({
+ //           success: false,
+   //         response: '❌ Gabim në server. Provo përsëri.'
+   //     });
+ //   }
+// });
+
+// ✅ RUTA PËR MESAZHET E DREJTPËRDREDHURA (PËR FRONTEND)
+
+// ✅ RUTA E THJESHTUAR PËR MESAZHE - PUNON ME URËN
 router.post('/message', async (req, res) => {
     try {
         const { message, userId = 1 } = req.body;
         
-        console.log('🔍 routes/chat/message: Marrë mesazh:', message?.substring(0, 50));
+        console.log('🔍 routes/chat/message: Marrë mesazh për urë:', message?.substring(0, 50));
 
         if (!message || message.trim() === '') {
             return res.json({
@@ -88,23 +163,12 @@ router.post('/message', async (req, res) => {
             });
         }
 
-        // 🎯 PRIORITET I PARË: SMART RESPONSE ROUTER LOGJIKË
-        console.log('🎯 Duke procesuar me SmartResponseRouter logjikë...');
-        
-        const smartResponse = await processWithSmartLogic(message);
-        
-        if (smartResponse && !isGenericResponse(smartResponse)) {
-            console.log('✅ SmartLogic dha përgjigje të mirë:', smartResponse.substring(0, 50));
-            return res.json({
-                success: true,
-                response: smartResponse
-            });
-        }
-
-        // 🔄 FALLBACK: COMMAND SERVICE (SISTEMI I VJETËR)
-        console.log('🔄 Duke përdorur CommandService si fallback...');
+        // ✅ PERDOR DIRECT COMMAND SERVICE (JO URËN, SE URËRA ËSHTË NË APP.JS)
+        console.log('🎯 routes/chat/message: Duke thirrur CommandService direkt...');
+        const CommandService = require('../services/commandService');
         
         // Merr përdoruesin
+        const db = require('../database');
         const user = await new Promise((resolve) => {
             db.get('SELECT * FROM users WHERE id = ?', [userId], (err, user) => {
                 resolve(user || { id: userId, username: 'user' + userId });
@@ -113,7 +177,7 @@ router.post('/message', async (req, res) => {
 
         const result = await CommandService.processCommand('', user, message);
         
-        console.log('📊 Rezultati nga CommandService:', {
+        console.log('📊 routes/chat/message: Rezultati:', {
             success: result.success,
             messageLength: result.response?.length || 0
         });
@@ -129,194 +193,8 @@ router.post('/message', async (req, res) => {
     }
 });
 
-// ✅ FUNKSIONI I KORIGJUAR PËR SMART RESPONSE LOGJIKË
-async function processWithSmartLogic(message) {
-    const lowerMessage = message.toLowerCase().trim();
-    
-    console.log('🔍 SmartLogic duke analizuar:', lowerMessage);
-    
-    // 🎯 PRIORITETI 1: PYETJE KOMPLEKSE - DËRGO TE GEMINI
-    if (lowerMessage.includes('çfarë është') || lowerMessage.includes('si funksionon') ||
-        lowerMessage.includes('shpjego') || lowerMessage.includes('shpjegomë') ||
-        lowerMessage.includes('detaje') || lowerMessage.includes('mëso më shumë') ||
-        lowerMessage.includes('blockchain') || lowerMessage.includes('inteligjencë artificiale') ||
-        lowerMessage.includes('machine learning') || lowerMessage.includes('deep learning') ||
-        lowerMessage.includes('teknologji') || lowerMessage.includes('shkenc') ||
-        lowerMessage.length > 30) { // Pyetje të gjata
-        
-        console.log('🎯 Pyetje komplekse - duke dërguar te Gemini...');
-        
-        try {
-            const geminiRoute = await callGeminiAPI(message);
-            if (geminiRoute && geminiRoute.success) {
-                return geminiRoute.response;
-            }
-        } catch (error) {
-            console.log('❌ Gabim në Gemini:', error);
-        }
-    }
-    
-    // 🎯 PRIORITETI 2: MATEMATIKË
-    if (lowerMessage.includes('sa është') || lowerMessage.includes('sa bejnë') || 
-        lowerMessage.includes('sa ben') || lowerMessage.match(/\d+\s*[\+\-\*\/]\s*\d+/)) {
-        try {
-            const mathResult = evaluateMathExpression(message);
-            if (mathResult) {
-                return mathResult;
-            }
-        } catch (error) {
-            console.log('❌ Gabim në llogaritje:', error);
-        }
-    }
-    
-    // 🎯 PRIORITETI 3: PYETJE SOCIALE
-    if (lowerMessage.includes('si jeni') || lowerMessage.includes('si je') || 
-        lowerMessage.includes('si kaloni') || lowerMessage.includes('si po shkoni') ||
-        lowerMessage.includes('si ndiheni') || lowerMessage.includes('si ndihesh') ||
-        lowerMessage === 'si je?' || lowerMessage === 'si jeni?') {
-        return "Jam shumë mirë, faleminderit që pyetët! 😊 Si mund t'ju ndihmoj sot?";
-    }
-    
-    // 🎯 PRIORITETI 4: OFRIM NDIHMESE
-    if (lowerMessage.includes('mun') || lowerMessage.includes('mund') || 
-        lowerMessage.includes('ndihm') || lowerMessage.includes('help') ||
-        lowerMessage.includes('ndihmo')) {
-        return "Sigurisht! Mund t'ju ndihmoj me shumë çështje. Çfarë saktësisht keni nevojë?";
-    }
-    
-    // 🎯 PRIORITETI 5: LIBRA DHE LEKTIM
-    if (lowerMessage.includes('liber') || lowerMessage.includes('libra') || 
-        lowerMessage.includes('libri') || lowerMessage.includes('lexoj') ||
-        lowerMessage.includes('libër')) {
-        return "📚 Interesante! Çfarë lloj libri po kërkoni? Fiction, shkencor, historik, apo diçka tjetër?";
-    }
-    
-    // 🎯 PRIORITETI 6: PYETJE TË PËRGJITHSHME
-    if (lowerMessage.includes('cfare') || lowerMessage.includes('çfarë') || 
-        lowerMessage.includes('cka') || lowerMessage.includes('çka') ||
-        lowerMessage.includes('cfarë')) {
-        return "🤔 Mund t'ju ndihmoj me shumë çështje! Çfarë saktësisht dëshironi të dini? Teknologji, shkencë, programim, apo diçka tjetër?";
-    }
-    
-    // 🎯 PRIORITETI 7: FALEMINDERIT
-    if (lowerMessage.includes('faleminderit') || lowerMessage.includes('rrofsh') || 
-        lowerMessage.includes('thanks') || lowerMessage.includes('thank you') ||
-        lowerMessage.includes('flm')) {
-        return "S'ka përse! 😊 Gjithmonë i lumtur të ndihmoj!";
-    }
-    
-    // 🎯 PRIORITETI 8: MIRËMËNGJES/MIRËMBRËMA
-    if (lowerMessage.includes('mirëmëngjes') || lowerMessage.includes('miremengjes')) {
-        return "Mirëmëngjes! ☀️ Fillim të mbarë të ditës! Si mund t'ju ndihmoj sot?";
-    }
-    
-    if (lowerMessage.includes('mirëmbrëma') || lowerMessage.includes('mirembrema')) {
-        return "Mirëmbrëma! 🌙 Mbrëmje e mbarë! Si mund t'ju shërbej?";
-    }
-    
-    // 🎯 PRIORITETI 9: LAMTUMIRË
-    if (lowerMessage.includes('lamtumirë') || lowerMessage.includes('mirupafshim') ||
-        lowerMessage.includes('bye') || lowerMessage.includes('goodbye') ||
-        lowerMessage.includes('shëndet')) {
-        return "Mirupafshim! 😊 Ishte kënaqësi të flisja me ju! Shpresoj të flasim sërish shpejt!";
-    }
-    
-    // 🔄 NËSE NUK GJENDET RUGË E MIRË, KTHEHU NULL
-    console.log('🔍 Nuk u gjet rrugë e mirë në SmartLogic');
-    return null;
-}
-
-// ✅ FUNKSION I RI PËR TË THIRRUR GEMINI
-async function callGeminiAPI(message) {
-    try {
-        console.log('📡 Duke thirrur Gemini API për:', message.substring(0, 50));
-        
-        // Provo rrugë të ndryshme të mundshme
-        const possibleRoutes = [
-            '/api/gemini/simple-chat',
-            '/api/gemini/ask',
-            '/api/gemini/chat',
-            '/api/gemini/message'
-        ];
-        
-        for (const route of possibleRoutes) {
-            try {
-                const response = await fetch(`http://localhost:3000${route}`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        message: message,
-                        userId: 1
-                    })
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log('✅ Gemini u gjet në:', route);
-                    return data;
-                }
-            } catch (error) {
-                // Vazhdo te rruga tjetër
-                continue;
-            }
-        }
-        
-        console.log('❌ Asnjë rrugë Gemini nuk u gjet');
-        return null;
-        
-    } catch (error) {
-        console.log('❌ Gabim në thirrjen e Gemini:', error);
-        return null;
-    }
-}
-
-// ✅ FUNKSION PËR LLOGARITJE MATEMATIKE
-function evaluateMathExpression(text) {
-    try {
-        // Gjej shprehjet matematikore
-        const mathMatch = text.match(/(\d+)\s*([\+\-\*\/])\s*(\d+)/);
-        if (!mathMatch) return null;
-        
-        const num1 = parseInt(mathMatch[1]);
-        const operator = mathMatch[2];
-        const num2 = parseInt(mathMatch[3]);
-        
-        let result;
-        switch(operator) {
-            case '+': result = num1 + num2; break;
-            case '-': result = num1 - num2; break;
-            case '*': result = num1 * num2; break;
-            case '/': 
-                if (num2 === 0) return "❌ Nuk mund të pjesëtohet me zero!";
-                result = num1 / num2; 
-                break;
-            default: return null;
-        }
-        
-        return `🧮 Rezultati: ${num1} ${operator} ${num2} = ${result}`;
-    } catch (error) {
-        return null;
-    }
-}
-
-// ✅ KONTROLLO NËSE PËRGJIGJA ËSHTË GJENERIKE
-function isGenericResponse(response) {
-    if (!response) return true;
-    
-    const genericPatterns = [
-        'e kuptoj',
-        'përdorni /ndihmo', 
-        'nuk kuptova',
-        'nuk jam i sigurt',
-        'mund të përsërisni'
-    ];
-    
-    return genericPatterns.some(pattern => 
-        response.toLowerCase().includes(pattern)
-    );
-}
-
-// ✅ RUTA PËR PANELIN E NDIHMËS
+// ✅ KODI EKZISTUES - MERR HISTORINË E BISEDËS
+// ✅ RUTA E RE PËR PANELIN E NDIHMËS ME BUTONA - Shto në routes/chat.js ekzistues
 router.get('/help-panel', async (req, res) => {
     try {
         const helpPanel = `
@@ -568,5 +446,97 @@ router.post('/feedback', (req, res) => {
         }
     );
 });
+
+// ============================================ Sistemi lokal i inteligjencës =======================================
+class LocalChatIntelligence {
+    constructor() {
+        this.knowledgeBase = {
+            greetings: {
+                patterns: ['pershendetje', 'hello', 'hi', 'tung', 'ciao', 'mirëmëngjes', 'mirëdita', 'mirëmbrëma'],
+                responses: [
+                    'Përshëndetje! 😊 Mirë se ju gjetëm!',
+                    "Hello! Si mund t'ju ndihmoj sot?",
+                    'Tungjatjeta! Gëzohem që ju shoh!',
+                    'Përshëndetje! Çfarë mund të bëj për ju?'
+                ]
+            },
+            farewells: {
+                patterns: ['mirupafshim', 'bye', 'lamtumirë', 'shëndet', 'flm', 'faleminderit'],
+                responses: [
+                    'Mirupafshim! 😊 Ishte kënaqësi të flisja me ju!',
+                    'Lamtumirë! Shpresoj të flasim sërish!',
+                    'Faleminderit! Ju uroj një ditë të mbarë!',
+                    'Shëndet! Mos u largoni shumë!'
+                ]
+            },
+            help: {
+                patterns: ['ndihmo', 'help', 'komanda', 'si punon', 'çfarë mund të bësh'],
+                responses: [
+                    'Unë jam RRUFE-TESLA! Mund të:\n• Të përgjigjem pyetjeve bazë\n• Të llogarit matematikë\n• Të kujtoj bisedat tona\n• Të ndihmoj me informacione\n\nShkruani pyetjen tuaj!'
+                ]
+            },
+            math: {
+                patterns: ['+', '-', '*', '/', '^', 'llogarit', 'sa është'],
+                responses: []
+            },
+            // ... më shumë kategori
+        };
+    }
+
+    processMessage(message) {
+        const lowerMessage = message.toLowerCase();
+        
+        // Kontrollo nëse është matematikë
+        if (this.isMathExpression(message)) {
+            return this.solveMath(message);
+        }
+        
+        // Kontrollo kategori të tjera
+        for (let category in this.knowledgeBase) {
+            for (let pattern of this.knowledgeBase[category].patterns) {
+                if (lowerMessage.includes(pattern)) {
+                    const responses = this.knowledgeBase[category].responses;
+                    return responses[Math.floor(Math.random() * responses.length)];
+                }
+            }
+        }
+        
+        // Përgjigje default
+        return this.getDefaultResponse();
+    }
+
+    isMathExpression(text) {
+        const mathRegex = /^[\d+\-*/().^ ]+$/;
+        return mathRegex.test(text.replace(/\s/g, ''));
+    }
+
+    solveMath(expression) {
+        try {
+            // Pastro dhe siguro shprehjen
+            let cleanExpr = expression.replace(/[^0-9+\-*/().^]/g, '');
+            
+            // Zëvendëso ^ me ** për fuqi
+            cleanExpr = cleanExpr.replace(/\^/g, '**');
+            
+            // Përdor Function constructor për llogaritje të sigurt
+            const result = Function(`"use strict"; return (${cleanExpr})`)();
+            
+            return `🧮 Rezultati: **${result}**`;
+        } catch (error) {
+            return '❌ Nuk mund ta llogaris shprehjen matematikore.';
+        }
+    }
+
+    getDefaultResponse() {
+        const defaultResponses = [
+            'Interesante! Çfarë mendoni ju për këtë?',
+            'E kuptoj! A keni ndonjë pyetje tjetër?',
+            'Faleminderit për këtë informacion!',
+            'Po dëgjoj... vazhdoni ju lutem!',
+            'Kjo është shumë interesante!'
+        ];
+        return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
+    }
+}
 
 module.exports = router;
