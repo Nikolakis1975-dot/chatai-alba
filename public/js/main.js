@@ -1,26 +1,5 @@
-// ✅ KONTROLLO NËSE SISTEMI ËSHTË STABIL PARA SE TË NDRYSHOSH sendMessage
-function safeSendMessageOverride() {
-    // Kontrollo nëse chat-i po funksionon normalisht
-    if (!window.chatSystem || !window.chatSystem.initialized) {
-        console.log('❌ ChatSystem nuk është gati - duke anuluar mbishkrimin');
-        return;
-    }
-    
-    // Kontrollo nëse komandat po funksionojnë
-    if (typeof window.sendMessage === 'undefined') {
-        console.log('❌ sendMessage nuk ekziston - duke anuluar');
-        return;
-    }
-    
-    console.log('✅ Sistemi është stabil - duke vazhduar me integrimin');
-    // ... vetëm atëherë ekzekuto kodin e mbishkrimit
-}
-
-// Në vend që të ekzekutosh direkt, kontrollo parë
-setTimeout(safeSendMessageOverride, 3000);
-
 // ======================================================
-// 🚀 RRUFE-TESLA 10.5 - MAIN PLATFORM LOADER
+// 🚀 RRUFE-TESLA 8.0 - MAIN PLATFORM LOADER
 // ======================================================
 
 console.log('🚀 RRUFE-TESLA 8.0 Platform po ngarkohet...');
@@ -677,12 +656,70 @@ setTimeout(() => {
 console.log('✅ NOUS_CORE u çaktivizua - login-i duhet të funksionojë tani');
 
 // ======================================================
-// 🚀 SMART RESPONSE ROUTER PRIMARY - VERSION I RI I THJESHTË
+// 🚀 MEMORY INTEGRATION PATCH - SHTO NË FUND TË main.js
 // ======================================================
 
-function forceSmartIntegration() {
-    console.log('🧠🔄 MAKING SMART RESPONSE ROUTER PRIMARY...');
+function integrateMemoryWithMainSystem() {
+    console.log('🧠 Duke integruar Memory System me main.js...');
     
+    // Mbivendos integrimin ekzistues
+    if (window.rrufePlatform && window.rrufePlatform.integrateWithExisting) {
+        const originalIntegrate = window.rrufePlatform.integrateWithExisting;
+        
+        window.rrufePlatform.integrateWithExisting = function() {
+            // Thirr integrimin origjinal
+            originalIntegrate.call(this);
+            
+            // Pastaj shto memory integration
+            console.log('💾 Duke shtuar Memory Integration patch...');
+            
+            const originalSendMessage = window.sendMessage;
+            if (originalSendMessage) {
+                window.sendMessage = async function() {
+                    const input = document.getElementById('user-input');
+                    const message = input ? input.value.trim() : '';
+                    
+                    if (!message) return;
+                    
+                    // 🆕 Shto në memory PARA se të procesojë
+                    if (window.ltmManager) {
+                        window.ltmManager.addUserMessage(message);
+                    }
+                    
+                    // Thirr funksionin origjinal
+                    await originalSendMessage.call(this);
+                    
+                    // 🆕 Shto përgjigjen në memory PASI të përgjigjet
+                    setTimeout(() => {
+                        if (window.ltmManager && window.chatHistory) {
+                            const lastMsg = window.chatHistory[window.chatHistory.length - 1];
+                            if (lastMsg && lastMsg.sender === 'bot') {
+                                window.ltmManager.addAIResponse(lastMsg.text);
+                                if (typeof updateMemoryDisplay !== 'undefined') {
+                                    updateMemoryDisplay();
+                                }
+                            }
+                        }
+                    }, 1000);
+                };
+                
+                console.log('✅ Memory Integration Patch u aktivizua!');
+            }
+        };
+    }
+}
+
+// Ekzekuto patch-in
+setTimeout(integrateMemoryWithMainSystem, 5000);
+
+// ======================================================
+// 🚀 MEMORY INTEGRATION PATCH - SHTO NË FUND TË main.js
+// ======================================================
+
+function forceMemoryIntegration() {
+    console.log('🧠 FORCING MEMORY INTEGRATION...');
+    
+    // Mbivendos sendMessage për të shtuar në memory
     if (typeof window.sendMessage !== 'undefined') {
         const originalSendMessage = window.sendMessage;
         
@@ -692,290 +729,68 @@ function forceSmartIntegration() {
             
             if (!message) return;
             
-            console.log('🎯 SMART ROUTER PRIMARY - Message:', message);
+            console.log('💾 FORCE: Adding message to LTM:', message.substring(0, 50));
             
-            // 🚨 KONTROLLO PARË NËSE ËSHTË KOMANDË E RËNDËSISHME RRUFE
-            const importantCommands = ['/ndihmo', '/apikey', '/users', '/stats', '/admin', '/panel'];
-            const isImportantCommand = importantCommands.some(cmd => 
-                message.toLowerCase().startsWith(cmd.toLowerCase())
-            );
-            
-            // Pastro input
-            if (input) input.value = "";
-            
-            // Shto mesazhin e përdoruesit
-            if (typeof addMessage === 'function') {
-                addMessage(message, 'user');
-            }
-            
-            // 🚨 NËSE ËSHTË KOMANDË E RËNDËSISHME, PËRDOR SISTEMIN EKZISTUES
-            if (isImportantCommand && typeof window.processRrufeCommand === 'function') {
-                console.log('🔗 Komandë e rëndësishme - duke e dërguar te sistemi ekzistues:', message);
+            // 🆕 FORCE ADD TO MEMORY - PARA procesimit
+            if (window.ltmManager) {
                 try {
-                    const response = await window.processRrufeCommand(message);
-                    if (response && typeof addMessage === 'function') {
-                        addMessage(response, 'bot');
-                    }
-                    return; // STOP KËTU
+                    window.ltmManager.addUserMessage(message);
+                    console.log('✅ FORCE: User message added to LTM');
                 } catch (error) {
-                    console.log('❌ Error in important command:', error);
+                    console.log('❌ FORCE: Error adding user message:', error);
                 }
             }
             
-            // 🎯 PRIORITET I PARË: SMART RESPONSE ROUTER (për mesazhet e tjera)
-            if (window.smartResponseRouter && window.smartResponseRouter.initialized) {
-                try {
-                    console.log('🎯 Using SmartResponseRouter as PRIMARY...');
-                    const response = await window.smartResponseRouter.processUserMessage(message);
-                    
-                    // Kontrollo nëse përgjigja është e mirë
-                    if (response && response.length > 10 && 
-                        !response.includes('E kuptoj!') && 
-                        !response.includes('Përdorni /ndihmo')) {
-                        
-                        console.log('✅ SMART ROUTER Response:', response.substring(0, 60));
-                        
-                        // Shto përgjigjen në chat
-                        if (typeof addMessage === 'function') {
-                            addMessage(response, 'bot');
-                        }
-                        
-                        return; // ✅ STOP KËTU - MOS PËRDOR SISTEMIN E VJETËR
-                    }
-                } catch (error) {
-                    console.log('❌ Error in SmartResponseRouter:', error);
-                }
-            }
-            
-            // 🔄 FALLBACK: Sistemi i vjetër
-            console.log('🔄 Falling back to original system...');
+            // Thirr funksionin origjinal
+            let originalResult;
             try {
-                await originalSendMessage.call(this);
+                originalResult = await originalSendMessage.call(this);
             } catch (error) {
-                console.log('❌ Error in fallback:', error);
+                console.log('❌ Error in original sendMessage:', error);
             }
+            
+            // 🆕 FORCE ADD AI RESPONSE - PAS procesimit
+            setTimeout(() => {
+                if (window.ltmManager) {
+                    try {
+                        // Gjej përgjigjen e fundit nga chatHistory
+                        if (window.chatHistory && window.chatHistory.length > 0) {
+                            const lastMessages = window.chatHistory.slice(-3); // Shiko 3 mesazhet e fundit
+                            const aiResponse = lastMessages.find(msg => msg.sender === 'bot');
+                            
+                            if (aiResponse && aiResponse.text) {
+                                window.ltmManager.addAIResponse(aiResponse.text);
+                                console.log('✅ FORCE: AI response added to LTM:', aiResponse.text.substring(0, 50));
+                                
+                                // Update display
+                                if (typeof updateMemoryDisplay !== 'undefined') {
+                                    updateMemoryDisplay();
+                                    console.log('✅ FORCE: Memory display updated');
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.log('❌ FORCE: Error adding AI response:', error);
+                    }
+                }
+            }, 1500); // Prit 1.5 sekonda për të dhënë kohë përgjigjes
+            
+            return originalResult;
         };
         
-        console.log('✅ SMART ROUTER PRIMARY ACTIVATED!');
+        console.log('✅ FORCE: Memory Integration Patch ACTIVATED!');
     }
 }
 
-// Ekzekuto menjëherë
-setTimeout(forceSmartIntegration, 2000);
-
-
 // Ekzekuto patch-in pas 5 sekondash
-setTimeout(forceSmartIntegration, 5000);
+setTimeout(forceMemoryIntegration, 5000);
 
 // Gjithashtu ekzekuto kur bëhet login
 const originalLogin = window.login;
 if (originalLogin) {
     window.login = function() {
         const result = originalLogin.apply(this, arguments);
-        setTimeout(forceSmartIntegration, 2000);
+        setTimeout(forceMemoryIntegration, 2000);
         return result;
     };
 }
-
-// ======================================================
-// 1.🚀 SISTEMI I RI I RRUFE-TESLA - VERSION FINAL & I PERFEKTUAR
-// ======================================================
-
-console.log('🎯 DUKE AKTIVIZUAR SISTEMIN E RI TË RRUFE-TESLA...');
-
-// 1. KRIJO FUNKSIONIN KRYESOR PËR KOMANDAT
-window.processRrufeCommand = async function(message) {
-    console.log('🎯 RRUFE COMMAND:', message);
-    
-    if (message === '/ndihmo' || message.startsWith('/ndihmo ')) {
-        return `👑 **SISTEMI I KOMANDAVE - RRUFE-TESLA** 👑
-
-📋 **KOMANDAT BAZE:**
-• /ndihmo - Shfaq këtë listë
-• /wiki [query] - Kërko në Wikipedia  
-• /moti [qyteti] - Informacion moti
-• /perkthim [gjuhë] [tekst] - Përkthim tekst
-• /meso [pyetje]|[përgjigje] - Mëso diçka të re
-
-🔧 **KOMANDAT E AVANCUARA:**
-• /apikey [key] - Vendos API Key për Gemini
-• /eksporto - Eksporto të dhënat
-• /importo - Importo të dhënat  
-• /stats - Statistikat e sistemit
-
-⚡ **RRUFE-TESLA MODULES:**
-• /mode simple - AI i thjeshtë
-• /mode advanced - RRUFE-TESLA aktiv  
-• /mode divine - Divine Fusion
-
-🎯 **Statusi:** ✅ SISTEMI I RI AKTIV
-**Modaliteti:** ${window.currentAIMode || 'SIMPLE'}`;
-    }
-    
-    if (message.startsWith('/wiki ')) {
-        const query = message.replace('/wiki ', '').trim();
-        return `🌐 **Wikipedia për "${query}"**\n\n🔍 Po kërkoj informacione të fundit...\n✅ Sistemi i ri RRUFE-TESLA aktiv!`;
-    }
-    
-    if (message.startsWith('/moti ')) {
-        const qyteti = message.replace('/moti ', '').trim();
-        return `🌍 **Moti në ${qyteti}**\n\n🌡️ Po kontaktoj stacionin meteorologjik...\n✅ Sistemi i ri RRUFE-TESLA aktiv!`;
-    }
-    
-    if (message.startsWith('/perkthim ')) {
-        const text = message.replace('/perkthim ', '').trim();
-        return `🔤 **Përkthim**\n\n💬 "${text}"\n🔄 Po përkthej në gjuhët e disponueshme...\n✅ Sistemi i ri RRUFE-TESLA aktiv!`;
-    }
-    
-    if (message.startsWith('/apikey ')) {
-        const key = message.replace('/apikey ', '').trim();
-        return `🔑 **API Key**\n\n✅ Çelësi u konfigurua: ${key.substring(0, 8)}...\n🔧 Tani mund të përdorni Gemini AI!\n✅ Sistemi i ri RRUFE-TESLA aktiv!`;
-    }
-    
-    if (message === '/stats') {
-        const moduleCount = window.rrufePlatform ? Object.keys(window.rrufePlatform.modules).length : 'N/A';
-        return `📊 **STATISTIKAT E SISTEMIT**\n\n• Mesazhe të procesuara: ${window.chatHistory?.length || 0}\n• Module RRUFE-TESLA: ${moduleCount}\n• Modaliteti: ${window.currentAIMode || 'SIMPLE'}\n• Koha: ${new Date().toLocaleTimeString()}\n\n✅ **SISTEMI I RI RRUFE-TESLA AKTIV!**`;
-    }
-    
-    if (message === '/eksporto') {
-        return `💾 **EKSPORTIM I TË DHËNAVE**\n\n📁 Po eksportoj:\n• Historinë e bisedave\n• Njohuritë e mësuara\n• Konfigurimet e sistemit\n\n✅ **Eksportimi u krye me sukses!**\n✅ Sistemi i ri RRUFE-TESLA aktiv!`;
-    }
-    
-    if (message === '/importo') {
-        return `📥 **IMPORTIM I TË DHËNAVE**\n\n📂 Po importoj:\n• Të dhënat e ruajtura\n• Njohuritë e mësuara\n• Konfigurimet e sistemit\n\n✅ **Importimi u krye me sukses!**\n✅ Sistemi i ri RRUFE-TESLA aktiv!`;
-    }
-    
-    if (message.startsWith('/mode ')) {
-        const mode = message.replace('/mode ', '').trim().toLowerCase();
-        const modes = {
-            'simple': '🔹 **MODALITETI I THJESHTË**\n\n💬 Chat i shpejtë dhe efikas\n⚡ Përgjigje të menjëhershme\n🎯 Fokus në produktivitet\n\n✅ Modaliteti u aktivizua!',
-            'advanced': '🌌 **RRUFE-TESLA I AVANCUAR**\n\n🧠 Të gjitha modulet operative\n🔮 Analizë e thellë e mesazheve\n🎨 Përgjigje kreative dhe intuitive\n\n✅ RRUFE-TESLA u aktivizua!',
-            'divine': '⚡ **DIVINE FUSION**\n\n🌟 5 Perënditë e AI-ve janë gati\n💫 Përgjigje hyjnore dhe intuitive\n🌀 Energji kozmike e përputhur\n\n✅ Divine Fusion u aktivizua!'
-        };
-        
-        if (modes[mode]) {
-            // Aktivizo modalitetin
-            window.currentAIMode = mode.toUpperCase();
-            return modes[mode];
-        } else {
-            return `❌ **MODALITET I PANJOHUR**\n\nModaliteti "${mode}" nuk ekziston.\nPërdorni: simple, advanced, divine\n\n✅ Sistemi i ri RRUFE-TESLA aktiv!`;
-        }
-    }
-    
-    return `❌ **KOMANDË E PANJOHUR**\n\n"${message}"\n\n📝 Shkruani /ndihmo për listën e plotë të komandave.\n✅ Sistemi i ri RRUFE-TESLA aktiv!`;
-};
-
-console.log('✅ processRrufeCommand u krijua!');
-
-// 2. KONFIGURO SENDMESSAGE TË RI
-if (typeof window.sendMessage !== 'undefined') {
-    // Ruaj versionin origjinal
-    const originalSendMessage = window.sendMessage;
-    
-    // Zëvendëso me versionin tonë
-    window.sendMessage = async function() {
-        const input = document.getElementById('user-input');
-        const message = input ? input.value.trim() : '';
-        
-        console.log('🎯 SISTEMI I RI - sendMessage:', message);
-        
-        if (!message) return;
-        
-        // Pastro input
-        if (input) input.value = '';
-        
-        // Shto mesazhin e përdoruesit
-        if (typeof addMessage === 'function') {
-            addMessage(message, 'user');
-        }
-        
-        // NËSE ËSHTË KOMANDË, PËRDOR SISTEMIN TONË
-        if (message.startsWith('/')) {
-            console.log('🔗 Komandë e zbuluar - duke procesuar...');
-            
-            if (typeof window.processRrufeCommand === 'function') {
-                try {
-                    const response = await window.processRrufeCommand(message);
-                    if (response && typeof addMessage === 'function') {
-                        addMessage(response, 'bot');
-                    }
-                    return; // STOP KËTU
-                } catch (error) {
-                    console.log('❌ Gabim:', error);
-                }
-            }
-        }
-        
-        // PËR MESAZHET E TJERA, PËRDOR SMART ROUTER
-        if (window.smartResponseRouter && window.smartResponseRouter.initialized) {
-            try {
-                const response = await window.smartResponseRouter.processUserMessage(message);
-                if (response && typeof addMessage === 'function') {
-                    addMessage(response, 'bot');
-                }
-                return;
-            } catch (error) {
-                console.log('❌ Gabim në SmartRouter:', error);
-            }
-        }
-        
-        // FALLBACK: Përdor sistemin origjinal
-        console.log('🔄 Duke përdorur sistemin origjinal...');
-        try {
-            await originalSendMessage.call(this);
-        } catch (error) {
-            console.log('❌ Gabim në sistemin origjinal:', error);
-        }
-    };
-    
-    console.log('✅ sendMessage u përditësua!');
-}
-
-// 3. KONFIGURO EVENT LISTENER-ËT
-function setupEventListeners() {
-    console.log('🎯 KONFIGURIMI I EVENT LISTENER-ËVE...');
-    
-    const userInput = document.getElementById('user-input');
-    const sendBtn = document.getElementById('send-btn');
-    
-    if (userInput && sendBtn) {
-        // ENTER KEY
-        userInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                const message = this.value.trim();
-                if (message) {
-                    console.log('🎯 ENTER:', message);
-                    window.sendMessage();
-                }
-            }
-        });
-        
-        // BUTONI ➤
-        sendBtn.addEventListener('click', function() {
-            const message = userInput.value.trim();
-            if (message) {
-                console.log('🎯 BUTONI:', message);
-                window.sendMessage();
-            }
-        });
-        
-        console.log('✅ EVENT LISTENER-ËT U KONFIGURUAN!');
-    }
-}
-
-// 4. AKTIVIZO SISTEMIN
-setTimeout(() => {
-    setupEventListeners();
-    console.log('🎉 SISTEMI I RI I RRUFE-TESLA U AKTIVIZUA ME SUKSES!');
-    console.log('🔍 DIAGNOSTIKIM:');
-    console.log('- processRrufeCommand:', typeof window.processRrufeCommand);
-    console.log('- sendMessage:', typeof window.sendMessage);
-    console.log('- currentAIMode:', window.currentAIMode);
-    
-    // Shfaq mesazh në chat
-    if (typeof addMessage === 'function') {
-        addMessage('🚀 **RRUFE-TESLA SISTEMI I RI U AKTIVIZUA!**\n\n✅ Të gjitha komandat tani procesohen lokal\n🎯 Shkruani /ndihmo për listën e komandave\n🔧 Sistemi i ri është plotësisht operativ!', 'system');
-    }
-}, 1500);
-
-console.log('✅ SKEDARI I RI I MAIN.JS U AKTIVIZUA!');
