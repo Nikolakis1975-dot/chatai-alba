@@ -182,135 +182,42 @@ class ChatSystem {
         }
     }
 
-   // ==================================== learnFromInteraction ============================
-
-    async learnFromInteraction(question, answer, metadata = {}) {
-    console.log("🎓 Duke u përpjekur të mësoj nga interaksioni...");
-    
-    try {
-        // ✅ KONTROLLO NËSE ËSHTË PËRGJIGJE E MIRË PËR TU RUAJTUR
-        if (!answer || answer.length < 50) {
-            console.log("ℹ️ Përgjigja shumë e shkurtër për tu ruajtur");
-            return;
-        }
-
-        // ✅ KONTROLLO NËSE ËSHTË PËRGJIGJE GJENERIKE
-        const genericPatterns = [
-            'e kuptoj', 'përdorni /ndihmo', 'nuk kuptova', 
-            'mund të përsërisni', 'nuk jam i sigurt', 'kjo është një pyetje interesante'
-        ];
-        
-        const isGeneric = genericPatterns.some(pattern => 
-            answer.toLowerCase().includes(pattern)
-        );
-        
-        if (isGeneric) {
-            console.log("ℹ️ Përgjigje gjenerike - nuk ruhet");
-            return;
-        }
-
-        // ✅ KONTROLLO NËSE VIEN NGA GEMINI (përmban informacion të detajuar)
-        const isFromGemini = answer.length > 100 || 
-                            answer.includes('**') || 
-                            answer.includes('•') ||
-                            answer.toLowerCase().includes('është') ||
-                            metadata.source === 'gemini_api';
-
-        if (!isFromGemini) {
-            console.log("ℹ️ Nuk është përgjigje nga Gemini - nuk ruhet");
-            return;
-        }
-
-        console.log("💾 Duke ruajtur përgjigjen nga Gemini...");
-
-        // 🎯 METODA 1: PROVO KNOWLEDGEDISTILLER PARË
-        if (window.knowledgeDistiller && typeof window.knowledgeDistiller.addKnowledge === 'function') {
-            const knowledgeKey = this.generateKnowledgeKey(question);
-            
-            await window.knowledgeDistiller.addKnowledge(knowledgeKey, {
-                question: question,
-                answer: answer,
-                learnedAt: new Date().toISOString(),
-                source: 'gemini_api',
-                category: this.detectCategory(question),
-                usageCount: 0,
-                lastUsed: null
-            }, 'gemini_learned');
-            
-            console.log("✅ U ruajt në KnowledgeDistiller:", knowledgeKey);
-            return;
-        }
-
-        // 🔄 METODA 2: PROVO KNOWLEDGEINTEGRATION
-        else if (window.knowledgeIntegration && typeof window.knowledgeIntegration.learnFromInteraction === 'function') {
-            await window.knowledgeIntegration.learnFromInteraction(question, answer, {
-                category: 'gemini_learned',
-                timestamp: new Date().toISOString(),
-                source: 'gemini_api',
-                complexity: 'high'
-            });
-            console.log("✅ U ruajt në KnowledgeIntegration");
-            return;
-        }
-
-        // 🆘 METODA 3: LOCALSTORAGE FALLBACK
-        else {
-            const saved = this.saveToLocalStorage(question, answer);
-            if (saved) {
-                console.log("✅ U ruajt në LocalStorage (fallback)");
+    async learnFromInteraction(question, answer) {
+        try {
+            // 🎯 PROVO KNOWLEDGEINTEGRATION PARË
+            if (window.knowledgeIntegration && typeof window.knowledgeIntegration.learnFromInteraction === 'function') {
+                await window.knowledgeIntegration.learnFromInteraction(question, answer, {
+                    category: 'conversation',
+                    timestamp: new Date().toISOString(),
+                    source: 'chat_system'
+                });
+                console.log("🎓 U mësua nga interaksioni!");
             }
+            // 🎯 PROVO KNOWLEDGEDISTILLER SI FALLBACK
+            else if (window.knowledgeDistiller && typeof window.knowledgeDistiller.learnFromInteraction === 'function') {
+                await window.knowledgeDistiller.learnFromInteraction(question, answer, {
+                    category: 'conversation'
+                });
+                console.log("🎓 U mësua nga interaksioni (fallback)!");
+            }
+            // 🔄 PROVO ADDKNOWLEDGE SI FALLBACK EMERGJENT
+            else if (window.knowledgeDistiller && typeof window.knowledgeDistiller.addKnowledge === 'function') {
+                const knowledgeKey = question.substring(0, 30).replace(/[^\w]/g, '_');
+                await window.knowledgeDistiller.addKnowledge(knowledgeKey, {
+                    question: question,
+                    answer: answer,
+                    learnedAt: new Date().toISOString()
+                }, 'conversation');
+                console.log("🎓 U mësua nga interaksioni (emergjent)!");
+            }
+            else {
+                console.log("ℹ️ Nuk ka sistem mësimi të disponueshëm");
+            }
+        } catch (error) {
+            console.error("❌ Gabim në mësimin nga interaksioni:", error);
         }
-
-    } catch (error) {
-        console.error("❌ Gabim në mësimin nga interaksioni:", error);
     }
-},
 
-// ✅ FUNKSION I RI: GJENERO ÇELËS UNIK
-generateKnowledgeKey(question) {
-    return question
-        .toLowerCase()
-        .replace(/[^\w\s]/g, '')
-        .replace(/\s+/g, '_')
-        .substring(0, 30) + '_' + Date.now();
-},
-
-// ✅ FUNKSION I RI: ZBULO KATEGORINË
-detectCategory(question) {
-    const lowerQ = question.toLowerCase();
-    if (lowerQ.includes('ai') || lowerQ.includes('teknologji') || lowerQ.includes('programim') || lowerQ.includes('kompjuter')) {
-        return 'technology';
-    } else if (lowerQ.includes('shkenc') || lowerQ.includes('fizik') || lowerQ.includes('kim') || lowerQ.includes('biologji')) {
-        return 'science';
-    } else if (lowerQ.includes('libër') || lowerQ.includes('edukim') || lowerQ.includes('shkoll') || lowerQ.includes('universitet')) {
-        return 'education';
-    } else if (lowerQ.includes('shëndet') || lowerQ.includes('mjekësi') || lowerQ.includes('spital')) {
-        return 'health';
-    } else {
-        return 'general';
-    }
-},
-
-// ✅ FUNKSION I RI: RUAJ NË LOCALSTORAGE
-saveToLocalStorage(question, answer) {
-    try {
-        const key = 'rrufe_gemini_' + this.generateKnowledgeKey(question);
-        const knowledge = {
-            question: question,
-            answer: answer,
-            timestamp: new Date().toISOString(),
-            category: this.detectCategory(question),
-            source: 'gemini_api',
-            usageCount: 0
-        };
-        localStorage.setItem(key, JSON.stringify(knowledge));
-        return true;
-    } catch (e) {
-        console.error("❌ Gabim në localStorage:", e);
-        return false;
-    }
-}
-    
     addMessageToChat(message, sender) {
     console.log(`📝 Duke shtuar mesazh nga ${sender}...`);
     
