@@ -1053,81 +1053,31 @@ window.testRrufeCommands = function() {
 };
 
 console.log('🎉 SISTEMI I RI I KOMANDAVE RRUFE-TESLA U SHTUA!');
-
 // ======================================================
-// 🚨 ÇAKTIVIZIMI I SISTEMIT TË VJETËR - VERSION RADIKAL
-// ======================================================
-
-function disableLegacySystem() {
-    console.log('🛑 DUKE ÇAKTIVIZUAR SISTEMIN E VJETËR...');
-    
-    // Çaktivizo event listener-ët e vjetër
-    const userInput = document.getElementById('user-input');
-    if (userInput) {
-        userInput.replaceWith(userInput.cloneNode(true));
-    }
-    
-    const sendBtn = document.getElementById('send-btn');
-    if (sendBtn) {
-        sendBtn.replaceWith(sendBtn.cloneNode(true));
-    }
-    
-    // Krijo event listener-ë të rinj TË FORTUAR
-    setTimeout(() => {
-        const newInput = document.getElementById('user-input');
-        const newBtn = document.getElementById('send-btn');
-        
-        if (newInput && newBtn) {
-            // Event për ENTER
-            newInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    const message = this.value.trim();
-                    if (message) {
-                        console.log('🎯 NEW ENTER HANDLER:', message);
-                        processMessageDirectly(message);
-                    }
-                }
-            });
-            
-            // Event për butonin ➤
-            newBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                const message = newInput.value.trim();
-                if (message) {
-                    console.log('🎯 NEW BUTTON HANDLER:', message);
-                    processMessageDirectly(message);
-                }
-            });
-            
-            console.log('✅ EVENT LISTENER-ËT E RINJ U KONFIGURUAN!');
-        }
-    }, 100);
-}
-
-// ======================================================
-// 🎯 FUNKSION I RI PËR PROCESIM TË DIREKT
+// 🔧 PATCH I KORRIGJUAR PËR sendMessage - VERSION FINAL
 // ======================================================
 
-async function processMessageDirectly(message) {
-    console.log('🎯 PROCESSING DIRECTLY:', message);
-    
-    // Pastro input
+// Ruaj versionin origjinal
+const originalSendMessage = window.sendMessage;
+
+// Mbishkruaj komplet POR me timing të duhur
+window.sendMessage = async function() {
     const input = document.getElementById('user-input');
-    if (input) input.value = '';
+    const message = input ? input.value.trim() : '';
     
-    // Shto mesazhin e përdoruesit
+    console.log('🎯 PATCHED sendMessage:', message);
+    
+    if (!message) return;
+    
+    // 🚨 MOS E PASTRO INPUT MENJËHERË - lëre sistemin origjinal ta bëjë këtë
+    // Vetëm shto mesazhin e përdoruesit
     if (typeof addMessage === 'function') {
         addMessage(message, 'user');
     }
     
-    // 🚨 KONTROLLO NËSE ËSHTË KOMANDË
+    // 🚨 NËSE ËSHTË KOMANDË, PROCESOJE DIRECT
     if (message.startsWith('/')) {
-        console.log('🔗 Komandë - duke procesuar...');
+        console.log('🔗 Komandë e zbuluar - duke procesuar...');
         
         if (typeof window.processRrufeCommand === 'function') {
             try {
@@ -1135,61 +1085,54 @@ async function processMessageDirectly(message) {
                 if (response && typeof addMessage === 'function') {
                     addMessage(response, 'bot');
                 }
-                return;
+                
+                // 🎯 TANI pastro input PASI të ketë përfunduar procesimi
+                if (input) input.value = '';
+                return; // 🛑 STOP KËTU
             } catch (error) {
-                console.log('❌ Error in processRrufeCommand:', error);
+                console.log('❌ Error:', error);
             }
         }
     }
     
-    // 🎯 SMART RESPONSE ROUTER
+    // 🎯 PËRNDRYSHE PËRDOR SMART ROUTER
     if (window.smartResponseRouter && window.smartResponseRouter.initialized) {
         try {
-            console.log('🎯 Using SmartResponseRouter...');
             const response = await window.smartResponseRouter.processUserMessage(message);
-            
             if (response && typeof addMessage === 'function') {
                 addMessage(response, 'bot');
             }
-            return;
             
+            // 🎯 TANI pastro input PASI të ketë përfunduar procesimi
+            if (input) input.value = '';
+            return; // 🛑 STOP KËTU
         } catch (error) {
-            console.log('❌ Error in SmartResponseRouter:', error);
+            console.log('❌ Error in SmartRouter:', error);
         }
     }
     
-    // 🔄 FALLBACK
-    console.log('🔄 Falling back to basic response...');
-    if (typeof addMessage === 'function') {
-        addMessage('Më falni, sistemi po punon në rregullime. Provo përsëri.', 'bot');
+    // 🔄 NËSE ASGJË NUK FUNKSIONON, PËRDOR ORIGJINALIN
+    console.log('🔄 Duke përdorur sendMessage origjinal...');
+    try {
+        await originalSendMessage.call(this);
+        // 🎯 Sistemi origjinal do të pastrojë input-in
+    } catch (error) {
+        console.log('❌ Error in original:', error);
     }
-}
-
-// ======================================================
-// 🚀 EKZEKUTIMI I MENJËHERËSHËM
-// ======================================================
-
-// Prit deri të ngarkohet faqja
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('📄 FAQJA U NGARKUA - DUKE AKTIVIZUAR SISTEMIN E RI...');
-    
-    setTimeout(() => {
-        disableLegacySystem();
-        console.log('✅ SISTEMI I RI U AKTIVIZUA!');
-        
-        // Testo nëse funksionon
-        console.log('🧪 TEST I SISTEMIT TË RI:');
-        console.log('- processMessageDirectly:', typeof processMessageDirectly);
-        console.log('- processRrufeCommand:', typeof window.processRrufeCommand);
-        console.log('- sendMessage:', typeof window.sendMessage);
-    }, 1000);
-});
-
-// Funksion për testim të drejtpërdrejtë
-window.testNewSystem = function() {
-    console.log('🧪 TEST I DIREKT I SISTEMIT TË RI:');
-    processMessageDirectly('/ndihmo');
 };
 
-console.log('🎉 SISTEMI I RI I PROCESIMIT U SHTUA!');
+console.log('✅ sendMessage U PATCH-UA ME SUKSES!');
 
+// ======================================================
+// 🎯 TEST I MENJËHERËSHËM
+// ======================================================
+
+setTimeout(() => {
+    console.log('🧪 SISTEMI I RI ËSHTË GATI PËR TEST:');
+    console.log('- sendMessage:', typeof window.sendMessage);
+    console.log('- processRrufeCommand:', typeof window.processRrufeCommand);
+    console.log('- SmartResponseRouter:', window.smartResponseRouter?.initialized);
+    
+    // Testo me një mesazh testues
+    console.log('📝 Shkruaj "/ndihmo" në chat dhe shtyp ENTER');
+}, 2000);
