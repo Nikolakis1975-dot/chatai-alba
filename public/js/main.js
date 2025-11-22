@@ -1053,3 +1053,143 @@ window.testRrufeCommands = function() {
 };
 
 console.log('🎉 SISTEMI I RI I KOMANDAVE RRUFE-TESLA U SHTUA!');
+
+// ======================================================
+// 🚨 ÇAKTIVIZIMI I SISTEMIT TË VJETËR - VERSION RADIKAL
+// ======================================================
+
+function disableLegacySystem() {
+    console.log('🛑 DUKE ÇAKTIVIZUAR SISTEMIN E VJETËR...');
+    
+    // Çaktivizo event listener-ët e vjetër
+    const userInput = document.getElementById('user-input');
+    if (userInput) {
+        userInput.replaceWith(userInput.cloneNode(true));
+    }
+    
+    const sendBtn = document.getElementById('send-btn');
+    if (sendBtn) {
+        sendBtn.replaceWith(sendBtn.cloneNode(true));
+    }
+    
+    // Krijo event listener-ë të rinj TË FORTUAR
+    setTimeout(() => {
+        const newInput = document.getElementById('user-input');
+        const newBtn = document.getElementById('send-btn');
+        
+        if (newInput && newBtn) {
+            // Event për ENTER
+            newInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const message = this.value.trim();
+                    if (message) {
+                        console.log('🎯 NEW ENTER HANDLER:', message);
+                        processMessageDirectly(message);
+                    }
+                }
+            });
+            
+            // Event për butonin ➤
+            newBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const message = newInput.value.trim();
+                if (message) {
+                    console.log('🎯 NEW BUTTON HANDLER:', message);
+                    processMessageDirectly(message);
+                }
+            });
+            
+            console.log('✅ EVENT LISTENER-ËT E RINJ U KONFIGURUAN!');
+        }
+    }, 100);
+}
+
+// ======================================================
+// 🎯 FUNKSION I RI PËR PROCESIM TË DIREKT
+// ======================================================
+
+async function processMessageDirectly(message) {
+    console.log('🎯 PROCESSING DIRECTLY:', message);
+    
+    // Pastro input
+    const input = document.getElementById('user-input');
+    if (input) input.value = '';
+    
+    // Shto mesazhin e përdoruesit
+    if (typeof addMessage === 'function') {
+        addMessage(message, 'user');
+    }
+    
+    // 🚨 KONTROLLO NËSE ËSHTË KOMANDË
+    if (message.startsWith('/')) {
+        console.log('🔗 Komandë - duke procesuar...');
+        
+        if (typeof window.processRrufeCommand === 'function') {
+            try {
+                const response = await window.processRrufeCommand(message);
+                if (response && typeof addMessage === 'function') {
+                    addMessage(response, 'bot');
+                }
+                return;
+            } catch (error) {
+                console.log('❌ Error in processRrufeCommand:', error);
+            }
+        }
+    }
+    
+    // 🎯 SMART RESPONSE ROUTER
+    if (window.smartResponseRouter && window.smartResponseRouter.initialized) {
+        try {
+            console.log('🎯 Using SmartResponseRouter...');
+            const response = await window.smartResponseRouter.processUserMessage(message);
+            
+            if (response && typeof addMessage === 'function') {
+                addMessage(response, 'bot');
+            }
+            return;
+            
+        } catch (error) {
+            console.log('❌ Error in SmartResponseRouter:', error);
+        }
+    }
+    
+    // 🔄 FALLBACK
+    console.log('🔄 Falling back to basic response...');
+    if (typeof addMessage === 'function') {
+        addMessage('Më falni, sistemi po punon në rregullime. Provo përsëri.', 'bot');
+    }
+}
+
+// ======================================================
+// 🚀 EKZEKUTIMI I MENJËHERËSHËM
+// ======================================================
+
+// Prit deri të ngarkohet faqja
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📄 FAQJA U NGARKUA - DUKE AKTIVIZUAR SISTEMIN E RI...');
+    
+    setTimeout(() => {
+        disableLegacySystem();
+        console.log('✅ SISTEMI I RI U AKTIVIZUA!');
+        
+        // Testo nëse funksionon
+        console.log('🧪 TEST I SISTEMIT TË RI:');
+        console.log('- processMessageDirectly:', typeof processMessageDirectly);
+        console.log('- processRrufeCommand:', typeof window.processRrufeCommand);
+        console.log('- sendMessage:', typeof window.sendMessage);
+    }, 1000);
+});
+
+// Funksion për testim të drejtpërdrejtë
+window.testNewSystem = function() {
+    console.log('🧪 TEST I DIREKT I SISTEMIT TË RI:');
+    processMessageDirectly('/ndihmo');
+};
+
+console.log('🎉 SISTEMI I RI I PROCESIMIT U SHTUA!');
+
