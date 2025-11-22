@@ -67,11 +67,8 @@ class ChatSystem {
         const sendBtn = document.getElementById('send-btn');
         
         if (userInput && sendBtn) {
-            console.log("✅ Elementët u gjetën, duke konfiguruar listeners...");
-            
             // Event për butonin Send
             sendBtn.addEventListener('click', () => {
-                console.log("🖱️ Butoni u klikua");
                 const message = userInput.value.trim();
                 if (message) {
                     this.handleUserMessage(message);
@@ -80,11 +77,10 @@ class ChatSystem {
                 }
             });
             
-            // Event për Enter key
+            // Event për Enter key - VERSIONI I RI I KORIGJUAR
             userInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
-                    e.preventDefault();
-                    console.log("🎹 Enter u shtyp");
+                    e.preventDefault(); // ✅ PARANDALO REFRESH-IN E FAQES
                     const message = userInput.value.trim();
                     if (message) {
                         this.handleUserMessage(message);
@@ -94,240 +90,64 @@ class ChatSystem {
                 }
             });
             
-            console.log("✅ Event listeners u konfiguruan me sukses!");
+            console.log("✅ Event listeners u konfiguruan");
         } else {
-            console.log("❌ Elementët e chat-it nuk u gjetën:", {
-                userInput: userInput ? "✅ EKZISTON" : "❌ NUK EKZISTON",
-                sendBtn: sendBtn ? "✅ EKZISTON" : "❌ NUK EKZISTON"
-            });
-            
-            // Provo përsëri pas 1 sekonde
-            setTimeout(() => this.setupEventListeners(), 1000);
+            console.log("⏳ Elementët e chat-it nuk janë gati ende");
+            setTimeout(() => this.setupEventListeners(), 2000);
         }
     }
 
     async handleUserMessage(message) {
-    if (!message || message.trim() === '') {
-        console.log("❌ Mesazhi është bosh");
-        return;
-    }
-    
-    console.log(`💬 Duke procesuar mesazhin: "${message}"`);
-    
-    // Shto mesazhin e përdoruesit në chat
-    this.addMessageToChat(message, 'user');
-    
-    // Shfaq "po mendon..."
-    this.showThinkingIndicator();
-    
-    try {
-        let response;
-        
-        // 🎯 KOMANDA /NDIHMO - KONTROLLO MË PARË
-        if (message.toLowerCase().trim() === '/ndihmo' || message.toLowerCase().trim() === '/help') {
-            console.log("🎯 U zbulua komanda /ndihmo");
-            response = this.getHelpResponse();
-        }
-        // 👋 PËRSHËNDETJE
-        else if (this.isGreeting(message)) {
-            console.log("👋 U zbulua përshëndetje");
-            response = this.getGreetingResponse();
-        }
-        // 🧮 MATEMATIKË
-        else if (this.isMathQuestion(message)) {
-            console.log("🧮 U zbulua pyetje matematikore");
-            response = this.solveMath(message);
-        }
-        // 🧠 PYETJE KOMPLEKSE
-        else if (this.isComplexQuestion(message)) {
-            console.log("💭 U zbulua pyetje komplekse");
-            response = await this.processComplexQuestion(message);
-        }
-        // 🔄 PËRGJIGJE STANDARDE
-        else {
-            console.log("🔀 Duke përdorur përgjigje standarde");
-            response = this.getStandardResponse(message);
+        if (!message || message.trim() === '') {
+            return;
         }
         
-        console.log("📤 Përgjigja e gjeneruar:", response.substring(0, 50) + "...");
+        console.log(`💬 Duke procesuar mesazhin: "${message}"`);
         
-        // Fshi "po mendon..."
-        this.hideThinkingIndicator();
+        // Shto mesazhin e përdoruesit në chat
+        this.addMessageToChat(message, 'user');
         
-        // Shto përgjigjen
-        this.addMessageToChat(response, 'bot');
+        // Shfaq "po mendon..." nëse ekziston
+        this.showThinkingIndicator();
         
-        // Ruaj në njohuri
-        await this.learnFromInteraction(message, response);
-        
-    } catch (error) {
-        console.error("❌ Gabim në procesimin e mesazhit:", error);
-        this.hideThinkingIndicator();
-        this.addMessageToChat("Më falni, pati një gabim në sistem. Provo përsëri.", 'bot');
-    }
-}
-
-// ✅ FUNKSIONET E REJA QË DUHEN SHTUAR:
-
-// 1. Funksioni për /ndihmo
-getHelpResponse() {
-    return `🎯 **RRUFE-TESLA - KOMANDAT:**
-    
-• **/ndihmo** - Shfaq këtë ndihmë
-• **/stats** - Statistikat e sistemit
-• **/mode** - Ndrysho modin e punës
-• **/reset** - Ristejo bisedën
-
-💡 **Shembuj pyetjesh:**
-• "Çfarë është AI?"
-• "Si funksionon blockchain?"
-• "Shpjego machine learning"
-• "Sa është 15 + 25?"
-
-🧠 **Sistemi mëson automatikisht** nga çdo bisedë!`;
-}
-
-// 2. Kontrollo përshëndetje
-isGreeting(message) {
-    const greetings = ['përshëndetje', 'hello', 'hi', 'mirëdita', 'ciao', 'hey'];
-    return greetings.some(greet => message.toLowerCase().includes(greet));
-}
-
-// 3. Përgjigje përshëndetjeje
-getGreetingResponse() {
-    const greetings = [
-        "Përshëndetje! 😊 Si mund t'ju ndihmoj sot?",
-        "Hello! 👋 Mirë se ju gjetëm!",
-        "Mirëdita! ☀️ Çfarë mund të bëj për ju?",
-        "Tungjatjeta! 🎯 Si mund të ndihmoj?"
-    ];
-    return greetings[Math.floor(Math.random() * greetings.length)];
-}
-
-// 4. Kontrollo pyetje matematikore
-isMathQuestion(message) {
-    const mathPatterns = ['sa është', 'sa bëjnë', '+', '-', '*', '/', 'llogarit', 'kalkul'];
-    return mathPatterns.some(pattern => 
-        message.toLowerCase().includes(pattern)
-    ) || /\d+[\+\-\*\/]\d+/.test(message);
-}
-
-// 5. Zgjidh matematikën
-solveMath(message) {
-    try {
-        console.log("🧮 Duke zgjidhur matematikën...");
-        
-        let expression = '';
-        const lowerMsg = message.toLowerCase();
-        
-        // Nxjerr shprehjen matematikore
-        if (lowerMsg.includes('sa është')) {
-            expression = message.split('sa është')[1].replace('?', '').trim();
-        } else if (lowerMsg.includes('sa bëjnë')) {
-            expression = message.split('sa bëjnë')[1].replace('?', '').trim();
-        } else {
-            // Provoj të gjej shprehjen direkt
-            expression = message.replace(/[^\d\+\-\*\/\.\(\)]/g, '').trim();
+        try {
+            let response;
+            
+            // 🎯 PRIORITET I PARË: SMART RESPONSE ROUTER
+            if (this.smartRouterEnabled && window.smartResponseRouter) {
+                console.log("🎯 Duke përdorur SmartResponseRouter...");
+                response = await window.smartResponseRouter.processUserMessage(message);
+                
+                // Nëse SmartRouter dha përgjigje të mirë
+                if (response && !this.isGenericResponse(response)) {
+                    console.log("✅ SmartResponseRouter dha përgjigje të mirë");
+                } else {
+                    console.log("🔄 SmartResponseRouter dha përgjigje gjenerike, duke provuar serverin...");
+                    response = await this.sendToServer(message);
+                }
+            } else {
+                // 🔄 FALLBACK: Dërgo te serveri
+                response = await this.sendToServer(message);
+            }
+            
+            // Fshi "po mendon..."
+            this.hideThinkingIndicator();
+            
+            // Shto përgjigjen në chat
+            this.addMessageToChat(response, 'bot');
+            
+            // 🧠 MËSO NGA INTERAKSIONI
+            await this.learnFromInteraction(message, response);
+            
+        } catch (error) {
+            console.error("❌ Gabim në procesimin e mesazhit:", error);
+            
+            // Fshi "po mendon..."
+            this.hideThinkingIndicator();
+            
+            this.addMessageToChat("Më falni, pati një gabim në sistem. Provo përsëri.", 'bot');
         }
-        
-        if (!expression) {
-            return "Nuk mund ta gjej shprehjen matematikore. Provoni: 'Sa është 5 + 3?'";
-        }
-        
-        // Sigurohu që shprehja është e sigurt
-        if (!/^[\d\+\-\*\/\.\(\)\s]+$/.test(expression)) {
-            return "Shprehja matematikore përmban karaktere të pasigurta.";
-        }
-        
-        // Llogarit rezultatin
-        const result = eval(expression);
-        
-        return `🧮 **${message}** = **${result}**`;
-        
-    } catch (error) {
-        console.error("❌ Gabim në matematikë:", error);
-        return "Nuk mund ta zgjidh këtë shprehje matematikore. Ju lutem provoni një shprehje më të thjeshtë.";
     }
-}
-
-// 6. Kontrollo pyetje komplekse
-isComplexQuestion(message) {
-    const complexPatterns = [
-        'çfarë është', 'si funksionon', 'shpjego', 
-        'shpjegomë', 'detaje', 'mëso më shumë',
-        'ai', 'blockchain', 'teknologji', 'shkenc'
-    ];
-    return complexPatterns.some(pattern => 
-        message.toLowerCase().includes(pattern)
-    );
-}
-
-// 7. Proceso pyetje komplekse
-async processComplexQuestion(message) {
-    console.log("🌐 Duke procesuar pyetje komplekse...");
-    
-    // Simuloj një vonesë të vogël
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    const lowerMsg = message.toLowerCase();
-    
-    if (lowerMsg.includes('çfarë është ai') || lowerMsg.includes('cfare eshte ai')) {
-        return `🤖 **AI (Inteligjenca Artificiale)** është një fushë e shkencës kompjuterike që fokusohet në krijimin e sistemeve që mund të kryejnë detyra që normalisht kërkojnë inteligjencë njerëzore.
-
-**Llojet kryesore:**
-• **Machine Learning** - Mësimi nga të dhënat
-• **Deep Learning** - Rrjetet neuronale  
-• **NLP** - Përpunimi i gjuhës natyrore
-• **Computer Vision** - Njohja e imazheve
-
-💡 **RRUFE-TESLA** është një shembull i AI!`;
-    }
-    
-    if (lowerMsg.includes('blockchain')) {
-        return `⛓️ **Blockchain** është një teknologji e re që ruan të dhëna në mënyrë të decentralizuar dhe të sigurt.
-
-**Karakteristikat kryesore:**
-• **Decentralizim** - Nuk kontrollohet nga një qendër e vetme
-• **Transparencë** - Të gjitha transaksionet janë publike
-• **Siguri** - E pamundur të falsifikohen të dhënat
-• **Imutabilitet** - Të dhënat nuk mund të ndryshohen
-
-💰 Përdoret kryesisht për kriptomonedha si Bitcoin.`;
-    }
-    
-    // Përgjigje e përgjithshme për pyetje komplekse
-    return `🧠 **${message}**
-
-Kjo është një pyetje shumë interesante! Për përgjigje më të detajuara dhe të përditësuara, unë rekomandoj të konsultoni burime specializuese.
-
-💡 **Ndihmë:**
-• Përdorni /ndihmo për më shumë komanda
-• Pyetni më specifikisht për çështje teknike`;
-}
-
-// 8. Përgjigje standarde
-getStandardResponse(message) {
-    const lowerMsg = message.toLowerCase();
-    
-    if (lowerMsg.includes('si jeni') || lowerMsg.includes('si je')) {
-        return "Jam shumë mirë, faleminderit që pyetët! 😊 Si mund t'ju ndihmoj sot?";
-    }
-    
-    if (lowerMsg.includes('faleminderit') || lowerMsg.includes('rrofsh') || lowerMsg.includes('flm')) {
-        return "S'ka përse! 😊 Gjithmonë i lumtur të ndihmoj!";
-    }
-    
-    if (lowerMsg.includes('libër') || lowerMsg.includes('libra')) {
-        return "📚 Interesante! Çfarë lloj libri po kërkoni? Fiction, shkencor, historik, apo diçka tjetër?";
-    }
-    
-    if (lowerMsg.includes('cfare') || lowerMsg.includes('çfarë') || lowerMsg.includes('cka') || lowerMsg.includes('çka')) {
-        return "🤔 Mund t'ju ndihmoj me shumë çështje! Çfarë saktësisht dëshironi të dini? Teknologji, shkencë, programim, apo diçka tjetër?";
-    }
-    
-    return "E kuptoj! 😊 Përdorni /ndihmo për të parë të gjitha komandat e mia.";
-}
-
 
     async sendToServer(message) {
         try {
@@ -344,19 +164,16 @@ getStandardResponse(message) {
                 })
             });
             
-            console.log("📨 Statusi i përgjigjes:", response.status);
-            
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}`);
             }
             
             const data = await response.json();
-            console.log("📊 Data e përgjigjes:", data);
             
             if (data.success && data.response) {
                 return data.response;
             } else {
-                throw new Error('Përgjigje e pavlefshme nga serveri: ' + (data.error || 'N/A'));
+                throw new Error('Përgjigje e pavlefshme nga serveri');
             }
             
         } catch (error) {
@@ -366,46 +183,35 @@ getStandardResponse(message) {
     }
 
     async learnFromInteraction(question, answer) {
-        console.log("🎓 Duke u përpjekur të mësoj nga interaksioni...");
-        
         try {
-            // Ruaj të gjitha përgjigjet nga Gemini
-            if (answer && answer.length > 10) {
-                const knowledgeKey = this.generateKnowledgeKey(question);
-                
-                // Provo KnowledgeDistiller parë
-                if (window.knowledgeDistiller && typeof window.knowledgeDistiller.addKnowledge === 'function') {
-                    await window.knowledgeDistiller.addKnowledge(knowledgeKey, {
-                        question: question,
-                        answer: answer,
-                        learnedAt: new Date().toISOString(),
-                        source: 'chat_system',
-                        category: this.detectCategory(question),
-                        usageCount: 0
-                    }, 'gemini_learned');
-                    
-                    console.log("💾 U ruajt në KnowledgeDistiller:", knowledgeKey);
-                    return;
-                }
-                
-                // Provo KnowledgeIntegration si fallback
-                else if (window.knowledgeIntegration && typeof window.knowledgeIntegration.learnFromInteraction === 'function') {
-                    await window.knowledgeIntegration.learnFromInteraction(question, answer, {
-                        category: 'gemini_learned',
-                        timestamp: new Date().toISOString(),
-                        source: 'gemini_api'
-                    });
-                    console.log("💾 U ruajt në KnowledgeIntegration");
-                    return;
-                }
-                
-                // Provo localStorage si emergency
-                else {
-                    this.saveToLocalStorage(question, answer);
-                    console.log("💾 U ruajt në LocalStorage (fallback)");
-                }
-            } else {
-                console.log("ℹ️ Përgjigja shumë e shkurtër për tu ruajtur");
+            // 🎯 PROVO KNOWLEDGEINTEGRATION PARË
+            if (window.knowledgeIntegration && typeof window.knowledgeIntegration.learnFromInteraction === 'function') {
+                await window.knowledgeIntegration.learnFromInteraction(question, answer, {
+                    category: 'conversation',
+                    timestamp: new Date().toISOString(),
+                    source: 'chat_system'
+                });
+                console.log("🎓 U mësua nga interaksioni!");
+            }
+            // 🎯 PROVO KNOWLEDGEDISTILLER SI FALLBACK
+            else if (window.knowledgeDistiller && typeof window.knowledgeDistiller.learnFromInteraction === 'function') {
+                await window.knowledgeDistiller.learnFromInteraction(question, answer, {
+                    category: 'conversation'
+                });
+                console.log("🎓 U mësua nga interaksioni (fallback)!");
+            }
+            // 🔄 PROVO ADDKNOWLEDGE SI FALLBACK EMERGJENT
+            else if (window.knowledgeDistiller && typeof window.knowledgeDistiller.addKnowledge === 'function') {
+                const knowledgeKey = question.substring(0, 30).replace(/[^\w]/g, '_');
+                await window.knowledgeDistiller.addKnowledge(knowledgeKey, {
+                    question: question,
+                    answer: answer,
+                    learnedAt: new Date().toISOString()
+                }, 'conversation');
+                console.log("🎓 U mësua nga interaksioni (emergjent)!");
+            }
+            else {
+                console.log("ℹ️ Nuk ka sistem mësimi të disponueshëm");
             }
         } catch (error) {
             console.error("❌ Gabim në mësimin nga interaksioni:", error);
@@ -413,97 +219,102 @@ getStandardResponse(message) {
     }
 
     addMessageToChat(message, sender) {
-        console.log(`📝 Duke shtuar mesazh nga ${sender}...`);
-        
-        // Gjej chat container-in e duhur
-        let chatScreen = document.getElementById('chat-screen');
-        
-        // Nëse nuk gjendet, kërko në të gjithë dokumentin
-        if (!chatScreen) {
-            console.log("🔍 'chat-screen' nuk u gjet, duke kërkuar alternative...");
-            
-            // Provo elementë të tjerë të mundshëm
-            const possibleContainers = [
-                'chat',
-                'messages',
-                'conversation',
-                'chat-container',
-                'message-area'
-            ];
-            
-            for (const containerId of possibleContainers) {
-                chatScreen = document.getElementById(containerId);
-                if (chatScreen) {
-                    console.log(`✅ U gjet alternative: ${containerId}`);
-                    break;
-                }
-            }
-        }
-        
-        // Nëse akoma nuk gjendet, krijo një të ri
-        if (!chatScreen) {
-            console.log("🏗️ Duke krijuar chat container të ri...");
-            chatScreen = this.createProperChatContainer();
-        }
-        
-        // Krijo elementin e mesazhit
-        const messageElement = document.createElement('div');
-        messageElement.className = `message ${sender}-message`;
-        messageElement.innerHTML = `
-            <div class="message-content">
-                ${this.formatMessage(message)}
-            </div>
-            <div class="message-time">${new Date().toLocaleTimeString()}</div>
-        `;
-        
-        // Shto mesazhin në chat screen
-        chatScreen.appendChild(messageElement);
-        
-        // Scroll në fund
-        chatScreen.scrollTop = chatScreen.scrollHeight;
-        
-        console.log(`✅ U shtua mesazh nga ${sender} në chat-screen: ${message.substring(0, 50)}...`);
+    console.log(`📝 Duke shtuar mesazh nga ${sender}...`);
+    
+    // ✅ PËRDOR TË NJËJTIN SISTEM SI KOMANDA /NDIHMO
+    if (typeof addMessage === 'function') {
+        console.log("✅ Duke përdorur addMessage ekzistuese...");
+        addMessage(message, sender);
+        return;
     }
+    
+    // ✅ ALTERNATIVE: PËRDOR TË NJËJTIN LOGJIKË SI addMessage
+    console.log("🔄 Duke përdorur sistemin alternative...");
+    
+    // Gjej chat container ekzistues (i njëjti që përdor /ndihmo)
+    let chatContainer = document.getElementById('chat');
+    
+    // Nëse nuk gjendet, kërko container të tjerë
+    if (!chatContainer) {
+        chatContainer = document.querySelector('.chat-messages, .messages, .conversation, [class*="message"]');
+    }
+    
+    // Nëse përsëri nuk gjendet, krijo një të ri
+    if (!chatContainer) {
+        console.log("🏗️ Duke krijuar chat container të ri...");
+        chatContainer = this.createChatContainerLikeHelp();
+    }
+    
+    // Krijo elementin e mesazhit (i njëjti stil si /ndihmo)
+    const messageElement = document.createElement('div');
+    messageElement.className = `message ${sender}-message`;
+    messageElement.innerHTML = `
+        <div class="message-content">
+            ${this.formatMessage(message)}
+        </div>
+        <div class="message-time">${new Date().toLocaleTimeString()}</div>
+    `;
+    
+    // Shto mesazhin në container
+    chatContainer.appendChild(messageElement);
+    
+    // Scroll në fund
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+    
+    console.log(`✅ U shtua mesazh nga ${sender}: ${message.substring(0, 50)}...`);
+}
 
-    // Funksion i ri për të krijuar chat container në pozicionin e duhur
-    createProperChatContainer() {
-        console.log("📍 Duke krijuar chat container në pozicionin e duhur...");
+// ✅ FUNKSION I RI QË KRIJON CHAT CONTAINER SI AI I /NDIHMO
+createChatContainerLikeHelp() {
+    console.log("📍 Duke krijuar chat container si /ndihmo...");
+    
+    // Krijo container të ri
+    const chatContainer = document.createElement('div');
+    chatContainer.id = 'chat';
+    chatContainer.className = 'chat-messages';
+    chatContainer.style.cssText = `
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        background: #f8fafc;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        max-height: 500px;
+        border-bottom: 1px solid #e2e8f0;
+    `;
+    
+    // ✅ GJENI POZICIONIN E SAKTË (të njëjtin ku shfaqet /ndihmo)
+    const existingChat = document.querySelector('#chat, .chat-messages, .messages');
+    if (existingChat) {
+        // Zëvendëso ekzistuesin
+        existingChat.parentNode.replaceChild(chatContainer, existingChat);
+        console.log("✅ U zëvendësua chat container ekzistues!");
+    } else {
+        // Vendos në pozicionin e duhur
+        const mainContent = document.querySelector('main') || 
+                           document.querySelector('.container') || 
+                           document.querySelector('.app-content') || 
+                           document.body;
         
-        // Krijo container-in kryesor të chat-it
-        const chatContainer = document.createElement('div');
-        chatContainer.id = 'chat-screen';
-        chatContainer.className = 'chat-screen';
+        // Gjej input container për të vendosur përpara tij
+        const inputContainer = document.querySelector('.input-container') || 
+                              document.getElementById('user-input')?.parentElement;
         
-        // Gjej pozicionin e duhur - para input field
-        const userInput = document.getElementById('user-input');
-        const sendBtn = document.getElementById('send-btn');
-        
-        let inserted = false;
-        
-        if (userInput && userInput.parentElement) {
-            // Vendos para input container
-            const inputContainer = userInput.parentElement;
-            const mainContainer = inputContainer.parentElement;
-            
-            // Vendos chat container para input container
-            mainContainer.insertBefore(chatContainer, inputContainer);
+        if (inputContainer && inputContainer.parentElement) {
+            inputContainer.parentElement.insertBefore(chatContainer, inputContainer);
             console.log("✅ Chat container u vendos para input field!");
-            inserted = true;
-        } 
-        
-        // Fallback: vendos në fillim të body
-        if (!inserted) {
-            document.body.prepend(chatContainer);
-            console.log("✅ Chat container u vendos në fillim të body!");
+        } else {
+            // Vendos në fillim të main content
+            mainContent.prepend(chatContainer);
+            console.log("✅ Chat container u vendos në fillim të main content!");
         }
-        
-        // Shto stilet nëse nuk ekzistojnë
-        this.addChatStyles();
-        
-        return chatContainer;
     }
+    
+    return chatContainer;
+}
 
-    // Funksion i ri për të siguruar chat container
+    // ✅ FUNKSION I RI PËR TË SIGURUAR CHAT CONTAINER
     ensureChatContainer() {
         if (!document.getElementById('chat-screen')) {
             console.log("🔧 Duke siguruar chat container...");
@@ -511,7 +322,7 @@ getStandardResponse(message) {
         }
     }
 
-    // Funksion për të shtuar stilet e chat-it
+    // ✅ FUNKSION PËR TË SHTUAR STILET E CHAT-IT
     addChatStyles() {
         if (!document.getElementById('chat-fix-styles')) {
             const style = document.createElement('style');
@@ -625,80 +436,48 @@ getStandardResponse(message) {
     }
 
     showThinkingIndicator() {
-        // Sigurohu që chat screen ekziston
-        let chatScreen = document.getElementById('chat-screen');
-        if (!chatScreen) {
-            chatScreen = this.createProperChatContainer();
-        }
-        
-        // Krijo ose shfaq thinking indicator
-        let thinkingElement = document.getElementById('thinking');
-        if (!thinkingElement) {
-            thinkingElement = document.createElement('div');
-            thinkingElement.id = 'thinking';
-            thinkingElement.className = 'thinking-indicator';
-            thinkingElement.innerHTML = `
-                <div class="thinking-content">
-                    <span class="thinking-text">RRUFE-TESLA po mendon...</span>
-                    <div class="thinking-dots">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </div>
-                </div>
-            `;
-            chatScreen.appendChild(thinkingElement);
-        }
-        
-        thinkingElement.style.display = 'block';
-        chatScreen.scrollTop = chatScreen.scrollHeight;
-        
-        console.log("🤔 Thinking indicator u shfaq!");
+    console.log("🤔 Duke shfaqur thinking indicator...");
+    
+    // ✅ PËRDOR TË NJËJTIN CHAT CONTAINER
+    let chatContainer = document.getElementById('chat');
+    if (!chatContainer) {
+        chatContainer = document.querySelector('.chat-messages, .messages, .conversation');
     }
+    
+    if (!chatContainer) {
+        console.log("❌ Nuk u gjet chat container, duke krijuar...");
+        chatContainer = this.createChatContainerLikeHelp();
+    }
+    
+    // Krijo ose shfaq thinking indicator
+    let thinkingElement = document.getElementById('thinking');
+    if (!thinkingElement) {
+        thinkingElement = document.createElement('div');
+        thinkingElement.id = 'thinking';
+        thinkingElement.className = 'thinking-indicator';
+        thinkingElement.innerHTML = `
+            <div class="thinking-content">
+                <span class="thinking-text">RRUFE-TESLA po mendon...</span>
+                <div class="thinking-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        `;
+        chatContainer.appendChild(thinkingElement);
+    }
+    
+    thinkingElement.style.display = 'block';
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+    
+    console.log("✅ Thinking indicator u shfaq!");
+}
 
     hideThinkingIndicator() {
         const thinkingElement = document.getElementById('thinking');
         if (thinkingElement) {
             thinkingElement.style.display = 'none';
-        }
-    }
-
-    // Funksion i ri: Gjenero çelës unik për njohuri
-    generateKnowledgeKey(question) {
-        return question
-            .toLowerCase()
-            .substring(0, 30)
-            .replace(/[^\w\s]/g, '')
-            .replace(/\s+/g, '_') + '_' + Date.now();
-    }
-
-    // Funksion i ri: Zbuloni kategorinë automatikisht
-    detectCategory(question) {
-        const lowerQ = question.toLowerCase();
-        if (lowerQ.includes('ai') || lowerQ.includes('teknologji') || lowerQ.includes('programim')) {
-            return 'technology';
-        } else if (lowerQ.includes('shkenc') || lowerQ.includes('fizik') || lowerQ.includes('kim')) {
-            return 'science';
-        } else if (lowerQ.includes('libër') || lowerQ.includes('edukim') || lowerQ.includes('shkoll')) {
-            return 'education';
-        } else {
-            return 'general';
-        }
-    }
-
-    // Funksion i ri: Ruaj në localStorage si fallback
-    saveToLocalStorage(question, answer) {
-        try {
-            const key = 'rrufe_knowledge_' + this.generateKnowledgeKey(question);
-            const knowledge = {
-                question: question,
-                answer: answer,
-                timestamp: new Date().toISOString(),
-                category: this.detectCategory(question)
-            };
-            localStorage.setItem(key, JSON.stringify(knowledge));
-        } catch (e) {
-            console.error("❌ Gabim në localStorage:", e);
         }
     }
 
@@ -883,4 +662,46 @@ setTimeout(() => {
     if (!window.chatSystem?.initialized) {
         window.fixEnterKeyManual();
     }
+}, 3000);
+
+// ==================== DIAGNOSTIKIM I POZICIONIT TË /NDIHMO ====================
+
+window.findHelpMessagePosition = function() {
+    console.log("🔍 DUKE KËRKUAR POZICIONIN E /NDIHMO:");
+    
+    // Gjej të gjitha mesazhet e /ndihmo
+    const helpMessages = document.querySelectorAll('.message, .bot-message, .user-message, [class*="message"]');
+    
+    console.log(`📊 Gjetëm ${helpMessages.length} mesazhe:`);
+    
+    helpMessages.forEach((msg, index) => {
+        const content = msg.textContent || msg.innerText;
+        const container = msg.closest('#chat, .chat-messages, .messages, .conversation, div');
+        
+        console.log(`--- Mesazhi ${index + 1} ---`);
+        console.log(`Përmbajtja: ${content.substring(0, 50)}...`);
+        console.log(`Container: ${container?.id || container?.className || 'N/A'}`);
+        console.log(`HTML: ${msg.outerHTML.substring(0, 100)}...`);
+        console.log(`Parent: ${msg.parentElement?.id || msg.parentElement?.className}`);
+    });
+    
+    // Gjej të gjitha containerët e mundshëm
+    const containers = document.querySelectorAll('#chat, .chat-messages, .messages, .conversation, [id*="chat"], [class*="chat"], [class*="message"]');
+    
+    console.log(`🔍 Gjetëm ${containers.length} containerë të mundshëm:`);
+    
+    containers.forEach((container, index) => {
+        console.log(`Container ${index + 1}:`);
+        console.log(`  ID: ${container.id || 'N/A'}`);
+        console.log(`  Class: ${container.className || 'N/A'}`);
+        console.log(`  Tag: ${container.tagName}`);
+        console.log(`  Children: ${container.children.length}`);
+        console.log(`  Position: ${container.getBoundingClientRect().top}px from top`);
+    });
+};
+
+// Auto-diagnostikim
+setTimeout(() => {
+    console.log("🔍 AUTO-DIAGNOSTIKIM I POZICIONIT:");
+    window.findHelpMessagePosition();
 }, 3000);
