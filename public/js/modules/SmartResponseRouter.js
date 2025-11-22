@@ -704,32 +704,70 @@ class SmartResponseRouter {
         );
     }
 
-    // ==================== API PUBLIKE ====================
 
-    async processUserMessage(message) {
-        if (!this.initialized) {
-            console.log("⏳ SmartResponseRouter nuk është inicializuar, duke u inicializuar...");
-            const initialized = await this.initializeSafely();
-            if (!initialized) {
-                return "🔄 Sistemi po inicializohet, provoni përsëri...";
-            }
-        }
-        
-        console.log(`🧠 SmartResponseRouter po proceson: "${message.substring(0, 50)}..."`);
-        
-        try {
-            const analysis = this.analyzeMessage(message);
-            const routeConfig = this.determineBestRoute(message, analysis);
-            const response = await this.executeRoute(routeConfig, message);
-            
-            console.log("✅ Përgjigja u gjenerua me sukses");
-            return response;
-            
-        } catch (error) {
-            console.error("❌ Gabim në procesimin e mesazhit:", error);
-            return "Më falni, pati një gabim në sistem. Provo përsëri.";
+    // ==================== FUNKSION I RI PËR KONTROLLIM ====================
+
+shouldHandleMessage(message) {
+    const lowerMsg = message.toLowerCase().trim();
+    
+    // 🚨 MESAZHET QË NUK DUHET TË TRAJTOHEN NGA SMART ROUTER
+    const excludeMessages = [
+        '/ndihmo',
+        '/apikey',
+        '/users', 
+        '/stats',
+        '/admin',
+        '/panel',
+        '/clearall'
+    ];
+    
+    // Nëse është komandë e rëndësishme RRUFE, lëre sistemin ekzistues ta trajtojë
+    if (excludeMessages.some(cmd => lowerMsg.startsWith(cmd))) {
+        console.log("🔗 Duke e lënë sistemin ekzistues të trajtojë:", message);
+        return false;
+    }
+    
+    // Kontrollo nëse ka funksion ekzistues për këtë komandë
+    if (typeof window.processRrufeCommand === 'function' && this.isRrufeCommand(lowerMsg)) {
+        console.log("🔗 Komandë RRUFE - duke e lënë sistemin ekzistues");
+        return false;
+    }
+    
+    return true;
+}
+
+// ==================== MODIFIKO processUserMessage ====================
+
+async processUserMessage(message) {
+    if (!this.initialized) {
+        console.log("⏳ SmartResponseRouter nuk është inicializuar, duke u inicializuar...");
+        const initialized = await this.initializeSafely();
+        if (!initialized) {
+            return "🔄 Sistemi po inicializohet, provoni përsëri...";
         }
     }
+    
+    console.log(`🧠 SmartResponseRouter po proceson: "${message.substring(0, 50)}..."`);
+    
+    // 🚨 KONTROLLO NËSE DUHET TË TRAJTOHET
+    if (!this.shouldHandleMessage(message)) {
+        console.log("🔗 Duke e kaluar mesazhin te sistemi ekzistues...");
+        return null; // Ose kthe një vlerë speciale
+    }
+    
+    try {
+        const analysis = this.analyzeMessage(message);
+        const routeConfig = this.determineBestRoute(message, analysis);
+        const response = await this.executeRoute(routeConfig, message);
+        
+        console.log("✅ Përgjigja u gjenerua me sukses");
+        return response;
+        
+    } catch (error) {
+        console.error("❌ Gabim në procesimin e mesazhit:", error);
+        return "Më falni, pati një gabim në sistem. Provo përsëri.";
+    }
+}
 
     getStats() {
         return {
