@@ -500,4 +500,158 @@ router.post('/simple-chat', async (req, res) => {
     }
 });
 
+
+// ================================= openai ============================
+// Në routes/gemini.js - shto në FUND të skedarit, para `module.exports`
+// ======================================================================
+// 🆕 OPENAI ROUTES - IMPLEMENTIM I DIREKT & I SIGURT
+// ======================================================================
+
+// ✅ RUTA E STATUSIT TË OPENAI
+router.get('/openai/status', async (req, res) => {
+    try {
+        console.log('🔮 Duke kontrolluar statusin e OpenAI...');
+        
+        let openaiStatus = {
+            available: false,
+            status: 'checking',
+            message: 'Duke kontrolluar shërbimin OpenAI...'
+        };
+
+        try {
+            // Provo të ngarkosh OpenAI service
+            const { openai, getModel } = require('../services/openaiService');
+            
+            if (!openai) {
+                openaiStatus = {
+                    available: false,
+                    status: 'service_not_loaded',
+                    message: 'OpenAI service nuk u ngarkua'
+                };
+            } else if (!process.env.OPENAI_API_KEY) {
+                openaiStatus = {
+                    available: false,
+                    status: 'api_key_missing',
+                    message: 'OPENAI_API_KEY nuk është vendosur në .env'
+                };
+            } else {
+                // Testo me një kërkesë të vogël
+                const testCompletion = await openai.chat.completions.create({
+                    model: getModel('chat'),
+                    messages: [{ role: "user", content: "Test" }],
+                    max_tokens: 5
+                });
+
+                openaiStatus = {
+                    available: true,
+                    status: 'active', 
+                    message: 'OpenAI service është operative 🎉',
+                    model: getModel('chat'),
+                    test_response: testCompletion.choices[0].message.content
+                };
+            }
+        } catch (error) {
+            openaiStatus = {
+                available: false,
+                status: 'error',
+                message: `OpenAI error: ${error.message}`,
+                suggestion: 'Kontrollo OPENAI_API_KEY në .env file'
+            };
+        }
+
+        res.json({
+            success: true,
+            ...openaiStatus,
+            timestamp: new Date().toISOString(),
+            route: 'direct-gemini-route'
+        });
+        
+    } catch (error) {
+        res.json({
+            success: false,
+            available: false,
+            status: 'error',
+            message: error.message,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+// ✅ RUTA KRYESORE E OPENAI CHAT
+router.post('/openai/chat', async (req, res) => {
+    try {
+        const { message } = req.body;
+        
+        console.log('🔮 OpenAI Chat Request:', message?.substring(0, 100));
+        
+        if (!message || message.trim() === '') {
+            return res.json({
+                success: false,
+                response: '❌ Ju lutem shkruani një mesazh për OpenAI'
+            });
+        }
+
+        // Provo OpenAI service direkt
+        try {
+            const { openai, getModel } = require('../services/openaiService');
+            
+            if (!process.env.OPENAI_API_KEY) {
+                throw new Error('OPENAI_API_KEY nuk është konfiguruar në .env file');
+            }
+
+            const completion = await openai.chat.completions.create({
+                model: getModel('chat'),
+                messages: [
+                    {
+                        role: "system", 
+                        content: "Ti je RRUFE-TESLA AI, një asistent inteligjent shqip. Përgjigju në shqip dhe jep përgjigje të dobishme dhe miqësore."
+                    },
+                    {
+                        role: "user",
+                        content: message
+                    }
+                ],
+                max_tokens: 1000,
+                temperature: 0.7
+            });
+
+            const response = completion.choices[0].message.content;
+            
+            console.log('✅ OpenAI Response Success');
+            
+            res.json({
+                success: true,
+                response: `🔮 **OpenAI**\n\n${response}`,
+                model: getModel('chat'),
+                tokens: completion.usage?.total_tokens || 0,
+                timestamp: new Date().toISOString(),
+                route: 'direct-gemini-route'
+            });
+            
+        } catch (openaiError) {
+            console.error('❌ OpenAI Service Error:', openaiError.message);
+            
+            // Fallback i mirë nëse OpenAI dështon
+            res.json({
+                success: true,
+                response: `🔮 **OpenAI Test Mode**\n\n"${message}"\n\n💡 *OpenAI service is being configured*\n\n**Status:** ${openaiError.message}\n**Këshillë:** Kontrolloni OPENAI_API_KEY në .env file`,
+                fallback: true,
+                timestamp: new Date().toISOString()
+            });
+        }
+        
+    } catch (error) {
+        console.error('❌ OpenAI Route Error:', error);
+        res.json({
+            success: false,
+            response: `❌ Gabim server: ${error.message}`,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+console.log('✅ OpenAI routes u regjistruan direkt në gemini.js');
+console.log('🔮 /api/openai/status - Status route');
+console.log('🔮 /api/openai/chat - Chat route');
+
 module.exports = router;
