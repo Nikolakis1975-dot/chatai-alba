@@ -119,6 +119,107 @@ app.use('/api/tll', tllActivationRoutes);
 app.use('/api/knowledge', knowledgeRoutes);
 
 // ======================================================
+// 🆕 OPENAI ROUTES - IMPLEMENTIM I DIREKT NË APP.JS
+// ======================================================
+
+// ✅ RUTA E STATUSIT TË OPENAI - DIREKT NË APP.JS
+app.get('/api/openai/status', async (req, res) => {
+    console.log('🎯 /api/openai/status u thirr direkt nga app.js');
+    try {
+        res.json({
+            success: true,
+            message: 'OpenAI route works direkt nga app.js! 🎉',
+            status: 'active',
+            timestamp: new Date().toISOString(),
+            route: 'direct-app-route',
+            system: 'RRUFE_TESLA_10.5_OPTIMIZED'
+        });
+    } catch (error) {
+        res.json({
+            success: false,
+            message: 'Gabim në OpenAI status',
+            error: error.message
+        });
+    }
+});
+
+// ✅ RUTA E CHAT-IT TË OPENAI - DIREKT NË APP.JS
+app.post('/api/openai/chat', async (req, res) => {
+    console.log('🎯 /api/openai/chat u thirr direkt nga app.js');
+    try {
+        const { message } = req.body;
+        
+        if (!message || message.trim() === '') {
+            return res.json({
+                success: false,
+                response: '❌ Ju lutem shkruani një mesazh për OpenAI'
+            });
+        }
+        
+        console.log('🔮 Mesazhi i OpenAI:', message.substring(0, 100));
+        
+        // PËRDOR OPENAI SERVICE TË VËRTETË
+        try {
+            const { openai, getModel } = require('./services/openaiService');
+            
+            if (!process.env.OPENAI_API_KEY) {
+                throw new Error('OPENAI_API_KEY nuk është konfiguruar në .env file');
+            }
+            
+            const completion = await openai.chat.completions.create({
+                model: getModel('chat'),
+                messages: [
+                    {
+                        role: "system", 
+                        content: "Ti je RRUFE-TESLA AI, një asistent inteligjent shqip. Përgjigju në shqip dhe jep përgjigje të dobishme dhe miqësore."
+                    },
+                    {
+                        role: "user",
+                        content: message
+                    }
+                ],
+                max_tokens: 1000,
+                temperature: 0.7
+            });
+
+            const response = completion.choices[0].message.content;
+            
+            res.json({
+                success: true,
+                response: `🔮 **OpenAI**\n\n${response}`,
+                model: getModel('chat'),
+                tokens: completion.usage?.total_tokens || 0,
+                timestamp: new Date().toISOString(),
+                route: 'direct-app-route'
+            });
+            
+        } catch (openaiError) {
+            console.error('❌ OpenAI Service Error:', openaiError.message);
+            
+            // FALLBACK NËSE OPENAI DËSHTON
+            res.json({
+                success: true,
+                response: `🔮 **OpenAI Test Mode**\n\n"${message}"\n\n💡 *OpenAI service is being configured*\n\n**Status:** ${openaiError.message}\n**Këshillë:** Kontrolloni OPENAI_API_KEY në .env file`,
+                fallback: true,
+                timestamp: new Date().toISOString()
+            });
+        }
+        
+    } catch (error) {
+        console.error('❌ OpenAI Route Error:', error);
+        res.json({
+            success: false,
+            response: `❌ Gabim server: ${error.message}`,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+console.log('✅ OpenAI routes u regjistruan DIREKT në app.js:');
+console.log('   - GET /api/openai/status');
+console.log('   - POST /api/openai/chat');
+
+// ======================================================
 // 5️⃣ Static files (Frontend)
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -187,7 +288,6 @@ setTimeout(() => {
 const AppBridge = require('./bridges/app-bridge');
 
 // ✅ INICIALIZO VETËM NJË HERË - NË FUND TË SKEDARIT
-// Lëviz këtë në fund, PARA server.listen
 AppBridge.initializeSafeBridge(app);
 console.log('🌉 AppBridge u inicializua në server');
 
@@ -203,6 +303,7 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`🌌 RRUFE-TESLA 10.5 Routes u regjistruan: /api/consciousness`);
     console.log(`🧠 MEMORY OPTIMIZATION: AKTIVIZUAR PËR 512MB RAM`);
     console.log(`🌉 APP BRIDGE: AKTIVIZUAR ME RUGËT OPENAI`);
+    console.log(`🔮 OPENAI ROUTES: AKTIVIZUAR DIREKT NË APP.JS`);
     
     // ✅ NIS MEMORY MONITORING
     MemoryMonitor.startMonitoring();
