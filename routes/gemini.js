@@ -500,17 +500,25 @@ router.post('/simple-chat', async (req, res) => {
     }
 });
 
-
-// ================================= openai ============================
-// Në routes/gemini.js - shto në FUND të skedarit, para `module.exports`
-// ======================================================================
+// ======================================================
 // 🆕 OPENAI ROUTES - IMPLEMENTIM I DIREKT & I SIGURT
-// ======================================================================
+// ======================================================
+
+// ✅ RUTA TESTUESE - kontrollo nëse rrugët po regjistrohen
+router.get('/bridge/test', (req, res) => {
+    console.log('✅ /api/bridge/test u thirr direkt nga gemini.js');
+    res.json({ 
+        success: true, 
+        message: '🌉 Rrugët direkt në gemini.js punojnë! 🎉',
+        timestamp: new Date().toISOString(),
+        route: 'direct-gemini-route'
+    });
+});
 
 // ✅ RUTA E STATUSIT TË OPENAI
 router.get('/openai/status', async (req, res) => {
     try {
-        console.log('🔮 Duke kontrolluar statusin e OpenAI...');
+        console.log('🔮 /api/openai/status u thirr direkt nga gemini.js');
         
         let openaiStatus = {
             available: false,
@@ -567,6 +575,7 @@ router.get('/openai/status', async (req, res) => {
         });
         
     } catch (error) {
+        console.error('❌ Gabim në /api/openai/status:', error);
         res.json({
             success: false,
             available: false,
@@ -582,7 +591,7 @@ router.post('/openai/chat', async (req, res) => {
     try {
         const { message } = req.body;
         
-        console.log('🔮 OpenAI Chat Request:', message?.substring(0, 100));
+        console.log('🔮 /api/openai/chat u thirr:', message?.substring(0, 50));
         
         if (!message || message.trim() === '') {
             return res.json({
@@ -650,8 +659,9 @@ router.post('/openai/chat', async (req, res) => {
     }
 });
 
-console.log('✅ OpenAI routes u regjistruan direkt në gemini.js');
-console.log('🔮 /api/openai/status - Status route');
-console.log('🔮 /api/openai/chat - Chat route');
+console.log('🎯 OpenAI routes u shtuan direkt në gemini.js:');
+console.log('   - GET /api/bridge/test');
+console.log('   - GET /api/openai/status');
+console.log('   - POST /api/openai/chat');
 
 module.exports = router;
