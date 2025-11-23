@@ -1,3 +1,6 @@
+// Në routes/gemini.js - shto në fillim të skedarit
+console.log('🎯 routes/gemini.js po ekzekutohet...');
+
 const express = require('express');
 const db = require('../database');
 const encryption = require('../utils/encryption');
