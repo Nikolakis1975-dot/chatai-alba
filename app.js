@@ -181,9 +181,15 @@ setTimeout(() => {
 }, 2000);
 
 // ======================================================
-// 9️⃣ Ura (Bridge System)
+// 9️⃣ Ura (Bridge System) - VERSION I KORRIGJUAR
+// ======================================================
+
 const AppBridge = require('./bridges/app-bridge');
+
+// ✅ INICIALIZO VETËM NJË HERË - NË FUND TË SKEDARIT
+// Lëviz këtë në fund, PARA server.listen
 AppBridge.initializeSafeBridge(app);
+console.log('🌉 AppBridge u inicializua në server');
 
 // ======================================================
 // 🔟 Start server - ME MEMORY MONITORING
@@ -196,6 +202,7 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`🎤 Voice Routes u regjistruan: /api/voice/transcribe`);
     console.log(`🌌 RRUFE-TESLA 10.5 Routes u regjistruan: /api/consciousness`);
     console.log(`🧠 MEMORY OPTIMIZATION: AKTIVIZUAR PËR 512MB RAM`);
+    console.log(`🌉 APP BRIDGE: AKTIVIZUAR ME RUGËT OPENAI`);
     
     // ✅ NIS MEMORY MONITORING
     MemoryMonitor.startMonitoring();
