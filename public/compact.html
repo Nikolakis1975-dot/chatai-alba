@@ -468,6 +468,28 @@ button:has-text("ADMIN PANEL") {
       <button id="send-btn">➤</button>
     </footer>
   </div>
+<!-- Modal për OpenAI API Key -->
+<div id="openai-key-modal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h2>Konfigurimi i OpenAI API Key</h2>
+    <p>Vendos API Key për OpenAI për të aktivizuar funksionalitetin e plotë të chatbot-it.</p>
+    
+    <div class="api-key-form">
+      <input type="password" id="openai-key-input" placeholder="Vendos API Key këtu">
+      
+      <div class="button-group">
+        <button class="save-btn" onclick="saveOpenAIKeyToServer()">💾 Ruaj në Server</button>
+        <button class="delete-btn" onclick="deleteOpenAIKeyFromServer()">🗑️ Fshi nga Serveri</button>
+      </div>
+    </div>
+    
+    <div id="openai-key-status" class="api-status"></div>
+    
+    <p><small>Nuk ke API Key? Vizito <a href="https://platform.openai.com/account/api-keys" target="_blank">OpenAI</a> për të krijuar një.</small></p>
+    <p><small><strong>API Key ruhet i sigurt në server dhe enkriptuar!</strong></small></p>
+  </div>
+</div>
 
   <!-- Modal për API Key -->
   <div id="api-key-modal" class="modal">
