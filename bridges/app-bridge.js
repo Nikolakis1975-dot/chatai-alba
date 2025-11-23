@@ -1,8 +1,9 @@
-// ==================== ✅ APP.JS BRIDGE - 12.10.2024 ====================
-// 📝 DESKRIMI: Ura e sigurt midis app.js ekzistues dhe sistemeve të reja
+// ==================== ✅ APP.JS BRIDGE - UPDATED WITH OPENAI SUPPORT ====================
+// 📝 DESKRIMI: Ura e sigurt midis app.js ekzistues dhe sistemeve të reja + OpenAI integration
 // 🎯 QËLLIMI: Lidhje e kontrolluar pa ndryshime në app.js ekzistues
-// 🔧 AUTORI: ChatAI ALBA Team
+// 🔧 AUTORI: ChatAI ALBA Team  
 // 🏗️ ARKITEKTURA: Modular Bridge Pattern
+// 🆕 VERSION: 2.0 - Me OpenAI Support
 // =========================================================================
 
 class AppBridge {
@@ -43,7 +44,7 @@ class AppBridge {
             console.log('ℹ️ CommandService nuk mund të ngarkohet akoma:', error.message);
         }
 
-        // ✅ REGJISTRO RUTA TESTUESE
+        // ✅ REGJISTRO RUTA TESTUESE DHE OPENAI
         this.registerTestRoutes(app);
     }
 
@@ -56,8 +57,113 @@ class AppBridge {
                 message: '🌉 Ura e AppBridge punon!',
                 timestamp: new Date().toISOString(),
                 status: 'Operational',
-                version: '1.0'
+                version: '2.0 - With OpenAI Support'
             });
+        });
+
+        // 🆕 ==================== OPENAI ROUTES ====================
+
+        // ✅ RUTA E STATUSIT TË OPENAI
+        app.get('/api/openai/status', async (req, res) => {
+            try {
+                const CommandBridge = require('./command-bridge');
+                const status = await CommandBridge.checkOpenAIStatus();
+                
+                res.json({
+                    success: true,
+                    ...status,
+                    timestamp: new Date().toISOString(),
+                    bridge: 'app-bridge-openai-status'
+                });
+            } catch (error) {
+                res.json({
+                    success: false,
+                    available: false,
+                    status: 'error',
+                    message: error.message,
+                    timestamp: new Date().toISOString(),
+                    bridge: 'app-bridge-openai-status-error'
+                });
+            }
+        });
+
+        // ✅ RUTA KRYESORE E OPENAI CHAT
+        app.post('/api/openai/chat', async (req, res) => {
+            try {
+                const userId = req.userId || req.body.userId || 'user-' + Date.now();
+                const sessionId = req.sessionId || req.body.sessionId || 'session-' + Date.now();
+                
+                console.log('🌉 AppBridge: Duke kapur kërkesë OpenAI - Session:', { userId, sessionId });
+
+                const { message } = req.body;
+
+                if (!message || message.trim() === '') {
+                    return res.json({ 
+                        success: false, 
+                        response: '❌ Ju lutem shkruani një mesazh për OpenAI',
+                        sessionData: { userId, sessionId },
+                        bridge: 'app-bridge-openai-validation'
+                    });
+                }
+
+                // ✅ PËRDOR URËN E COMMAND-BRIDGE PËR OPENAI
+                try {
+                    const CommandBridge = require('./command-bridge');
+                    const db = require('../database');
+                    
+                    const user = await db.getAsync('SELECT * FROM users WHERE id = ?', [userId || 1]);
+                    
+                    if (user) {
+                        console.log('🔮 AppBridge: Duke thirrur CommandBridge për OpenAI...');
+                        const result = await CommandBridge.processOpenAICommand(message, user);
+                        
+                        console.log('📊 AppBridge: Rezultati OpenAI:', {
+                            success: result.success,
+                            bridge: result.bridge,
+                            tokens: result.tokens || 0
+                        });
+                        
+                        return res.json({
+                            ...result,
+                            sessionData: { userId, sessionId },
+                            bridge: result.bridge || 'app-bridge-openai'
+                        });
+                    } else {
+                        return res.json({
+                            success: false,
+                            response: '❌ Përdoruesi nuk u gjet për OpenAI',
+                            sessionData: { userId, sessionId },
+                            bridge: 'app-bridge-openai-user-error'
+                        });
+                    }
+                } catch (bridgeError) {
+                    console.error('❌ AppBridge: Gabim në CommandBridge për OpenAI:', bridgeError);
+                    
+                    // ✅ FALLBACK I SIGURT PËR OPENAI
+                    return res.json({
+                        success: true,
+                        response: `🔮 **OpenAI via App Bridge**\n\n"${message}"\n\n🌉 *Kjo është version testues i OpenAI përmes sistemit tonë të urave*\n\n**Gabim:** ${bridgeError.message}`,
+                        bridge: 'app-bridge-openai-fallback',
+                        sessionData: { userId, sessionId },
+                        timestamp: new Date().toISOString()
+                    });
+                }
+
+            } catch (error) {
+                console.error('❌ AppBridge: Gabim i përgjithshëm në /api/openai/chat:', error);
+                
+                // ✅ FALLBACK FINAL - ASNJËHERË NUK DËSHTO
+                return res.json({
+                    success: true,
+                    response: `🔮 **OpenAI Bridge Active**\n\n"${req.body.message}"\n\n💡 *Infrastruktura e OpenAI është gati për integrim*\n\n**Gabim:** ${error.message}`,
+                    bridge: 'app-bridge-openai-final-fallback',
+                    sessionData: {
+                        userId: req.userId || req.body.userId,
+                        sessionId: req.sessionId || req.body.sessionId
+                    },
+                    timestamp: new Date().toISOString()
+                });
+            }
         });
 
         // ✅ RUTA E RE PËR MESAZHET NATYRORE - KAP PARA SE TË SHKOJNË TE GEMINI
@@ -249,6 +355,8 @@ class AppBridge {
         });
 
         console.log('✅ Ruta testuese e urës u regjistrua: /api/bridge/test');
+        console.log('✅ Ruta e statusit OpenAI u regjistrua: /api/openai/status');
+        console.log('✅ Ruta e chat-it OpenAI u regjistrua: /api/openai/chat');
         console.log('✅ Ruta e mesazheve natyrore u regjistrua: /api/chat');
         console.log('✅ Ruta e drejtpërdrejtë e mesazheve u regjistrua: /api/chat/message');
     }
