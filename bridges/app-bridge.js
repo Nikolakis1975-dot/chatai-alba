@@ -48,18 +48,25 @@ class AppBridge {
         this.registerTestRoutes(app);
     }
 
-    // ✅ REGJISTRIM I RUTAVE TË REJA TË TESTUARA
-    static registerTestRoutes(app) {
-        // ✅ RUTA TESTUESE - vetëm për testim
-        app.get('/api/bridge/test', (req, res) => {
-            res.json({ 
-                success: true, 
-                message: '🌉 Ura e AppBridge punon!',
-                timestamp: new Date().toISOString(),
-                status: 'Operational',
-                version: '2.0 - With OpenAI Support'
-            });
+  static registerTestRoutes(app) {
+    console.log('🔍 AppBridge: Duke regjistruar rrugët...');
+    
+    // ✅ RUTA TESTUESE - kontrollo nëse AppBridge po punon
+    app.get('/api/bridge/test', (req, res) => {
+        console.log('✅ AppBridge Test Route u thirr!');
+        res.json({ 
+            success: true, 
+            message: '🌉 Ura e AppBridge punon!',
+            timestamp: new Date().toISOString(),
+            status: 'Operational',
+            version: '2.0 - With OpenAI Support'
         });
+    });
+
+    // ... rest of your OpenAI routes ...
+
+    console.log('✅ AppBridge: Të gjitha rrugët u regjistruan');
+}
 
         // 🆕 ==================== OPENAI ROUTES ====================
 
