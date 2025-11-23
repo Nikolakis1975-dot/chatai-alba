@@ -794,3 +794,43 @@ if (originalLogin) {
         return result;
     };
 }
+
+// ===================================== 🌉 OPENAI BRIDGE ACTIVATION =======================================
+function activateOpenAIBridge() {
+    console.log('🔮 Duke aktivizuar OpenAI Bridge...');
+    
+    window.openaiBridge = {
+        async send(message) {
+            try {
+                const response = await fetch('/api/openai/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message })
+                });
+                return await response.json();
+            } catch (error) {
+                return {
+                    success: false,
+                    response: `❌ OpenAI Bridge Error: ${error.message}`
+                };
+            }
+        },
+        
+        async status() {
+            try {
+                const response = await fetch('/api/openai/status');
+                return await response.json();
+            } catch (error) {
+                return {
+                    success: false,
+                    available: false,
+                    message: `Status check failed: ${error.message}`
+                };
+            }
+        }
+    };
+    
+    console.log('✅ OpenAI Bridge activated via App Bridge system');
+}
+
+setTimeout(activateOpenAIBridge, 2000);
