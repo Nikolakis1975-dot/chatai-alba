@@ -48,31 +48,28 @@ class AppBridge {
         this.registerTestRoutes(app);
     }
 
-  static registerTestRoutes(app) {
-    console.log('🔍 AppBridge: Duke regjistruar rrugët...');
-    
-    // ✅ RUTA TESTUESE - kontrollo nëse AppBridge po punon
-    app.get('/api/bridge/test', (req, res) => {
-        console.log('✅ AppBridge Test Route u thirr!');
-        res.json({ 
-            success: true, 
-            message: '🌉 Ura e AppBridge punon!',
-            timestamp: new Date().toISOString(),
-            status: 'Operational',
-            version: '2.0 - With OpenAI Support'
+    // ✅ REGJISTRIM I RUTAVE TË REJA TË TESTUARA
+    static registerTestRoutes(app) {
+        console.log('🔍 AppBridge: Duke regjistruar rrugët...');
+        
+        // ✅ RUTA TESTUESE - kontrollo nëse AppBridge po punon
+        app.get('/api/bridge/test', (req, res) => {
+            console.log('✅ AppBridge Test Route u thirr!');
+            res.json({ 
+                success: true, 
+                message: '🌉 Ura e AppBridge punon!',
+                timestamp: new Date().toISOString(),
+                status: 'Operational',
+                version: '2.0 - With OpenAI Support'
+            });
         });
-    });
-
-    // ... rest of your OpenAI routes ...
-
-    console.log('✅ AppBridge: Të gjitha rrugët u regjistruan');
-}
 
         // 🆕 ==================== OPENAI ROUTES ====================
 
         // ✅ RUTA E STATUSIT TË OPENAI
         app.get('/api/openai/status', async (req, res) => {
             try {
+                console.log('🔮 AppBridge: Duke kontrolluar statusin e OpenAI...');
                 const CommandBridge = require('./command-bridge');
                 const status = await CommandBridge.checkOpenAIStatus();
                 
@@ -83,6 +80,7 @@ class AppBridge {
                     bridge: 'app-bridge-openai-status'
                 });
             } catch (error) {
+                console.error('❌ AppBridge: Gabim në status check:', error);
                 res.json({
                     success: false,
                     available: false,
@@ -361,11 +359,12 @@ class AppBridge {
             }
         });
 
-        console.log('✅ Ruta testuese e urës u regjistrua: /api/bridge/test');
-        console.log('✅ Ruta e statusit OpenAI u regjistrua: /api/openai/status');
-        console.log('✅ Ruta e chat-it OpenAI u regjistrua: /api/openai/chat');
-        console.log('✅ Ruta e mesazheve natyrore u regjistrua: /api/chat');
-        console.log('✅ Ruta e drejtpërdrejtë e mesazheve u regjistrua: /api/chat/message');
+        console.log('✅ AppBridge: Të gjitha rrugët u regjistruan');
+        console.log('🌉 Ruta testuese e urës: /api/bridge/test');
+        console.log('🔮 Ruta e statusit OpenAI: /api/openai/status');
+        console.log('🔮 Ruta e chat-it OpenAI: /api/openai/chat');
+        console.log('💬 Ruta e mesazheve natyrore: /api/chat');
+        console.log('📨 Ruta e drejtpërdrejtë e mesazheve: /api/chat/message');
     }
 }
 
