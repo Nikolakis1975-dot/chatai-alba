@@ -6,41 +6,98 @@ const router = express.Router();
 const { User } = require('../models/User');
 const encryption = require('../utils/encryption');
 
-// ✅ MIDDLEWARE I THJESHTË - PA SESSION COMPLEX
+// ✅ MIDDLEWARE I PËRMIRËSUAR - PROVO TË GJITHA MËNYRAT
 const authenticateUser = async (req, res, next) => {
     try {
-        console.log('🔐 OpenAI Auth - Headers:', req.headers);
+        console.log('🔐 OpenAI Auth Check:');
+        console.log('   - Session ID:', req.sessionID);
+        console.log('   - Session:', req.session);
+        console.log('   - Cookies:', req.cookies);
+        console.log('   - Headers:', req.headers);
         
-        // MËNYRA 1: Merr userId nga header
-        const userId = req.headers['x-user-id'];
-        if (userId && userId !== 'null' && userId !== 'undefined') {
-            req.user = { id: userId };
-            console.log('✅ OpenAI Auth SUCCESS nga header - User ID:', userId);
-            return next();
-        }
-        
-        // MËNYRA 2: Merr userId nga body
-        if (req.body && req.body.userId) {
-            req.user = { id: req.body.userId };
-            console.log('✅ OpenAI Auth SUCCESS nga body - User ID:', req.body.userId);
-            return next();
-        }
-        
-        // MËNYRA 3: Kontrollo session (fallback)
+        // MËNYRA 1: Session-based auth
         if (req.session && req.session.userId) {
             req.user = { id: req.session.userId };
-            console.log('✅ OpenAI Auth SUCCESS nga session - User ID:', req.session.userId);
+            console.log('✅ Auth SUCCESS nga session - User ID:', req.session.userId);
             return next();
         }
         
-        console.log('❌ OpenAI Auth FAILED - Asnjë userId nuk u gjet');
-        return res.json({
-            success: false,
-            message: 'Ju duhet të jeni i loguar për të përdorur OpenAI.'
-        });
+        // MËNYRA 2: Kontrollo nëse ka session të ruajtur në database
+        if (req.sessionID) {
+            try {
+                const sessionStore = req.sessionStore;
+                sessionStore.get(req.sessionID, (err, sessionData) => {
+                    if (!err && sessionData && sessionData.userId) {
+                        req.user = { id: sessionData.userId };
+                        console.log('✅ Auth SUCCESS nga session store - User ID:', sessionData.userId);
+                        return next();
+                    } else {
+                        checkCookies();
+                    }
+                });
+            } catch (e) {
+                checkCookies();
+            }
+        } else {
+            checkCookies();
+        }
+        
+        function checkCookies() {
+            // MËNYRA 3: Cookie-based auth
+            if (req.cookies && req.cookies.userId) {
+                req.user = { id: req.cookies.userId };
+                console.log('✅ Auth SUCCESS nga cookie - User ID:', req.cookies.userId);
+                return next();
+            }
+            
+            // MËNYRA 4: Token nga cookie
+            if (req.cookies && req.cookies.token) {
+                try {
+                    const jwt = require('jsonwebtoken');
+                    const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET || 'fallback-secret');
+                    req.user = { id: decoded.userId || decoded.id };
+                    console.log('✅ Auth SUCCESS nga token - User ID:', req.user.id);
+                    return next();
+                } catch (tokenError) {
+                    console.log('❌ Token i pavlefshëm:', tokenError.message);
+                }
+            }
+            
+            // MËNYRA 5: Kontrollo nëse ka user të loguar në database për këtë session
+            checkDatabaseAuth();
+        }
+        
+        async function checkDatabaseAuth() {
+            try {
+                // Merr IP-në e klientit
+                const clientIp = req.ip || req.connection.remoteAddress;
+                console.log('🔍 Duke kontrolluar auth në database për IP:', clientIp);
+                
+                // Kjo është fallback - në realitet duhet të kesh një mënyrë për të lidhur session me user
+                // Për momentin, le të kthejmë një error të qartë
+                console.log('❌ Auth FAILED - Asnjë metodë nuk funksionoi');
+                return res.json({
+                    success: false,
+                    message: 'Session ka skaduar. Ju lutem rifreskoni faqen dhe logoheni përsëri.',
+                    debug: {
+                        sessionId: req.sessionID,
+                        hasSession: !!req.session,
+                        hasCookies: !!req.cookies,
+                        cookies: req.cookies
+                    }
+                });
+                
+            } catch (dbError) {
+                console.error('❌ Gabim në database auth:', dbError);
+                return res.json({
+                    success: false,
+                    message: 'Gabim në server. Ju lutem provoni përsëri.'
+                });
+            }
+        }
         
     } catch (error) {
-        console.error('❌ Gabim në OpenAI auth:', error);
+        console.error('❌ Gabim në auth middleware:', error);
         return res.json({
             success: false,
             message: 'Gabim në identifikim'
@@ -51,142 +108,27 @@ const authenticateUser = async (req, res, next) => {
 // Përdor middleware
 router.use(authenticateUser);
 
-// ✅ RUTA TESTUESE - PA AUTH
-router.get('/test-no-auth', async (req, res) => {
+// ✅ RUTA DEBUG - TREGO TË GJITHA TË DHËNAT
+router.get('/debug-auth', async (req, res) => {
     try {
         res.json({
             success: true,
-            message: 'Kjo rrutë funksionon pa auth!',
-            timestamp: new Date().toISOString()
+            message: 'Debug auth information',
+            session: {
+                id: req.sessionID,
+                data: req.session
+            },
+            cookies: req.cookies,
+            headers: req.headers,
+            user: req.user,
+            ip: req.ip
         });
     } catch (error) {
         res.json({
             success: false,
-            message: 'Test FAILED: ' + error.message
+            message: 'Debug FAILED: ' + error.message
         });
     }
 });
 
-// ✅ RUTA TESTUESE - ME AUTH
-router.get('/test-with-auth', async (req, res) => {
-    try {
-        console.log('🧪 Test Auth - User:', req.user);
-        
-        const user = await User.findByPk(req.user.id);
-        
-        res.json({
-            success: true,
-            message: 'Auth test SUCCESS',
-            user: {
-                id: user.id,
-                username: user.username
-            }
-        });
-        
-    } catch (error) {
-        console.error('❌ Gabim në test auth:', error);
-        res.json({
-            success: false,
-            message: 'Auth test FAILED: ' + error.message
-        });
-    }
-});
-
-// ✅ RUAJ OPENAI KEY - VERSION I THJESHTË
-router.post('/save-key', async (req, res) => {
-    try {
-        const { apiKey } = req.body;
-        const userId = req.user.id;
-
-        console.log('💾 Duke ruajtur OpenAI Key për user:', userId);
-
-        if (!apiKey) {
-            return res.json({
-                success: false,
-                message: 'API Key është e zbrazët'
-            });
-        }
-
-        // ✅ RUAJ NË DATABASE - Kjo është ajo që duhet!
-        const encryptedKey = encryption.encrypt(apiKey);
-        
-        await User.update({
-            openaiApiKey: encryptedKey,
-            isOpenaiActive: true
-        }, { where: { id: userId } });
-
-        console.log('✅ OpenAI Key u ruajt në database për user:', userId);
-
-        res.json({
-            success: true,
-            message: 'OpenAI API Key u ruajt me sukses në database!'
-        });
-
-    } catch (error) {
-        console.error('❌ Gabim në ruajtjen e OpenAI Key:', error);
-        res.json({
-            success: false,
-            message: 'Gabim në ruajtjen e API Key: ' + error.message
-        });
-    }
-});
-
-// ✅ STATUS I OPENAI KEY
-router.get('/status', async (req, res) => {
-    try {
-        const userId = req.user.id;
-        console.log('🔍 Duke kontrolluar statusin OpenAI për user:', userId);
-
-        const user = await User.findByPk(userId);
-
-        if (!user) {
-            return res.json({
-                success: false,
-                message: 'Përdoruesi nuk u gjet'
-            });
-        }
-
-        res.json({
-            success: true,
-            hasApiKey: !!user.openaiApiKey,
-            isActive: user.isOpenaiActive || false,
-            message: user.openaiApiKey ? 
-                'OpenAI është i konfiguruar' : 
-                'OpenAI nuk është i konfiguruar'
-        });
-
-    } catch (error) {
-        console.error('❌ Gabim në status OpenAI:', error);
-        res.json({
-            success: false,
-            message: 'Gabim në kontrollimin e statusit'
-        });
-    }
-});
-
-// ✅ FSHI OPENAI KEY
-router.delete('/delete-key', async (req, res) => {
-    try {
-        const userId = req.user.id;
-        console.log('🗑️ Duke fshirë OpenAI Key për user:', userId);
-
-        await User.update({
-            openaiApiKey: null,
-            isOpenaiActive: false
-        }, { where: { id: userId } });
-
-        res.json({
-            success: true,
-            message: 'OpenAI API Key u fshi me sukses!'
-        });
-
-    } catch (error) {
-        console.error('❌ Gabim në fshirjen e OpenAI Key:', error);
-        res.json({
-            success: false,
-            message: 'Gabim në fshirjen e API Key'
-        });
-    }
-});
-
-module.exports = router;
+// ✅ RUTA TESTUESE - THJES
