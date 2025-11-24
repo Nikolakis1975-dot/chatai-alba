@@ -303,4 +303,47 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`🌌 RRUFE-TESLA 10.5 Routes u regjistruan: /api/consciousness`);
     console.log(`🔮 OpenAI Enhanced Routes u regjistruan: /api/openai-enhanced`);
     console.log(`🧠 MEMORY OPTIMIZATION: AKTIVIZUAR PËR 512MB RAM`);
-    console.log(`🌉 APP BRIDGE: AKTIVIZUAR ME RUGËT OPENAI`
+    console.log(`🌉 APP BRIDGE: AKTIVIZUAR ME RUGËT OPENAI`);
+    
+    // ✅ NIS MEMORY MONITORING
+    MemoryMonitor.startMonitoring();
+    
+    // ✅ SHFAQ MEMORY STARTUP
+    const used = process.memoryUsage();
+    const startupMB = Math.round(used.heapUsed / 1024 / 1024);
+    console.log(`🧠 STARTUP MEMORY: ${startupMB}MB / 512MB`);
+});
+
+// ======================================================
+// 🔄 GARBAGE COLLECTION FALLBACK
+// ======================================================
+
+// Nëse node nuk është startuar me --expose-gc, krijo fallback
+if (!global.gc) {
+    console.log('⚠️  Garbage Collection nuk është i ekspozuar. Duke krijuar fallback...');
+    
+    // Fallback i thjeshtë për memory management
+    global.simpleGarbageCollector = () => {
+        const before = process.memoryUsage();
+        const beforeMB = Math.round(before.heapUsed / 1024 / 1024);
+        
+        // Forcim i thjeshtë memory cleanup
+        try {
+            if (global.gc) {
+                global.gc();
+            } else {
+                // Fallback: bëj loop të madh për të trigger garbage collection
+                const arr = new Array(1000000).fill(null);
+                arr.length = 0;
+            }
+        } catch (e) {}
+        
+        const after = process.memoryUsage();
+        const afterMB = Math.round(after.heapUsed / 1024 / 1024);
+        
+        console.log(`🔄 SIMPLE GC: ${beforeMB}MB → ${afterMB}MB`);
+        return afterMB;
+    };
+}
+
+module.exports = app;
