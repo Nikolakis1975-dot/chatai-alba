@@ -46,6 +46,39 @@ class MemoryMonitor {
 }
 
 // ======================================================
+// 🎯 SESSION CONFIGURATION FIX
+// ======================================================
+
+const session = require('express-session');
+
+// ✅ SESSION MIDDLEWARE - PARA TË GJITHA RUTAVE
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'fallback-secret-rrufe-tesla-alba-2024-missing-env-var',
+    resave: true,  // ✅ Ndrysho në true
+    saveUninitialized: true,  // ✅ Ndrysho në true
+    cookie: { 
+        secure: process.env.NODE_ENV === 'production',
+        httpOnly: true,
+        maxAge: 24 * 60 * 60 * 1000, // 24 ore
+        sameSite: 'lax'
+    }
+}));
+
+console.log('🔄 Session Config - Secret:', process.env.SESSION_SECRET ? '✅ Set' : '❌ Missing');
+
+// ✅ GLOBAL USER MIDDLEWARE
+app.use((req, res, next) => {
+    // Debug session
+    if (req.session && req.session.userId) {
+        console.log(`👤 Global Middleware - User ID: ${req.session.userId}`);
+        req.user = { id: req.session.userId };
+    } else {
+        console.log('👤 Global Middleware - No user session');
+    }
+    next();
+});
+
+// ======================================================
 // 2️⃣ Konfigurime të përgjithshme
 // ======================================================
 
