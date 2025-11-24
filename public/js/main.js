@@ -1030,3 +1030,41 @@ function debugUserId() {
     
     alert(userId ? `✅ User ID: ${userId}` : '❌ Nuk u gjet User ID');
 }
+
+// ==================== 🧪 DEBUG FUNCTIONS ====================
+
+// ✅ DEBUG AUTH - PROVO KËTË SË PARI
+async function debugAuth() {
+    try {
+        const response = await fetch('/api/openai-enhanced/debug-auth', {
+            credentials: 'include',
+            headers: {
+                'Cache-Control': 'no-cache'
+            }
+        });
+        const data = await response.json();
+        console.log('🔍 DEBUG AUTH:', data);
+        
+        if (data.success) {
+            alert('✅ Debug SUCCESS\nUser: ' + (data.user?.id || 'N/A') + '\nCheck console for details');
+        } else {
+            alert('❌ Debug FAILED: ' + data.message);
+        }
+    } catch (error) {
+        alert('❌ Debug ERROR: ' + error.message);
+    }
+}
+
+// ✅ TEST I THJESHTË
+async function simpleTest() {
+    try {
+        const response = await fetch('/api/openai-enhanced/simple-test', {
+            credentials: 'include'
+        });
+        const data = await response.json();
+        console.log('🧪 SIMPLE TEST:', data);
+        alert(data.success ? '✅ Simple test works!' : '❌ ' + data.message);
+    } catch (error) {
+        alert('❌ Simple test error: ' + error.message);
+    }
+}
