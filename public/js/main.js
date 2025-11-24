@@ -1068,3 +1068,36 @@ async function simpleTest() {
         alert('❌ Simple test error: ' + error.message);
     }
 }
+
+// ✅ DEBUG SESSION
+async function debugSession() {
+    try {
+        const response = await fetch('/api/openai-enhanced/debug-session', {
+            credentials: 'include'
+        });
+        const data = await response.json();
+        console.log('🔍 DEBUG SESSION:', data);
+        
+        if (data.success) {
+            alert('✅ Session Debug SUCCESS\nCheck console for details');
+        } else {
+            alert('❌ Session Debug FAILED: ' + data.message);
+        }
+    } catch (error) {
+        alert('❌ Session Debug ERROR: ' + error.message);
+    }
+}
+
+// ✅ TEST OPENAI STATUS
+async function testOpenAIStatus() {
+    try {
+        const response = await fetch('/api/openai-enhanced/status', {
+            credentials: 'include'
+        });
+        const data = await response.json();
+        console.log('🔄 STATUS TEST:', data);
+        alert(data.success ? '✅ Status works!' : '❌ ' + data.message);
+    } catch (error) {
+        alert('❌ Status test error: ' + error.message);
+    }
+}
