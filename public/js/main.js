@@ -782,6 +782,38 @@ function forceMemoryIntegration() {
     }
 }
 
+// ==================== 🧠 OPENAI SIMPLE ACTIVATION ====================
+setTimeout(() => {
+    window.openaiSimple = {
+        async send(message) {
+            try {
+                console.log('🔮 Duke dërguar mesazh në OpenAI:', message);
+                
+                const response = await fetch('/api/openai/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ message })
+                });
+                
+                const result = await response.json();
+                console.log('📥 Përgjigja nga OpenAI:', result);
+                return result;
+                
+            } catch (error) {
+                console.error('❌ Gabim në OpenAI:', error);
+                return {
+                    success: false,
+                    response: `❌ Gabim: ${error.message}`
+                };
+            }
+        }
+    };
+    
+    console.log('✅ OpenAI Simple u aktivizua në frontend');
+}, 3000); // Vonesë 3 sekonda pas Memory Integration
+
+// ==================== 🎯 INTEGRIMI ME SISTEMIN E TASHËM ====================
+
 // Ekzekuto patch-in pas 5 sekondash
 setTimeout(forceMemoryIntegration, 5000);
 
@@ -791,6 +823,31 @@ if (originalLogin) {
     window.login = function() {
         const result = originalLogin.apply(this, arguments);
         setTimeout(forceMemoryIntegration, 2000);
+        
+        // Aktivizo OpenAI pas login
+        setTimeout(() => {
+            if (!window.openaiSimple) {
+                window.openaiSimple = {
+                    async send(message) {
+                        try {
+                            const response = await fetch('/api/openai/chat', {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({ message })
+                            });
+                            return await response.json();
+                        } catch (error) {
+                            return {
+                                success: false,
+                                response: `❌ Gabim: ${error.message}`
+                            };
+                        }
+                    }
+                };
+                console.log('✅ OpenAI Simple u aktivizua pas login');
+            }
+        }, 3000);
+        
         return result;
     };
 }
