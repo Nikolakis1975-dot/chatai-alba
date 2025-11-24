@@ -1,9 +1,8 @@
-// ===============================================
-// Openai - RRUFE TESLA 10.5
-// ===============================================
-
+// =================================================
+// Openai  RRUFE TESLA 10.5
+// =================================================
 const { OpenAI } = require('openai');
-const { User } = require('../models');
+const { User } = require('../models/User'); // ✅ Rruga e saktë
 const encryption = require('../utils/encryption');
 
 class OpenAIEnhancedService {
@@ -53,7 +52,7 @@ class OpenAIEnhancedService {
                 success: true,
                 response: completion.choices[0].message.content,
                 model: "gpt-4",
-                tokens: completion.usage.total_tokens
+                tokens: completion.usage?.total_tokens || 0
             };
         } catch (error) {
             console.error('❌ Gabim OpenAI API:', error);
