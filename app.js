@@ -145,48 +145,62 @@ app.get('/api/openai/status', async (req, res) => {
 
 // ==================== ✅ RUTA E CHAT-IT TË OPENAI - DIREKT NË APP.JS (VERSION I THJESHTË) =========================
 app.post('/api/openai/chat', async (req, res) => {
-    console.log('🎯 /api/openai/chat u thirr direkt nga app.js');
-    
     try {
-        const { message } = req.body;
+        const { message, apiKey } = req.body;
         
-        if (!message || message.trim() === '') {
+        console.log('🔮 OpenAI Request - API Key nga frontend:', !!apiKey);
+        
+        // ✅ PËRDOR API KEY NGA FRONTEND OSE ENVIRONMENT
+        const openaiApiKey = apiKey || process.env.OPENAI_API_KEY;
+        
+        if (!openaiApiKey) {
             return res.json({
-                success: false,
-                response: '❌ Ju lutem shkruani një mesazh për OpenAI'
+                success: true,
+                response: `🔮 **OpenAI Setup Required**\n\n"${message}"\n\n💡 *Ju lutem vendosni API Key në panelin e OpenAI*`,
+                fallback: true
             });
         }
         
-        console.log('🔮 Mesazhi i OpenAI:', message.substring(0, 100));
+        // ✅ PËRDOR OPENAI ME API KEY
+        const { OpenAI } = require('openai');
+        const openai = new OpenAI({ 
+            apiKey: openaiApiKey 
+        });
         
-        // ✅ GJITHMONE KTHE PËRGJIGJE TESTUESE - NUK PROVO OPENAI
-        const testResponse = {
-            success: true,
-            response: `🔮 **OpenAI Test Mode**\n\n"${message}"\n\n💡 *OpenAI është gati për integrim!*\n\n**Status:** Sistemi po funksionon në modalitet testues.`,
-            fallback: true,
-            timestamp: new Date().toISOString(),
-            route: 'direct-app-route'
-        };
+        const completion = await openai.chat.completions.create({
+            model: 'gpt-4',
+            messages: [
+                {
+                    role: "system", 
+                    content: "Ti je RRUFE-TESLA AI. Përgjigju në shqip dhe jep përgjigje të dobishme."
+                },
+                {
+                    role: "user",
+                    content: message
+                }
+            ],
+            max_tokens: 500
+        });
+
+        const response = completion.choices[0].message.content;
         
-        console.log('✅ OpenAI ktheu përgjigje testuese');
-        res.json(testResponse);
-        
-    } catch (error) {
-        console.error('❌ OpenAI Route Error:', error);
-        
-        // ✅ FALLBACK FINAL - ASNJËHERË NUK DËSHTON
         res.json({
             success: true,
-            response: `🔮 **OpenAI Test**\n\n"${req.body.message}"\n\n💡 *Sistemi po funksionon normalisht*`,
-            fallback: true,
+            response: `🔮 **OpenAI**: ${response}`,
             timestamp: new Date().toISOString()
+        });
+        
+    } catch (error) {
+        console.error('❌ OpenAI Error:', error.message);
+        
+        // Fallback nëse dështon
+        res.json({
+            success: true,
+            response: `🔮 **OpenAI Test Mode**\n\n"${req.body.message}"\n\n💡 *Gabim: ${error.message}*`,
+            fallback: true
         });
     }
 });
-
-console.log('✅ OpenAI routes u regjistruan DIREKT në app.js:');
-console.log('   - GET /api/openai/status');
-console.log('   - POST /api/openai/chat');
 
 // ======================================================
 // 5️⃣ Static files (Frontend)
