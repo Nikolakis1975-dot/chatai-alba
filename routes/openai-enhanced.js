@@ -3,22 +3,64 @@
 // ========================================================
 const express = require('express');
 const router = express.Router();
-const { User } = require('../models/User'); // ✅ Rruga e saktë
+const { User } = require('../models/User');
 const encryption = require('../utils/encryption');
 const OpenAIEnhancedService = require('../services/openaiEnhancedService');
 
-// ✅ Ruaj OpenAI API Key
+// ✅ MIDDLEWARE PËR AUTHENTICATION - KORRIGJUAR
+const authenticateUser = (req, res, next) => {
+    try {
+        // Kontrollo nëse ka session të aktiv
+        if (req.session && req.session.userId) {
+            req.user = { id: req.session.userId };
+            return next();
+        }
+        
+        // Kontrollo nëse ka token në header
+        const authHeader = req.headers.authorization;
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            const token = authHeader.substring(7);
+            // Verifiko token-in (implementoje këtë nëse ke JWT)
+            // req.user = verifyToken(token);
+            // return next();
+        }
+        
+        // Kontrollo nëse ka cookie me user ID
+        if (req.cookies && req.cookies.userId) {
+            req.user = { id: req.cookies.userId };
+            return next();
+        }
+        
+        console.log('❌ Përdoruesi nuk është i identifikuar:', {
+            session: req.session,
+            cookies: req.cookies,
+            headers: req.headers
+        });
+        
+        return res.json({
+            success: false,
+            message: 'Përdoruesi nuk është i identifikuar. Ju lutem identifikohuni përsëri.'
+        });
+        
+    } catch (error) {
+        console.error('❌ Gabim në authentication:', error);
+        return res.json({
+            success: false,
+            message: 'Gabim në identifikim'
+        });
+    }
+};
+
+// ✅ Përdor middleware-in për të gjitha rrugët
+router.use(authenticateUser);
+
+// ✅ Ruaj OpenAI API Key - VERSION I KORRIGJUAR
 router.post('/save-key', async (req, res) => {
     try {
         const { apiKey } = req.body;
-        const userId = req.user?.id;
+        const userId = req.user.id;
 
-        if (!userId) {
-            return res.json({
-                success: false,
-                message: 'Përdoruesi nuk është i identifikuar'
-            });
-        }
+        console.log('🔐 Duke ruajtur OpenAI Key për user:', userId);
 
         if (!apiKey) {
             return res.json({
@@ -34,6 +76,8 @@ router.post('/save-key', async (req, res) => {
             isOpenaiActive: true
         }, { where: { id: userId } });
 
+        console.log('✅ OpenAI Key u ruajt për user:', userId);
+
         res.json({
             success: true,
             message: 'OpenAI API Key u ruajt me sukses!'
@@ -48,22 +92,19 @@ router.post('/save-key', async (req, res) => {
     }
 });
 
-// ✅ Fshi OpenAI API Key
+// ✅ Fshi OpenAI API Key - VERSION I KORRIGJUAR
 router.delete('/delete-key', async (req, res) => {
     try {
-        const userId = req.user?.id;
+        const userId = req.user.id;
 
-        if (!userId) {
-            return res.json({
-                success: false,
-                message: 'Përdoruesi nuk është i identifikuar'
-            });
-        }
+        console.log('🗑️ Duke fshirë OpenAI Key për user:', userId);
 
         await User.update({
             openaiApiKey: null,
             isOpenaiActive: false
         }, { where: { id: userId } });
+
+        console.log('✅ OpenAI Key u fshi për user:', userId);
 
         res.json({
             success: true,
@@ -79,25 +120,27 @@ router.delete('/delete-key', async (req, res) => {
     }
 });
 
-// ✅ Status i OpenAI Key
+// ✅ Status i OpenAI Key - VERSION I KORRIGJUAR
 router.get('/status', async (req, res) => {
     try {
-        const userId = req.user?.id;
+        const userId = req.user.id;
 
-        if (!userId) {
-            return res.json({
-                success: false,
-                message: 'Përdoruesi nuk është i identifikuar'
-            });
-        }
+        console.log('🔍 Duke kontrolluar statusin OpenAI për user:', userId);
 
         const user = await User.findByPk(userId);
 
+        if (!user) {
+            return res.json({
+                success: false,
+                message: 'Përdoruesi nuk u gjet'
+            });
+        }
+
         res.json({
             success: true,
-            hasApiKey: !!user?.openaiApiKey,
-            isActive: user?.isOpenaiActive || false,
-            message: user?.openaiApiKey ? 
+            hasApiKey: !!user.openaiApiKey,
+            isActive: user.isOpenaiActive || false,
+            message: user.openaiApiKey ? 
                 'OpenAI është i konfiguruar' : 
                 'OpenAI nuk është i konfiguruar'
         });
@@ -111,18 +154,13 @@ router.get('/status', async (req, res) => {
     }
 });
 
-// ✅ Chat me OpenAI
+// ✅ Chat me OpenAI - VERSION I KORRIGJUAR
 router.post('/chat', async (req, res) => {
     try {
         const { message } = req.body;
-        const userId = req.user?.id;
+        const userId = req.user.id;
 
-        if (!userId) {
-            return res.json({
-                success: false,
-                message: 'Përdoruesi nuk është i identifikuar'
-            });
-        }
+        console.log('🔮 OpenAI Chat për user:', userId, 'Mesazhi:', message?.substring(0, 50));
 
         if (!message) {
             return res.json({
@@ -135,7 +173,7 @@ router.post('/chat', async (req, res) => {
 
         if (result.fallback) {
             // Fallback në Gemini nëse OpenAI dështon
-            const geminiService = require('./../services/geminiService');
+            const geminiService = require('../services/geminiService');
             const geminiResult = await geminiService.generateResponse(message, userId);
             
             return res.json({
@@ -159,8 +197,8 @@ router.post('/chat', async (req, res) => {
         
         // Fallback në Gemini
         try {
-            const geminiService = require('./../services/geminiService');
-            const geminiResult = await geminiService.generateResponse(req.body.message, req.user?.id);
+            const geminiService = require('../services/geminiService');
+            const geminiResult = await geminiService.generateResponse(req.body.message, req.user.id);
             
             res.json({
                 success: true,
