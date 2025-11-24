@@ -890,4 +890,145 @@ function activateOpenAIBridge() {
     console.log('✅ OpenAI Bridge activated via App Bridge system');
 }
 
+// ======================================== 🔮 OPENAI PANEL FUNCTIONS =====================================
+
+// ✅ Shfaq panelin OpenAI
+function showOpenAIPanel() {
+    console.log('🔮 Duke hapur panelin OpenAI...');
+    document.getElementById('openai-modal').style.display = 'block';
+    updateOpenAIStatus();
+}
+
+// ✅ Ruaj OpenAI Key në server
+async function saveOpenAIKey() {
+    const apiKey = document.getElementById('openai-key-input').value.trim();
+    const statusDiv = document.getElementById('openai-key-status');
+    
+    if (!apiKey) {
+        statusDiv.textContent = '❌ Ju lutem vendosni OpenAI API Key';
+        statusDiv.className = 'api-status invalid';
+        return;
+    }
+    
+    try {
+        statusDiv.textContent = '🔄 Duke ruajtur në database...';
+        statusDiv.className = 'api-status';
+        
+        const response = await fetch('/api/openai-enhanced/save-key', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            credentials: 'include',
+            body: JSON.stringify({ apiKey })
+        });
+        
+        const data = await response.json();
+        console.log('📥 Përgjigja nga serveri:', data);
+        
+        if (data.success) {
+            statusDiv.textContent = '✅ ' + data.message;
+            statusDiv.className = 'api-status valid';
+            
+            // Mbylle modalin pas 2 sekondash
+            setTimeout(() => {
+                document.getElementById('openai-modal').style.display = 'none';
+            }, 2000);
+            
+        } else {
+            statusDiv.textContent = '❌ ' + data.message;
+            statusDiv.className = 'api-status invalid';
+        }
+    } catch (error) {
+        console.error('❌ Gabim në ruajtjen e OpenAI Key:', error);
+        statusDiv.textContent = '❌ Gabim në server: ' + error.message;
+        statusDiv.className = 'api-status invalid';
+    }
+}
+
+// ✅ Fshi OpenAI Key nga serveri
+async function deleteOpenAIKey() {
+    const statusDiv = document.getElementById('openai-key-status');
+    
+    try {
+        statusDiv.textContent = '🔄 Duke fshirë nga database...';
+        statusDiv.className = 'api-status';
+        
+        const response = await fetch('/api/openai-enhanced/delete-key', {
+            method: 'DELETE',
+            credentials: 'include'
+        });
+        
+        const data = await response.json();
+        console.log('📥 Përgjigja e fshirjes:', data);
+        
+        if (data.success) {
+            statusDiv.textContent = '✅ ' + data.message;
+            statusDiv.className = 'api-status valid';
+            document.getElementById('openai-key-input').value = '';
+        } else {
+            statusDiv.textContent = '❌ ' + data.message;
+            statusDiv.className = 'api-status invalid';
+        }
+    } catch (error) {
+        console.error('❌ Gabim në fshirjen e OpenAI Key:', error);
+        statusDiv.textContent = '❌ Gabim në server: ' + error.message;
+        statusDiv.className = 'api-status invalid';
+    }
+}
+
+// ✅ Kontrollo statusin e OpenAI Key
+async function updateOpenAIStatus() {
+    const statusDiv = document.getElementById('openai-key-status');
+    
+    try {
+        statusDiv.textContent = '🔄 Duke kontrolluar statusin...';
+        statusDiv.className = 'api-status';
+        
+        const response = await fetch('/api/openai-enhanced/status', {
+            credentials: 'include'
+        });
+        
+        const data = await response.json();
+        console.log('📊 Statusi i OpenAI:', data);
+        
+        if (data.success && data.hasApiKey) {
+            statusDiv.textContent = '✅ OpenAI është i konfiguruar dhe aktiv';
+            statusDiv.className = 'api-status valid';
+            document.getElementById('openai-key-input').value = '••••••••••••••••';
+        } else {
+            statusDiv.textContent = '❌ OpenAI nuk është i konfiguruar';
+            statusDiv.className = 'api-status invalid';
+            document.getElementById('openai-key-input').value = '';
+        }
+    } catch (error) {
+        console.error('❌ Gabim në kontrollimin e statusit:', error);
+        statusDiv.textContent = '❌ Gabim në kontrollim: ' + error.message;
+        statusDiv.className = 'api-status invalid';
+    }
+}
+
+// ✅ Testo OpenAI me një mesazh
+async function testOpenAI() {
+    try {
+        const response = await fetch('/api/openai-enhanced/chat', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            credentials: 'include',
+            body: JSON.stringify({ message: 'Test OpenAI connection' })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success && !result.fallback) {
+            alert('✅ OpenAI funksionon perfektisht!');
+            return true;
+        } else {
+            alert('❌ OpenAI nuk funksionon: ' + (result.response || 'Gabim i panjohur'));
+            return false;
+        }
+    } catch (error) {
+        alert('❌ Gabim në test: ' + error.message);
+        return false;
+    }
+}
+
 setTimeout(activateOpenAIBridge, 2000);
