@@ -1,5 +1,5 @@
 // ============================================================
-// 🌟 ChatAI ALBA v3.0 — Server kryesor ME MEMORY OPTIMIZATION
+// 🌟 ChatAI ALBA v3.0 — Server kryesor ME SESSION AUTH
 // ============================================================
 
 // 1️⃣ Konfigurime fillestare
@@ -8,6 +8,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const cookieParser = require('cookie-parser');
+const session = require('express-session');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -54,17 +55,35 @@ app.use(cors({
     origin: [
         'http://localhost:3000',
         'https://chatai-alba-gr9dw.ondigitalocean.app',
-        'https://deklarata-rrufetesla.netlify.app' // ✅ SHTESË E RE: Lejon Deklaratën
+        'https://deklarata-rrufetesla.netlify.app'
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-User-ID']
 }));
 
 // ✅ COOKIE & BODY parsers
 app.use(cookieParser());
-app.use(express.json({ limit: '5mb' })); // ✅ ULVUAR NGA 10mb NË 5mb
-app.use(express.urlencoded({ limit: '5mb', extended: true })); // ✅ ULVUAR
+app.use(express.json({ limit: '5mb' }));
+app.use(express.urlencoded({ limit: '5mb', extended: true }));
+
+// ======================================================
+// 🆕 SESSION CONFIGURATION - SHUMË E RËNDËSISHME!
+// ======================================================
+
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'rrufe-tesla-alba-chatai-super-secret-key-2024-digitalocean',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { 
+        secure: process.env.NODE_ENV === 'production',
+        httpOnly: true,
+        maxAge: 24 * 60 * 60 * 1000, // 24 ore
+        sameSite: 'lax'
+    }
+}));
+
+console.log('✅ SESSION MIDDLEWARE U AKTIVIZUA');
 
 // ======================================================
 // 3️⃣ Importo & Regjistro rutat
@@ -97,8 +116,8 @@ const openaiEnhancedRoutes = require('./routes/openai-enhanced');
 // ======================================================
 
 // 🌌 Ruta të reja për Ndërgjegjen Kolektive
-const consciousnessRoutes = require('./routes/rrufe/consciousness-routes'); // ✅ SHTESË E RE
-app.use('/api/consciousness', consciousnessRoutes); // ✅ SHTESË E RE
+const consciousnessRoutes = require('./routes/rrufe/consciousness-routes');
+app.use('/api/consciousness', consciousnessRoutes);
 
 // ======================================================
 // 4️⃣ Regjistro të gjitha rutat (vazhdim)
@@ -145,7 +164,7 @@ app.get('/api/openai/status', async (req, res) => {
     }
 });
 
-// ==================== ✅ RUTA E CHAT-IT TË OPENAI - DIREKT NË APP.JS (VERSION I THJESHTË) =========================
+// ==================== ✅ RUTA E CHAT-IT TË OPENAI - DIREKT NË APP.JS =========================
 app.post('/api/openai/chat', async (req, res) => {
     try {
         const { message, apiKey } = req.body;
@@ -211,7 +230,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // ======================================================
 // 6️⃣ Default route — për SPA frontend
 app.get('/', (req, res) => {
-    // ✅ SHTESË E RE: Memory check për çdo request
+    // ✅ Memory check për çdo request
     const used = process.memoryUsage();
     const memoryMB = Math.round(used.heapUsed / 1024 / 1024);
     
@@ -284,11 +303,12 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Serveri është duke u drejtuar në portin ${PORT}`);
     console.log(`🌐 URL: http://localhost:${PORT}`);
     console.log(`🔐 NODE_ENV: ${process.env.NODE_ENV}`);
+    console.log(`🔐 SESSION_SECRET: ${process.env.SESSION_SECRET ? '✅ SET' : '❌ MISSING'}`);
     console.log(`🎤 Voice Routes u regjistruan: /api/voice/transcribe`);
     console.log(`🌌 RRUFE-TESLA 10.5 Routes u regjistruan: /api/consciousness`);
+    console.log(`🔮 OpenAI Enhanced Routes u regjistruan: /api/openai-enhanced`);
     console.log(`🧠 MEMORY OPTIMIZATION: AKTIVIZUAR PËR 512MB RAM`);
     console.log(`🌉 APP BRIDGE: AKTIVIZUAR ME RUGËT OPENAI`);
-    console.log(`🔮 OPENAI ROUTES: AKTIVIZUAR DIREKT NË APP.JS`);
     
     // ✅ NIS MEMORY MONITORING
     MemoryMonitor.startMonitoring();
