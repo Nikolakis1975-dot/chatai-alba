@@ -13,4 +13,14 @@ class User {
     }
 }
 
+// =================================== OPENAI ===============================================
+openaiApiKey: {
+    type: DataTypes.TEXT,
+    allowNull: true
+},
+isOpenaiActive: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+}
+
 module.exports = User;
