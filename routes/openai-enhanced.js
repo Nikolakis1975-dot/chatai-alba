@@ -7,43 +7,33 @@ const { User } = require('../models/User');
 const encryption = require('../utils/encryption');
 const OpenAIEnhancedService = require('../services/openaiEnhancedService');
 
-// ✅ MIDDLEWARE PËR AUTHENTICATION - KORRIGJUAR
-const authenticateUser = (req, res, next) => {
+// ✅ PËRDOR I NJËJTIN AUTH MIDDLEWARE SI GEMINI
+const authenticateUser = async (req, res, next) => {
     try {
-        // Kontrollo nëse ka session të aktiv
+        console.log('🔐 OpenAI Auth Check - Session:', req.session);
+        
+        // I NJËJTI KOD SI NË GEMINI ROUTES
         if (req.session && req.session.userId) {
             req.user = { id: req.session.userId };
+            console.log('✅ OpenAI Auth SUCCESS - User ID:', req.user.id);
             return next();
         }
         
-        // Kontrollo nëse ka token në header
-        const authHeader = req.headers.authorization;
-        if (authHeader && authHeader.startsWith('Bearer ')) {
-            const token = authHeader.substring(7);
-            // Verifiko token-in (implementoje këtë nëse ke JWT)
-            // req.user = verifyToken(token);
-            // return next();
-        }
-        
-        // Kontrollo nëse ka cookie me user ID
+        // Fallback: provo me cookie
         if (req.cookies && req.cookies.userId) {
             req.user = { id: req.cookies.userId };
+            console.log('✅ OpenAI Auth SUCCESS nga cookie - User ID:', req.user.id);
             return next();
         }
         
-        console.log('❌ Përdoruesi nuk është i identifikuar:', {
-            session: req.session,
-            cookies: req.cookies,
-            headers: req.headers
-        });
-        
+        console.log('❌ OpenAI Auth FAILED - Session:', req.session);
         return res.json({
             success: false,
-            message: 'Përdoruesi nuk është i identifikuar. Ju lutem identifikohuni përsëri.'
+            message: 'Session ka skaduar. Ju lutem rifreskoni faqen.'
         });
         
     } catch (error) {
-        console.error('❌ Gabim në authentication:', error);
+        console.error('❌ Gabim në OpenAI auth:', error);
         return res.json({
             success: false,
             message: 'Gabim në identifikim'
@@ -51,16 +41,43 @@ const authenticateUser = (req, res, next) => {
     }
 };
 
-// ✅ Përdor middleware-in për të gjitha rrugët
+// Përdor middleware
 router.use(authenticateUser);
 
-// ✅ Ruaj OpenAI API Key - VERSION I KORRIGJUAR
+// ✅ RUTA E STATUSIT - TESTONI KËTË SË PARI
+router.get('/test-session', async (req, res) => {
+    try {
+        console.log('🧪 Test Session - User:', req.user);
+        
+        const user = await User.findByPk(req.user.id);
+        
+        res.json({
+            success: true,
+            message: 'OpenAI session test SUCCESS',
+            user: {
+                id: user.id,
+                username: user.username,
+                hasOpenAIKey: !!user.openaiApiKey
+            },
+            session: req.session
+        });
+        
+    } catch (error) {
+        console.error('❌ Gabim në test session:', error);
+        res.json({
+            success: false,
+            message: 'Test session FAILED: ' + error.message
+        });
+    }
+});
+
+// ✅ RUAJ OPENAI KEY
 router.post('/save-key', async (req, res) => {
     try {
         const { apiKey } = req.body;
         const userId = req.user.id;
 
-        console.log('🔐 Duke ruajtur OpenAI Key për user:', userId);
+        console.log('💾 Duke ruajtur OpenAI Key për user:', userId);
 
         if (!apiKey) {
             return res.json({
@@ -87,44 +104,15 @@ router.post('/save-key', async (req, res) => {
         console.error('❌ Gabim në ruajtjen e OpenAI Key:', error);
         res.json({
             success: false,
-            message: 'Gabim në ruajtjen e API Key'
+            message: 'Gabim në ruajtjen e API Key: ' + error.message
         });
     }
 });
 
-// ✅ Fshi OpenAI API Key - VERSION I KORRIGJUAR
-router.delete('/delete-key', async (req, res) => {
-    try {
-        const userId = req.user.id;
-
-        console.log('🗑️ Duke fshirë OpenAI Key për user:', userId);
-
-        await User.update({
-            openaiApiKey: null,
-            isOpenaiActive: false
-        }, { where: { id: userId } });
-
-        console.log('✅ OpenAI Key u fshi për user:', userId);
-
-        res.json({
-            success: true,
-            message: 'OpenAI API Key u fshi me sukses!'
-        });
-
-    } catch (error) {
-        console.error('❌ Gabim në fshirjen e OpenAI Key:', error);
-        res.json({
-            success: false,
-            message: 'Gabim në fshirjen e API Key'
-        });
-    }
-});
-
-// ✅ Status i OpenAI Key - VERSION I KORRIGJUAR
+// ✅ STATUS I OPENAI KEY
 router.get('/status', async (req, res) => {
     try {
         const userId = req.user.id;
-
         console.log('🔍 Duke kontrolluar statusin OpenAI për user:', userId);
 
         const user = await User.findByPk(userId);
@@ -151,67 +139,6 @@ router.get('/status', async (req, res) => {
             success: false,
             message: 'Gabim në kontrollimin e statusit'
         });
-    }
-});
-
-// ✅ Chat me OpenAI - VERSION I KORRIGJUAR
-router.post('/chat', async (req, res) => {
-    try {
-        const { message } = req.body;
-        const userId = req.user.id;
-
-        console.log('🔮 OpenAI Chat për user:', userId, 'Mesazhi:', message?.substring(0, 50));
-
-        if (!message) {
-            return res.json({
-                success: false,
-                message: 'Mesazhi është i zbrazët'
-            });
-        }
-
-        const result = await OpenAIEnhancedService.chatWithOpenAI(userId, message);
-
-        if (result.fallback) {
-            // Fallback në Gemini nëse OpenAI dështon
-            const geminiService = require('../services/geminiService');
-            const geminiResult = await geminiService.generateResponse(message, userId);
-            
-            return res.json({
-                success: true,
-                response: `🔮 **OpenAI Fallback**\n\n${geminiResult.response}`,
-                fallback: true,
-                source: 'gemini'
-            });
-        }
-
-        res.json({
-            success: true,
-            response: `🔮 **OpenAI**\n\n${result.response}`,
-            model: result.model,
-            tokens: result.tokens,
-            source: 'openai'
-        });
-
-    } catch (error) {
-        console.error('❌ Gabim në OpenAI chat:', error);
-        
-        // Fallback në Gemini
-        try {
-            const geminiService = require('../services/geminiService');
-            const geminiResult = await geminiService.generateResponse(req.body.message, req.user.id);
-            
-            res.json({
-                success: true,
-                response: `🔮 **OpenAI Fallback**\n\n${geminiResult.response}`,
-                fallback: true,
-                source: 'gemini'
-            });
-        } catch (fallbackError) {
-            res.json({
-                success: false,
-                response: '❌ Gabim në të dy shërbimet AI'
-            });
-        }
     }
 });
 
