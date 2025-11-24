@@ -7,26 +7,51 @@ const { User } = require('../models/User');
 const encryption = require('../utils/encryption');
 const OpenAIEnhancedService = require('../services/openaiEnhancedService');
 
-// ✅ PËRDOR I NJËJTIN AUTH MIDDLEWARE SI GEMINI
+// ✅ MIDDLEWARE I KORRIGJUAR - PËRDOR I NJËJTIN SISTEM SI GEMINI
 const authenticateUser = async (req, res, next) => {
     try {
-        console.log('🔐 OpenAI Auth Check - Session:', req.session);
+        console.log('🔐 OpenAI Auth Check - Cookies:', req.cookies);
+        console.log('🔐 OpenAI Auth Check - Headers:', req.headers);
         
-        // I NJËJTI KOD SI NË GEMINI ROUTES
+        // MËNYRA 1: Kontrollo session (si në Gemini)
         if (req.session && req.session.userId) {
             req.user = { id: req.session.userId };
-            console.log('✅ OpenAI Auth SUCCESS - User ID:', req.user.id);
+            console.log('✅ OpenAI Auth SUCCESS nga session - User ID:', req.user.id);
             return next();
         }
         
-        // Fallback: provo me cookie
-        if (req.cookies && req.cookies.userId) {
-            req.user = { id: req.cookies.userId };
-            console.log('✅ OpenAI Auth SUCCESS nga cookie - User ID:', req.user.id);
+        // MËNYRA 2: Kontrollo token nga headers (si në Gemini)
+        const authHeader = req.headers.authorization;
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            const token = authHeader.substring(7);
+            // Verifiko token-in - përdor të njëjtin sistem si Gemini
+            try {
+                const jwt = require('jsonwebtoken');
+                const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret');
+                req.user = { id: decoded.userId };
+                console.log('✅ OpenAI Auth SUCCESS nga token - User ID:', req.user.id);
+                return next();
+            } catch (tokenError) {
+                console.log('❌ Token i pavlefshëm:', tokenError.message);
+            }
+        }
+        
+        // MËNYRA 3: Kontrollo userId nga body (fallback)
+        if (req.body && req.body.userId) {
+            req.user = { id: req.body.userId };
+            console.log('✅ OpenAI Auth SUCCESS nga body - User ID:', req.user.id);
             return next();
         }
         
-        console.log('❌ OpenAI Auth FAILED - Session:', req.session);
+        // MËNYRA 4: Kontrollo localStorage userId (përmes header)
+        const userIdHeader = req.headers['x-user-id'];
+        if (userIdHeader) {
+            req.user = { id: userIdHeader };
+            console.log('✅ OpenAI Auth SUCCESS nga header - User ID:', req.user.id);
+            return next();
+        }
+        
+        console.log('❌ OpenAI Auth FAILED - Asnjë metodë nuk funksionoi');
         return res.json({
             success: false,
             message: 'Session ka skaduar. Ju lutem rifreskoni faqen.'
@@ -44,7 +69,7 @@ const authenticateUser = async (req, res, next) => {
 // Përdor middleware
 router.use(authenticateUser);
 
-// ✅ RUTA E STATUSIT - TESTONI KËTË SË PARI
+// ✅ RUTA TESTUESE - PROVO KËTË SË PARI
 router.get('/test-session', async (req, res) => {
     try {
         console.log('🧪 Test Session - User:', req.user);
@@ -58,8 +83,7 @@ router.get('/test-session', async (req, res) => {
                 id: user.id,
                 username: user.username,
                 hasOpenAIKey: !!user.openaiApiKey
-            },
-            session: req.session
+            }
         });
         
     } catch (error) {
@@ -71,7 +95,7 @@ router.get('/test-session', async (req, res) => {
     }
 });
 
-// ✅ RUAJ OPENAI KEY
+// ✅ RUAJ OPENAI KEY - VERSION I KORRIGJUAR
 router.post('/save-key', async (req, res) => {
     try {
         const { apiKey } = req.body;
@@ -109,7 +133,7 @@ router.post('/save-key', async (req, res) => {
     }
 });
 
-// ✅ STATUS I OPENAI KEY
+// ✅ STATUS I OPENAI KEY - VERSION I KORRIGJUAR
 router.get('/status', async (req, res) => {
     try {
         const userId = req.user.id;
