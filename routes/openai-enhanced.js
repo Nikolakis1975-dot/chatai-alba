@@ -131,4 +131,59 @@ router.get('/debug-auth', async (req, res) => {
     }
 });
 
-// ✅ RUTA TESTUESE - THJES
+// ✅ RUTA TESTUESE - THJESHTË
+router.get('/simple-test', async (req, res) => {
+    try {
+        res.json({
+            success: true,
+            message: 'OpenAI route works!',
+            user: req.user,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        res.json({
+            success: false,
+            message: 'Test FAILED: ' + error.message
+        });
+    }
+});
+
+// ... (Ruajtja e API Key mbetet e njëjtë)
+router.post('/save-key', async (req, res) => {
+    try {
+        const { apiKey } = req.body;
+        const userId = req.user.id;
+
+        console.log('💾 Duke ruajtur OpenAI Key për user:', userId);
+
+        if (!apiKey) {
+            return res.json({
+                success: false,
+                message: 'API Key është e zbrazët'
+            });
+        }
+
+        const encryptedKey = encryption.encrypt(apiKey);
+        
+        await User.update({
+            openaiApiKey: encryptedKey,
+            isOpenaiActive: true
+        }, { where: { id: userId } });
+
+        console.log('✅ OpenAI Key u ruajt në database për user:', userId);
+
+        res.json({
+            success: true,
+            message: 'OpenAI API Key u ruajt me sukses në database!'
+        });
+
+    } catch (error) {
+        console.error('❌ Gabim në ruajtjen e OpenAI Key:', error);
+        res.json({
+            success: false,
+            message: 'Gabim në ruajtjen e API Key: ' + error.message
+        });
+    }
+});
+
+module.exports = router;
