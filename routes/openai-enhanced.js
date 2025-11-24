@@ -3,9 +3,9 @@
 // ========================================================
 const express = require('express');
 const router = express.Router();
-const { User } = require('./../models/User'); // ✅ Rruga e saktë
-const encryption = require('./../utils/encryption');
-const OpenAIEnhancedService = require('./../services/openaiEnhancedService');
+const { User } = require('../models/User'); // ✅ Rruga e saktë
+const encryption = require('../utils/encryption');
+const OpenAIEnhancedService = require('../services/openaiEnhancedService');
 
 // ✅ Ruaj OpenAI API Key
 router.post('/save-key', async (req, res) => {
