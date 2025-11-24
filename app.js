@@ -1,5 +1,5 @@
 // ============================================================
-// 🌟 ChatAI ALBA v3.0 — Server kryesor ME SESSION AUTH
+// 🌟 ChatAI ALBA v3.0 — Server kryesor ME MEMORY OPTIMIZATION
 // ============================================================
 
 // 1️⃣ Konfigurime fillestare
@@ -8,7 +8,6 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const cookieParser = require('cookie-parser');
-const session = require('express-session');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -68,22 +67,19 @@ app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ limit: '5mb', extended: true }));
 
 // ======================================================
-// 🆕 SESSION CONFIGURATION - SHUMË E RËNDËSISHME!
+// 🆕 SIMPLE SESSION EMULATION - PA EXPRESS-SESSION
 // ======================================================
 
-app.use(session({
-    secret: process.env.SESSION_SECRET || 'rrufe-tesla-alba-chatai-super-secret-key-2024-digitalocean',
-    resave: false,
-    saveUninitialized: false,
-    cookie: { 
-        secure: process.env.NODE_ENV === 'production',
-        httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000, // 24 ore
-        sameSite: 'lax'
+app.use((req, res, next) => {
+    // Emulim i thjeshtë session - përdor cookie direkt
+    if (req.cookies && req.cookies.userId) {
+        req.user = { id: req.cookies.userId };
+        console.log('🔐 Session Emulation - User ID:', req.cookies.userId);
     }
-}));
+    next();
+});
 
-console.log('✅ SESSION MIDDLEWARE U AKTIVIZUA');
+console.log('✅ SESSION EMULATION U AKTIVIZUA');
 
 // ======================================================
 // 3️⃣ Importo & Regjistro rutat
@@ -303,52 +299,8 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Serveri është duke u drejtuar në portin ${PORT}`);
     console.log(`🌐 URL: http://localhost:${PORT}`);
     console.log(`🔐 NODE_ENV: ${process.env.NODE_ENV}`);
-    console.log(`🔐 SESSION_SECRET: ${process.env.SESSION_SECRET ? '✅ SET' : '❌ MISSING'}`);
     console.log(`🎤 Voice Routes u regjistruan: /api/voice/transcribe`);
     console.log(`🌌 RRUFE-TESLA 10.5 Routes u regjistruan: /api/consciousness`);
     console.log(`🔮 OpenAI Enhanced Routes u regjistruan: /api/openai-enhanced`);
     console.log(`🧠 MEMORY OPTIMIZATION: AKTIVIZUAR PËR 512MB RAM`);
-    console.log(`🌉 APP BRIDGE: AKTIVIZUAR ME RUGËT OPENAI`);
-    
-    // ✅ NIS MEMORY MONITORING
-    MemoryMonitor.startMonitoring();
-    
-    // ✅ SHFAQ MEMORY STARTUP
-    const used = process.memoryUsage();
-    const startupMB = Math.round(used.heapUsed / 1024 / 1024);
-    console.log(`🧠 STARTUP MEMORY: ${startupMB}MB / 512MB`);
-});
-
-// ======================================================
-// 🔄 GARBAGE COLLECTION FALLBACK
-// ======================================================
-
-// Nëse node nuk është startuar me --expose-gc, krijo fallback
-if (!global.gc) {
-    console.log('⚠️  Garbage Collection nuk është i ekspozuar. Duke krijuar fallback...');
-    
-    // Fallback i thjeshtë për memory management
-    global.simpleGarbageCollector = () => {
-        const before = process.memoryUsage();
-        const beforeMB = Math.round(before.heapUsed / 1024 / 1024);
-        
-        // Forcim i thjeshtë memory cleanup
-        try {
-            if (global.gc) {
-                global.gc();
-            } else {
-                // Fallback: bëj loop të madh për të trigger garbage collection
-                const arr = new Array(1000000).fill(null);
-                arr.length = 0;
-            }
-        } catch (e) {}
-        
-        const after = process.memoryUsage();
-        const afterMB = Math.round(after.heapUsed / 1024 / 1024);
-        
-        console.log(`🔄 SIMPLE GC: ${beforeMB}MB → ${afterMB}MB`);
-        return afterMB;
-    };
-}
-
-module.exports = app;
+    console.log(`🌉 APP BRIDGE: AKTIVIZUAR ME RUGËT OPENAI`
