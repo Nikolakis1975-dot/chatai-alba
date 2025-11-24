@@ -296,6 +296,28 @@
     <button id="send-btn">➤</button>
 </footer>
 
+  <!-- Modal për OpenAI API Key -->
+<div id="openai-modal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>🔮 Konfigurimi i OpenAI</h2>
+        <p>Vendos OpenAI API Key për të aktivizuar GPT-4.</p>
+        
+        <div class="api-key-form">
+            <input type="password" id="openai-key-input" placeholder="Vendos OpenAI API Key këtu">
+            
+            <div class="button-group">
+                <button class="save-btn" onclick="saveOpenAIKey()">💾 Ruaj në Server</button>
+                <button class="delete-btn" onclick="deleteOpenAIKey()">🗑️ Fshi nga Serveri</button>
+            </div>
+        </div>
+        
+        <div id="openai-key-status" class="api-status"></div>
+        
+        <p><small>Nuk ke API Key? Vizito <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI Platform</a></small></p>
+    </div>
+</div>
+    
   <!-- Modal për API Key -->
   <div id="api-key-modal" class="modal">
     <div class="modal-content">
