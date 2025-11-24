@@ -1,18 +1,24 @@
 // ========================================================
 // Openai RRUFE TESLA 10.5
 // ========================================================
-
 const express = require('express');
 const router = express.Router();
-const { User } = require('../models');
-const encryption = require('../utils/encryption');
-const OpenAIEnhancedService = require('../services/openaiEnhancedService');
+const { User } = require('./../models/User'); // ✅ Rruga e saktë
+const encryption = require('./../utils/encryption');
+const OpenAIEnhancedService = require('./../services/openaiEnhancedService');
 
 // ✅ Ruaj OpenAI API Key
 router.post('/save-key', async (req, res) => {
     try {
         const { apiKey } = req.body;
-        const userId = req.user.id;
+        const userId = req.user?.id;
+
+        if (!userId) {
+            return res.json({
+                success: false,
+                message: 'Përdoruesi nuk është i identifikuar'
+            });
+        }
 
         if (!apiKey) {
             return res.json({
@@ -45,7 +51,14 @@ router.post('/save-key', async (req, res) => {
 // ✅ Fshi OpenAI API Key
 router.delete('/delete-key', async (req, res) => {
     try {
-        const userId = req.user.id;
+        const userId = req.user?.id;
+
+        if (!userId) {
+            return res.json({
+                success: false,
+                message: 'Përdoruesi nuk është i identifikuar'
+            });
+        }
 
         await User.update({
             openaiApiKey: null,
@@ -69,19 +82,28 @@ router.delete('/delete-key', async (req, res) => {
 // ✅ Status i OpenAI Key
 router.get('/status', async (req, res) => {
     try {
-        const userId = req.user.id;
+        const userId = req.user?.id;
+
+        if (!userId) {
+            return res.json({
+                success: false,
+                message: 'Përdoruesi nuk është i identifikuar'
+            });
+        }
+
         const user = await User.findByPk(userId);
 
         res.json({
             success: true,
-            hasApiKey: !!user.openaiApiKey,
-            isActive: user.isOpenaiActive,
-            message: user.openaiApiKey ? 
+            hasApiKey: !!user?.openaiApiKey,
+            isActive: user?.isOpenaiActive || false,
+            message: user?.openaiApiKey ? 
                 'OpenAI është i konfiguruar' : 
-                'OpenAI nuk është konfiguruar'
+                'OpenAI nuk është i konfiguruar'
         });
 
     } catch (error) {
+        console.error('❌ Gabim në status OpenAI:', error);
         res.json({
             success: false,
             message: 'Gabim në kontrollimin e statusit'
@@ -93,7 +115,14 @@ router.get('/status', async (req, res) => {
 router.post('/chat', async (req, res) => {
     try {
         const { message } = req.body;
-        const userId = req.user.id;
+        const userId = req.user?.id;
+
+        if (!userId) {
+            return res.json({
+                success: false,
+                message: 'Përdoruesi nuk është i identifikuar'
+            });
+        }
 
         if (!message) {
             return res.json({
@@ -106,7 +135,7 @@ router.post('/chat', async (req, res) => {
 
         if (result.fallback) {
             // Fallback në Gemini nëse OpenAI dështon
-            const geminiService = require('./geminiService');
+            const geminiService = require('./../services/geminiService');
             const geminiResult = await geminiService.generateResponse(message, userId);
             
             return res.json({
@@ -129,15 +158,22 @@ router.post('/chat', async (req, res) => {
         console.error('❌ Gabim në OpenAI chat:', error);
         
         // Fallback në Gemini
-        const geminiService = require('./geminiService');
-        const geminiResult = await geminiService.generateResponse(req.body.message, req.user.id);
-        
-        res.json({
-            success: true,
-            response: `🔮 **OpenAI Fallback**\n\n${geminiResult.response}`,
-            fallback: true,
-            source: 'gemini'
-        });
+        try {
+            const geminiService = require('./../services/geminiService');
+            const geminiResult = await geminiService.generateResponse(req.body.message, req.user?.id);
+            
+            res.json({
+                success: true,
+                response: `🔮 **OpenAI Fallback**\n\n${geminiResult.response}`,
+                fallback: true,
+                source: 'gemini'
+            });
+        } catch (fallbackError) {
+            res.json({
+                success: false,
+                response: '❌ Gabim në të dy shërbimet AI'
+            });
+        }
     }
 });
 
