@@ -837,17 +837,18 @@ async function sendChatMessage(message) {
     }
 }
 
-// ==================== 🎯 SISTEMI I KOMANDAVE ====================
+// ================================== 🎯 SISTEMI I KOMANDAVE - VERSION I RI ==================================
 
 // ✅ FUNKSION PËR PROCESIMIN E KOMANDAVE SPECIALE
 function processSpecialCommands(message) {
     const trimmedMessage = message.trim();
+    console.log('🔍 Duke kontrolluar komandën:', trimmedMessage);
     
     // ✅ KOMANDA /ndihmo - SHFAQ PANELIN E NDIHMËS
     if (trimmedMessage === '/ndihmo') {
         console.log('🎯 Komanda /ndihmo u zbulua - duke shfaqur panelin');
         showHelpPanel();
-        return true;
+        return true; // NUK dërgohet tek OpenAI
     }
     
     // ✅ LISTA E KOMANDAVE SPECIALE
@@ -862,7 +863,7 @@ function processSpecialCommands(message) {
         if (trimmedMessage.startsWith(command)) {
             console.log(`🎯 Komanda speciale u zbulua: ${command}`);
             handleSpecialCommand(command, trimmedMessage);
-            return true;
+            return true; // NUK dërgohet tek OpenAI
         }
     }
     
@@ -872,6 +873,9 @@ function processSpecialCommands(message) {
 
 // ✅ FUNKSION PËR TRAJTIMIN E KOMANDAVE SPECIALE
 function handleSpecialCommand(command, fullMessage) {
+    // Shto mesazhin e user-it në chat
+    addMessageToChat(fullMessage, 'user');
+    
     switch (command) {
         case '/wiki':
             addMessageToChat('🌐 Funksioni Wikipedia është në zhvillim...', 'bot');
@@ -911,11 +915,11 @@ function handleSpecialCommand(command, fullMessage) {
     }
 }
 
-// ✅ FUNKSION PËR TË SHFAQUR PANELIN E NDIHMËS
+// ✅ FUNKSION PËR TË SHFAQUR PANELIN E NDIHMËS - VERSION I RI
 function showHelpPanel() {
-    const helpUrl = '/api/chat/help-panel';
+    console.log('🔄 Duke hapur panelin e ndihmës...');
     
-    // Krijo një iframe për të shfaqur panelin
+    // Krijo modal për panelin e ndihmës
     const existingModal = document.getElementById('help-panel-modal');
     if (existingModal) {
         existingModal.remove();
@@ -928,53 +932,113 @@ function showHelpPanel() {
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        width: 80%;
-        height: 80%;
+        width: 90%;
+        max-width: 700px;
+        max-height: 90vh;
         background: white;
-        border: 2px solid #667eea;
-        border-radius: 10px;
-        box-shadow: 0 0 20px rgba(0,0,0,0.3);
+        border: 3px solid #667eea;
+        border-radius: 15px;
+        box-shadow: 0 0 30px rgba(0,0,0,0.4);
         z-index: 10000;
-        display: flex;
-        flex-direction: column;
+        overflow: hidden;
+        font-family: Arial, sans-serif;
     `;
     
+    // Header i modalit
     const header = document.createElement('div');
     header.style.cssText = `
         background: linear-gradient(135deg, #667eea, #764ba2);
         color: white;
-        padding: 15px;
-        border-radius: 8px 8px 0 0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        padding: 20px;
+        text-align: center;
+        position: relative;
     `;
     header.innerHTML = `
-        <h3 style="margin: 0;">👑 PANELI I NDIHMËS - RRUFE TESLA</h3>
-        <button onclick="document.getElementById('help-panel-modal').remove()" style="background: none; border: none; color: white; font-size: 20px; cursor: pointer;">×</button>
+        <h2 style="margin: 0; font-size: 24px;">👑 CHATAI ALBA - PANELI I NDIHMËS 👑</h2>
+        <button onclick="document.getElementById('help-panel-modal').remove()" 
+                style="position: absolute; top: 10px; right: 15px; background: none; border: none; color: white; font-size: 24px; cursor: pointer; padding: 5px 10px;">×</button>
     `;
     
-    const iframe = document.createElement('iframe');
-    iframe.src = helpUrl;
-    iframe.style.cssText = `
-        flex: 1;
-        border: none;
-        border-radius: 0 0 8px 8px;
+    // Përmbajtja e modalit
+    const content = document.createElement('div');
+    content.style.cssText = `
+        padding: 20px;
+        max-height: 70vh;
+        overflow-y: auto;
+    `;
+    content.innerHTML = `
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
+            <h3 style="color: #2c3e50; margin-top: 0;">🔹 KOMANDAT BAZË</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <button onclick="useCommand('/ndihmo')" style="background: #4CAF50; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">📋 /ndihmo</button>
+                <button onclick="useCommand('/wiki ')" style="background: #2196F3; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">🌐 /wiki</button>
+                <button onclick="useCommand('/perkthim ')" style="background: #FF9800; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">🔄 /perkthim</button>
+                <button onclick="useCommand('/meso ')" style="background: #9C27B0; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">🎓 /meso</button>
+                <button onclick="useCommand('/moti ')" style="background: #607D8B; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">🌍 /moti</button>
+                <button onclick="useCommand('/apikey ')" style="background: #795548; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">🔑 /apikey</button>
+            </div>
+        </div>
+
+        <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 15px 0;">
+            <h3 style="color: #1565c0; margin-top: 0;">🚀 KËRKIM NË INTERNET</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                <button onclick="useCommand('/gjej ')" style="background: #FF5722; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">🔍 /gjej</button>
+                <button onclick="useCommand('/google ')" style="background: #4285F4; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">🔎 /google</button>
+                <button onclick="useCommand('/kërko ')" style="background: #34A853; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">📰 /kërko</button>
+            </div>
+        </div>
+
+        <div style="background: #fff3e0; padding: 15px; border-radius: 8px; margin: 15px 0;">
+            <h3 style="color: #e65100; margin-top: 0;">💾 MENAXHIM I DHËNAVE</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <button onclick="useCommand('/eksporto')" style="background: #009688; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">📥 /eksporto</button>
+                <button onclick="useCommand('/importo')" style="background: #FFC107; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">📤 /importo</button>
+            </div>
+        </div>
+
+        <div style="background: #fce4ec; padding: 15px; border-radius: 8px; margin: 15px 0;">
+            <h3 style="color: #c2185b; margin-top: 0;">👑 ADMIN PANEL</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <button onclick="useCommand('/admin')" style="background: #7B1FA2; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">⚡ /admin</button>
+                <button onclick="useCommand('/users')" style="background: #512DA8; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">👥 /users</button>
+                <button onclick="useCommand('/stats')" style="background: #303F9F; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">📊 /stats</button>
+                <button onclick="useCommand('/panel')" style="background: #1976D2; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">🛠️ /panel</button>
+            </div>
+        </div>
+
+        <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin: 15px 0;">
+            <h3 style="color: #2e7d32; margin-top: 0;">⚡ VEPRIME TË SHPEJTA</h3>
+            <input type="text" id="quickCommand" placeholder="Shkruaj komandën këtu..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 10px;">
+            <button onclick="executeQuickCommand()" style="background: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%;">🚀 Ekzekuto Komandën</button>
+        </div>
     `;
     
     modal.appendChild(header);
-    modal.appendChild(iframe);
+    modal.appendChild(content);
     document.body.appendChild(modal);
     
     // Shto mesazh në chat
     addMessageToChat('🔧 Panel-i i ndihmës u hap! Shfrytëzoni komandat e disponueshme.', 'bot');
 }
 
-// ✅ FUNKSION PËR PËRDORIMIN E KOMANDËS NGA BUTONAT (për panelin e ndihmës)
+// ✅ FUNKSION PËR PËRDORIMIN E KOMANDËS NGA BUTONAT
 function useCommand(command) {
     console.log('🎯 Përdor komandën nga butoni:', command);
     document.getElementById('user-input').value = command;
-    handleSendMessage();
+    // Mbyll modalin
+    document.getElementById('help-panel-modal')?.remove();
+}
+
+// ✅ FUNKSION PËR KOMANDË TË SHPEJTË
+function executeQuickCommand() {
+    const quickInput = document.getElementById('quickCommand');
+    const command = quickInput.value.trim();
+    if (command) {
+        document.getElementById('user-input').value = command;
+        document.getElementById('help-panel-modal')?.remove();
+        // Opsional: ekzekuto automatikisht
+        // handleSendMessage();
+    }
 }
 
 // ==================== 🔮 OPENAI PANEL - EXACT SI GEMINI ====================
