@@ -1,3 +1,13 @@
+// ========================= ✅ VARIABLA GLOBALE =========================
+let currentUser = null;
+// ✅ FUNKSION PËR TË VENDOSUR CURRENT USER (shtoje këtë)
+// ========================================================================
+
+function setCurrentUser(user) {
+    currentUser = user;
+    console.log('👤 Current user set:', user);
+}
+
 // ==================== ⚙️ SISTEMI I MENAXHIMIT TË MOTORËVE AI ====================
 //         = =                 MANAXHIMI ON - OFF                     = =
 //         = =             SISTEMI RRUFE TESLA 10.5                   = =
@@ -918,40 +928,296 @@ function processSpecialCommands(message) {
     return false;
 }
 
-// ✅ HAPI 4 - FUNKSION I RI PËR TRAJTIMIN E KOMANDAVE - DËRGON TË GJITHA NË SERVER
-async function handleSpecialCommand(command, fullMessage) {
-    try {
-        console.log('🎯 Duke dërguar komandën në server:', command);
-        
-        // Dërgo komandën direkt në server
-        const response = await fetch('/api/chat/process-command', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include',
-            body: JSON.stringify({ 
-                message: fullMessage,
-                userId: 1
-            })
-        });
-        
-        const data = await response.json();
-        console.log('📥 Përgjigje nga serveri:', data);
-        
-        if (data.success) {
-            addMessageToChat(data.response, 'bot');
-        } else {
-            addMessageToChat('❌ ' + data.error, 'bot');
-        }
-        
-    } catch (error) {
-        console.error('❌ Gabim në komandë:', error);
-        addMessageToChat('❌ Gabim në server. Provo përsëri.', 'bot');
+// ===================== ✅ FUNKSION PËR TRAJTIMIN E KOMANDAVE SPECIALE - ME KOMANDA REALE ========================
+
+function handleSpecialCommand(command, fullMessage) {
+    // Shto mesazhin e user-it në chat
+    addMessageToChat(fullMessage, 'user');
+    
+    // Ndaj mesazhin në pjesë
+    const parts = fullMessage.trim().split(" ");
+    const cmd = parts[0];
+
+    switch (cmd) {
+        case '/wiki':
+            const wikiQuery = parts.slice(1).join(" ");
+            if (!wikiQuery) { 
+                addMessageToChat("⚠️ Shkruaj diçka për të kërkuar në Wikipedia.", 'bot'); 
+                break; 
+            }
+            searchWikipediaReal(wikiQuery);
+            break;
+
+        case '/perkthim':
+            if (parts.length < 3) {
+                addMessageToChat("⚠️ Përdorimi: /perkthim [gjuha] [tekst]", 'bot');
+                break;
+            }
+            const targetLang = parts[1].toLowerCase();
+            const textToTranslate = parts.slice(2).join(" ");
+            translateWithAPI(textToTranslate, targetLang);
+            break;
+
+        case '/meso':
+            const split = fullMessage.replace("/meso", "").split("|");
+            if (split.length === 2) {
+                const question = split[0].trim().toLowerCase();
+                const answer = split[1].trim();
+                learnNewKnowledge(question, answer);
+            } else {
+                addMessageToChat("⚠️ Përdorimi: /meso pyetje | përgjigje", 'bot');
+            }
+            break;
+
+        case '/moti':
+            if (parts.length < 2) {
+                addMessageToChat("⚠️ Përdorimi: /moti [qyteti]", 'bot');
+            } else {
+                const city = parts.slice(1).join(" ");
+                getWeatherWithAPI(city);
+            }
+            break;
+
+        case '/apikey':
+            if (parts.length < 2) {
+                checkApiKeyStatus();
+            } else {
+                const newApiKey = parts.slice(1).join(" ");
+                saveApiKeyToServer(newApiKey);
+            }
+            break;
+
+        case '/eksporto':
+            exportKnowledge();
+            break;
+
+        case '/importo':
+            importKnowledge();
+            break;
+
+        case '/gjej':
+        case '/google':
+        case '/kërko':
+            const searchQuery = parts.slice(1).join(" ");
+            if (!searchQuery) {
+                addMessageToChat(`⚠️ Përdorimi: ${cmd} [kërkim]`, 'bot');
+            } else {
+                webSearchReal(searchQuery);
+            }
+            break;
+
+        case '/admin':
+        case '/users':
+        case '/stats':
+        case '/panel':
+        case '/clearall':
+            handleAdminCommands(cmd, parts);
+            break;
+
+        default:
+            // Provoni llogaritje matematikore
+            const calcResult = tryCalculate(fullMessage);
+            if (calcResult !== null) {
+                addMessageToChat("🧮 Rezultati: " + calcResult, 'bot');
+                return;
+            }
+            
+            // Nëse nuk është komandë e njohur
+            addMessageToChat(`❌ Komanda "${cmd}" nuk është implementuar.`, 'bot');
     }
 }
 
-// ✅ FUNKSION PËR TË SHFAQUR PANELIN E NDIHMËS - VERSION I RI
+// ===================================== GJIT VECORITE NDIHMO COMAND ==========================================
+
+// ✅ FUNKSIONET PËR KOMANDAT REALE
+
+async function handleWikiSearch(query) {
+    try {
+        showThinkingIndicator();
+        const res = await fetch(`https://sq.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`);
+        const data = await res.json();
+        hideThinkingIndicator();
+        
+        if (data.extract) {
+            addMessageToChat(`🌐 **Wikipedia**: ${data.extract}`, "bot");
+        } else {
+            addMessageToChat("❌ Nuk u gjet informacion në Wikipedia.", "bot");
+        }
+    } catch (error) { 
+        hideThinkingIndicator();
+        addMessageToChat("⚠️ Gabim gjatë kërkimit në Wikipedia.", "bot"); 
+    }
+}
+
+async function handleLearnCommand(question, answer) {
+    try {
+        const response = await fetch('/api/chat/knowledge', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+                userId: currentUser?.id || 1,
+                question: question,
+                answer: answer
+            })
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            addMessageToChat("✅ Mësova diçka të re!", "bot");
+        } else {
+            addMessageToChat("⚠️ Gabim gjatë ruajtjes: " + data.error, "bot");
+        }
+    } catch (error) {
+        addMessageToChat("⚠️ Gabim gjatë ruajtjes së njohurive.", "bot");
+    }
+}
+
+async function handleTranslation(text, targetLang) {
+    const sourceLang = (targetLang === "sq") ? "en" : "sq";
+    
+    showThinkingIndicator();
+    
+    try {
+        const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sourceLang}|${targetLang}`);
+        const data = await response.json();
+        hideThinkingIndicator();
+        
+        const translatedText = data?.responseData?.translatedText || "❌ Gabim përkthimi.";
+        addMessageToChat(`🔄 **Përkthim**: ${translatedText}`, "bot");
+    } catch (error) {
+        hideThinkingIndicator();
+        addMessageToChat("⚠️ Gabim përkthimi.", "bot");
+    }
+}
+
+async function handleExport() {
+    try {
+        const response = await fetch(`/api/chat/export/${currentUser?.id || 1}`);
+        const data = await response.json();
+        
+        if (response.ok) {
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "knowledge.json";
+            link.click();
+            addMessageToChat("💾 Eksportova njohuritë!", "bot");
+        } else {
+            addMessageToChat("❌ Gabim gjatë eksportimit: " + data.error, "bot");
+        }
+    } catch (error) {
+        addMessageToChat("❌ Gabim gjatë eksportimit.", "bot");
+    }
+}
+
+function handleImport() {
+    const input = document.createElement("input");
+    input.type = "file"; 
+    input.accept = "application/json";
+    input.onchange = async (e) => {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = async () => {
+            try {
+                const knowledgeData = JSON.parse(reader.result);
+                
+                const response = await fetch('/api/chat/import', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: currentUser?.id || 1,
+                        knowledge: knowledgeData
+                    })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    addMessageToChat("✅ Importova njohuritë!", "bot");
+                } else {
+                    addMessageToChat("❌ Gabim gjatë importimit: " + data.error, "bot");
+                }
+            } catch (error) {
+                addMessageToChat("❌ Gabim gjatë importimit.", "bot");
+            }
+        };
+        reader.readAsText(file);
+    };
+    input.click();
+}
+
+async function handleWeather(city) {
+    showThinkingIndicator();
+    
+    try {
+        const response = await fetch(`https://wttr.in/${encodeURIComponent(city)}?format=%c+%t+%w+%h`);
+        const data = await response.text();
+        hideThinkingIndicator();
+        addMessageToChat(`🌍 **Moti në ${city}**: ${data}`, "bot");
+    } catch (error) {
+        hideThinkingIndicator();
+        addMessageToChat("⚠️ Gabim gjatë marrjes së motit.", "bot");
+    }
+}
+
+async function checkApiKeyStatus() {
+    try {
+        const response = await fetch('/api/api-keys/status/gemini', {
+            credentials: 'include'
+        });
+        const data = await response.json();
+        
+        if (data.hasApiKey) {
+            addMessageToChat("🔑 API Key është konfiguruar në server!", "bot");
+        } else {
+            addMessageToChat("❌ Nuk ka API Key të konfiguruar. Përdor: /apikey [key_jote]", "bot");
+        }
+    } catch (error) {
+        addMessageToChat("❌ Gabim gjatë kontrollimit të statusit të API Key.", "bot");
+    }
+}
+
+async function saveApiKeyCommand(apiKey) {
+    try {
+        const response = await fetch('/api/api-keys/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                userId: currentUser?.id || 1,
+                apiKey: apiKey,
+                serviceName: 'gemini'
+            })
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            addMessageToChat("✅ API Key u ruajt me sukses në server!", "bot");
+        } else {
+            addMessageToChat("❌ Gabim gjatë ruajtjes së API Key: " + data.error, "bot");
+        }
+    } catch (error) {
+        addMessageToChat("❌ Gabim gjatë ruajtjes së API Key.", "bot");
+    }
+}
+
+// ✅ FUNKSIONE ADMIN (do të implementohen më vonë)
+function showAllUsers() {
+    addMessageToChat("👥 **Lista e Përdoruesve**\n\nFunksioni do të implementohet së shpejti...", "bot");
+}
+
+function showSystemStats() {
+    addMessageToChat("📊 **Statistikat e Sistemit**\n\nFunksioni do të implementohet së shpejti...", "bot");
+}
+
+function clearAllChats() {
+    addMessageToChat("🗑️ **Fshirja e të gjitha bisedave**\n\nFunksioni do të implementohet së shpejti...", "bot");
+}
+
+function addAdminPanel() {
+    addMessageToChat("👑 **Paneli i Adminit**\n\nFunksioni do të implementohet së shpejti...", "bot");
+}
+
+// ========================== ✅ FUNKSION PËR TË SHFAQUR PANELIN E NDIHMËS - VERSION I RI ================================
 function showHelpPanel() {
     console.log('🔄 Duke hapur panelin e ndihmës...');
     
