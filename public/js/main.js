@@ -13,15 +13,14 @@ function setCurrentUser(user) {
 //         = =             SISTEMI RRUFE TESLA 10.5                   = =
 // =================================================================================
 
-// ✅ STATUSI I MOTORËVE AI - Shto në fillim të main.js, pas komenteve fillestare
+// ✅ STATUSI I MOTORËVE AI
 let aiEngineStatus = {
     gemini: true,    // Gemini është aktiv fillimisht
     openai: false    // OpenAI është i çaktivizuar
 };
 
-// ✅ FUNKSION PËR NDRYSHIMIN E MOTORËVE - Shto menjëherë pas variablave
-// function switchAIEngine(engine) {
-window.swiftAIEngine = function(engine) {
+// ✅ FUNKSION PËR NDRYSHIMIN E MOTORËVE
+window.switchAIEngine = function(engine) {
     console.log(`🔄 Duke ndryshuar motorin në: ${engine}`);
     
     // Çaktivizo të gjithë motorët
@@ -32,15 +31,15 @@ window.swiftAIEngine = function(engine) {
     aiEngineStatus[engine] = true;
     
     // Përditëso UI-në
-   // updateEngineStatusUI();
-    window.updateEngineStatusUI = function() {
+    updateEngineStatusUI();
+    
     // Shfaq mesazh në chat
     const engineName = engine === 'gemini' ? 'Gemini' : 'OpenAI';
     addMessageToChat(`🔧 Motor i aktivizuar: ${engineName}`, 'system');
-}
+};
 
-// ✅ FUNKSION PËR PËRDDITËSIMIN E UI - Shto pas switchAIEngine
-function updateEngineStatusUI() {
+// ✅ FUNKSION PËR PËRDDITËSIMIN E UI
+window.updateEngineStatusUI = function() {
     const geminiBtn = document.getElementById('gemini-engine-btn');
     const openaiBtn = document.getElementById('openai-engine-btn');
     
@@ -53,7 +52,13 @@ function updateEngineStatusUI() {
         openaiBtn.style.background = aiEngineStatus.openai ? '#2196F3' : '#666';
         openaiBtn.textContent = aiEngineStatus.openai ? '🔮 OpenAI ✅' : '🔮 OpenAI';
     }
-}
+};
+
+// ✅ INICIALIZO UI-NË KUR FAQA NGARKOHET
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 RRUFE-TESLA 10.5 - Sistemi i motorëve u aktivizua!');
+    updateEngineStatusUI();
+});
 
 // ========================================================
 // 🚀 RRUFE-TESLA 8.0 - MAIN PLATFORM LOADER
