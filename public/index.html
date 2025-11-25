@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ChatAI ALBA - Version i Ri me Server</title>
+  <title>ChatAI ALBA - Ndodhemi ne zhvillim dhe testim</title>
 
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
@@ -170,6 +170,17 @@
       transform: none;
       box-shadow: none;
     }
+
+    /* Stili për butonat e motorëve AI */
+    .ai-engine-selector {
+      display: flex;
+      gap: 10px;
+      margin: 10px 0;
+      padding: 10px;
+      background: #f5f5f5;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+    }
   </style>
 </head>
 <body>
@@ -277,38 +288,41 @@
     
     <main id="chat"></main>
 
-  <!-- NË public/index.html - ZËVENDËSO BUTONIN -->
-<footer id="input-area">
-    <button id="emoji-btn">😊</button>
-    <div id="emoji-panel" class="hidden">
-        <span>😀</span><span>😂</span><span>😍</span><span>🔥</span><span>😎</span>
-        <span>🤔</span><span>😢</span><span>❤️</span><span>👍</span><span>👎</span>
-    </div>
+    <!-- FOOTER ME BUTONAT E MOTORËVE AI DHE INPUT -->
+    <footer id="input-area">
+      <!-- BUTONAT PËR ZGJEDHJE MOTORËSH AI -->
+      <div class="ai-engine-selector">
+          <button id="gemini-engine-btn" onclick="switchAIEngine('gemini')" 
+                  style="flex: 1; background: #4CAF50; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">
+              🤖 Gemini ✅
+          </button>
+          <button id="openai-engine-btn" onclick="switchAIEngine('openai')" 
+                  style="flex: 1; background: #666; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">
+              🔮 OpenAI
+          </button>
+      </div>
 
-  <!-- 🎤 BUTONI I VOICE AI -->
-    <button id="voice-btn" 
-            onclick="voiceButtonClick(event)"
-            style="background:#2E86AB; color:white; border:none; border-radius:50%; width:45px; height:45px; margin-right:10px; cursor:pointer; font-size:18px;"
-            title="Kliko për të folur (Voice AI)">
-        🎤
-    </button> 
+      <!-- INPUT CONTAINER -->
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <button id="emoji-btn">😊</button>
+        <div id="emoji-panel" class="hidden">
+            <span>😀</span><span>😂</span><span>😍</span><span>🔥</span><span>😎</span>
+            <span>🤔</span><span>😢</span><span>❤️</span><span>👍</span><span>👎</span>
+        </div>
 
-    <input type="text" id="user-input" placeholder="Shkruaj mesazhin...">
-    <button id="send-btn">➤</button>
-</footer>
-</div>
+        <!-- 🎤 BUTONI I VOICE AI -->
+        <button id="voice-btn" 
+                onclick="voiceButtonClick(event)"
+                style="background:#2E86AB; color:white; border:none; border-radius:50%; width:45px; height:45px; cursor:pointer; font-size:18px;"
+                title="Kliko për të folur (Voice AI)">
+            🎤
+        </button> 
 
-  <!-- Shto këtë në index.html, para chat input -->
-<div class="ai-engine-selector" style="display: flex; gap: 10px; margin: 10px 0; padding: 10px; background: #f5f5f5; border-radius: 8px;">
-    <button id="gemini-engine-btn" onclick="switchAIEngine('gemini')" 
-            style="flex: 1; background: #4CAF50; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">
-        🤖 Gemini ✅
-    </button>
-    <button id="openai-engine-btn" onclick="switchAIEngine('openai')" 
-            style="flex: 1; background: #666; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">
-        🔮 OpenAI
-    </button>
-</div>
+        <input type="text" id="user-input" placeholder="Shkruaj mesazhin..." style="flex: 1;">
+        <button id="send-btn">➤</button>
+      </div>
+    </footer>
+  </div>
 
  <!-- 🆕 MODAL PËR OPENAI API KEY - EXACT SI GEMINI -->
 <div id="openai-modal" class="modal">
