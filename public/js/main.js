@@ -52,7 +52,7 @@
 //    if (openaiBtn) {
 //        openaiBtn.style.background = aiEngineStatus.openai ? '#2196F3' : '#666';
 //        openaiBtn.textContent = aiEngineStatus.openai ? '🔮 OpenAI ✅' : '🔮 OpenAI';
-    }
+ //   }
 };
 
 // ✅ INICIALIZO UI-NË KUR FAQA NGARKOHET
