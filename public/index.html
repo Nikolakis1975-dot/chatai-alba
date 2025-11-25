@@ -298,6 +298,18 @@
 </footer>
 </div>
 
+  <!-- Shto këtë në index.html, para chat input -->
+<div class="ai-engine-selector" style="display: flex; gap: 10px; margin: 10px 0; padding: 10px; background: #f5f5f5; border-radius: 8px;">
+    <button id="gemini-engine-btn" onclick="switchAIEngine('gemini')" 
+            style="flex: 1; background: #4CAF50; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">
+        🤖 Gemini ✅
+    </button>
+    <button id="openai-engine-btn" onclick="switchAIEngine('openai')" 
+            style="flex: 1; background: #666; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">
+        🔮 OpenAI
+    </button>
+</div>
+
  <!-- 🆕 MODAL PËR OPENAI API KEY - EXACT SI GEMINI -->
 <div id="openai-modal" class="modal">
     <div class="modal-content">
