@@ -65,41 +65,46 @@ class ChatAISystem {
         }
     }
 
-    // ✅ SISTEM I PËRMBYLLUR ME OPENAI FALLBACK
-    async handleChatMessage(message) {
-        try {
-            console.log('💬 Duke përpunuar mesazhin:', message.substring(0, 50));
-            
-            // 1. Së pari provo me sistemin ekzistues (Gemini)
-            let result = await this.sendToGemini(message);
-            
-            // 2. Nëse duhet përdorur OpenAI fallback
-            if (this.shouldUseOpenAIFallback(result, message)) {
-                console.log('🔄 Duke përdorur OpenAI fallback...');
-                
-                const openaiResult = await this.sendToOpenAI(message);
-                
-                if (openaiResult.success) {
-                    return openaiResult;
-                } else {
-                    console.log('❌ OpenAI dështoi, duke përdorur përgjigjen bazë');
-                    return result;
-                }
-            }
-            
-            return result;
-            
-        } catch (error) {
-            console.error('❌ Gabim në handleChatMessage:', error);
-            return {
-                success: false,
-                response: '❌ Gabim në server. Ju lutem provoni përsëri.',
-                source: 'error'
-            };
+// ============================== ✅ SISTEM I PËRMBYLLUR ME OPENAI FALLBACK ==================================
+    // ✅ SISTEM I PËRMBYLLUR ME OPENAI SI PRIMARY
+async handleChatMessage(message) {
+    try {
+        console.log('💬 Duke përpunuar mesazhin:', message.substring(0, 50));
+        
+        // 1. PROVO SË PARI ME OPENAI (primary)
+        console.log('🔮 Duke përdorur OpenAI si primary...');
+        const openaiResult = await this.sendToOpenAI(message);
+        
+        if (openaiResult.success) {
+            return openaiResult;
         }
+        
+        // 2. Nëse OpenAI dështon, provo me Gemini (fallback)
+        console.log('🔄 OpenAI dështoi, duke provuar Gemini...');
+        const geminiResult = await this.sendToGemini(message);
+        
+        if (geminiResult.success) {
+            return geminiResult;
+        }
+        
+        // 3. Nëse të dy dështojnë, kthe mesazh default
+        return {
+            success: false,
+            response: '❌ Asnjë shërbim AI nuk është i disponueshëm. Ju lutem kontrolloni konfigurimin e API Keys.',
+            source: 'error'
+        };
+        
+    } catch (error) {
+        console.error('❌ Gabim në handleChatMessage:', error);
+        return {
+            success: false,
+            response: '❌ Gabim në server. Ju lutem provoni përsëri.',
+            source: 'error'
+        };
     }
+}
 
-    // ✅ DËRGO TE GEMINI
+// ================================================ ✅ DËRGO TE GEMINI ==========================================
     async sendToGemini(message) {
         try {
             const response = await fetch('/api/gemini/ask', {
