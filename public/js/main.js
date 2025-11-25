@@ -37,7 +37,7 @@
     // Shfaq mesazh në chat
  //   const engineName = engine === 'gemini' ? 'Gemini' : 'OpenAI';
 //    addMessageToChat(`🔧 Motor i aktivizuar: ${engineName}`, 'system');
-};
+// };
 
 // ✅ FUNKSION PËR PËRDDITËSIMIN E UI
 // window.updateEngineStatusUI = function() {
