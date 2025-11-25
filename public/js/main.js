@@ -883,18 +883,19 @@ async function sendChatMessage(message) {
     }
 }
 
-// ================================== 🎯 SISTEMI I KOMANDAVE - VERSION I RI ==================================
+// ============================ 🎯 SISTEMI I KOMANDAVE - VERSION I RI ==========================
+// FUKSION COMAND           ===                 ==                       ===                   ==
+// ==============================================================================================
 
 // ✅ FUNKSION PËR PROCESIMIN E KOMANDAVE SPECIALE
 function processSpecialCommands(message) {
     const trimmedMessage = message.trim();
-    console.log('🔍 Duke kontrolluar komandën:', trimmedMessage);
     
     // ✅ KOMANDA /ndihmo - SHFAQ PANELIN E NDIHMËS
     if (trimmedMessage === '/ndihmo') {
         console.log('🎯 Komanda /ndihmo u zbulua - duke shfaqur panelin');
         showHelpPanel();
-        return true; // NUK dërgohet tek OpenAI
+        return true;
     }
     
     // ✅ LISTA E KOMANDAVE SPECIALE
@@ -909,7 +910,7 @@ function processSpecialCommands(message) {
         if (trimmedMessage.startsWith(command)) {
             console.log(`🎯 Komanda speciale u zbulua: ${command}`);
             handleSpecialCommand(command, trimmedMessage);
-            return true; // NUK dërgohet tek OpenAI
+            return true;
         }
     }
     
@@ -917,47 +918,36 @@ function processSpecialCommands(message) {
     return false;
 }
 
-// ✅ FUNKSION PËR TRAJTIMIN E KOMANDAVE SPECIALE
-function handleSpecialCommand(command, fullMessage) {
-    // Shto mesazhin e user-it në chat
-    addMessageToChat(fullMessage, 'user');
-    
-    switch (command) {
-        case '/wiki':
-            addMessageToChat('🌐 Funksioni Wikipedia është në zhvillim...', 'bot');
-            break;
-        case '/perkthim':
-            addMessageToChat('🔄 Funksioni i përkthimit është në zhvillim...', 'bot');
-            break;
-        case '/meso':
-            addMessageToChat('🎓 Funksioni i mësimit është në zhvillim...', 'bot');
-            break;
-        case '/moti':
-            addMessageToChat('🌍 Funksioni i motit është në zhvillim...', 'bot');
-            break;
-        case '/apikey':
-            addMessageToChat('🔑 Shko te Panel-i OpenAI për të konfiguruar API Key', 'bot');
-            showOpenAIPanel();
-            break;
-        case '/gjej':
-        case '/google':
-        case '/kërko':
-            addMessageToChat('🔍 Funksioni i kërkimit në internet është në zhvillim...', 'bot');
-            break;
-        case '/eksporto':
-            addMessageToChat('📥 Funksioni i eksportimit është në zhvillim...', 'bot');
-            break;
-        case '/importo':
-            addMessageToChat('📤 Funksioni i importimit është në zhvillim...', 'bot');
-            break;
-        case '/admin':
-        case '/users':
-        case '/stats':
-        case '/panel':
-            addMessageToChat('👑 Funksionet e administrimit janë në zhvillim...', 'bot');
-            break;
-        default:
-            addMessageToChat(`❌ Komanda "${command}" nuk është implementuar ende.`, 'bot');
+// ✅ HAPI 4 - FUNKSION I RI PËR TRAJTIMIN E KOMANDAVE - DËRGON TË GJITHA NË SERVER
+async function handleSpecialCommand(command, fullMessage) {
+    try {
+        console.log('🎯 Duke dërguar komandën në server:', command);
+        
+        // Dërgo komandën direkt në server
+        const response = await fetch('/api/chat/process-command', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({ 
+                message: fullMessage,
+                userId: 1
+            })
+        });
+        
+        const data = await response.json();
+        console.log('📥 Përgjigje nga serveri:', data);
+        
+        if (data.success) {
+            addMessageToChat(data.response, 'bot');
+        } else {
+            addMessageToChat('❌ ' + data.error, 'bot');
+        }
+        
+    } catch (error) {
+        console.error('❌ Gabim në komandë:', error);
+        addMessageToChat('❌ Gabim në server. Provo përsëri.', 'bot');
     }
 }
 
