@@ -8,6 +8,20 @@
 //    console.log('👤 Current user set:', user);
 // }
 
+// ========================= ✅ VARIABLA ==========================
+
+// ✅ DEKLARO VETËM NËSE NUK EKZISTON
+if (typeof currentUser === 'undefined') {
+    let currentUser = null;
+}
+
+// ✅ FUNKSION PËR TË VENDOSUR CURRENT USER
+function setCurrentUser(user) {
+    currentUser = user;
+    console.log('👤 Current user set:', user);
+}
+
+
 // ==================== ⚙️ SISTEMI I MENAXHIMIT TË MOTORËVE AI ====================
 //         = =                 MANAXHIMI ON - OFF                     = =
 //         = =             SISTEMI RRUFE TESLA 10.5                   = =
