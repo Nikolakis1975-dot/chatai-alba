@@ -181,6 +181,29 @@
       border-radius: 8px;
       border: 1px solid #ddd;
     }
+
+    /* STILI I RI PËR INPUT */
+#user-input {
+    flex: 1;
+    min-width: 400px;
+    padding: 12px 15px;
+    font-size: 16px;
+    border: 2px solid #ddd;
+    border-radius: 25px;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+#user-input:focus {
+    border-color: #4285f4;
+}
+
+/* RESPONSIVE DESIGN */
+@media (max-width: 768px) {
+    #user-input {
+        min-width: 200px;
+    }
+}
   </style>
 </head>
 <body>
@@ -311,12 +334,12 @@
         </div>
 
         <!-- 🎤 BUTONI I VOICE AI -->
-        <button id="voice-btn" 
-                onclick="voiceButtonClick(event)"
-                style="background:#2E86AB; color:white; border:none; border-radius:50%; width:45px; height:45px; cursor:pointer; font-size:18px;"
-                title="Kliko për të folur (Voice AI)">
-            🎤
-        </button> 
+  <button id="voice-btn" 
+          onclick="voiceButtonClick(event)"
+          style="background:#2E86AB; color:white; border:none; border-radius:50%; width:45px; height:45px; cursor:pointer; font-size:18px;"
+          title="Kliko për të folur (Voice AI)">
+      🎤
+  </button> 
 
         <input type="text" id="user-input" placeholder="Shkruaj mesazhin..." 
                style="flex: 1; min-width: 300px; padding: 12px 15px; font-size: 16px;">
