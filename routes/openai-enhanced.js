@@ -2,222 +2,263 @@
 // Openai RRUFE TESLA 10.5
 // ========================================================
 const express = require('express');
-const router = express.Router();
-const { User } = require('../models/User');
+const db = require('../database');
 const encryption = require('../utils/encryption');
 const jwt = require('jsonwebtoken');
+const { OpenAI } = require('openai');
+const router = express.Router();
 
-// ✅ JWT AUTH MIDDLEWARE - PËRDO AUTH_TOKEN COOKIE
-const authenticateUser = async (req, res, next) => {
+// ✅ PËRDO TË NJËJTIN AUTH SI GEMINI
+const authenticateToken = (req, res, next) => {
     try {
-        console.log('🔐 OpenAI JWT Auth Check:');
+        const token = req.cookies.auth_token;
         
-        let token = null;
-        let userId = null;
-
-        // MËNYRA 1: Merr token nga cookie (auth_token)
-        if (req.cookies && req.cookies.auth_token) {
-            token = req.cookies.auth_token;
-            console.log('✅ Token u gjet nga cookie');
+        if (!token) {
+            return res.status(401).json({ 
+                success: false, 
+                error: '❌ Nuk jeni i loguar' 
+            });
         }
         
-        // MËNYRA 2: Merr token nga headers
-        else if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
-            token = req.headers.authorization.substring(7);
-            console.log('✅ Token u gjet nga headers');
-        }
-
-        // VERIFIKO TOKEN
-        if (token) {
-            try {
-                const decoded = jwt.verify(token, process.env.JWT_SECRET || 'jwt-super-secret-key-2024-alba-rrufe-tesla-strong');
-                userId = decoded.userId || decoded.id;
-                console.log('✅ JWT Token valid - User ID:', userId);
-                console.log('✅ User decoded:', decoded);
-                
-                req.user = { id: userId };
-                return next();
-                
-            } catch (tokenError) {
-                console.log('❌ JWT Token invalid:', tokenError.message);
-            }
-        }
-
-        console.log('❌ Auth FAILED - No valid token found');
-        return res.json({
-            success: false,
-            message: 'Authentication failed. Please refresh and login again.'
-        });
-        
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_2024');
+        req.user = decoded;
+        next();
     } catch (error) {
-        console.error('❌ Gabim në auth middleware:', error);
-        return res.json({
-            success: false,
-            message: 'Gabim në identifikim'
+        return res.status(401).json({ 
+            success: false, 
+            error: '❌ Session i pavlefshëm' 
         });
     }
 };
 
-// Përdor middleware
-router.use(authenticateUser);
-
-// ✅ DEBUG ROUTE
-router.get('/debug-auth', async (req, res) => {
+// ✅ STATUS - SI GEMINI
+router.get('/status', authenticateToken, async (req, res) => {
     try {
-        // Test database connection too
-        const user = await User.findByPk(req.user.id);
-        
-        res.json({
-            success: true,
-            message: 'JWT Auth Debug SUCCESS',
-            user: {
-                id: req.user.id,
-                dbUser: user ? {
-                    id: user.id,
-                    username: user.username,
-                    hasOpenAIKey: !!user.openaiApiKey
-                } : 'User not found in DB'
-            },
-            tokenInfo: {
-                hasToken: !!(req.cookies && req.cookies.auth_token),
-                tokenPresent: req.cookies && req.cookies.auth_token ? 'YES' : 'NO'
+        const userId = req.user.userId;
+
+        // ✅ PËRDO TË NJËJTIN DATABASE PATTERN SI GEMINI
+        db.get(
+            'SELECT api_key FROM api_keys WHERE user_id = ? AND service_name = ?',
+            [userId, 'openai'],
+            (err, row) => {
+                if (err) {
+                    console.error('❌ Gabim në database:', err);
+                    return res.status(500).json({ 
+                        success: false, 
+                        error: '❌ Gabim në server' 
+                    });
+                }
+
+                res.json({
+                    success: true,
+                    hasApiKey: !!(row && row.api_key),
+                    message: row && row.api_key ? 'OpenAI i konfiguruar' : 'OpenAI jo i konfiguruar'
+                });
             }
-        });
+        );
     } catch (error) {
-        res.json({
-            success: false,
-            message: 'Debug FAILED: ' + error.message
+        res.json({ 
+            success: false, 
+            error: '❌ ' + error.message 
         });
     }
 });
 
-// ✅ STATUS
-router.get('/status', async (req, res) => {
-    try {
-        const userId = req.user.id;
-        console.log('🔍 Status check for user:', userId);
-
-        const user = await User.findByPk(userId);
-
-        if (!user) {
-            return res.json({
-                success: false,
-                message: 'Përdoruesi nuk u gjet'
-            });
-        }
-
-        res.json({
-            success: true,
-            hasApiKey: !!user.openaiApiKey,
-            isActive: user.isOpenaiActive || false,
-            message: user.openaiApiKey ? 'OpenAI është i konfiguruar' : 'OpenAI nuk është i konfiguruar',
-            user: {
-                id: user.id,
-                username: user.username
-            }
-        });
-
-    } catch (error) {
-        console.error('❌ Status error:', error);
-        res.json({
-            success: false,
-            message: 'Gabim në kontrollimin e statusit'
-        });
-    }
-});
-
-// ✅ SAVE KEY
-router.post('/save-key', async (req, res) => {
+// ✅ SAVE KEY - SI GEMINI
+router.post('/save-key', authenticateToken, async (req, res) => {
     try {
         const { apiKey } = req.body;
-        const userId = req.user.id;
+        const userId = req.user.userId;
 
-        console.log('💾 Saving OpenAI Key for user:', userId);
-        console.log('🔑 API Key received:', apiKey ? 'YES (' + apiKey.substring(0, 10) + '...)' : 'NO');
+        console.log('💾 Duke ruajtur OpenAI Key për user:', userId);
 
         if (!apiKey) {
             return res.json({
                 success: false,
-                message: 'API Key është e zbrazët'
+                error: '❌ API Key është e zbrazët'
             });
         }
 
-        // Kontrollo nëse API Key është valid
         if (!apiKey.startsWith('sk-proj') && !apiKey.startsWith('sk-')) {
             return res.json({
                 success: false,
-                message: 'API Key nuk duket të jetë valid. Duhet të fillojë me "sk-proj" ose "sk-"'
+                error: '❌ API Key i pavlefshëm. Duhet të fillojë me "sk-proj" ose "sk-"'
             });
         }
 
+        // ✅ ENKRIPTO SI GEMINI
         const encryptedKey = encryption.encrypt(apiKey);
-        
-        const result = await User.update({
-            openaiApiKey: encryptedKey,
-            isOpenaiActive: true,
-            updatedAt: new Date()
-        }, { 
-            where: { id: userId } 
-        });
 
-        console.log('✅ OpenAI Key saved for user:', userId, 'Result:', result);
+        // ✅ PËRDO TË NJËJTIN DATABASE QUERY SI GEMINI
+        db.run(
+            `INSERT OR REPLACE INTO api_keys (user_id, service_name, api_key, created_at, updated_at) 
+             VALUES (?, ?, ?, datetime('now'), datetime('now'))`,
+            [userId, 'openai', encryptedKey],
+            function(err) {
+                if (err) {
+                    console.error('❌ Gabim në database:', err);
+                    return res.status(500).json({ 
+                        success: false, 
+                        error: '❌ Gabim në ruajtje' 
+                    });
+                }
 
-        res.json({
-            success: true,
-            message: 'OpenAI API Key u ruajt me sukses!'
-        });
+                console.log('✅ OpenAI Key u ruajt në database');
+                res.json({ 
+                    success: true, 
+                    message: '✅ OpenAI API Key u ruajt!' 
+                });
+            }
+        );
 
     } catch (error) {
         console.error('❌ Save key error:', error);
-        res.json({
-            success: false,
-            message: 'Gabim në ruajtjen e API Key: ' + error.message
+        res.json({ 
+            success: false, 
+            error: '❌ Gabim në ruajtje: ' + error.message 
         });
     }
 });
 
-// ✅ DELETE KEY
-router.delete('/delete-key', async (req, res) => {
+// ✅ DELETE KEY - SI GEMINI
+router.delete('/delete-key', authenticateToken, async (req, res) => {
     try {
-        const userId = req.user.id;
-        console.log('🗑️ Deleting OpenAI Key for user:', userId);
+        const userId = req.user.userId;
 
-        const result = await User.update({
-            openaiApiKey: null,
-            isOpenaiActive: false,
-            updatedAt: new Date()
-        }, { where: { id: userId } });
+        // ✅ PËRDO TË NJËJTIN DATABASE QUERY SI GEMINI
+        db.run(
+            'DELETE FROM api_keys WHERE user_id = ? AND service_name = ?',
+            [userId, 'openai'],
+            function(err) {
+                if (err) {
+                    console.error('❌ Gabim në database:', err);
+                    return res.status(500).json({ 
+                        success: false, 
+                        error: '❌ Gabim në fshirje' 
+                    });
+                }
 
-        console.log('✅ OpenAI Key deleted for user:', userId, 'Result:', result);
-
-        res.json({
-            success: true,
-            message: 'OpenAI API Key u fshi me sukses!'
-        });
+                console.log('✅ OpenAI Key u fshi nga database');
+                res.json({ 
+                    success: true, 
+                    message: '✅ OpenAI API Key u fshi!' 
+                });
+            }
+        );
 
     } catch (error) {
         console.error('❌ Delete key error:', error);
-        res.json({
-            success: false,
-            message: 'Gabim në fshirjen e API Key: ' + error.message
+        res.json({ 
+            success: false, 
+            error: '❌ Gabim në fshirje: ' + error.message 
         });
     }
 });
 
-// ✅ TEST ROUTE - PA AUTH (vetëm për test)
-router.get('/test-connection', async (req, res) => {
-    try {
-        res.json({
-            success: true,
-            message: 'OpenAI Routes are working!',
-            timestamp: new Date().toISOString()
-        });
-    } catch (error) {
-        res.json({
-            success: false,
-            message: 'Test failed: ' + error.message
+// ✅ CHAT - SI GEMINI
+router.post('/chat', authenticateToken, async (req, res) => {
+    const { message } = req.body;
+    const userId = req.user.userId;
+
+    console.log('💬 OpenAI Chat - User:', userId, 'Message:', message?.substring(0, 50));
+
+    if (!message) {
+        return res.status(400).json({ 
+            success: false, 
+            error: '❌ Mesazhi është i zbrazët' 
         });
     }
+
+    try {
+        // ✅ PËRDO TË NJËJTIN DATABASE PATTERN SI GEMINI
+        db.get(
+            'SELECT api_key FROM api_keys WHERE user_id = ? AND service_name = ?',
+            [userId, 'openai'],
+            async (err, row) => {
+                if (err) {
+                    console.error('❌ Gabim në database:', err);
+                    return res.status(500).json({ 
+                        success: false, 
+                        error: '❌ Gabim në server' 
+                    });
+                }
+
+                if (!row || !row.api_key) {
+                    return res.status(400).json({ 
+                        success: false, 
+                        error: '❌ Nuk është konfiguruar API Key për OpenAI' 
+                    });
+                }
+
+                try {
+                    // ✅ DEKRIPTO SI GEMINI
+                    console.log('🔓 Duke dekriptuar OpenAI API Key...');
+                    const apiKey = encryption.decrypt(row.api_key);
+                    console.log('✅ API Key u dekriptua');
+
+                    // ✅ KRIJO OPENAI CLIENT
+                    const openai = new OpenAI({ 
+                        apiKey: apiKey 
+                    });
+
+                    console.log("🌐 Duke bërë thirrje në OpenAI API...");
+
+                    const completion = await openai.chat.completions.create({
+                        model: 'gpt-4',
+                        messages: [
+                            {
+                                role: "system", 
+                                content: "Ti je RRUFE-TESLA AI. Përgjigju në shqip dhe jep përgjigje të dobishme, kreative dhe intuitive."
+                            },
+                            {
+                                role: "user",
+                                content: message
+                            }
+                        ],
+                        max_tokens: 1000,
+                        temperature: 0.7
+                    });
+
+                    const response = completion.choices[0].message.content;
+                    
+                    console.log('✅ OpenAI response received');
+
+                    res.json({
+                        success: true,
+                        response: `🔮 **OpenAI**: ${response}`
+                    });
+
+                } catch (openaiError) {
+                    console.error('❌ Gabim gjatë thirrjes së OpenAI API:', openaiError);
+                    
+                    let errorMessage = openaiError.message;
+                    if (openaiError.message.includes('Incorrect API key')) {
+                        errorMessage = '❌ API Key i pavlefshëm për OpenAI';
+                    }
+                    
+                    res.status(500).json({ 
+                        success: false, 
+                        error: errorMessage 
+                    });
+                }
+            }
+        );
+    } catch (error) {
+        console.error('❌ Gabim i përgjithshëm:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: '❌ Gabim në server: ' + error.message 
+        });
+    }
+});
+
+// ✅ TEST ROUTE - SI GEMINI
+router.get('/test', (req, res) => {
+    res.json({ 
+        success: true, 
+        message: '✅ Ruta e OpenAI është punuese!',
+        timestamp: new Date().toISOString()
+    });
 });
 
 module.exports = router;
