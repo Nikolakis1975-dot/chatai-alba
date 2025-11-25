@@ -782,7 +782,7 @@ function forceMemoryIntegration() {
     }
 }
 
-// ==================== 🔮 OPENAI CHAT INTEGRATION ====================
+// ======================================= 🔮 OPENAI CHAT INTEGRATION ===========================================
 
 // ✅ FUNKSION PËR TË SHTUAR MESAZHE NË CHAT
 function addMessageToChat(message, sender) {
@@ -837,6 +837,298 @@ async function sendChatMessage(message) {
     }
 }
 
+// ==================== 🎯 SISTEMI I KOMANDAVE ====================
+
+// ✅ FUNKSION PËR PROCESIMIN E KOMANDAVE SPECIALE
+function processSpecialCommands(message) {
+    const trimmedMessage = message.trim();
+    
+    // ✅ KOMANDA /ndihmo - SHFAQ PANELIN E NDIHMËS
+    if (trimmedMessage === '/ndihmo') {
+        console.log('🎯 Komanda /ndihmo u zbulua - duke shfaqur panelin');
+        showHelpPanel();
+        return true;
+    }
+    
+    // ✅ LISTA E KOMANDAVE SPECIALE
+    const specialCommands = [
+        '/wiki', '/perkthim', '/meso', '/moti', '/apikey', 
+        '/gjej', '/google', '/kërko', '/eksporto', '/importo', 
+        '/admin', '/users', '/stats', '/panel'
+    ];
+    
+    // Kontrollo nëse mesazhi fillon me ndonjë komandë speciale
+    for (const command of specialCommands) {
+        if (trimmedMessage.startsWith(command)) {
+            console.log(`🎯 Komanda speciale u zbulua: ${command}`);
+            handleSpecialCommand(command, trimmedMessage);
+            return true;
+        }
+    }
+    
+    // Nëse nuk është komandë speciale, kthe false
+    return false;
+}
+
+// ✅ FUNKSION PËR TRAJTIMIN E KOMANDAVE SPECIALE
+function handleSpecialCommand(command, fullMessage) {
+    switch (command) {
+        case '/wiki':
+            addMessageToChat('🌐 Funksioni Wikipedia është në zhvillim...', 'bot');
+            break;
+        case '/perkthim':
+            addMessageToChat('🔄 Funksioni i përkthimit është në zhvillim...', 'bot');
+            break;
+        case '/meso':
+            addMessageToChat('🎓 Funksioni i mësimit është në zhvillim...', 'bot');
+            break;
+        case '/moti':
+            addMessageToChat('🌍 Funksioni i motit është në zhvillim...', 'bot');
+            break;
+        case '/apikey':
+            addMessageToChat('🔑 Shko te Panel-i OpenAI për të konfiguruar API Key', 'bot');
+            showOpenAIPanel();
+            break;
+        case '/gjej':
+        case '/google':
+        case '/kërko':
+            addMessageToChat('🔍 Funksioni i kërkimit në internet është në zhvillim...', 'bot');
+            break;
+        case '/eksporto':
+            addMessageToChat('📥 Funksioni i eksportimit është në zhvillim...', 'bot');
+            break;
+        case '/importo':
+            addMessageToChat('📤 Funksioni i importimit është në zhvillim...', 'bot');
+            break;
+        case '/admin':
+        case '/users':
+        case '/stats':
+        case '/panel':
+            addMessageToChat('👑 Funksionet e administrimit janë në zhvillim...', 'bot');
+            break;
+        default:
+            addMessageToChat(`❌ Komanda "${command}" nuk është implementuar ende.`, 'bot');
+    }
+}
+
+// ✅ FUNKSION PËR TË SHFAQUR PANELIN E NDIHMËS
+function showHelpPanel() {
+    const helpUrl = '/api/chat/help-panel';
+    
+    // Krijo një iframe për të shfaqur panelin
+    const existingModal = document.getElementById('help-panel-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    const modal = document.createElement('div');
+    modal.id = 'help-panel-modal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 80%;
+        height: 80%;
+        background: white;
+        border: 2px solid #667eea;
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(0,0,0,0.3);
+        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+    `;
+    
+    const header = document.createElement('div');
+    header.style.cssText = `
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        padding: 15px;
+        border-radius: 8px 8px 0 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    `;
+    header.innerHTML = `
+        <h3 style="margin: 0;">👑 PANELI I NDIHMËS - RRUFE TESLA</h3>
+        <button onclick="document.getElementById('help-panel-modal').remove()" style="background: none; border: none; color: white; font-size: 20px; cursor: pointer;">×</button>
+    `;
+    
+    const iframe = document.createElement('iframe');
+    iframe.src = helpUrl;
+    iframe.style.cssText = `
+        flex: 1;
+        border: none;
+        border-radius: 0 0 8px 8px;
+    `;
+    
+    modal.appendChild(header);
+    modal.appendChild(iframe);
+    document.body.appendChild(modal);
+    
+    // Shto mesazh në chat
+    addMessageToChat('🔧 Panel-i i ndihmës u hap! Shfrytëzoni komandat e disponueshme.', 'bot');
+}
+
+// ✅ FUNKSION PËR PËRDORIMIN E KOMANDËS NGA BUTONAT (për panelin e ndihmës)
+function useCommand(command) {
+    console.log('🎯 Përdor komandën nga butoni:', command);
+    document.getElementById('user-input').value = command;
+    handleSendMessage();
+}
+
+// ==================== 🔮 OPENAI PANEL - EXACT SI GEMINI ====================
+
+// ✅ SHFAQ PANELIN OPENAI
+function showOpenAIPanel() {
+    console.log('🔮 Duke hapur panelin OpenAI...');
+    document.getElementById('openai-modal').style.display = 'block';
+    updateOpenAIStatus();
+}
+
+// ✅ UPDATE STATUS - EXACT SI GEMINI
+async function updateOpenAIStatus() {
+    const statusDiv = document.getElementById('openai-key-status');
+    
+    try {
+        statusDiv.textContent = '🔄 Duke kontrolluar statusin...';
+        statusDiv.className = 'api-status';
+        
+        const response = await fetch('/api/openai-enhanced/status', {
+            credentials: 'include'
+        });
+        
+        const data = await response.json();
+        console.log('📊 OpenAI Status:', data);
+        
+        if (data.success) {
+            if (data.hasApiKey) {
+                statusDiv.textContent = '✅ OpenAI i konfiguruar';
+                statusDiv.className = 'api-status valid';
+                document.getElementById('openai-key-input').value = '••••••••••••••••';
+            } else {
+                statusDiv.textContent = '❌ OpenAI jo i konfiguruar';
+                statusDiv.className = 'api-status invalid';
+                document.getElementById('openai-key-input').value = '';
+            }
+        } else {
+            statusDiv.textContent = '❌ ' + data.error;
+            statusDiv.className = 'api-status invalid';
+        }
+    } catch (error) {
+        console.error('❌ Status error:', error);
+        statusDiv.textContent = '❌ Gabim në lidhje';
+        statusDiv.className = 'api-status invalid';
+    }
+}
+
+// ✅ RUAJ API KEY - EXACT SI GEMINI
+async function saveOpenAIKey() {
+    const apiKey = document.getElementById('openai-key-input').value.trim();
+    const statusDiv = document.getElementById('openai-key-status');
+    
+    if (!apiKey) {
+        statusDiv.textContent = '❌ Ju lutem vendosni OpenAI API Key';
+        statusDiv.className = 'api-status invalid';
+        return;
+    }
+    
+    // Kontrollo nëse është API Key i maskuar
+    if (apiKey === '••••••••••••••••') {
+        statusDiv.textContent = '❌ Ju lutem vendosni API Key të vërtetë, jo të maskuar';
+        statusDiv.className = 'api-status invalid';
+        return;
+    }
+    
+    try {
+        statusDiv.textContent = '🔄 Duke ruajtur...';
+        statusDiv.className = 'api-status';
+        
+        const response = await fetch('/api/openai-enhanced/save-key', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({ apiKey })
+        });
+        
+        const data = await response.json();
+        console.log('💾 Save OpenAI Key Response:', data);
+        
+        if (data.success) {
+            statusDiv.textContent = '✅ ' + data.message;
+            statusDiv.className = 'api-status valid';
+            
+            // Refresh status pas 1 sekonde
+            setTimeout(updateOpenAIStatus, 1000);
+            
+        } else {
+            statusDiv.textContent = '❌ ' + data.error;
+            statusDiv.className = 'api-status invalid';
+        }
+    } catch (error) {
+        console.error('❌ Save OpenAI Key Error:', error);
+        statusDiv.textContent = '❌ Gabim në server';
+        statusDiv.className = 'api-status invalid';
+    }
+}
+
+// ✅ FSHI API KEY - EXACT SI GEMINI
+async function deleteOpenAIKey() {
+    const statusDiv = document.getElementById('openai-key-status');
+    
+    try {
+        statusDiv.textContent = '🔄 Duke fshirë...';
+        statusDiv.className = 'api-status';
+        
+        const response = await fetch('/api/openai-enhanced/delete-key', {
+            method: 'DELETE',
+            credentials: 'include'
+        });
+        
+        const data = await response.json();
+        console.log('🗑️ Delete OpenAI Key Response:', data);
+        
+        if (data.success) {
+            statusDiv.textContent = '✅ ' + data.message;
+            statusDiv.className = 'api-status valid';
+            document.getElementById('openai-key-input').value = '';
+            
+            // Refresh status pas 1 sekonde
+            setTimeout(updateOpenAIStatus, 1000);
+        } else {
+            statusDiv.textContent = '❌ ' + data.error;
+            statusDiv.className = 'api-status invalid';
+        }
+    } catch (error) {
+        console.error('❌ Delete OpenAI Key Error:', error);
+        statusDiv.textContent = '❌ Gabim në server';
+        statusDiv.className = 'api-status invalid';
+    }
+}
+
+// ✅ TEST OPENAI CONNECTION
+async function testOpenAIConnection() {
+    try {
+        const response = await fetch('/api/openai-enhanced/test', {
+            credentials: 'include'
+        });
+        const data = await response.json();
+        console.log('🧪 OpenAI Test:', data);
+        
+        if (data.success) {
+            alert('✅ OpenAI Routes punojnë!');
+        } else {
+            alert('❌ OpenAI Test FAILED: ' + data.message);
+        }
+    } catch (error) {
+        alert('❌ Test ERROR: ' + error.message);
+    }
+}
+
+// ==================== 🚀 SISTEMI KRYESOR I CHAT ====================
+
 // ✅ MBIVENDOS FUNKSIONIN EKZISTUES TË CHAT-IT
 document.addEventListener('DOMContentLoaded', function() {
     // Gjej butonin e send dhe input-in
@@ -859,7 +1151,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        console.log('✅ OpenAI chat system u aktivizua');
+        console.log('✅ OpenAI chat system me komanda u aktivizua');
     }
 });
 
@@ -875,6 +1167,16 @@ async function handleSendMessage() {
     userInput.value = '';
     
     try {
+        // ✅ KONTROLLO NËSE ËSHTË KOMANDË SPECIALE
+        const isSpecialCommand = processSpecialCommands(message);
+        if (isSpecialCommand) {
+            console.log('🎯 Komanda speciale u procesua');
+            return;
+        }
+        
+        // ✅ NËSE NUK ËSHTË KOMANDË, DËRGO TE OPENAI
+        console.log('🔮 Duke dërguar mesazh normal tek OpenAI');
+        
         // Shfaq loading indicator
         const chat = document.getElementById('chat');
         const loadingDiv = document.createElement('div');
@@ -901,3 +1203,5 @@ async function handleSendMessage() {
         addMessageToChat('❌ Gabim në server. Provoni përsëri.', 'bot');
     }
 }
+
+console.log('🚀 RRUFE-TESLA Chat System u ngarkua me sukses!');
