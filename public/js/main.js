@@ -20,7 +20,8 @@ let aiEngineStatus = {
 };
 
 // ✅ FUNKSION PËR NDRYSHIMIN E MOTORËVE - Shto menjëherë pas variablave
-function switchAIEngine(engine) {
+// function switchAIEngine(engine) {
+window.swiftAIEngine = function(engine) {
     console.log(`🔄 Duke ndryshuar motorin në: ${engine}`);
     
     // Çaktivizo të gjithë motorët
@@ -31,8 +32,8 @@ function switchAIEngine(engine) {
     aiEngineStatus[engine] = true;
     
     // Përditëso UI-në
-    updateEngineStatusUI();
-    
+   // updateEngineStatusUI();
+    window.updateEngineStatusUI = function() {
     // Shfaq mesazh në chat
     const engineName = engine === 'gemini' ? 'Gemini' : 'OpenAI';
     addMessageToChat(`🔧 Motor i aktivizuar: ${engineName}`, 'system');
