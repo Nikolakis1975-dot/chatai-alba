@@ -11,8 +11,6 @@ const jwt = require('jsonwebtoken');
 const authenticateUser = async (req, res, next) => {
     try {
         console.log('🔐 OpenAI JWT Auth Check:');
-        console.log('   - Cookies:', req.cookies);
-        console.log('   - Headers auth:', req.headers.authorization);
         
         let token = null;
         let userId = null;
@@ -32,9 +30,10 @@ const authenticateUser = async (req, res, next) => {
         // VERIFIKO TOKEN
         if (token) {
             try {
-                const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret');
+                const decoded = jwt.verify(token, process.env.JWT_SECRET || 'jwt-super-secret-key-2024-alba-rrufe-tesla-strong');
                 userId = decoded.userId || decoded.id;
                 console.log('✅ JWT Token valid - User ID:', userId);
+                console.log('✅ User decoded:', decoded);
                 
                 req.user = { id: userId };
                 return next();
@@ -44,22 +43,10 @@ const authenticateUser = async (req, res, next) => {
             }
         }
 
-        // MËNYRA 3: Session fallback
-        if (req.session && req.session.userId) {
-            userId = req.session.userId;
-            console.log('✅ Session auth - User ID:', userId);
-            req.user = { id: userId };
-            return next();
-        }
-
-        console.log('❌ Auth FAILED - No valid token or session');
+        console.log('❌ Auth FAILED - No valid token found');
         return res.json({
             success: false,
-            message: 'Session ka skaduar. Ju lutem rifreskoni faqen dhe logoheni përsëri.',
-            debug: {
-                hasToken: !!token,
-                hasSession: !!(req.session && req.session.userId)
-            }
+            message: 'Authentication failed. Please refresh and login again.'
         });
         
     } catch (error) {
@@ -77,15 +64,24 @@ router.use(authenticateUser);
 // ✅ DEBUG ROUTE
 router.get('/debug-auth', async (req, res) => {
     try {
+        // Test database connection too
+        const user = await User.findByPk(req.user.id);
+        
         res.json({
             success: true,
-            message: 'JWT Auth Debug',
-            user: req.user,
+            message: 'JWT Auth Debug SUCCESS',
+            user: {
+                id: req.user.id,
+                dbUser: user ? {
+                    id: user.id,
+                    username: user.username,
+                    hasOpenAIKey: !!user.openaiApiKey
+                } : 'User not found in DB'
+            },
             tokenInfo: {
                 hasToken: !!(req.cookies && req.cookies.auth_token),
-                token: req.cookies && req.cookies.auth_token ? 'Present' : 'Missing'
-            },
-            session: req.session
+                tokenPresent: req.cookies && req.cookies.auth_token ? 'YES' : 'NO'
+            }
         });
     } catch (error) {
         res.json({
@@ -137,6 +133,7 @@ router.post('/save-key', async (req, res) => {
         const userId = req.user.id;
 
         console.log('💾 Saving OpenAI Key for user:', userId);
+        console.log('🔑 API Key received:', apiKey ? 'YES (' + apiKey.substring(0, 10) + '...)' : 'NO');
 
         if (!apiKey) {
             return res.json({
@@ -145,7 +142,7 @@ router.post('/save-key', async (req, res) => {
             });
         }
 
-        // Kontrollo nëse API Key është valid (fillon me sk-proj)
+        // Kontrollo nëse API Key është valid
         if (!apiKey.startsWith('sk-proj') && !apiKey.startsWith('sk-')) {
             return res.json({
                 success: false,
@@ -155,12 +152,15 @@ router.post('/save-key', async (req, res) => {
 
         const encryptedKey = encryption.encrypt(apiKey);
         
-        await User.update({
+        const result = await User.update({
             openaiApiKey: encryptedKey,
-            isOpenaiActive: true
-        }, { where: { id: userId } });
+            isOpenaiActive: true,
+            updatedAt: new Date()
+        }, { 
+            where: { id: userId } 
+        });
 
-        console.log('✅ OpenAI Key saved for user:', userId);
+        console.log('✅ OpenAI Key saved for user:', userId, 'Result:', result);
 
         res.json({
             success: true,
@@ -182,10 +182,13 @@ router.delete('/delete-key', async (req, res) => {
         const userId = req.user.id;
         console.log('🗑️ Deleting OpenAI Key for user:', userId);
 
-        await User.update({
+        const result = await User.update({
             openaiApiKey: null,
-            isOpenaiActive: false
+            isOpenaiActive: false,
+            updatedAt: new Date()
         }, { where: { id: userId } });
+
+        console.log('✅ OpenAI Key deleted for user:', userId, 'Result:', result);
 
         res.json({
             success: true,
@@ -196,7 +199,23 @@ router.delete('/delete-key', async (req, res) => {
         console.error('❌ Delete key error:', error);
         res.json({
             success: false,
-            message: 'Gabim në fshirjen e API Key'
+            message: 'Gabim në fshirjen e API Key: ' + error.message
+        });
+    }
+});
+
+// ✅ TEST ROUTE - PA AUTH (vetëm për test)
+router.get('/test-connection', async (req, res) => {
+    try {
+        res.json({
+            success: true,
+            message: 'OpenAI Routes are working!',
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        res.json({
+            success: false,
+            message: 'Test failed: ' + error.message
         });
     }
 });
