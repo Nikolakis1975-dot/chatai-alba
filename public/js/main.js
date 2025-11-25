@@ -8,16 +8,16 @@
 //    console.log('👤 Current user set:', user);
 // }
 
-// ========================= ✅ VARIABLA ==========================
+// ========================= ✅ VARIABLA  ==========================
 
-// ✅ DEKLARO VETËM NËSE NUK EKZISTON
-if (typeof currentUser === 'undefined') {
-    let currentUser = null;
+// ✅ PËRDOR WINDOW OBJECT PËR VARIABLA GLOBALE
+if (!window.currentUser) {
+    window.currentUser = null;
 }
 
 // ✅ FUNKSION PËR TË VENDOSUR CURRENT USER
 function setCurrentUser(user) {
-    currentUser = user;
+    window.currentUser = user;
     console.log('👤 Current user set:', user);
 }
 
