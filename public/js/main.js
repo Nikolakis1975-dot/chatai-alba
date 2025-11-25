@@ -782,52 +782,16 @@ function forceMemoryIntegration() {
     }
 }
 
-// ==================== 🔮 OPENAI PANEL FUNCTIONS - VERSION I KORRIGJUAR ====================
+// ==================== 🔮 OPENAI PANEL - EXACT SI GEMINI ====================
 
-// ✅ FUNKSION I THJESHTË PËR USER ID
-function getCurrentUserId() {
-    // Kjo është VETËM për ta dërguar serverit, API Key ruhet në database
-    try {
-        // Provoni të gjitha mënyrat për të gjetur user ID
-        const currentUser = localStorage.getItem('currentUser');
-        if (currentUser) {
-            const user = JSON.parse(currentUser);
-            
-            // Provoni të gjitha format e mundshme
-            if (user.id) return user.id.toString();
-            if (user.userId) return user.userId.toString();
-            if (user._id) return user._id.toString();
-            if (user.data && user.data.id) return user.data.id.toString();
-            if (user.user && user.user.id) return user.user.id.toString();
-        }
-        
-        // Provoni userData
-        const userData = localStorage.getItem('userData');
-        if (userData) {
-            const user = JSON.parse(userData);
-            if (user.id) return user.id.toString();
-            if (user.userId) return user.userId.toString();
-        }
-        
-        console.log('❌ Nuk u gjet user ID në localStorage');
-        return null;
-        
-    } catch (error) {
-        console.error('❌ Gabim në getCurrentUserId:', error);
-        return null;
-    }
-}
-
-// ==================== 🔮 OPENAI PANEL FUNCTIONS ====================
-
-// ✅ SHFAQ PANELIN
+// ✅ SHFAQ PANELIN OPENAI
 function showOpenAIPanel() {
     console.log('🔮 Duke hapur panelin OpenAI...');
     document.getElementById('openai-modal').style.display = 'block';
     updateOpenAIStatus();
 }
 
-// ✅ UPDATE STATUS
+// ✅ UPDATE STATUS - EXACT SI GEMINI
 async function updateOpenAIStatus() {
     const statusDiv = document.getElementById('openai-key-status');
     
@@ -840,36 +804,43 @@ async function updateOpenAIStatus() {
         });
         
         const data = await response.json();
-        console.log('📊 Status response:', data);
+        console.log('📊 OpenAI Status:', data);
         
         if (data.success) {
             if (data.hasApiKey) {
-                statusDiv.textContent = '✅ OpenAI është i konfiguruar';
+                statusDiv.textContent = '✅ OpenAI i konfiguruar';
                 statusDiv.className = 'api-status valid';
                 document.getElementById('openai-key-input').value = '••••••••••••••••';
             } else {
-                statusDiv.textContent = '❌ OpenAI nuk është i konfiguruar';
+                statusDiv.textContent = '❌ OpenAI jo i konfiguruar';
                 statusDiv.className = 'api-status invalid';
                 document.getElementById('openai-key-input').value = '';
             }
         } else {
-            statusDiv.textContent = '❌ ' + data.message;
+            statusDiv.textContent = '❌ ' + data.error;
             statusDiv.className = 'api-status invalid';
         }
     } catch (error) {
-        console.error('❌ Status check error:', error);
-        statusDiv.textContent = '❌ Gabim në lidhje: ' + error.message;
+        console.error('❌ Status error:', error);
+        statusDiv.textContent = '❌ Gabim në lidhje';
         statusDiv.className = 'api-status invalid';
     }
 }
 
-// ✅ RUAJ KEY
+// ✅ RUAJ API KEY - EXACT SI GEMINI
 async function saveOpenAIKey() {
     const apiKey = document.getElementById('openai-key-input').value.trim();
     const statusDiv = document.getElementById('openai-key-status');
     
     if (!apiKey) {
         statusDiv.textContent = '❌ Ju lutem vendosni OpenAI API Key';
+        statusDiv.className = 'api-status invalid';
+        return;
+    }
+    
+    // Kontrollo nëse është API Key i maskuar
+    if (apiKey === '••••••••••••••••') {
+        statusDiv.textContent = '❌ Ju lutem vendosni API Key të vërtetë, jo të maskuar';
         statusDiv.className = 'api-status invalid';
         return;
     }
@@ -888,27 +859,27 @@ async function saveOpenAIKey() {
         });
         
         const data = await response.json();
-        console.log('💾 Save response:', data);
+        console.log('💾 Save OpenAI Key Response:', data);
         
         if (data.success) {
             statusDiv.textContent = '✅ ' + data.message;
             statusDiv.className = 'api-status valid';
             
-            // Refresh status
+            // Refresh status pas 1 sekonde
             setTimeout(updateOpenAIStatus, 1000);
             
         } else {
-            statusDiv.textContent = '❌ ' + data.message;
+            statusDiv.textContent = '❌ ' + data.error;
             statusDiv.className = 'api-status invalid';
         }
     } catch (error) {
-        console.error('❌ Save error:', error);
-        statusDiv.textContent = '❌ Gabim në server: ' + error.message;
+        console.error('❌ Save OpenAI Key Error:', error);
+        statusDiv.textContent = '❌ Gabim në server';
         statusDiv.className = 'api-status invalid';
     }
 }
 
-// ✅ FSHI KEY
+// ✅ FSHI API KEY - EXACT SI GEMINI
 async function deleteOpenAIKey() {
     const statusDiv = document.getElementById('openai-key-status');
     
@@ -922,55 +893,41 @@ async function deleteOpenAIKey() {
         });
         
         const data = await response.json();
-        console.log('🗑️ Delete response:', data);
+        console.log('🗑️ Delete OpenAI Key Response:', data);
         
         if (data.success) {
             statusDiv.textContent = '✅ ' + data.message;
             statusDiv.className = 'api-status valid';
             document.getElementById('openai-key-input').value = '';
             
-            // Refresh status
+            // Refresh status pas 1 sekonde
             setTimeout(updateOpenAIStatus, 1000);
         } else {
-            statusDiv.textContent = '❌ ' + data.message;
+            statusDiv.textContent = '❌ ' + data.error;
             statusDiv.className = 'api-status invalid';
         }
     } catch (error) {
-        console.error('❌ Delete error:', error);
-        statusDiv.textContent = '❌ Gabim në server: ' + error.message;
+        console.error('❌ Delete OpenAI Key Error:', error);
+        statusDiv.textContent = '❌ Gabim në server';
         statusDiv.className = 'api-status invalid';
     }
 }
 
-// ✅ DEBUG SESSION
-async function debugSession() {
+// ✅ TEST OPENAI CONNECTION
+async function testOpenAIConnection() {
     try {
-        const response = await fetch('/api/openai-enhanced/debug-session', {
+        const response = await fetch('/api/openai-enhanced/test', {
             credentials: 'include'
         });
         const data = await response.json();
-        console.log('🔍 DEBUG SESSION:', data);
+        console.log('🧪 OpenAI Test:', data);
         
         if (data.success) {
-            alert('✅ Debug SUCCESS\nUser: ' + (data.user?.id || 'N/A') + '\nCheck console for details');
+            alert('✅ OpenAI Routes punojnë!');
         } else {
-            alert('❌ Debug FAILED: ' + data.message);
+            alert('❌ OpenAI Test FAILED: ' + data.message);
         }
     } catch (error) {
-        alert('❌ Debug ERROR: ' + error.message);
-    }
-}
-
-// ✅ TEST STATUS
-async function testOpenAIStatus() {
-    try {
-        const response = await fetch('/api/openai-enhanced/status', {
-            credentials: 'include'
-        });
-        const data = await response.json();
-        console.log('🔄 STATUS TEST:', data);
-        alert(data.success ? '✅ Status works!' : '❌ ' + data.message);
-    } catch (error) {
-        alert('❌ Status test error: ' + error.message);
+        alert('❌ Test ERROR: ' + error.message);
     }
 }
