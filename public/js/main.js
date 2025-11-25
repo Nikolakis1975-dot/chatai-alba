@@ -1528,7 +1528,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// =============================== ✅ FUNKSIONI I RI PËR DËRGIM MESAZHESH ME SISTEM MOTORËSH ========================
+// =================================================================
+// ✅ FUNKSIONI I RI PËR DËRGIM MESAZHESH ME SISTEM MOTORËSH
+//===================================================================
+
 async function handleSendMessage() {
     const userInput = document.getElementById('user-input');
     const message = userInput.value.trim();
@@ -1557,13 +1560,13 @@ async function handleSendMessage() {
         chat.appendChild(loadingDiv);
         chat.scrollTop = chat.scrollHeight;
         
-        // ✅ ZGJIDH MOTORIN E DUHUR BAZË NË STATUS
+        // ✅ ZGJIDH MOTORIN E DUHUR BAZË NË STATUSIN GLOBAL 🚨 KORRIGJUAR KËTU
         let result;
         
-        if (aiEngineStatus.gemini) {
+        if (window.aiEngineStatus.gemini) {  // ✅ NDRYSHIMI: window.aiEngineStatus
             console.log('🤖 Duke përdorur Gemini...');
             result = await sendToGemini(message);
-        } else if (aiEngineStatus.openai) {
+        } else if (window.aiEngineStatus.openai) {  // ✅ NDRYSHIMI: window.aiEngineStatus
             console.log('🔮 Duke përdorur OpenAI...');
             result = await sendChatMessage(message);
         } else {
