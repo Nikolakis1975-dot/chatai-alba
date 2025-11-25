@@ -1,7 +1,7 @@
-// ========================= ✅ VARIABLA GLOBALE =========================
+// ========================= ✅ VARIABLA GLOBALE ==========================
 let currentUser = null;
 // ✅ FUNKSION PËR TË VENDOSUR CURRENT USER (shtoje këtë)
-// ========================================================================
+// =========================================================================
 
 function setCurrentUser(user) {
     currentUser = user;
