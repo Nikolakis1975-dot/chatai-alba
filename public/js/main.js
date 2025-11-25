@@ -1,12 +1,12 @@
 // ========================= ✅ VARIABLA GLOBALE ==========================
-let currentUser = null;
+// let currentUser = null;
 // ✅ FUNKSION PËR TË VENDOSUR CURRENT USER (shtoje këtë)
 // =========================================================================
 
-function setCurrentUser(user) {
-    currentUser = user;
-    console.log('👤 Current user set:', user);
-}
+// function setCurrentUser(user) {
+//    currentUser = user;
+//    console.log('👤 Current user set:', user);
+// }
 
 // ==================== ⚙️ SISTEMI I MENAXHIMIT TË MOTORËVE AI ====================
 //         = =                 MANAXHIMI ON - OFF                     = =
