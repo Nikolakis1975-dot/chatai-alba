@@ -782,159 +782,25 @@ function forceMemoryIntegration() {
     }
 }
 
-// ==================== 🔮 OPENAI PANEL - EXACT SI GEMINI ====================
+// ==================== 🔮 OPENAI CHAT INTEGRATION ====================
 
-// ✅ SHFAQ PANELIN OPENAI
-function showOpenAIPanel() {
-    console.log('🔮 Duke hapur panelin OpenAI...');
-    document.getElementById('openai-modal').style.display = 'block';
-    updateOpenAIStatus();
+// ✅ FUNKSION PËR TË SHTUAR MESAZHE NË CHAT
+function addMessageToChat(message, sender) {
+    const chat = document.getElementById('chat');
+    if (!chat) return;
+
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${sender}`;
+    
+    messageDiv.innerHTML = `
+        <div class="message-text">${message}</div>
+    `;
+    
+    chat.appendChild(messageDiv);
+    chat.scrollTop = chat.scrollHeight;
 }
 
-// ✅ UPDATE STATUS - EXACT SI GEMINI
-async function updateOpenAIStatus() {
-    const statusDiv = document.getElementById('openai-key-status');
-    
-    try {
-        statusDiv.textContent = '🔄 Duke kontrolluar statusin...';
-        statusDiv.className = 'api-status';
-        
-        const response = await fetch('/api/openai-enhanced/status', {
-            credentials: 'include'
-        });
-        
-        const data = await response.json();
-        console.log('📊 OpenAI Status:', data);
-        
-        if (data.success) {
-            if (data.hasApiKey) {
-                statusDiv.textContent = '✅ OpenAI i konfiguruar';
-                statusDiv.className = 'api-status valid';
-                document.getElementById('openai-key-input').value = '••••••••••••••••';
-            } else {
-                statusDiv.textContent = '❌ OpenAI jo i konfiguruar';
-                statusDiv.className = 'api-status invalid';
-                document.getElementById('openai-key-input').value = '';
-            }
-        } else {
-            statusDiv.textContent = '❌ ' + data.error;
-            statusDiv.className = 'api-status invalid';
-        }
-    } catch (error) {
-        console.error('❌ Status error:', error);
-        statusDiv.textContent = '❌ Gabim në lidhje';
-        statusDiv.className = 'api-status invalid';
-    }
-}
-
-// ✅ RUAJ API KEY - EXACT SI GEMINI
-async function saveOpenAIKey() {
-    const apiKey = document.getElementById('openai-key-input').value.trim();
-    const statusDiv = document.getElementById('openai-key-status');
-    
-    if (!apiKey) {
-        statusDiv.textContent = '❌ Ju lutem vendosni OpenAI API Key';
-        statusDiv.className = 'api-status invalid';
-        return;
-    }
-    
-    // Kontrollo nëse është API Key i maskuar
-    if (apiKey === '••••••••••••••••') {
-        statusDiv.textContent = '❌ Ju lutem vendosni API Key të vërtetë, jo të maskuar';
-        statusDiv.className = 'api-status invalid';
-        return;
-    }
-    
-    try {
-        statusDiv.textContent = '🔄 Duke ruajtur...';
-        statusDiv.className = 'api-status';
-        
-        const response = await fetch('/api/openai-enhanced/save-key', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include',
-            body: JSON.stringify({ apiKey })
-        });
-        
-        const data = await response.json();
-        console.log('💾 Save OpenAI Key Response:', data);
-        
-        if (data.success) {
-            statusDiv.textContent = '✅ ' + data.message;
-            statusDiv.className = 'api-status valid';
-            
-            // Refresh status pas 1 sekonde
-            setTimeout(updateOpenAIStatus, 1000);
-            
-        } else {
-            statusDiv.textContent = '❌ ' + data.error;
-            statusDiv.className = 'api-status invalid';
-        }
-    } catch (error) {
-        console.error('❌ Save OpenAI Key Error:', error);
-        statusDiv.textContent = '❌ Gabim në server';
-        statusDiv.className = 'api-status invalid';
-    }
-}
-
-// ✅ FSHI API KEY - EXACT SI GEMINI
-async function deleteOpenAIKey() {
-    const statusDiv = document.getElementById('openai-key-status');
-    
-    try {
-        statusDiv.textContent = '🔄 Duke fshirë...';
-        statusDiv.className = 'api-status';
-        
-        const response = await fetch('/api/openai-enhanced/delete-key', {
-            method: 'DELETE',
-            credentials: 'include'
-        });
-        
-        const data = await response.json();
-        console.log('🗑️ Delete OpenAI Key Response:', data);
-        
-        if (data.success) {
-            statusDiv.textContent = '✅ ' + data.message;
-            statusDiv.className = 'api-status valid';
-            document.getElementById('openai-key-input').value = '';
-            
-            // Refresh status pas 1 sekonde
-            setTimeout(updateOpenAIStatus, 1000);
-        } else {
-            statusDiv.textContent = '❌ ' + data.error;
-            statusDiv.className = 'api-status invalid';
-        }
-    } catch (error) {
-        console.error('❌ Delete OpenAI Key Error:', error);
-        statusDiv.textContent = '❌ Gabim në server';
-        statusDiv.className = 'api-status invalid';
-    }
-}
-
-// ✅ TEST OPENAI CONNECTION
-async function testOpenAIConnection() {
-    try {
-        const response = await fetch('/api/openai-enhanced/test', {
-            credentials: 'include'
-        });
-        const data = await response.json();
-        console.log('🧪 OpenAI Test:', data);
-        
-        if (data.success) {
-            alert('✅ OpenAI Routes punojnë!');
-        } else {
-            alert('❌ OpenAI Test FAILED: ' + data.message);
-        }
-    } catch (error) {
-        alert('❌ Test ERROR: ' + error.message);
-    }
-}
-
-// ====================================== 🔮 OPENAI CHAT INTEGRATION =====================================
-
-// ✅ OVERRIDE FUNKSIONIN E CHAT-IT PËR TË PËRDORUR OPENAI
+// ✅ FUNKSION PËR DËRGIM MESAZHESH NË OPENAI
 async function sendChatMessage(message) {
     try {
         console.log('🔮 Duke dërguar në OpenAI:', message);
@@ -971,9 +837,34 @@ async function sendChatMessage(message) {
     }
 }
 
-// ✅ MODIFIKO FUNKSIONIN EKZISTUES TË CHAT-IT
-const originalSendMessage = window.sendMessage;
-window.sendMessage = async function() {
+// ✅ MBIVENDOS FUNKSIONIN EKZISTUES TË CHAT-IT
+document.addEventListener('DOMContentLoaded', function() {
+    // Gjej butonin e send dhe input-in
+    const sendBtn = document.getElementById('send-btn');
+    const userInput = document.getElementById('user-input');
+    
+    if (sendBtn && userInput) {
+        // Hiq event listener-et e vjetra
+        sendBtn.replaceWith(sendBtn.cloneNode(true));
+        userInput.replaceWith(userInput.cloneNode(true));
+        
+        // Shto event listener-et e rinj
+        const newSendBtn = document.getElementById('send-btn');
+        const newUserInput = document.getElementById('user-input');
+        
+        newSendBtn.addEventListener('click', handleSendMessage);
+        newUserInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                handleSendMessage();
+            }
+        });
+        
+        console.log('✅ OpenAI chat system u aktivizua');
+    }
+});
+
+// ✅ FUNKSIONI I RI PËR DËRGIM MESAZHESH
+async function handleSendMessage() {
     const userInput = document.getElementById('user-input');
     const message = userInput.value.trim();
     
@@ -984,8 +875,20 @@ window.sendMessage = async function() {
     userInput.value = '';
     
     try {
+        // Shfaq loading indicator
+        const chat = document.getElementById('chat');
+        const loadingDiv = document.createElement('div');
+        loadingDiv.id = 'loading-indicator';
+        loadingDiv.className = 'message bot';
+        loadingDiv.innerHTML = '<div class="message-text">🔄 Po procesoj...</div>';
+        chat.appendChild(loadingDiv);
+        chat.scrollTop = chat.scrollHeight;
+        
         // Përdor OpenAI direkt
         const result = await sendChatMessage(message);
+        
+        // Hiq loading indicator
+        document.getElementById('loading-indicator')?.remove();
         
         if (result.success) {
             addMessageToChat(result.response, 'bot');
@@ -993,9 +896,8 @@ window.sendMessage = async function() {
             addMessageToChat('❌ ' + result.error, 'bot');
         }
     } catch (error) {
-        console.error('❌ Gabim në sendMessage:', error);
+        console.error('❌ Gabim në handleSendMessage:', error);
+        document.getElementById('loading-indicator')?.remove();
         addMessageToChat('❌ Gabim në server. Provoni përsëri.', 'bot');
     }
-};
-
-console.log('✅ OpenAI chat integration u aktivizua');
+}
