@@ -509,10 +509,16 @@ async function translateTextReal(text) {
 async function getWeatherReal(location) {
     // Informacione moti të thjeshta
     const weatherData = {
-        'tirana': '🌤️ 24°C, Pjesërisht me re',
-        'durres': '☀️ 26°C, I kthellët',
-        'vlora': '☀️ 28°C, I kthellët',
-        'shkoder': '🌧️ 22
+        'tirana': '24°C, Pjeserisht me re',
+        'durres': '26°C, I kthellet',
+        'vlora': '28°C, I kthellet', 
+        'shkoder': '22°C, Me shi',
+        'default': `Moti per ${location}: Te dhena momentalisht nuk jane te disponueshme`
+    };
+    
+    const weather = weatherData[location.toLowerCase()] || weatherData['default'];
+    return weather;
+}
 
 // ===================================== ✅ RUTA E RE PËR PANELIN E NDIHMËS ME BUTONA ==================================
 
