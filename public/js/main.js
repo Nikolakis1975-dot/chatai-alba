@@ -1626,102 +1626,82 @@ async function sendToGemini(message) {
     }
 }
 
-// ==================== 🚨 EMERGJENCY FIX PËR MOTORËT AI ====================
+// ==================== 🚀 SISTEMI I RI I MOTORËVE - PA NDRYSHIME ====================
 
-// ✅ FORCEO INICIALIZIMIN E MOTORËVE
-function initializeAIEngines() {
-    console.log('🚀 EMERGJENCY: Duke inicializuar motorët AI...');
+// ✅ INICIALIZO MOTORËT PA PREKUR currentUser
+function initializeAIEngineSystem() {
+    console.log('🚀 Duke inicializuar sistemin e motorëve...');
     
-    // ✅ VARIABLA GLOBALE
-    window.aiEngineStatus = {
+    // ✅ KRIJO VARIABLA TË REJA (nuk prekin currentUser)
+    const aiEngineStatus = {
         gemini: true,
         openai: false
     };
     
     // ✅ FUNKSIONI PËR NDRYSHIMIN E MOTORËVE
-    window.switchAIEngine = function(engine) {
-        console.log('🔄 BUTONI I SHTYPUR: Duke ndryshuar motorin në:', engine);
+    function switchAIEngine(engine) {
+        console.log('🔄 Duke ndryshuar motorin në:', engine);
         
-        if (engine !== 'gemini' && engine !== 'openai') {
-            console.error('❌ Motor i panjohur:', engine);
-            return;
-        }
+        aiEngineStatus.gemini = false;
+        aiEngineStatus.openai = false;
+        aiEngineStatus[engine] = true;
         
-        // Çaktivizo të gjithë motorët
-        window.aiEngineStatus.gemini = false;
-        window.aiEngineStatus.openai = false;
+        updateEngineStatusUI();
         
-        // Aktivizo motorin e zgjedhur
-        window.aiEngineStatus[engine] = true;
-        
-        console.log('✅ Statusi i ri:', window.aiEngineStatus);
-        
-        // Përditëso UI-në
-        if (window.updateEngineStatusUI) {
-            window.updateEngineStatusUI();
-        }
-        
-        // Shfaq mesazh në chat
         const engineName = engine === 'gemini' ? '🤖 Gemini' : '🔮 OpenAI';
         if (typeof addMessageToChat !== 'undefined') {
             addMessageToChat(`🔧 Motor i aktivizuar: ${engineName}`, 'system');
         }
-    };
+    }
     
     // ✅ FUNKSIONI PËR PËRDDITËSIMIN E UI
-    window.updateEngineStatusUI = function() {
-        console.log('🎨 Duke përditësuar UI-në e butonave...');
-        
+    function updateEngineStatusUI() {
         const geminiBtn = document.getElementById('gemini-engine-btn');
         const openaiBtn = document.getElementById('openai-engine-btn');
         
-        console.log('🔍 Gjetur butona:', { geminiBtn, openaiBtn });
-        
         if (geminiBtn) {
-            geminiBtn.style.background = window.aiEngineStatus.gemini ? '#4CAF50' : '#666';
-            geminiBtn.textContent = window.aiEngineStatus.gemini ? '🤖 Gemini ✅' : '🤖 Gemini';
-            console.log('✅ Gemini button u përditësua');
+            geminiBtn.style.background = aiEngineStatus.gemini ? '#4CAF50' : '#666';
+            geminiBtn.textContent = aiEngineStatus.gemini ? '🤖 Gemini ✅' : '🤖 Gemini';
         }
         
         if (openaiBtn) {
-            openaiBtn.style.background = window.aiEngineStatus.openai ? '#2196F3' : '#666';
-            openaiBtn.textContent = window.aiEngineStatus.openai ? '🔮 OpenAI ✅' : '🔮 OpenAI';
-            console.log('✅ OpenAI button u përditësua');
+            openaiBtn.style.background = aiEngineStatus.openai ? '#2196F3' : '#666';
+            openaiBtn.textContent = aiEngineStatus.openai ? '🔮 OpenAI ✅' : '🔮 OpenAI';
         }
-    };
+    }
     
-    // ✅ INICIALIZO BUTONAT
-    function initializeButtons() {
-        console.log('🎯 Duke inicializuar butonat...');
-        
+    // ✅ SHTO EVENT LISTENERS PËR BUTONAT
+    function attachButtonListeners() {
         const geminiBtn = document.getElementById('gemini-engine-btn');
         const openaiBtn = document.getElementById('openai-engine-btn');
         
         if (geminiBtn) {
-            geminiBtn.onclick = function() {
-                console.log('🎯 Gemini button clicked');
-                window.switchAIEngine('gemini');
-            };
+            geminiBtn.addEventListener('click', function() {
+                switchAIEngine('gemini');
+            });
         }
         
         if (openaiBtn) {
-            openaiBtn.onclick = function() {
-                console.log('🎯 OpenAI button clicked');
-                window.switchAIEngine('openai');
-            };
+            openaiBtn.addEventListener('click', function() {
+                switchAIEngine('openai');
+            });
         }
         
-        // Përditëso UI-në fillestare
-        window.updateEngineStatusUI();
+        console.log('✅ Event listeners u shtuan!');
     }
     
     // ✅ EKZEKUTO INICIALIZIMIN
-    setTimeout(initializeButtons, 100);
-    
-    console.log('✅ EMERGJENCY: Motorët AI u inicializuan!');
+    setTimeout(() => {
+        attachButtonListeners();
+        updateEngineStatusUI();
+        console.log('✅ Sistemi i motorëve u inicializua!');
+    }, 1000);
 }
 
-// ✅ THIRR FUNKSIONIN E INICIALIZIMIT
-setTimeout(initializeAIEngines, 500);
+// ✅ THIRR FUNKSIONIN KUR FAQA NGARKOHET
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📄 Faqja u ngarkua - duke nisur sistemin e motorëve...');
+    initializeAIEngineSystem();
+});
 
 console.log('🚀 RRUFE-TESLA Chat System u ngarkua me sukses!');
