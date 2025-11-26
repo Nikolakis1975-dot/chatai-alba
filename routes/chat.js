@@ -1,7 +1,3 @@
-// ===========================================================
-// RRUFE TESLA - 10.5
-// ===========================================================
-
 const crypto = require('crypto');
 const express = require('express');
 const db = require('../database');
@@ -48,42 +44,117 @@ async function getUserById(userId) {
     });
 }
 
-//function getSimpleNaturalResponse(message) {
- //   const lowerMessage = message.toLowerCase();
-//    
-//    if (lowerMessage.includes('përshëndetje') || lowerMessage.includes('tungjatjeta') || lowerMessage.includes('hello')) {
- //       return "Përshëndetje! 😊 Mirë se ju gjetëm! Si mund t'ju ndihmoj sot?";
-//    }
-//    
-//    if (lowerMessage.includes('si je') || lowerMessage.includes('si jeni')) {
-//        return "Jam shumë mirë, faleminderit që pyetët! 😊 Çfarë mund të bëj për ju?";
-//    }
-//    
- //   if (lowerMessage.includes('faleminderit') || lowerMessage.includes('rrofsh') || lowerMessage.includes('thanks')) {
- //       return "S'ka përse! 😊 Gjithmonë i lumtur të ndihmoj!";
-//    }
-//    
-//    if (lowerMessage.includes('ndihmë') || lowerMessage.includes('help')) {
-//        return "Sigurisht! 😊 Çfarë lloj ndihme keni nevojë? Mund të përdorni /ndihmo për të parë të gjitha mundësitë.";
-//    }
-//    
-//    if (lowerMessage.includes('mirëmëngjes')) {
-//        return "Mirëmëngjes! ☀️ Fillim të mbarë të ditës! Si mund t'ju ndihmoj sot?";
-//    }
-//    
-//    if (lowerMessage.includes('mirëmbrëma')) {
-//        return "Mirëmbrëma! 🌙 Mbrëmje e mbarë! Si mund t'ju shërbej?";
-//    }
-//    
-//    return "E kuptoj! 😊 Përdorni /ndihmo për të parë të gjitha komandat e mia, ose më tregoni më shumë se çfarë keni nevojë.";
-// }
+function getSimpleNaturalResponse(message) {
+    const lowerMessage = message.toLowerCase();
+    
+    if (lowerMessage.includes('përshëndetje') || lowerMessage.includes('tungjatjeta') || lowerMessage.includes('hello')) {
+        return "Përshëndetje! 😊 Mirë se ju gjetëm! Si mund t'ju ndihmoj sot?";
+    }
+    
+    if (lowerMessage.includes('si je') || lowerMessage.includes('si jeni')) {
+        return "Jam shumë mirë, faleminderit që pyetët! 😊 Çfarë mund të bëj për ju?";
+    }
+    
+    if (lowerMessage.includes('faleminderit') || lowerMessage.includes('rrofsh') || lowerMessage.includes('thanks')) {
+        return "S'ka përse! 😊 Gjithmonë i lumtur të ndihmoj!";
+    }
+    
+    if (lowerMessage.includes('ndihmë') || lowerMessage.includes('help')) {
+        return "Sigurisht! 😊 Çfarë lloj ndihme keni nevojë? Mund të përdorni /ndihmo për të parë të gjitha mundësitë.";
+    }
+    
+    if (lowerMessage.includes('mirëmëngjes')) {
+        return "Mirëmëngjes! ☀️ Fillim të mbarë të ditës! Si mund t'ju ndihmoj sot?";
+    }
+    
+    if (lowerMessage.includes('mirëmbrëma')) {
+        return "Mirëmbrëma! 🌙 Mbrëmje e mbarë! Si mund t'ju shërbej?";
+    }
+    
+    return "E kuptoj! 😊 Përdorni /ndihmo për të parë të gjitha komandat e mia, ose më tregoni më shumë se çfarë keni nevojë.";
+}
+
+// ✅ RUTA KRYESORE PËR MESAZHET - TRAJTON TË GJITHA MESAZHET
+// router.post('/', async (req, res) => {
+ //   try {
+   //     const { message, userId } = req.body;
+   //     
+   //     console.log('🔍 routes/chat: Marrë mesazh:', message?.substring(0, 50));
 //
+    //    if (!message) {
+    //        return res.status(constants.HTTP_STATUS.BAD_REQUEST).json({
+   //             success: false,
+   //             response: '❌ Ju lutem shkruani një mesazh'
+  //          });
+  //      }
+//
+     //   // ✅ SË PARI PROVO ME COMMAND SERVICE (SISTEMI I RI)
+     //   try {
+     //       const user = await getUserById(userId || 1);
+    //        
+     //       if (user) {
+     //           console.log('🎯 routes/chat: Duke thirrur CommandService...');
+     //           const result = await CommandService.processCommand('chat', user, message);
+     //           
+    //            // ✅ NËSE COMMAND SERVICE E TRAJTON, KTHEJ PËRGJIGJEN
+    //            if (result.success) {
+   //                 console.log('✅ routes/chat: CommandService e trajtoi mesazhin');
+   //                 return res.status(constants.HTTP_STATUS.OK).json(result);
+   //             }
+   //         }
+  //      } catch (cmdError) {
+  //          console.error('❌ routes/chat: Gabim në CommandService:', cmdError.message);
+  //      }
+//
+    //    // ✅ NËSE COMMAND SERVICE NUK E TRAJTON, SHKO TE SISTEMI I VJETËR (GEMINI)
+     //   console.log('🔄 routes/chat: CommandService nuk e trajtoi, duke shkuar te Gemini...');
+    //    
+     //   try {
+    //        // Kontrollo nëse ka API Key
+    //        const hasApiKey = await checkApiKey(userId || 1);
+    //        
+    //        if (!hasApiKey) {
+     //           // ✅ NËSE NUK KA API KEY, KTHE PËRGJIGJE BAZË
+     //           console.log('ℹ️ routes/chat: Nuk ka API Key, duke kthyer përgjigje bazë');
+     //           return res.status(constants.HTTP_STATUS.OK).json({
+     //               success: true,
+     //               response: getSimpleNaturalResponse(message)
+     //           });
+    //        }
+    //        
+    //        // Nëse ka API Key, shko te Gemini
+    //        console.log('🔑 routes/chat: Ka API Key, duke shkuar te Gemini...');
+   //         const geminiResponse = await require('./gemini').processMessage(message, userId || 1);
+   //         return res.status(constants.HTTP_STATUS.OK).json({
+   //             success: true,
+    //            response: geminiResponse
+   //         });
+   //         
+  //      } catch (geminiError) {
+  //          console.error('❌ routes/chat: Gabim në Gemini:', geminiError);
+  //          return res.status(constants.HTTP_STATUS.OK).json({
+ //               success: true,
+ //               response: getSimpleNaturalResponse(message)
+  //          });
+//        }
+//
+//    } catch (error) {
+//        console.error('❌ routes/chat: Gabim i përgjithshëm:', error);
+//        return res.status(constants.HTTP_STATUS.INTERNAL_ERROR).json({
+ //           success: false,
+   //         response: '❌ Gabim në server. Provo përsëri.'
+   //     });
+ //   }
+// });
+
+// ✅ RUTA PËR MESAZHET E DREJTPËRDREDHURA (PËR FRONTEND)
+
 // ✅ RUTA E THJESHTUAR PËR MESAZHE - PUNON ME URËN
 router.post('/message', async (req, res) => {
     try {
         const { message, userId = 1 } = req.body;
         
-        console.log('🔍 routes/chat/message: Marrë mesazh:', message?.substring(0, 50));
+        console.log('🔍 routes/chat/message: Marrë mesazh për urë:', message?.substring(0, 50));
 
         if (!message || message.trim() === '') {
             return res.json({
@@ -92,12 +163,12 @@ router.post('/message', async (req, res) => {
             });
         }
 
-        // =============================== ✅ MOS E PËRDOR getSimpleNaturalResponse KËTU ==================================
-        // 🚨 NUK DUHET: const autoResponse
-        
-        // ✅ THJESHT KALO MESAZHIN TE COMMAND SERVICE
+        // ✅ PERDOR DIRECT COMMAND SERVICE (JO URËN, SE URËRA ËSHTË NË APP.JS)
+        console.log('🎯 routes/chat/message: Duke thirrur CommandService direkt...');
         const CommandService = require('../services/commandService');
         
+        // Merr përdoruesin
+        const db = require('../database');
         const user = await new Promise((resolve) => {
             db.get('SELECT * FROM users WHERE id = ?', [userId], (err, user) => {
                 resolve(user || { id: userId, username: 'user' + userId });
@@ -106,15 +177,15 @@ router.post('/message', async (req, res) => {
 
         const result = await CommandService.processCommand('', user, message);
         
-        console.log('📊 routes/chat/message: Rezultati nga CommandService:', {
+        console.log('📊 routes/chat/message: Rezultati:', {
             success: result.success,
-            usedOpenAI: result.response?.includes('OpenAI') || false
+            messageLength: result.response?.length || 0
         });
         
         return res.json(result);
 
     } catch (error) {
-        console.error('❌ routes/chat/message: Gabim:', error);
+        console.error('❌ routes/chat/message: Gabim i përgjithshëm:', error);
         return res.json({
             success: false,
             response: '❌ Gabim në server. Provo përsëri.'
@@ -122,406 +193,8 @@ router.post('/message', async (req, res) => {
     }
 });
 
-// ==================== 🆕 RUTA TË REJA PËR KOMANDAT ===================
-//  COMANDAT E FUKSIONIT - NDIHMO ======================================
-//  ✅ RUTA PËR WIKIPEDIA SEARCH ======================================
-// ======================================================================
-
-router.get('/wiki-search', async (req, res) => {
-    try {
-        const { query } = req.query;
-        
-        if (!query) {
-            return res.json({
-                success: false,
-                error: '❌ Ju lutem jepni një kërkim'
-            });
-        }
-
-        console.log('🌐 Wikipedia search për:', query);
-        
-        // Për momentin kthe mesazh informativ - do të implementohet me API të vërtetë
-        res.json({
-            success: true,
-            query: query,
-            results: [],
-            message: `🔍 **Kërkim Wikipedia**: "${query}"\n\n📚 *Funksioni i kërkimit Wikipedia do të implementohet së shpejti*\n💡 Për momentin, mund të më pyesni direkt për këtë temë!`
-        });
-        
-    } catch (error) {
-        console.error('❌ Gabim në wiki-search:', error);
-        res.json({ 
-            success: false, 
-            error: 'Gabim në kërkim Wikipedia' 
-        });
-    }
-});
-
-// ==================================================== ✅ RUTA PËR PËRKTHIM ===========================================
-
-router.get('/translate', async (req, res) => {
-    try {
-        const { text, targetLang = 'sq' } = req.query;
-        
-        if (!text) {
-            return res.json({
-                success: false,
-                error: '❌ Ju lutem jepni tekst për përkthim'
-            });
-        }
-
-        console.log('🔄 Përkthim për:', text.substring(0, 50));
-        
-        // Për momentin kthe mesazh informativ - do të implementohet me API të vërtetë
-        res.json({
-            success: true,
-            original: text,
-            translated: text, // Për momentin kthe të njëjtin tekst
-            targetLang: targetLang,
-            message: `🔄 **Përkthim**\n\n📝 **Origjinal**: "${text}"\n🌍 **Përkthyer**: "${text}"\n\n💡 *Sistemi i përkthimit automatik do të implementohet së shpejti*`
-        });
-        
-    } catch (error) {
-        console.error('❌ Gabim në translate:', error);
-        res.json({ 
-            success: false, 
-            error: 'Gabim në përkthim' 
-        });
-    }
-});
-
-// ===================================================== ✅ RUTA PËR MOTIN ==========================================
-
-router.get('/weather', async (req, res) => {
-    try {
-        const { location = 'Tirana' } = req.query;
-
-        console.log('🌍 Kontrollim moti për:', location);
-        
-        // Për momentin kthe mesazh informativ - do të implementohet me API të vërtetë
-        res.json({
-            success: true,
-            location: location,
-            temperature: 'N/A',
-            condition: 'N/A',
-            message: `🌍 **Moti për**: ${location}\n\n⛅ *Shërbimi i motit do të implementohet së shpejti*\n💡 Për informacion moti, kontrolloni stacione lokale të motit!`
-        });
-        
-    } catch (error) {
-        console.error('❌ Gabim në weather:', error);
-        res.json({ 
-            success: false, 
-            error: 'Gabim në kontrollimin e motit' 
-        });
-    }
-});
-
-// ================================================== ✅ RUTA PËR KËRKIM NË INTERNET =================================
-
-router.get('/web-search', async (req, res) => {
-    try {
-        const { query } = req.query;
-        
-        if (!query) {
-            return res.json({
-                success: false,
-                error: '❌ Ju lutem jepni një kërkim'
-            });
-        }
-
-        console.log('🔍 Kërkim në internet për:', query);
-        
-        // Për momentin kthe mesazh informativ - do të implementohet me API të vërtetë
-        res.json({
-            success: true,
-            query: query,
-            results: [],
-            message: `🔍 **Kërkim në internet**: "${query}"\n\n🌐 *Funksioni i kërkimit në internet do të implementohet së shpejti*\n💡 Për momentin, mund të më pyesni direkt për këtë informacion!`
-        });
-        
-    } catch (error) {
-        console.error('❌ Gabim në web-search:', error);
-        res.json({ 
-            success: false, 
-            error: 'Gabim në kërkim në internet' 
-        });
-    }
-});
-
-// ==================================================✅ RUTA PËR EKSPORTIM CHAT HISTORY ====================================
-
-router.get('/export-chat', async (req, res) => {
-    try {
-        const { userId = 1 } = req.query;
-
-        console.log('📥 Eksportim chat history për user:', userId);
-        
-        // Për momentin kthe mesazh informativ
-        res.json({
-            success: true,
-            userId: userId,
-            message: `📥 **Eksportimi i historisë së bisedës**\n\n💾 *Funksioni i eksportimit do të implementohet së shpejti*\n📄 Do të mund të eksportoni historinë tuaj të bisedës në formatin JSON ose PDF.`
-        });
-        
-    } catch (error) {
-        console.error('❌ Gabim në export-chat:', error);
-        res.json({ 
-            success: false, 
-            error: 'Gabim në eksportim' 
-        });
-    }
-});
-
-// ==============================================✅ RUTA PËR IMPORTIM CHAT HISTORY ========================================
-
-router.post('/import-chat', async (req, res) => {
-    try {
-        const { userId = 1, data } = req.body;
-
-        console.log('📤 Importim chat history për user:', userId);
-        
-        // Për momentin kthe mesazh informativ
-        res.json({
-            success: true,
-            userId: userId,
-            imported: false,
-            message: `📤 **Importimi i historisë së bisedës**\n\n💾 *Funksioni i importimit do të implementohet së shpejti*\n📄 Do të mund të importoni historinë tuaj të bisedës nga file JSON.`
-        });
-        
-    } catch (error) {
-        console.error('❌ Gabim në import-chat:', error);
-        res.json({ 
-            success: false, 
-            error: 'Gabim në importim' 
-        });
-    }
-});
-
-// ==================================================== ✅ RUTA PËR ADMIN PANEL ========================================
-
-router.get('/admin-panel', async (req, res) => {
-    try {
-        console.log('👑 Duke hapur admin panel');
-        
-        res.json({
-            success: true,
-            message: `👑 **Admin Panel**\n\n⚡ *Paneli i administrimit do të implementohet së shpejti*\n🔧 Do të përmbajë statistikat e sistemit, menaxhimin e përdoruesve dhe konfigurime të avancuara.`
-        });
-        
-    } catch (error) {
-        console.error('❌ Gabim në admin-panel:', error);
-        res.json({ 
-            success: false, 
-            error: 'Gabim në admin panel' 
-        });
-    }
-});
-
-// ===================================================== ✅ RUTA PËR STATISTIKA =========================================
-
-router.get('/stats', async (req, res) => {
-    try {
-        console.log('📊 Duke gjeneruar statistikat');
-        
-        res.json({
-            success: true,
-            message: `📊 **Statistikat e Sistemit**\n\n📈 *Funksioni i statistikave do të implementohet së shpejti*\n📋 Do të shfaqë statistikat e përdorimit, aktivitetin e përdoruesve dhe performancën e sistemit.`
-        });
-        
-    } catch (error) {
-        console.error('❌ Gabim në stats:', error);
-        res.json({ 
-            success: false, 
-            error: 'Gabim në statistikat' 
-        });
-    }
-});
-
-// ====================== RUTA PËR TRAJTIMIN E KOMANDAVE SPECIFIKE =====================
-// ✅ RUTA PËR TRAJTIMIN E KOMANDAVE SPECIFIKE ME IMPLEMENTIM REAL
-// =====================================================================================
-router.post('/process-command', async (req, res) => {
-    try {
-        const { message, userId = 1 } = req.body;
-        
-        console.log('🎯 routes/chat/process-command: Marrë komandë:', message);
-
-        if (!message) {
-            return res.json({
-                success: false,
-                error: '❌ Komanda është e zbrazët'
-            });
-        }
-
-        // ✅ KONTROLLO NËSE ËSHTË SHPREHJE MATEMATIKE
-        if (isMathExpression(message)) {
-            const result = solveMathExpression(message);
-            return res.json({
-                success: true,
-                response: `🧮 **Llogaritje Matematikore**\n\n📝 **Shprehja**: ${message}\n✅ **Rezultati**: **${result}**\n\n🔢 *Llogaritja u krye me sukses!*`
-            });
-        }
-
-        // ✅ TRAJTO KOMANDAT SPECIFIKE
-        if (message.startsWith('/wiki ')) {
-            const query = message.replace('/wiki ', '').trim();
-            const wikiResult = await searchWikipediaReal(query);
-            return res.json({
-                success: true,
-                response: wikiResult
-            });
-        }
-        
-        else if (message.startsWith('/perkthim ')) {
-            const text = message.replace('/perkthim ', '').trim();
-            const translation = await translateTextReal(text);
-            return res.json({
-                success: true,
-                response: translation
-            });
-        }
-        
-        else if (message.startsWith('/moti ')) {
-            const location = message.replace('/moti ', '').trim();
-            const weather = await getWeatherReal(location);
-            return res.json({
-                success: true,
-                response: weather
-            });
-        }
-        
-        else if (message.startsWith('/gjej ') || message.startsWith('/google ') || message.startsWith('/kërko ')) {
-            const query = message.replace('/gjej ', '').replace('/google ', '').replace('/kërko ', '').trim();
-            const searchResult = await webSearchReal(query);
-            return res.json({
-                success: true,
-                response: searchResult
-            });
-        }
-        
-        else if (message === '/eksporto') {
-            const exportResult = await exportChatReal(userId);
-            return res.json({
-                success: true,
-                response: exportResult
-            });
-        }
-        
-        else if (message === '/importo') {
-            return res.json({
-                success: true,
-                response: `📤 **Importimi i historisë**\n\n💾 *Funksioni i importimit do të implementohet së shpejti*\n📄 Ju lutem përdorni panelin e administrimit për importim.`
-            });
-        }
-        
-        else if (message === '/admin' || message === '/users' || message === '/stats' || message === '/panel') {
-            return res.json({
-                success: true,
-                response: `👑 **Admin Panel**\n\n⚡ *Paneli i administrimit do të implementohet së shpejti*\n🔧 Do të përmbajë statistikat e sistemit dhe menaxhimin e përdoruesve.`
-            });
-        }
-        
-        else if (message.startsWith('/apikey ')) {
-            const apiKey = message.replace('/apikey ', '').trim();
-            // Ruaj API Key në database
-            await saveApiKeyToDatabase(userId, apiKey);
-            return res.json({
-                success: true,
-                response: `🔑 **API Key u konfigurua!**\n\n✅ *API Key për Gemini u ruajt me sukses!*\n🤖 Tani mund të përdorni plotësisht Gemini AI.\n\n💡 *Motor i aktivizuar: Gemini*`
-            });
-        }
-        
-        else if (message.startsWith('/meso ')) {
-            const topic = message.replace('/meso ', '').trim();
-            return res.json({
-                success: true,
-                response: `🎓 **Mësim për**: "${topic}"\n\n📚 *Po mësoj rreth kësaj teme...*\n💡 Do të jem i gatshëm të përgjigjem pyetjeve tuaja!\n\n🔍 *Këshillë: Përdorni motorin AI për më shumë informacion*`
-            });
-        }
-
-        // ✅ NËSE NUK ËSHTË KOMANDË E NJOHUR
-        return res.json({
-            success: false,
-            error: `❌ Komanda "${message}" nuk është e njohur.\n\n💡 Përdorni /ndihmo për të parë të gjitha komandat e disponueshme.`
-        });
-
-    } catch (error) {
-        console.error('❌ Gabim në process-command:', error);
-        return res.json({
-            success: false,
-            error: '❌ Gabim në server. Provo përsëri.'
-        });
-    }
-});
-
-// ✅ FUNKSIONE REALE PËR KOMANDAT
-function isMathExpression(text) {
-    // Kontrollo nëse është shprehje matematikore
-    const mathRegex = /^[\d+\-*/().^ ,]+$/;
-    const cleanText = text.replace(/\s/g, '');
-    return mathRegex.test(cleanText) && cleanText.length > 2;
-}
-
-function solveMathExpression(expression) {
-    try {
-        // Pastro shprehjen
-        let cleanExpr = expression.replace(/[^0-9+\-*/().^]/g, '');
-        cleanExpr = cleanExpr.replace(/\^/g, '**'); // Konverto fuqinë
-        
-        // Llogarit me eval të sigurt
-        const result = Function(`"use strict"; return (${cleanExpr})`)();
-        
-        // Format rezultatin
-        return Number(result.toFixed(6)); // 6 shifra pas presjes
-    } catch (error) {
-        return 'Gabim në llogaritje';
-    }
-}
-
-async function searchWikipediaReal(query) {
-    // Për momentin kthe informacion të dobishëm
-    const topics = {
-        'shqiperia': 'Shqipëria është një vend në Evropën Juglindore...',
-        'tirana': 'Tirana është kryeqyteti i Shqipërisë...',
-        'google': 'Google është kompani amerikane e teknologjisë...',
-        'default': `🔍 **Wikipedia: ${query}**\n\n📚 Informacioni për "${query}" do të merret nga Wikipedia API.\n🌐 *Funksioni i plotë do të implementohet së shpejti*`
-    };
-    
-    const result = topics[query.toLowerCase()] || topics['default'];
-    return result;
-}
-
-async function translateTextReal(text) {
-    // Përkthime të thjeshta
-    const translations = {
-        'hello': 'Përshëndetje',
-        'how are you': 'Si jeni',
-        'thank you': 'Faleminderit',
-        'good morning': 'Mirëmëngjes',
-        'good night': 'Natën e mirë'
-    };
-    
-    const translated = translations[text.toLowerCase()] || `🔄 **Përkthim**: "${text}"\n\n🌍 *Përkthimi automatik do të implementohet së shpejti*\n💡 Për momentin, përdorni motorin AI për përkthime më të sakta.`;
-    
-    return translated;
-}
-
-async function getWeatherReal(location) {
-    // Informacione moti të thjeshta
-    const weatherData = {
-        'tirana': '24°C, Pjeserisht me re',
-        'durres': '26°C, I kthellet',
-        'vlora': '28°C, I kthellet', 
-        'shkoder': '22°C, Me shi',
-        'default': `Moti per ${location}: Te dhena momentalisht nuk jane te disponueshme`
-    };
-    
-    const weather = weatherData[location.toLowerCase()] || weatherData['default'];
-    return weather;
-}
-
-// ===================================== ✅ RUTA E RE PËR PANELIN E NDIHMËS ME BUTONA ==================================
-
+// ✅ KODI EKZISTUES - MERR HISTORINË E BISEDËS
+// ✅ RUTA E RE PËR PANELIN E NDIHMËS ME BUTONA - Shto në routes/chat.js ekzistues
 router.get('/help-panel', async (req, res) => {
     try {
         const helpPanel = `
@@ -613,8 +286,6 @@ function executeQuickCommand() {
     }
 });
 
-// ======================================= ✅ KODI EKZISTUES (MBETET I NJËJTË) ===================================
-
 // ✅ KODI EKZISTUES - RUAJ MESAZHIN NË HISTORI
 router.post('/save', (req, res) => {
     const { userId, content, sender, timestamp } = req.body;
@@ -636,8 +307,7 @@ router.post('/save', (req, res) => {
     );
 });
 
-// ========================================✅ KODI EKZISTUES - RUAJ NJOHURI TË REJA ====================================
-
+// ✅ KODI EKZISTUES - RUAJ NJOHURI TË REJA
 router.post('/knowledge', (req, res) => {
     const { userId, question, answer } = req.body;
 
@@ -679,8 +349,7 @@ router.get('/knowledge/:userId/:question', (req, res) => {
     );
 });
 
-// ============================================= ✅ KODI EKZISTUES - EKSPORTO NJOHURITË ============================
-
+// ✅ KODI EKZISTUES - EKSPORTO NJOHURITË
 router.get('/export/:userId', (req, res) => {
     const { userId } = req.params;
 
@@ -697,8 +366,7 @@ router.get('/export/:userId', (req, res) => {
     );
 });
 
-// ==========================================✅ KODI EKZISTUES - IMPORTO NJOHURITË ======================================
-
+// ✅ KODI EKZISTUES - IMPORTO NJOHURITË
 router.post('/import', (req, res) => {
     const { userId, knowledge } = req.body;
 
@@ -731,8 +399,7 @@ router.post('/import', (req, res) => {
     });
 });
 
-// ================================ ✅ KODI EKZISTUES - FSHI HISTORINË E PËRDORUESIT ==================================
-
+// ✅ KODI EKZISTUES - FSHI HISTORINË E PËRDORUESIT
 router.delete('/clear/:userId', (req, res) => {
     const { userId } = req.params;
 
@@ -748,8 +415,7 @@ router.delete('/clear/:userId', (req, res) => {
     );
 });
 
-// ===================================== ✅ KODI EKZISTUES - EKSPORTO HISTORINË ================================
-
+// ✅ KODI EKZISTUES - EKSPORTO HISTORINË
 router.get('/export-history/:userId', (req, res) => {
     const { userId } = req.params;
 
@@ -765,8 +431,7 @@ router.get('/export-history/:userId', (req, res) => {
     );
 });
 
-// ============================================== ✅ KODI EKZISTUES - RUAJ FEEDBACK ===================================
-
+// ✅ KODI EKZISTUES - RUAJ FEEDBACK
 router.post('/feedback', (req, res) => {
     const { userId, messageId, feedbackType } = req.body;
 
@@ -781,5 +446,97 @@ router.post('/feedback', (req, res) => {
         }
     );
 });
+
+// ============================================ Sistemi lokal i inteligjencës =======================================
+class LocalChatIntelligence {
+    constructor() {
+        this.knowledgeBase = {
+            greetings: {
+                patterns: ['pershendetje', 'hello', 'hi', 'tung', 'ciao', 'mirëmëngjes', 'mirëdita', 'mirëmbrëma'],
+                responses: [
+                    'Përshëndetje! 😊 Mirë se ju gjetëm!',
+                    "Hello! Si mund t'ju ndihmoj sot?",
+                    'Tungjatjeta! Gëzohem që ju shoh!',
+                    'Përshëndetje! Çfarë mund të bëj për ju?'
+                ]
+            },
+            farewells: {
+                patterns: ['mirupafshim', 'bye', 'lamtumirë', 'shëndet', 'flm', 'faleminderit'],
+                responses: [
+                    'Mirupafshim! 😊 Ishte kënaqësi të flisja me ju!',
+                    'Lamtumirë! Shpresoj të flasim sërish!',
+                    'Faleminderit! Ju uroj një ditë të mbarë!',
+                    'Shëndet! Mos u largoni shumë!'
+                ]
+            },
+            help: {
+                patterns: ['ndihmo', 'help', 'komanda', 'si punon', 'çfarë mund të bësh'],
+                responses: [
+                    'Unë jam RRUFE-TESLA! Mund të:\n• Të përgjigjem pyetjeve bazë\n• Të llogarit matematikë\n• Të kujtoj bisedat tona\n• Të ndihmoj me informacione\n\nShkruani pyetjen tuaj!'
+                ]
+            },
+            math: {
+                patterns: ['+', '-', '*', '/', '^', 'llogarit', 'sa është'],
+                responses: []
+            },
+            // ... më shumë kategori
+        };
+    }
+
+    processMessage(message) {
+        const lowerMessage = message.toLowerCase();
+        
+        // Kontrollo nëse është matematikë
+        if (this.isMathExpression(message)) {
+            return this.solveMath(message);
+        }
+        
+        // Kontrollo kategori të tjera
+        for (let category in this.knowledgeBase) {
+            for (let pattern of this.knowledgeBase[category].patterns) {
+                if (lowerMessage.includes(pattern)) {
+                    const responses = this.knowledgeBase[category].responses;
+                    return responses[Math.floor(Math.random() * responses.length)];
+                }
+            }
+        }
+        
+        // Përgjigje default
+        return this.getDefaultResponse();
+    }
+
+    isMathExpression(text) {
+        const mathRegex = /^[\d+\-*/().^ ]+$/;
+        return mathRegex.test(text.replace(/\s/g, ''));
+    }
+
+    solveMath(expression) {
+        try {
+            // Pastro dhe siguro shprehjen
+            let cleanExpr = expression.replace(/[^0-9+\-*/().^]/g, '');
+            
+            // Zëvendëso ^ me ** për fuqi
+            cleanExpr = cleanExpr.replace(/\^/g, '**');
+            
+            // Përdor Function constructor për llogaritje të sigurt
+            const result = Function(`"use strict"; return (${cleanExpr})`)();
+            
+            return `🧮 Rezultati: **${result}**`;
+        } catch (error) {
+            return '❌ Nuk mund ta llogaris shprehjen matematikore.';
+        }
+    }
+
+    getDefaultResponse() {
+        const defaultResponses = [
+            'Interesante! Çfarë mendoni ju për këtë?',
+            'E kuptoj! A keni ndonjë pyetje tjetër?',
+            'Faleminderit për këtë informacion!',
+            'Po dëgjoj... vazhdoni ju lutem!',
+            'Kjo është shumë interesante!'
+        ];
+        return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
+    }
+}
 
 module.exports = router;
