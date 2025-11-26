@@ -1,5 +1,5 @@
 // ========================================================
-// Openai RRUFE TESLA 10.5 - VERSION I PLOTË I KORRIGJUAR
+// Openai RRUFE TESLA 10.5
 // ========================================================
 const express = require('express');
 const db = require('../database');
@@ -11,35 +11,23 @@ const router = express.Router();
 // ✅ PËRDO TË NJËJTIN AUTH SI GEMINI
 const authenticateToken = (req, res, next) => {
     try {
-        console.log('🔐 OpenAI Auth - Duke kontrolluar session...');
-        
-        // PROVO MULTIPLE SOURCES PËR TOKEN
-        const token = req.cookies.auth_token || 
-                     req.headers.authorization?.replace('Bearer ', '') || 
-                     req.query.token;
-        
-        console.log('🔐 Burime të token:', {
-            cookies: !!req.cookies.auth_token,
-            headers: !!req.headers.authorization,
-            query: !!req.query.token
-        });
+        const token = req.cookies.auth_token;
         
         if (!token) {
-            console.log('⚠️  Duke përdorur user default për testim...');
-            // FALLBACK: Përdor user default për testim
-            req.user = { userId: 1, username: 'admin' };
-            return next();
+            return res.status(401).json({ 
+                success: false, 
+                error: '❌ Nuk jeni i loguar' 
+            });
         }
         
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_2024');
-        console.log('✅ Token u verifikua, user ID:', decoded.userId);
         req.user = decoded;
         next();
     } catch (error) {
-        console.log('⚠️  Auth failed, duke përdorur fallback user:', error.message);
-        // FALLBACK: Përdor user default
-        req.user = { userId: 1, username: 'admin' };
-        next();
+        return res.status(401).json({ 
+            success: false, 
+            error: '❌ Session i pavlefshëm' 
+        });
     }
 };
 
@@ -76,40 +64,7 @@ router.get('/status', authenticateToken, async (req, res) => {
     }
 });
 
-// ======================== ✅ ROUTE E RE TEST - PA AUTH, PA DATABASE, PA ENKRIPTIM ==============================
-router.post('/simple-chat', async (req, res) => {
-    try {
-        const { message } = req.body;
-        
-        console.log('🎯 OPENAI SIMPLE-CHAT - Message:', message);
-
-        if (!message) {
-            return res.json({ 
-                success: false, 
-                error: '❌ Mesazhi është i zbrazët' 
-            });
-        }
-
-        // ✅ PËRGJIGJE E THJESHTË - FUNKSIONON PA PROBLEME
-        const responseText = `🔮 **OpenAI RRUFE-TESLA**\n\n**Pyetja juaj:** "${message}"\n\n**Përgjigja ime:**\n\n🎉 **OPENAI PO FUNKSIONON!**\n\n⚡ Kjo është një përgjigje direkte nga backend pa asnjë barrierë!\n\n✅ Rruga: /api/openai-enhanced/simple-chat\n✅ Metoda: POST\n✅ Status: 200 OK\n\n💡 Tani backend-i po përgjigjet normalisht!`;
-
-        console.log('✅ Simple-chat response u dërgua!');
-
-        res.json({
-            success: true,
-            response: responseText
-        });
-
-    } catch (error) {
-        console.error('❌ Gabim në simple-chat:', error);
-        res.json({
-            success: false,
-            error: '❌ Gabim: ' + error.message
-        });
-    }
-});
-
-// ===================================== ✅ SAVE KEY - SI GEMINI ===============================
+// ✅ SAVE KEY - SI GEMINI
 router.post('/save-key', authenticateToken, async (req, res) => {
     try {
         const { apiKey } = req.body;
@@ -200,106 +155,109 @@ router.delete('/delete-key', authenticateToken, async (req, res) => {
     }
 });
 
-
-// ====================================== ✅ CHAT - VERSION ME DEBUGGING TË PLOTË ==================================
-
+// ✅ CHAT - SI GEMINI
 router.post('/chat', authenticateToken, async (req, res) => {
     const { message } = req.body;
     const userId = req.user.userId;
 
-    console.log('🔍 OPENAI CHAT DEBUG:');
-    console.log('- User ID:', userId);
-    console.log('- Message:', message);
-    console.log('- User object:', req.user);
+    console.log('💬 OpenAI Chat - User:', userId, 'Message:', message?.substring(0, 50));
 
     if (!message) {
-        return res.json({ 
+        return res.status(400).json({ 
             success: false, 
             error: '❌ Mesazhi është i zbrazët' 
         });
     }
 
     try {
-        // ✅ KONTROLLO DATABASE
+        // ✅ PËRDO TË NJËJTIN DATABASE PATTERN SI GEMINI
         db.get(
             'SELECT api_key FROM api_keys WHERE user_id = ? AND service_name = ?',
             [userId, 'openai'],
             async (err, row) => {
-                console.log('🔍 DATABASE DEBUG:');
-                console.log('- Database error:', err);
-                console.log('- Row found:', !!row);
-                console.log('- API Key exists:', !!row?.api_key);
-
                 if (err) {
-                    console.error('❌ Database error:', err);
-                    return res.json({ 
+                    console.error('❌ Gabim në database:', err);
+                    return res.status(500).json({ 
                         success: false, 
                         error: '❌ Gabim në server' 
                     });
                 }
 
                 if (!row || !row.api_key) {
-                    console.log('❌ No API key found for user:', userId);
-                    return res.json({ 
+                    return res.status(400).json({ 
                         success: false, 
                         error: '❌ Nuk është konfiguruar API Key për OpenAI' 
                     });
                 }
 
                 try {
-                    // ✅ PROVO DEKRIPTIMIN
-                    console.log('🔓 Duke dekriptuar API Key...');
+                    // ✅ DEKRIPTO SI GEMINI
+                    console.log('🔓 Duke dekriptuar OpenAI API Key...');
                     const apiKey = encryption.decrypt(row.api_key);
-                    console.log('✅ API Key u dekriptua. Format:', apiKey.substring(0, 10) + '...');
+                    console.log('✅ API Key u dekriptua');
 
-                    // ✅ PËRGJIGJE TEST - FUNKSIONON PA OPENAI API
-                    console.log('🎯 Duke kthyer përgjigje test...');
+                    // ✅ KRIJO OPENAI CLIENT
+                    const openai = new OpenAI({ 
+                        apiKey: apiKey 
+                    });
+
+                    console.log("🌐 Duke bërë thirrje në OpenAI API...");
+
+                    const completion = await openai.chat.completions.create({
+                        model: 'gpt-4',
+                        messages: [
+                            {
+                                role: "system", 
+                                content: "Ti je RRUFE-TESLA AI. Përgjigju në shqip dhe jep përgjigje të dobishme, kreative dhe intuitive."
+                            },
+                            {
+                                role: "user",
+                                content: message
+                            }
+                        ],
+                        max_tokens: 1000,
+                        temperature: 0.7
+                    });
+
+                    const response = completion.choices[0].message.content;
                     
-                    const responseText = `🔮 **OpenAI RRUFE-TESLA**\n\n**Pyetja juaj:** "${message}"\n\n**Përgjigja ime:**\n\n🤖 **Test i suksesshëm!** OpenAI integration po funksionon.\n\n⚡ **Statusi:**\n• ✅ API Key: U gjet dhe u dekriptua\n• ✅ Database: Lidhja funksionon\n• ✅ Server: Po përgjigjet\n• ✅ User: ${req.user.username}\n\n🎉 **OPENAI ËSHTË GATI!** Tani po komunikojmë me sukses!`;
+                    console.log('✅ OpenAI response received');
 
                     res.json({
                         success: true,
-                        response: responseText
+                        response: `🔮 **OpenAI**: ${response}`
                     });
 
-                } catch (decryptError) {
-                    console.error('❌ Gabim në dekriptim:', decryptError);
-                    res.json({ 
+                } catch (openaiError) {
+                    console.error('❌ Gabim gjatë thirrjes së OpenAI API:', openaiError);
+                    
+                    let errorMessage = openaiError.message;
+                    if (openaiError.message.includes('Incorrect API key')) {
+                        errorMessage = '❌ API Key i pavlefshëm për OpenAI';
+                    }
+                    
+                    res.status(500).json({ 
                         success: false, 
-                        error: '❌ Gabim në dekriptimin e API Key' 
+                        error: errorMessage 
                     });
                 }
             }
         );
     } catch (error) {
         console.error('❌ Gabim i përgjithshëm:', error);
-        res.json({ 
+        res.status(500).json({ 
             success: false, 
             error: '❌ Gabim në server: ' + error.message 
         });
     }
 });
 
-// ================================= ✅ TEST ROUTE - SI GEMINI ==========================================
-
+// ✅ TEST ROUTE - SI GEMINI
 router.get('/test', (req, res) => {
     res.json({ 
         success: true, 
         message: '✅ Ruta e OpenAI është punuese!',
-        timestamp: new Date().toISOString(),
-        version: 'RRUFE-TESLA 10.5 - OpenAI Enhanced'
-    });
-});
-
-// ✅ HEALTH CHECK - RUTË E RE
-router.get('/health', authenticateToken, (req, res) => {
-    res.json({
-        success: true,
-        service: 'OpenAI Enhanced',
-        status: 'Operative',
-        version: '10.5',
-        timestamp: new Date().toISOString(),
-        user: req.user.userId
+        timestamp: new Date().toISOString()
     });
 });
 
