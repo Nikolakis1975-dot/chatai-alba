@@ -794,3 +794,74 @@ if (originalLogin) {
         return result;
     };
 }
+
+// ======================================= HANDLE SEND MESAGE ==================================
+
+async function handleSendMessage() {
+    console.log('🎯 🎯 🎯 handleSendMessage PO EKZEKUTOHET!');
+    
+    const userInput = document.getElementById('user-input');
+    const message = userInput.value.trim();
+    
+    console.log('📝 Mesazhi:', message);
+    console.log('🔍 Statusi i motorëve NË handleSendMessage:', window.aiEngineStatus);
+    
+    if (!message) return;
+    
+    // Kontrollo komandë speciale
+    if (processSpecialCommands(message)) {
+        userInput.value = '';
+        return;
+    }
+    
+    // Shto mesazhin e user-it
+    addMessageToChat(message, 'user');
+    userInput.value = '';
+    
+    try {
+        // Loading indicator
+        const chat = document.getElementById('chat');
+        const loadingDiv = document.createElement('div');
+        loadingDiv.id = 'loading-indicator';
+        loadingDiv.className = 'message bot';
+        loadingDiv.innerHTML = '<div class="message-text">🔄 Po procesoj...</div>';
+        chat.appendChild(loadingDiv);
+        chat.scrollTop = chat.scrollHeight;
+        
+        // ✅ DEBUG I DETAJUAR
+        console.log('🔍 🔍 🔍 DEBUG I PLOTË:');
+        console.log('- aiEngineStatus.openai:', window.aiEngineStatus?.openai);
+        console.log('- aiEngineStatus.gemini:', window.aiEngineStatus?.gemini);
+        console.log('- sendToOpenAI ekziston:', typeof window.sendToOpenAI);
+        console.log('- sendToGemini ekziston:', typeof sendToGemini);
+        
+        // ✅ ZGJIDH MOTORIN ME DEBUG
+        let result;
+        
+        if (window.aiEngineStatus?.openai === true) {
+            console.log('🔮 🔮 🔮 DUKE PËRDORUR OPENAI!');
+            result = await window.sendToOpenAI(message);
+            console.log('📥 Përgjigje nga OpenAI:', result);
+        } 
+        else {
+            console.log('🤖 DUKE PËRDORUR GEMINI!');
+            result = await sendToGemini(message);
+            console.log('📥 Përgjigje nga Gemini:', result);
+        }
+        
+        // Hiq loading
+        document.getElementById('loading-indicator')?.remove();
+        
+        // Shfaq rezultatin
+        if (result.success) {
+            addMessageToChat(result.response, 'bot');
+        } else {
+            addMessageToChat('❌ ' + result.error, 'bot');
+        }
+        
+    } catch (error) {
+        console.error('❌ Gabim:', error);
+        document.getElementById('loading-indicator')?.remove();
+        addMessageToChat('❌ Gabim në server.', 'bot');
+    }
+}
