@@ -409,14 +409,12 @@ getBasicNaturalResponse(message) {
         };
     }
 
-    // ✅ PËRGJIGJE DEFAULT
- //   return {
-//        success: true,
-//        response: "jo nuk E kuptoj! 😊 Përdorni /ndihmo për të parë të gjitha komandat e mia."
-//    };
-// }
- //   
-    // ============================ ✅ KONTROLLIMI I KNOWLEDGE BASE =============================
+// ======================✅ PJESA DEFAULT AUTOMATIK PERGJIGJE ====================================
+    
+console.log('🔮 CommandService: Duke e dërguar mesazhin te OpenAI...');
+return await this.sendToAI(message, user); 
+    
+ // ============================ ✅ KONTROLLIMI I KNOWLEDGE BASE =============================
     async checkKnowledgeBase(message, userId) {
         try {
             console.log('🔍 Duke kontrolluar Knowledge Base per:', message.substring(0, 50));
