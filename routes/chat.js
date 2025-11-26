@@ -48,42 +48,42 @@ async function getUserById(userId) {
     });
 }
 
-function getSimpleNaturalResponse(message) {
-    const lowerMessage = message.toLowerCase();
-    
-    if (lowerMessage.includes('përshëndetje') || lowerMessage.includes('tungjatjeta') || lowerMessage.includes('hello')) {
-        return "Përshëndetje! 😊 Mirë se ju gjetëm! Si mund t'ju ndihmoj sot?";
-    }
-    
-    if (lowerMessage.includes('si je') || lowerMessage.includes('si jeni')) {
-        return "Jam shumë mirë, faleminderit që pyetët! 😊 Çfarë mund të bëj për ju?";
-    }
-    
-    if (lowerMessage.includes('faleminderit') || lowerMessage.includes('rrofsh') || lowerMessage.includes('thanks')) {
-        return "S'ka përse! 😊 Gjithmonë i lumtur të ndihmoj!";
-    }
-    
-    if (lowerMessage.includes('ndihmë') || lowerMessage.includes('help')) {
-        return "Sigurisht! 😊 Çfarë lloj ndihme keni nevojë? Mund të përdorni /ndihmo për të parë të gjitha mundësitë.";
-    }
-    
-    if (lowerMessage.includes('mirëmëngjes')) {
-        return "Mirëmëngjes! ☀️ Fillim të mbarë të ditës! Si mund t'ju ndihmoj sot?";
-    }
-    
-    if (lowerMessage.includes('mirëmbrëma')) {
-        return "Mirëmbrëma! 🌙 Mbrëmje e mbarë! Si mund t'ju shërbej?";
-    }
-    
-    return "E kuptoj! 😊 Përdorni /ndihmo për të parë të gjitha komandat e mia, ose më tregoni më shumë se çfarë keni nevojë.";
-}
-
+//function getSimpleNaturalResponse(message) {
+ //   const lowerMessage = message.toLowerCase();
+//    
+//    if (lowerMessage.includes('përshëndetje') || lowerMessage.includes('tungjatjeta') || lowerMessage.includes('hello')) {
+ //       return "Përshëndetje! 😊 Mirë se ju gjetëm! Si mund t'ju ndihmoj sot?";
+//    }
+//    
+//    if (lowerMessage.includes('si je') || lowerMessage.includes('si jeni')) {
+//        return "Jam shumë mirë, faleminderit që pyetët! 😊 Çfarë mund të bëj për ju?";
+//    }
+//    
+ //   if (lowerMessage.includes('faleminderit') || lowerMessage.includes('rrofsh') || lowerMessage.includes('thanks')) {
+ //       return "S'ka përse! 😊 Gjithmonë i lumtur të ndihmoj!";
+//    }
+//    
+//    if (lowerMessage.includes('ndihmë') || lowerMessage.includes('help')) {
+//        return "Sigurisht! 😊 Çfarë lloj ndihme keni nevojë? Mund të përdorni /ndihmo për të parë të gjitha mundësitë.";
+//    }
+//    
+//    if (lowerMessage.includes('mirëmëngjes')) {
+//        return "Mirëmëngjes! ☀️ Fillim të mbarë të ditës! Si mund t'ju ndihmoj sot?";
+//    }
+//    
+//    if (lowerMessage.includes('mirëmbrëma')) {
+//        return "Mirëmbrëma! 🌙 Mbrëmje e mbarë! Si mund t'ju shërbej?";
+//    }
+//    
+//    return "E kuptoj! 😊 Përdorni /ndihmo për të parë të gjitha komandat e mia, ose më tregoni më shumë se çfarë keni nevojë.";
+// }
+//
 // ✅ RUTA E THJESHTUAR PËR MESAZHE - PUNON ME URËN
 router.post('/message', async (req, res) => {
     try {
         const { message, userId = 1 } = req.body;
         
-        console.log('🔍 routes/chat/message: Marrë mesazh për urë:', message?.substring(0, 50));
+        console.log('🔍 routes/chat/message: Marrë mesazh:', message?.substring(0, 50));
 
         if (!message || message.trim() === '') {
             return res.json({
@@ -92,12 +92,12 @@ router.post('/message', async (req, res) => {
             });
         }
 
-        // ✅ PERDOR DIRECT COMMAND SERVICE (JO URËN, SE URËRA ËSHTË NË APP.JS)
-        console.log('🎯 routes/chat/message: Duke thirrur CommandService direkt...');
+        // =============================== ✅ MOS E PËRDOR getSimpleNaturalResponse KËTU ==================================
+        // 🚨 NUK DUHET: const autoResponse
+        
+        // ✅ THJESHT KALO MESAZHIN TE COMMAND SERVICE
         const CommandService = require('../services/commandService');
         
-        // Merr përdoruesin
-        const db = require('../database');
         const user = await new Promise((resolve) => {
             db.get('SELECT * FROM users WHERE id = ?', [userId], (err, user) => {
                 resolve(user || { id: userId, username: 'user' + userId });
@@ -106,15 +106,15 @@ router.post('/message', async (req, res) => {
 
         const result = await CommandService.processCommand('', user, message);
         
-        console.log('📊 routes/chat/message: Rezultati:', {
+        console.log('📊 routes/chat/message: Rezultati nga CommandService:', {
             success: result.success,
-            messageLength: result.response?.length || 0
+            usedOpenAI: result.response?.includes('OpenAI') || false
         });
         
         return res.json(result);
 
     } catch (error) {
-        console.error('❌ routes/chat/message: Gabim i përgjithshëm:', error);
+        console.error('❌ routes/chat/message: Gabim:', error);
         return res.json({
             success: false,
             response: '❌ Gabim në server. Provo përsëri.'
