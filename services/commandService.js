@@ -410,12 +410,12 @@ getBasicNaturalResponse(message) {
     }
 
     // ✅ PËRGJIGJE DEFAULT
-    return {
-        success: true,
-        response: "jo nuk E kuptoj! 😊 Përdorni /ndihmo për të parë të gjitha komandat e mia."
-    };
-}
-    
+ //   return {
+//        success: true,
+//        response: "jo nuk E kuptoj! 😊 Përdorni /ndihmo për të parë të gjitha komandat e mia."
+//    };
+// }
+ //   
     // ============================ ✅ KONTROLLIMI I KNOWLEDGE BASE =============================
     async checkKnowledgeBase(message, userId) {
         try {
