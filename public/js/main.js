@@ -1,3 +1,20 @@
+/ ✅ KONTROLLO NËSE currentUser EKZISTON NJË HERË
+if (typeof window.currentUser === 'undefined') {
+    window.currentUser = null;
+    console.log('✅ currentUser u inicializua për herë të parë');
+}
+
+// ✅ FUNKSION PËR TË VENDOSUR CURRENT USER
+function setCurrentUser(user) {
+    window.currentUser = user;
+    console.log('👤 Current user set:', user);
+}
+
+// ✅ BËJE FUNKSIONIN GLOBAL
+if (typeof window.setCurrentUser === 'undefined') {
+    window.setCurrentUser = setCurrentUser;
+}
+
 // ======================================================
 // 🚀 RRUFE-TESLA 8.0 - MAIN PLATFORM LOADER
 // ======================================================
