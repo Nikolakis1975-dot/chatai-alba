@@ -384,11 +384,10 @@ async handleNaturalLanguage(message, user) {
     }
 }
 
-// =============================== ✅ FUNKSION I RI - NUK KTHET PËRGJIGJE AUTOMATIKE ===================================
+// ✅ FUNKSION I RI PËR PËRGJIGJE BAZË
 getBasicNaturalResponse(message) {
     const lowerMessage = message.toLowerCase();
     
-    // ✅ VETËM PËR PËRSHËNDETJE - për përvojë më të mirë përdoruesi
     if (lowerMessage.includes('përshëndetje') || lowerMessage.includes('pershendetje') || lowerMessage.includes('hello') || lowerMessage.includes('tung')) {
         return {
             success: true,
@@ -396,7 +395,13 @@ getBasicNaturalResponse(message) {
         };
     }
     
-    // ✅ VETËM PËR FALEMINDERIT - për sjellje të mirë
+    if (lowerMessage.includes('si je') || lowerMessage.includes('si jeni') || lowerMessage.includes('si kaloni')) {
+        return {
+            success: true, 
+            response: "Jam shumë mirë, faleminderit që pyetët! 😊 Çfarë mund të bëj për ju?"
+        };
+    }
+    
     if (lowerMessage.includes('faleminderit') || lowerMessage.includes('rrofsh') || lowerMessage.includes('thanks')) {
         return {
             success: true,
@@ -404,9 +409,11 @@ getBasicNaturalResponse(message) {
         };
     }
 
-    // ✅ PËR TË GJITHA MESAZHET E TJERA - NUK KTHEJ ASGJË, DËRGO TE OPENAI
-    console.log('🔮 getBasicNaturalResponse: Mesazh i rregullt - duke e dërguar te OpenAI');
-    return null;
+    // ✅ PËRGJIGJE DEFAULT
+    return {
+        success: true,
+        response: "E kuptoj! 😊 Përdorni /ndihmo për të parë të gjitha komandat e mia."
+    };
 }
     
     // ============================ ✅ KONTROLLIMI I KNOWLEDGE BASE =============================
