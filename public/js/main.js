@@ -865,3 +865,91 @@ async function handleSendMessage() {
         addMessageToChat('❌ Gabim në server.', 'bot');
     }
 }
+
+// ==================== 🔧 SISTEMI I BUTONAVE - FIX PERMANENT ====================
+
+// ✅ INICIALIZO SISTEMIN E BUTONAVE
+function initializeAIEngineSystem() {
+    console.log('🚀 Duke inicializuar sistemin e motorëve...');
+    
+    // ✅ VARIABLA GLOBALE
+    window.aiEngineStatus = {
+        gemini: true,
+        openai: false
+    };
+    
+    // ✅ FUNKSIONI PËR NDRYSHIM
+    window.switchAIEngine = function(engine) {
+        console.log('🔄 Duke ndryshuar motorin në:', engine);
+        
+        // Çaktivizo të gjithë motorët
+        window.aiEngineStatus.gemini = false;
+        window.aiEngineStatus.openai = false;
+        
+        // Aktivizo motorin e zgjedhur
+        window.aiEngineStatus[engine] = true;
+        
+        console.log('✅ Statusi i ri:', window.aiEngineStatus);
+        
+        // Përditëso butonat
+        updateAIButtons();
+        
+        // Shfaq mesazh në chat
+        const engineName = engine === 'gemini' ? '🤖 Gemini' : '🔮 OpenAI';
+        if (typeof addMessageToChat !== 'undefined') {
+            addMessageToChat(`🔧 Motor i aktivizuar: ${engineName}`, 'system');
+        }
+    };
+    
+    // ✅ FUNKSIONI PËR PËRDDITËSIMIN E BUTONAVE
+    function updateAIButtons() {
+        const geminiBtn = document.getElementById('gemini-engine-btn');
+        const openaiBtn = document.getElementById('openai-engine-btn');
+        
+        if (geminiBtn) {
+            geminiBtn.style.background = window.aiEngineStatus.gemini ? '#4CAF50' : '#666';
+            geminiBtn.textContent = window.aiEngineStatus.gemini ? '🤖 Gemini ✅' : '🤖 Gemini';
+        }
+        
+        if (openaiBtn) {
+            openaiBtn.style.background = window.aiEngineStatus.openai ? '#2196F3' : '#666';
+            openaiBtn.textContent = window.aiEngineStatus.openai ? '🔮 OpenAI ✅' : '🔮 OpenAI';
+        }
+        
+        console.log('🎨 Butonat u përditësuan');
+    }
+    
+    // ✅ SHTO EVENT LISTENERS
+    function attachButtonListeners() {
+        const geminiBtn = document.getElementById('gemini-engine-btn');
+        const openaiBtn = document.getElementById('openai-engine-btn');
+        
+        if (geminiBtn) {
+            geminiBtn.addEventListener('click', function() {
+                window.switchAIEngine('gemini');
+            });
+        }
+        
+        if (openaiBtn) {
+            openaiBtn.addEventListener('click', function() {
+                window.switchAIEngine('openai');
+            });
+        }
+        
+        console.log('✅ Event listeners u shtuan');
+    }
+    
+    // ✅ EKZEKUTO INICIALIZIMIN
+    setTimeout(() => {
+        attachButtonListeners();
+        updateAIButtons();
+        console.log('✅ Sistemi i motorëve u inicializua!');
+    }, 1000);
+}
+
+// ✅ INICIALIZO KUR FAQJA NGARKOHET
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeAIEngineSystem);
+} else {
+    initializeAIEngineSystem();
+}
