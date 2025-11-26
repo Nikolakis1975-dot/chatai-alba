@@ -1561,7 +1561,7 @@ async function handleSendMessage() {
         return;
     }
     
-    // ✅ Shto mesazhin e user-it në chat
+// =================================== ✅ Shto mesazhin e user-it në chat ================================
     addMessageToChat(message, 'user');
     userInput.value = '';
     
@@ -1575,16 +1575,17 @@ async function handleSendMessage() {
         chat.appendChild(loadingDiv);
         chat.scrollTop = chat.scrollHeight;
         
-        // ✅ ZGJIDH MOTORIN E DUHUR BAZË NË STATUSIN GLOBAL 🚨 KORRIGJUAR KËTU
+// ======================✅ ZGJIDH MOTORIN E DUHUR BAZË NË STATUSIN GLOBAL 🚨 KORRIGJUAR KËTU =====================
         let result;
         
-        if (window.aiEngineStatus.gemini) {  // ✅ NDRYSHIMI: window.aiEngineStatus
-            console.log('🤖 Duke përdorur Gemini...');
-            result = await sendToGemini(message);
-        } else if (window.aiEngineStatus.openai) {  // ✅ NDRYSHIMI: window.aiEngineStatus
-            console.log('🔮 Duke përdorur OpenAI...');
-            result = await sendChatMessage(message);
-        } else {
+       if (window.aiEngineStatus?.openai) {
+         console.log('🔮 Duke përdorur OpenAI...');
+          result = await window.sendToOpenAI(message);
+    }     else if (window.aiEngineStatus?.gemini) {
+          console.log('🤖 Duke përdorur Gemini...');
+         result = await sendToGemini(message);
+     } 
+          else {
             // Fallback nëse asnjë motor nuk është aktiv
             result = {
                 success: false,
@@ -1607,7 +1608,8 @@ async function handleSendMessage() {
     }
 }
 
-// ✅ FUNKSION PËR DËRGIM NË GEMINI - Shto pas handleSendMessage
+// ====================================✅ FUNKSION PËR DËRGIM NË GEMINI ====================================
+
 async function sendToGemini(message) {
     try {
         console.log('🤖 Duke dërguar në Gemini:', message);
