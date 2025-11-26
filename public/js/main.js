@@ -1,27 +1,3 @@
-console.log('🔧 MAIN.JS PO NGARKOHET...');
-
-// =====================================================================
-// ✅ VARIABLA GLOBALE ME MBROJTJE
-// =====================================================================
-
-// ✅ KONTROLLO NËSE currentUser EKZISTON NJË HERË
-if (typeof window.currentUser === 'undefined') {
-    window.currentUser = null;
-    console.log('✅ currentUser u inicializua për herë të parë');
-}
-
-// ✅ FUNKSION PËR TË VENDOSUR CURRENT USER
-function setCurrentUser(user) {
-    window.currentUser = user;
-    console.log('👤 Current user set:', user);
-}
-
-// ✅ BËJE FUNKSIONIN GLOBAL
-if (typeof window.setCurrentUser === 'undefined') {
-    window.setCurrentUser = setCurrentUser;
-}
-
-
 // ==================== ⚙️ SISTEMI I MENAXHIMIT TË MOTORËVE AI ====================
 //         = =                 MANAXHIMI ON - OFF                     = =
 //         = =             SISTEMI RRUFE TESLA 10.5                   = =
