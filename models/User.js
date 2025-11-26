@@ -1,9 +1,20 @@
-// ==================== ✅ USER MODEL - VERSION I KORRIGJUAR ====================
+// ==================== ✅ USER MODEL - 07.10.2024 ====================
 // 📝 DESKRIMI: Modeli i përdoruesit për databazën
-// 🎯 QËLLIMI: Menaxhim i të dhënave të përdoruesve  
+// 🎯 QËLLIMI: Menaxhim i të dhënave të përdoruesve
 // 🔧 AUTORI: ChatAI ALBA Team
 // ====================================================================
 
+class User {
+    constructor(userData) {
+        this.id = userData.id;
+        this.username = userData.username;
+        this.email = userData.email;
+        // ... të tjera
+    }
+}
+
+// =================================== OPENAI ===============================================
+// ✅ VERSIONI I PLOTË I KORRIGJUAR
 module.exports = (sequelize, DataTypes) => {
     const User = sequelize.define('User', {
         username: {
@@ -13,10 +24,7 @@ module.exports = (sequelize, DataTypes) => {
         },
         email: {
             type: DataTypes.STRING,
-            allowNull: true,
-            validate: {
-                isEmail: true
-            }
+            allowNull: true
         },
         password: {
             type: DataTypes.STRING,
@@ -25,7 +33,8 @@ module.exports = (sequelize, DataTypes) => {
         geminiApiKey: {
             type: DataTypes.TEXT,
             allowNull: true
-        },
+        }, // ✅ PRESJA KËTU!
+        
         openaiApiKey: {
             type: DataTypes.TEXT,
             allowNull: true
@@ -33,50 +42,14 @@ module.exports = (sequelize, DataTypes) => {
         isOpenaiActive: {
             type: DataTypes.BOOLEAN,
             defaultValue: false
-        },
-        isVerified: {
-            type: DataTypes.BOOLEAN,
-            defaultValue: false
-        },
-        profilePicture: {
-            type: DataTypes.TEXT,
-            allowNull: true
-        },
-        lastLogin: {
-            type: DataTypes.DATE,
-            allowNull: true
         }
+        // ✅ NUK KA PRESJE KËTU NË FUND
     }, {
         tableName: 'users',
-        timestamps: true,
-        indexes: [
-            {
-                unique: true,
-                fields: ['username']
-            },
-            {
-                fields: ['email']
-            }
-        ]
+        timestamps: true
     });
-
-    // ✅ METODA INSTANCE
-    User.prototype.toJSON = function() {
-        const values = Object.assign({}, this.get());
-        delete values.password;  // Mos e kthe password në response
-        delete values.geminiApiKey;  // Mos e kthe API Key
-        delete values.openaiApiKey;  // Mos e kthe API Key
-        return values;
-    };
-
-    // ✅ METODA STATIKE
-    User.findByUsername = function(username) {
-        return this.findOne({ where: { username } });
-    };
-
-    User.findByEmail = function(email) {
-        return this.findOne({ where: { email } });
-    };
 
     return User;
 };
+
+module.exports = User;
