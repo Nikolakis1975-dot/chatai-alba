@@ -1561,7 +1561,7 @@ async function handleSendMessage() {
         return;
     }
     
-// =================================== ✅ Shto mesazhin e user-it në chat ================================
+    // ✅ Shto mesazhin e user-it në chat
     addMessageToChat(message, 'user');
     userInput.value = '';
     
@@ -1575,22 +1575,21 @@ async function handleSendMessage() {
         chat.appendChild(loadingDiv);
         chat.scrollTop = chat.scrollHeight;
         
-// ======================✅ ZGJIDH MOTORIN E DUHUR BAZË NË STATUSIN GLOBAL 🚨 KORRIGJUAR KËTU =====================
-        let result;
+        // ✅ ZGJIDH MOTORIN E DUHUR BAZË NË STATUSIN GLOBAL - VERSION I KORRIGJUAR
+        console.log('🔍 Statusi i motorëve:', window.aiEngineStatus);
         
-       if (window.aiEngineStatus?.openai) {
-         console.log('🔮 Duke përdorur OpenAI...');
-          result = await window.sendToOpenAI(message);
-    }     else if (window.aiEngineStatus?.gemini) {
-          console.log('🤖 Duke përdorur Gemini...');
-         result = await sendToGemini(message);
-     } 
-          else {
+                let result;
+        
+        if (window.aiEngineStatus?.openai) {
+            console.log('🔮 Duke përdorur OpenAI...');
+            result = await window.sendToOpenAI(message);
+        } else if (window.aiEngineStatus?.gemini) {
+            console.log('🤖 Duke përdorur Gemini...');
+            result = await sendToGemini(message);
+        } else {
             // Fallback nëse asnjë motor nuk është aktiv
-            result = {
-                success: false,
-                error: '❌ Asnjë motor AI nuk është aktiv. Aktivizoni Gemini ose OpenAI.'
-            };
+            console.log('⚠️ Duke përdorur Gemini si fallback...');
+            result = await sendToGemini(message);
         }
         
         // Hiq loading indicator
