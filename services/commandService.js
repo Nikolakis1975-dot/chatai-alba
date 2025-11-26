@@ -384,10 +384,11 @@ async handleNaturalLanguage(message, user) {
     }
 }
 
-// ✅ FUNKSION I RI PËR PËRGJIGJE BAZË
+// =============================== ✅ FUNKSION I RI - NUK KTHET PËRGJIGJE AUTOMATIKE ===================================
 getBasicNaturalResponse(message) {
     const lowerMessage = message.toLowerCase();
     
+    // ✅ VETËM PËR PËRSHËNDETJE - për përvojë më të mirë përdoruesi
     if (lowerMessage.includes('përshëndetje') || lowerMessage.includes('pershendetje') || lowerMessage.includes('hello') || lowerMessage.includes('tung')) {
         return {
             success: true,
@@ -395,13 +396,7 @@ getBasicNaturalResponse(message) {
         };
     }
     
-    if (lowerMessage.includes('si je') || lowerMessage.includes('si jeni') || lowerMessage.includes('si kaloni')) {
-        return {
-            success: true, 
-            response: "Jam shumë mirë, faleminderit që pyetët! 😊 Çfarë mund të bëj për ju?"
-        };
-    }
-    
+    // ✅ VETËM PËR FALEMINDERIT - për sjellje të mirë
     if (lowerMessage.includes('faleminderit') || lowerMessage.includes('rrofsh') || lowerMessage.includes('thanks')) {
         return {
             success: true,
@@ -409,12 +404,12 @@ getBasicNaturalResponse(message) {
         };
     }
 
-// ======================✅ PJESA DEFAULT AUTOMATIK PERGJIGJE ====================================
+    // ✅ PËR TË GJITHA MESAZHET E TJERA - NUK KTHEJ ASGJË, DËRGO TE OPENAI
+    console.log('🔮 getBasicNaturalResponse: Mesazh i rregullt - duke e dërguar te OpenAI');
+    return null;
+}
     
-console.log('🔮 CommandService: Duke e dërguar mesazhin te OpenAI...');
-return await this.sendToAI(message, user); 
-    
- // ============================ ✅ KONTROLLIMI I KNOWLEDGE BASE =============================
+    // ============================ ✅ KONTROLLIMI I KNOWLEDGE BASE =============================
     async checkKnowledgeBase(message, userId) {
         try {
             console.log('🔍 Duke kontrolluar Knowledge Base per:', message.substring(0, 50));
