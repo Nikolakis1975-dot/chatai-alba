@@ -76,7 +76,40 @@ router.get('/status', authenticateToken, async (req, res) => {
     }
 });
 
-// ✅ SAVE KEY - SI GEMINI
+// ======================== ✅ ROUTE E RE TEST - PA AUTH, PA DATABASE, PA ENKRIPTIM ==============================
+router.post('/simple-chat', async (req, res) => {
+    try {
+        const { message } = req.body;
+        
+        console.log('🎯 OPENAI SIMPLE-CHAT - Message:', message);
+
+        if (!message) {
+            return res.json({ 
+                success: false, 
+                error: '❌ Mesazhi është i zbrazët' 
+            });
+        }
+
+        // ✅ PËRGJIGJE E THJESHTË - FUNKSIONON PA PROBLEME
+        const responseText = `🔮 **OpenAI RRUFE-TESLA**\n\n**Pyetja juaj:** "${message}"\n\n**Përgjigja ime:**\n\n🎉 **OPENAI PO FUNKSIONON!**\n\n⚡ Kjo është një përgjigje direkte nga backend pa asnjë barrierë!\n\n✅ Rruga: /api/openai-enhanced/simple-chat\n✅ Metoda: POST\n✅ Status: 200 OK\n\n💡 Tani backend-i po përgjigjet normalisht!`;
+
+        console.log('✅ Simple-chat response u dërgua!');
+
+        res.json({
+            success: true,
+            response: responseText
+        });
+
+    } catch (error) {
+        console.error('❌ Gabim në simple-chat:', error);
+        res.json({
+            success: false,
+            error: '❌ Gabim: ' + error.message
+        });
+    }
+});
+
+// ===================================== ✅ SAVE KEY - SI GEMINI ===============================
 router.post('/save-key', authenticateToken, async (req, res) => {
     try {
         const { apiKey } = req.body;
