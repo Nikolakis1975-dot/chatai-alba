@@ -1553,20 +1553,19 @@ async function handleSendMessage() {
     
     if (!message) return;
     
-    // ✅ KONTROLLO NËSE ËSHTË KOMANDË SPECIALE
+    // ✅ KONTROLLO KOMANDA SPECIALE
     const isSpecialCommand = processSpecialCommands(message);
     if (isSpecialCommand) {
-        console.log('🎯 Komanda speciale u procesua');
         userInput.value = '';
         return;
     }
     
-    // ✅ Shto mesazhin e user-it në chat
+    // ✅ SHTO MESAZHIN E USERIT
     addMessageToChat(message, 'user');
     userInput.value = '';
     
     try {
-        // Shfaq loading indicator
+        // LOADING INDICATOR
         const chat = document.getElementById('chat');
         const loadingDiv = document.createElement('div');
         loadingDiv.id = 'loading-indicator';
@@ -1575,35 +1574,45 @@ async function handleSendMessage() {
         chat.appendChild(loadingDiv);
         chat.scrollTop = chat.scrollHeight;
         
-        // ✅ ZGJIDH MOTORIN E DUHUR BAZË NË STATUSIN GLOBAL - VERSION I KORRIGJUAR
-        console.log('🔍 Statusi i motorëve:', window.aiEngineStatus);
+        // ✅ DEBUG: TREGO MOTORIN AKTUAL
+        console.log('🎯 MOTORI AKTUAL:', window.aiEngineStatus);
+        console.log('🔧 Duke përdorur OpenAI?', window.aiEngineStatus?.openai);
+        console.log('🔧 Duke përdorur Gemini?', window.aiEngineStatus?.gemini);
         
-                let result;
+        // ✅ ZGJIDH MOTORIN - KONTROLLO ME KUSHTE TË SHTRENJTA
+        let result;
         
-        if (window.aiEngineStatus?.openai) {
-            console.log('🔮 Duke përdorur OpenAI...');
+        if (window.aiEngineStatus?.openai === true) {
+            console.log('🔮 🔮 🔮 DUKE PËRDORUR OPENAI!');
             result = await window.sendToOpenAI(message);
-        } else if (window.aiEngineStatus?.gemini) {
-            console.log('🤖 Duke përdorur Gemini...');
-            result = await sendToGemini(message);
-        } else {
-            // Fallback nëse asnjë motor nuk është aktiv
-            console.log('⚠️ Duke përdorur Gemini si fallback...');
+        } 
+        else if (window.aiEngineStatus?.gemini === true) {
+            console.log('🤖 🤖 🤖 DUKE PËRDORUR GEMINI!');
             result = await sendToGemini(message);
         }
+        else {
+            // FALLBACK - TREGO GABIM
+            console.log('❌ ❌ ❌ ASNJË MOTOR I AKTIVIZUAR!');
+            result = {
+                success: false,
+                error: '❌ Asnjë motor AI nuk është aktiv. Kontrolloni butonat.'
+            };
+        }
         
-        // Hiq loading indicator
+        // HIQ LOADING
         document.getElementById('loading-indicator')?.remove();
         
+        // SHFAQ REZULTATIN
         if (result.success) {
             addMessageToChat(result.response, 'bot');
         } else {
             addMessageToChat('❌ ' + result.error, 'bot');
         }
+        
     } catch (error) {
-        console.error('❌ Gabim në handleSendMessage:', error);
+        console.error('❌ Gabim:', error);
         document.getElementById('loading-indicator')?.remove();
-        addMessageToChat('❌ Gabim në server. Provoni përsëri.', 'bot');
+        addMessageToChat('❌ Gabim në server.', 'bot');
     }
 }
 
