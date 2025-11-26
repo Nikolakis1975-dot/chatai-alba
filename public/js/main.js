@@ -1738,7 +1738,6 @@ if (document.readyState === 'loading') {
 
 // ==================== 🔮 OPENAI CHAT FUNCTION ====================
 
-// ✅ FUNKSION PËR DËRGIM MESAZHESH NË OPENAI
 async function sendToOpenAI(message) {
     try {
         console.log('🔮 Duke dërguar në OpenAI:', message.substring(0, 50));
@@ -1761,7 +1760,7 @@ async function sendToOpenAI(message) {
         const data = await response.json();
         console.log('📥 Përgjigje nga OpenAI:', data);
         
-        return data; // Kthe direkt response nga serveri
+        return data;
         
     } catch (error) {
         console.error('❌ Gabim në OpenAI:', error);
@@ -1772,9 +1771,7 @@ async function sendToOpenAI(message) {
     }
 }
 
-// ✅ BËJE FUNKSIONIN GLOBAL
+// ✅ BËJE GLOBAL
 window.sendToOpenAI = sendToOpenAI;
 
 console.log('🔮 OpenAI chat function u shtua në main.js');
-
-console.log('🔧 FIX EMERGJENCE: Sistemi i motorëve u shtua në main.js');
