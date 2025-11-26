@@ -4,24 +4,22 @@ console.log('🔧 MAIN.JS PO NGARKOHET...');
 // ✅ VARIABLA GLOBALE ME MBROJTJE
 // =====================================================================
 
-// ✅ DEKLARO PA 'let' PËR TË SHMANGUR KONFLIKTET
-if (typeof currentUser === 'undefined') {
-    var currentUser = null;
+// ✅ KONTROLLO NËSE currentUser EKZISTON NJË HERË
+if (typeof window.currentUser === 'undefined') {
+    window.currentUser = null;
+    console.log('✅ currentUser u inicializua për herë të parë');
 }
 
-// ✅ FUNKSION ME TRY-CATCH
+// ✅ FUNKSION PËR TË VENDOSUR CURRENT USER
 function setCurrentUser(user) {
-    try {
-        currentUser = user;
-        console.log('👤 Current user set:', user);
-    } catch (error) {
-        console.log('⚠️ Gabim në setCurrentUser, duke përdorur window object:', error);
-        window.currentUser = user;
-    }
+    window.currentUser = user;
+    console.log('👤 Current user set:', user);
 }
 
-// ✅ EKSPORTO SI GLOBAL
-window.setCurrentUser = setCurrentUser;
+// ✅ BËJE FUNKSIONIN GLOBAL
+if (typeof window.setCurrentUser === 'undefined') {
+    window.setCurrentUser = setCurrentUser;
+}
 
 
 // ==================== ⚙️ SISTEMI I MENAXHIMIT TË MOTORËVE AI ====================
