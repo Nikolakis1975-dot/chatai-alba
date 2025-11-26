@@ -412,7 +412,7 @@ getBasicNaturalResponse(message) {
     // ✅ PËRGJIGJE DEFAULT
     return {
         success: true,
-        response: "E kuptoj! 😊 Përdorni /ndihmo për të parë të gjitha komandat e mia."
+        response: "jo nuk E kuptoj! 😊 Përdorni /ndihmo për të parë të gjitha komandat e mia."
     };
 }
     
