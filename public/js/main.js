@@ -1736,4 +1736,45 @@ if (document.readyState === 'loading') {
     setTimeout(initAIEngineButtons, 100);
 }
 
+// ==================== 🔮 OPENAI CHAT FUNCTION ====================
+
+// ✅ FUNKSION PËR DËRGIM MESAZHESH NË OPENAI
+async function sendToOpenAI(message) {
+    try {
+        console.log('🔮 Duke dërguar në OpenAI:', message.substring(0, 50));
+        
+        const response = await fetch('/api/openai-enhanced/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({ 
+                message: message
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('📥 Përgjigje nga OpenAI:', data);
+        
+        return data; // Kthe direkt response nga serveri
+        
+    } catch (error) {
+        console.error('❌ Gabim në OpenAI:', error);
+        return {
+            success: false,
+            error: 'OpenAI nuk është i disponueshëm: ' + error.message
+        };
+    }
+}
+
+// ✅ BËJE FUNKSIONIN GLOBAL
+window.sendToOpenAI = sendToOpenAI;
+
+console.log('🔮 OpenAI chat function u shtua në main.js');
+
 console.log('🔧 FIX EMERGJENCE: Sistemi i motorëve u shtua në main.js');
