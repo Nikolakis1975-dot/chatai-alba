@@ -790,7 +790,7 @@ function forceMemoryIntegration() {
         openai: false    // OpenAI i çaktivizuar
     };
 
- // ✅ FUNKSIONI I RI PËR NDRYSHIMIN E MOTORIT ME CHAT INTEGRIM
+// ✅ FUNKSIONI I KORRIGJUAR PËR NDRYSHIMIN E MOTORIT
 window.switchAIEngine = function(engine) {
     console.log('🔄 Duke ndryshuar motorin në:', engine);
     
@@ -811,39 +811,27 @@ window.switchAIEngine = function(engine) {
     // Përditëso butonat
     updateAIButtons();
     
-    // ✅ SHFAQ MESAZH NË CHAT PËR AKTIVIZIM
+    // ✅ SHFAQ MESAZH NË CHAT PËR AKTIVIZIM - PËRDOR addMessage
     const engineName = engine === 'gemini' ? '🤖 Gemini' : '🔮 OpenAI';
     const activationMessage = `🔧 **Motor i aktivizuar:** ${engineName} është tani motori aktiv!`;
     
-    // ✅ KRIJO FUNKSIONIN PËR TË SHTUAR MESAZH NË CHAT
-    function addMessageToChat(message, sender = 'system') {
-        const chat = document.getElementById('chat');
-        if (!chat) {
-            console.error('❌ Chat container nuk u gjet!');
-            return;
-        }
-        
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${sender}`;
-        messageDiv.innerHTML = `
-            <div class="message-text">${message}</div>
-            <div class="message-time">${new Date().toLocaleTimeString()}</div>
-        `;
-        
-        chat.appendChild(messageDiv);
-        chat.scrollTop = chat.scrollHeight;
-        
-        console.log('✅ Mesazhi u shtua në chat:', message);
+    // ✅ PËRDOR FUNKSIONIN E VËRTETË addMessage
+    if (typeof addMessage !== 'undefined') {
+        addMessage(activationMessage, 'system');
+        console.log('✅ Mesazhi i aktivizimit u dërgua me addMessage');
+    } else if (typeof window.addMessage !== 'undefined') {
+        window.addMessage(activationMessage, 'system');
+        console.log('✅ Mesazhi i aktivizimit u dërgua me window.addMessage');
+    } else {
+        console.error('❌ Asnjë funksion addMessage nuk u gjet!');
     }
-    
-    // ✅ SHFAQ MESAZHIN NË CHAT
-    addMessageToChat(activationMessage, 'system');
     
     // ✅ FOKUSO NË INPUT FIELD PAS NDRYSHIMIT
     const userInput = document.getElementById('user-input');
     if (userInput) {
         userInput.focus();
         userInput.placeholder = `Shkruaj mesazhin këtu... (${engineName} aktiv)`;
+        console.log('✅ Input field u fokusua dhe placeholder u ndryshua');
     }
     
     // ✅ SHFAQ STATUSIN NË CONSOLE PËR DEBUG
@@ -854,6 +842,7 @@ window.switchAIEngine = function(engine) {
         const openaiModal = document.getElementById('openai-modal');
         if (openaiModal) {
             openaiModal.style.display = 'none';
+            console.log('✅ OpenAI modal u mbyll');
         }
     }
 };
