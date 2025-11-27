@@ -4,7 +4,8 @@ const encryption = require('../utils/encryption');
 const jwt = require('jsonwebtoken');
 const router = express.Router();
 
-// ✅ AUTHENTICATION SIMPLE
+// ==================================== ✅ AUTHENTICATION SIMPLE ====================================
+
 const authenticateToken = (req, res, next) => {
     try {
         const token = req.cookies.auth_token;
@@ -18,7 +19,8 @@ const authenticateToken = (req, res, next) => {
     }
 };
 
-// ✅ ROUTA E RE E DREJTPËRDREDHT
+// ========================================= ✅ ROUTA E RE E DREJTPËRDREDHT ====================================
+
 router.post('/chat', authenticateToken, async (req, res) => {
     try {
         const { message } = req.body;
@@ -30,7 +32,8 @@ router.post('/chat', authenticateToken, async (req, res) => {
             return res.json({ success: false, error: 'Mesazhi është i zbrazët' });
         }
 
-        // ✅ MER API KEY NGA DATABASE
+        // =========================== ✅ MER API KEY NGA DATABASE ==================================
+        
         db.get(
             'SELECT api_key FROM api_keys WHERE user_id = ? AND service_name = ?',
             [userId, 'openai'],
@@ -49,14 +52,16 @@ router.post('/chat', authenticateToken, async (req, res) => {
                     console.log('🔓 Duke dekriptuar API Key...');
                     const apiKey = encryption.decrypt(row.api_key);
                     
-                    // ✅ KONTROLLO NËSE ËSHTË VALID
+     // ================================ ✅ KONTROLLO NËSE ËSHTË VALID ======================================
+                    
                     if (!apiKey.startsWith('sk-')) {
                         return res.json({ success: false, error: 'API Key i pavlefshëm' });
                     }
 
                     console.log('🌐 Duke dërguar te OpenAI API...');
 
-                    // ✅ DËRGO TE OPENAI API DIRECT
+    // =================================== ✅ DËRGO TE OPENAI API DIRECT ======================================
+                    
                     const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
                         method: 'POST',
                         headers: {
