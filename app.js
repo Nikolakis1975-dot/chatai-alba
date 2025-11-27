@@ -161,7 +161,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/email', emailVerification);
 app.use('/api/api-keys', apiRoutes);
 app.use('/api/gemini', geminiRoutes);
-app.use('/admin', adminRoutes);
+app.use('/api/admin', adminRoutes);  // ✅ KORRIGJUAR: /api/admin në vend të /admin
 app.use('/api/gemini-simple', geminiSimpleRoutes);
 app.use('/api/rrufe', rrufeRoutes);
 app.use('/api/context-memory', contextMemoryRoutes);
@@ -255,6 +255,81 @@ app.post('/api/openai/chat', async (req, res) => {
 });
 
 // ======================================================
+// 🆕 ADMIN ROUTES - DIREKT NË APP.JS (EMERGJENCE)
+// ======================================================
+
+// ✅ ADMIN TEST ROUTE - DIREKT NË APP.JS
+app.get('/api/admin/test', (req, res) => {
+    res.json({ 
+        success: true, 
+        message: '✅ Admin API është operative! (Direkt nga app.js)',
+        timestamp: new Date().toISOString(),
+        version: 'RRUFE-TESLA 10.5 - EMERGENCY'
+    });
+});
+
+// ✅ ADMIN SETTINGS - DIREKT NË APP.JS
+app.post('/api/admin/settings', async (req, res) => {
+    try {
+        const { service, api_key } = req.body;
+        const db = require('./database');
+        const userId = 1; // Admin user
+
+        console.log('🔑 [ADMIN-EMERGENCY] Duke vendosur API Key për:', service);
+
+        if (!service || !api_key) {
+            return res.json({ 
+                success: false, 
+                error: 'Service dhe API Key janë të detyrueshëm' 
+            });
+        }
+
+        // ✅ RUAJ NË DATABASE
+        db.run(
+            "INSERT OR REPLACE INTO api_keys (user_id, service_name, api_key, created_at) VALUES (?, ?, ?, ?)",
+            [userId, service, api_key, new Date().toISOString()],
+            function(err) {
+                if (err) {
+                    console.error('❌ Gabim në ruajtjen e API Key:', err);
+                    return res.json({ success: false, error: 'Gabim në database' });
+                }
+
+                console.log('✅ API Key u ruajt për shërbimin:', service);
+                
+                res.json({ 
+                    success: true, 
+                    message: `API Key për ${service} u ruajt me sukses!`,
+                    key_id: this.lastID
+                });
+            }
+        );
+
+    } catch (error) {
+        console.error('❌ Gabim në admin/settings:', error);
+        res.json({ success: false, error: error.message });
+    }
+});
+
+// ✅ ADMIN API-KEYS - DIREKT NË APP.JS
+app.get('/api/admin/api-keys', (req, res) => {
+    const db = require('./database');
+    const userId = 1;
+    
+    db.all("SELECT * FROM api_keys WHERE user_id = ?", [userId], (err, rows) => {
+        if (err) {
+            return res.json({ success: false, error: err.message });
+        }
+        
+        res.json({ 
+            success: true, 
+            apiKeys: rows,
+            count: rows.length,
+            message: `Gjetën ${rows.length} API Keys`
+        });
+    });
+});
+
+// ======================================================
 // 5️⃣ Static files (Frontend)
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -337,6 +412,7 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`🎤 Voice Routes u regjistruan: /api/voice/transcribe`);
     console.log(`🌌 RRUFE-TESLA 10.5 Routes u regjistruan: /api/consciousness`);
     console.log(`🔮 OpenAI Enhanced Routes u regjistruan: /api/openai-enhanced`);
+    console.log(`🔑 Admin Routes u regjistruan: /api/admin/*`);
     console.log(`🧠 MEMORY OPTIMIZATION: AKTIVIZUAR PËR 512MB RAM`);
     console.log(`🌉 APP BRIDGE: AKTIVIZUAR ME RUGËT OPENAI`);
     
