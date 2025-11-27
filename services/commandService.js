@@ -346,34 +346,28 @@ isTechnicalRequest(message) {
   
 // ============================ ✅ TRAJTIMI I GJUHËS NATYRORE ME NLU =============================
 
-// ✅ KORRIGJIMI I PLOTË I handleNaturalLanguage - VERSION I RREGULLTUAR PËR BACKEND
-async handleNaturalLanguage(message, user) {
+// ✅ KORRIGJIMI I PLOTË - MER PARAMETRIN ENGINE NGA REQUEST
+async handleNaturalLanguage(message, user, requestData = {}) {
     try {
         console.log('🔍 [FIX-OPENAI] handleNaturalLanguage called:', message.substring(0, 50));
         
-        // ✅ KONTROLLO MOTORIN AKTIV - VERSION I RREGULLTUAR PËR BACKEND
+        // ✅ KONTROLLO MOTORIN AKTIV - VERSION I PËRSUAR
         let activeEngine = 'gemini'; // default
         
-        // Metoda 1: Nga request body (nëse dërgohet nga frontend)
-        if (this.request && this.request.body && this.request.body.engine) {
+        // Metoda 1: Nga request body (nga frontend)
+        if (requestData.engine) {
+            activeEngine = requestData.engine;
+            console.log(`🎯 [FIX-OPENAI] Motor nga frontend: ${activeEngine}`);
+        }
+        // Metoda 2: Nga this.request (nëse ekziston)
+        else if (this.request && this.request.body && this.request.body.engine) {
             activeEngine = this.request.body.engine;
-            console.log(`🎯 [FIX-OPENAI] Motor nga request: ${activeEngine}`);
+            console.log(`🎯 [FIX-OPENAI] Motor nga this.request: ${activeEngine}`);
         }
-        // Metoda 2: Nga user preferences në database
-        else if (user && user.id) {
-            const userEngine = await this.getUserEnginePreference(user.id);
-            if (userEngine) {
-                activeEngine = userEngine;
-                console.log(`🎯 [FIX-OPENAI] Motor nga database: ${activeEngine}`);
-            }
-        }
-        // Metoda 3: Fallback - kontrollo nëse ka OpenAI API Key
-        else {
-            const hasOpenAIKey = await this.checkOpenAIAPIKey(user.id);
-            if (hasOpenAIKey) {
-                activeEngine = 'openai';
-                console.log(`🎯 [FIX-OPENAI] Motor nga OpenAI key check: ${activeEngine}`);
-            }
+        // Metoda 3: Kontrollo nëse ka OpenAI API Key
+        else if (await this.checkOpenAIAPIKey(user.id)) {
+            activeEngine = 'openai';
+            console.log(`🎯 [FIX-OPENAI] Motor nga OpenAI key: ${activeEngine}`);
         }
         
         console.log(`🎯 [FIX-OPENAI] Motor i aktivizuar: ${activeEngine}`);
@@ -411,7 +405,6 @@ async handleNaturalLanguage(message, user) {
         if (activeEngine === 'gemini') {
             console.log('🤖 [FIX-OPENAI] Duke dërguar te Gemini...');
             try {
-                // Provo Gemini nëse ka API Key
                 const hasApiKey = await this.checkApiKey(user.id);
                 console.log('🔑 [FIX-OPENAI] Gemini API Key status:', hasApiKey);
                 
@@ -427,20 +420,18 @@ async handleNaturalLanguage(message, user) {
             }
         }
 
-        // ✅ FALLBACK - VETËM NËSE TË DY MOTORËT DËSHTOJNË
+        // ✅ FALLBACK
         console.log('⚠️ [FIX-OPENAI] Të dy motorët dështuan, duke kthyer fallback');
         return this.getBasicNaturalResponse(message);
         
     } catch (error) {
-        console.error('❌ [FIX-OPENAI] Gabim kritik në handleNaturalLanguage:', error);
+        console.error('❌ [FIX-OPENAI] Gabim kritik:', error);
         return {
             success: false,
             response: '❌ Gabim në server. Provo përsëri.'
         };
     }
 }
-
-// ✅ SHTO KËTO FUNKSIONE NË FUND TË KLASËS (para module.exports):
 
 // ✅ FUNKSIONI PËR KONTROLLIMIN E OPENAI API KEY
 async checkOpenAIAPIKey(userId) {
