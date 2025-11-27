@@ -21,16 +21,43 @@ const authenticateToken = (req, res, next) => {
 
 // ========================================= ✅ ROUTA E RE E DREJTPËRDREDHT ====================================
 
-router.post('/chat', authenticateToken, async (req, res) => {
+// ✅ ROUTE STATUS - PËR TESTIM
+router.get('/status', authenticateToken, async (req, res) => {
     try {
-        const { message } = req.body;
         const userId = req.user.userId;
+        
+        db.get(
+            'SELECT api_key FROM api_keys WHERE user_id = ? AND service_name = ?',
+            [userId, 'openai'],
+            (err, row) => {
+                if (err) {
+                    console.error('❌ Database error:', err);
+                    return res.json({ success: false, error: 'Gabim në server' });
+                }
 
-        console.log('🔮 OpenAI Direct - User:', userId, 'Message:', message?.substring(0, 50));
+                res.json({
+                    success: true,
+                    hasApiKey: !!(row && row.api_key),
+                    message: row && row.api_key ? 'OpenAI Direct i konfiguruar' : 'OpenAI Direct jo i konfiguruar',
+                    service: 'OpenAI Direct',
+                    status: 'Active'
+                });
+            }
+        );
+    } catch (error) {
+        res.json({ success: false, error: '❌ ' + error.message });
+    }
+});
 
-        if (!message) {
-            return res.json({ success: false, error: 'Mesazhi është i zbrazët' });
-        }
+// ✅ ROUTE TEST - PA AUTH
+router.get('/test', (req, res) => {
+    res.json({ 
+        success: true, 
+        message: '✅ OpenAI Direct Routes janë operative!',
+        timestamp: new Date().toISOString(),
+        version: 'RRUFE-TESLA 10.5 - OpenAI Direct'
+    });
+});
 
         // =========================== ✅ MER API KEY NGA DATABASE ==================================
         
