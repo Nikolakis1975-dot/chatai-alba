@@ -790,33 +790,54 @@ function forceMemoryIntegration() {
         openai: false    // OpenAI i çaktivizuar
     };
 
-    // ✅ FUNKSIONI PËR NDRYSHIMIN E MOTORIT
-    window.switchAIEngine = function(engine) {
-        console.log('🔄 Duke ndryshuar motorin në:', engine);
+   // ✅ FUNKSIONI I RI PËR NDRYSHIMIN E MOTORIT ME CHAT INTEGRIM
+window.switchAIEngine = function(engine) {
+    console.log('🔄 Duke ndryshuar motorin në:', engine);
+    
+    if (engine !== 'gemini' && engine !== 'openai') {
+        console.error('❌ Motor i pavlefshëm:', engine);
+        return;
+    }
+    
+    // Çaktivizo të gjithë motorët
+    window.aiEngineStatus.gemini = false;
+    window.aiEngineStatus.openai = false;
+    
+    // Aktivizo motorin e zgjedhur
+    window.aiEngineStatus[engine] = true;
+    
+    console.log('✅ Statusi i ri:', window.aiEngineStatus);
+    
+    // Përditëso butonat
+    updateAIButtons();
+    
+    // ✅ SHFAQ MESAZH NË CHAT PËR AKTIVIZIM
+    const engineName = engine === 'gemini' ? '🤖 Gemini' : '🔮 OpenAI';
+    const activationMessage = `🔧 **Motor i aktivizuar:** ${engineName} është tani motori aktiv!`;
+    
+    // Shfaq mesazhin në chat
+    if (typeof addMessageToChat !== 'undefined') {
+        addMessageToChat(activationMessage, 'system');
         
-        if (engine !== 'gemini' && engine !== 'openai') {
-            console.error('❌ Motor i pavlefshëm:', engine);
-            return;
+        // ✅ FOKUSO NË INPUT FIELD PAS NDRYSHIMIT
+        const userInput = document.getElementById('user-input');
+        if (userInput) {
+            userInput.focus();
+            userInput.placeholder = `Shkruaj mesazhin këtu... (${engineName} aktiv)`;
         }
-        
-        // Çaktivizo të gjithë motorët
-        window.aiEngineStatus.gemini = false;
-        window.aiEngineStatus.openai = false;
-        
-        // Aktivizo motorin e zgjedhur
-        window.aiEngineStatus[engine] = true;
-        
-        console.log('✅ Statusi i ri:', window.aiEngineStatus);
-        
-        // Përditëso butonat
-        updateAIButtons();
-        
-        // Shfaq mesazh në chat
-        const engineName = engine === 'gemini' ? '🤖 Gemini' : '🔮 OpenAI';
-        if (typeof addMessageToChat !== 'undefined') {
-            addMessageToChat(`🔧 **Motor i ndryshuar:** ${engineName} është aktiv tani!`, 'system');
+    }
+    
+    // ✅ SHFAQ STATUSIN NË CONSOLE PËR DEBUG
+    console.log(`🎯 ${engineName} u aktivizua me sukses!`);
+    
+    // ✅ MBYL OPENAI PANEL NËSE ËSHTË I HAPUR
+    if (engine === 'gemini') {
+        const openaiModal = document.getElementById('openai-modal');
+        if (openaiModal) {
+            openaiModal.style.display = 'none';
         }
-    };
+    }
+};
 
     // ✅ FUNKSIONI PËR PËRDDITËSIMIN E BUTONAVE
     function updateAIButtons() {
