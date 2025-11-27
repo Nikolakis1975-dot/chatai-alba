@@ -858,27 +858,28 @@ async function handleSendMessage() {
 
 // ==================================== 🔧 FIX PERMANENT - OPENAI & BUTONAT ==================================
 
-// ✅ KRIJO sendToOpenAI NËSE NUK EKZISTON
+// ✅ KRIJO sendToOpenAI NËSE NUK EKZISTON - VERSION I RI ME RUGË TË DREJTPËRDREDHT
 if (typeof window.sendToOpenAI === 'undefined') {
     window.sendToOpenAI = async function(message) {
-        console.log('🔮 sendToOpenAI: Duke dërguar TE OPENAI!');
+        console.log('🔮 sendToOpenAI: Duke dërguar TE OPENAI DIRECT!');
         
         try {
-            const response = await fetch('/api/openai-enhanced/chat', {
+            // ✅ PËRDOR RUGËN E RE TË DREJTPËRDREDHT
+            const response = await fetch('/api/openai-direct/chat', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 credentials: 'include',
                 body: JSON.stringify({ message })
             });
             
-            console.log('📡 Statusi i OpenAI:', response.status);
+            console.log('📡 Statusi i OpenAI Direct:', response.status);
             
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             
             const data = await response.json();
-            console.log('📥 Përgjigje nga OpenAI:', data);
+            console.log('📥 Përgjigje nga OpenAI Direct:', data);
             return data;
             
         } catch (error) {
@@ -889,7 +890,7 @@ if (typeof window.sendToOpenAI === 'undefined') {
             };
         }
     };
-    console.log('✅ sendToOpenAI u krijua në main.js');
+    console.log('✅ sendToOpenAI u krijua në main.js me rrugë të drejtpërdrejtë');
 }
 
 // ✅ VERIFIKO SISTEMIN
@@ -899,7 +900,7 @@ setTimeout(() => {
     console.log('- switchAIEngine:', typeof window.switchAIEngine);
     console.log('- sendToOpenAI:', typeof window.sendToOpenAI);
     console.log('- sendToGemini:', typeof sendToGemini);
-    console.log('🎉 OPENAI ËSHTË GATI PËR PËRDORIM!');
+    console.log('🎉 OPENAI DIRECT ËSHTË GATI PËR PËRDORIM!');
 }, 2000);
 
 // ==================== 🔧 SISTEMI I BUTONAVE - FIX PERMANENT ====================================
