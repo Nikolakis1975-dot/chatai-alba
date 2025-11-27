@@ -149,17 +149,22 @@ function getSimpleNaturalResponse(message) {
 
 // ============================= ✅ RUTA PËR MESAZHET E DREJTPËRDREDHURA (PËR FRONTEND) ============================
 
-// NË routes/chat.js - MODIFIKO THIRRJEN
+// ✅ RIKTHE routes/chat.js NË VERSIONIN ORIGJINAL
 router.post('/message', async (req, res) => {
     try {
-        const { message, engine } = req.body; // 🎯 MER ENGINE NGA REQUEST
+        const { message } = req.body;
         const userId = req.user?.userId;
-        
-        console.log('💬 Mesazh i marrë:', message);
-        console.log('🔧 Motor i kërkuar:', engine);
 
-        // ✅ KALO REQUEST DATA TE COMMAND SERVICE
-        const result = await commandService.handleNaturalLanguage(message, { id: userId }, { engine });
+        console.log('💬 Mesazh i marrë:', message);
+
+        // ✅ KONTROLLO NËSE ËSHTË KOMANDË SPECIALE
+        if (message.startsWith('/')) {
+            const result = await commandService.processCommand(message, { id: userId }, message);
+            return res.json(result);
+        }
+
+        // ✅ PROCESO MESAZHIN NATYROR
+        const result = await commandService.handleNaturalLanguage(message, { id: userId });
         
         res.json(result);
         
