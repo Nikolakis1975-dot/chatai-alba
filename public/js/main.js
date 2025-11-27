@@ -795,14 +795,13 @@ if (originalLogin) {
     };
 }
 
-// ==================== 🔧 FIX I ROUTING-IT NË FRONTEND ======================================
+// ==================================== ✅ FIX STATUSI I MOTORIT =====================================
 
-// ✅ MODIFIKO handleSendMessage PËR TË DËRGUAR TE MOTORI I DUHUR
 async function handleSendMessage() {
     const userInput = document.getElementById('user-input');
     const message = userInput.value.trim();
     
-    console.log('🎯 handleSendMessage - Motor i aktivizuar:', window.aiEngineStatus);
+    console.log('🎯 handleSendMessage - Motor aktiv:', window.aiEngineStatus);
     
     if (!message) return;
     
@@ -826,17 +825,21 @@ async function handleSendMessage() {
         chat.appendChild(loadingDiv);
         chat.scrollTop = chat.scrollHeight;
         
-        // ✅ ZGJIDH MOTORIN BAZË NË STATUSIN GLOBAL
-        let result;
+        // ✅ DËRGO MESAZHIN ME STATUSIN E MOTORIT
+        const activeEngine = window.aiEngineStatus?.openai ? 'openai' : 'gemini';
+        console.log('🔧 Duke dërguar me motor:', activeEngine);
         
-        if (window.aiEngineStatus?.openai === true) {
-            console.log('🔮 🔮 🔮 FRONTEND: Duke dërguar te OpenAI!');
-            result = await window.sendToOpenAI(message);
-        } 
-        else {
-            console.log('🤖 🤖 🤖 FRONTEND: Duke dërguar te Gemini!');
-            result = await sendToGemini(message);
-        }
+        const response = await fetch('/api/chat/message', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            credentials: 'include',
+            body: JSON.stringify({ 
+                message: message,
+                engine: activeEngine  // 🎯 SHTO KËTË PARAMETËR
+            })
+        });
+        
+        const result = await response.json();
         
         // Hiq loading
         document.getElementById('loading-indicator')?.remove();
