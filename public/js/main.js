@@ -855,42 +855,40 @@ async function handleSendMessage() {
     }
 }
 
-// ✅ SIGUROHU QË sendToOpenAI EKZISTON DHE FUNKSIONON
+// ========================== ✅ SIGUROHU QË sendToOpenAI EKZISTON DHE FUNKSIONON ============================
+
 if (typeof window.sendToOpenAI === 'undefined') {
     console.log('🔧 Duke krijuar sendToOpenAI...');
     
-    window.sendToOpenAI = async function(message) {
-        console.log('🔮 sendToOpenAI: Duke dërguar mesazh:', message.substring(0, 50));
+window.sendToOpenAI = async function(message) {
+    console.log('🔮 sendToOpenAI: Duke dërguar TE OPENAI DIRECT!');
+    
+    try {
+        const response = await fetch('/api/openai-enhanced/chat', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            credentials: 'include',
+            body: JSON.stringify({ message })
+        });
         
-        try {
-            const response = await fetch('/api/openai-enhanced/chat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'include',
-                body: JSON.stringify({ 
-                    message: message
-                })
-            });
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            console.log('📥 sendToOpenAI: Përgjigje:', data);
-            return data;
-            
-        } catch (error) {
-            console.error('❌ Gabim në sendToOpenAI:', error);
-            return {
-                success: false,
-                error: 'OpenAI nuk është i disponueshëm: ' + error.message
-            };
+        console.log('📡 Statusi i OpenAI:', response.status);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
-    };
-}
+        
+        const data = await response.json();
+        console.log('📥 Përgjigje nga OpenAI:', data);
+        return data;
+        
+    } catch (error) {
+        console.error('❌ Gabim në sendToOpenAI:', error);
+        return {
+            success: false,
+            error: 'OpenAI: ' + error.message
+        };
+    }
+};
 
 // ✅ VERIFIKO SISTEMIN PAS NGARKIMIT
 setTimeout(() => {
