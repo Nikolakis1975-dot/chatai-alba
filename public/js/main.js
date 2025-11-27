@@ -795,16 +795,14 @@ if (originalLogin) {
     };
 }
 
-// ======================================= HANDLE SEND MESAGE ==================================
+// ==================== 🔧 FIX I ROUTING-IT NË FRONTEND ======================================
 
+// ✅ MODIFIKO handleSendMessage PËR TË DËRGUAR TE MOTORI I DUHUR
 async function handleSendMessage() {
-    console.log('🎯 🎯 🎯 handleSendMessage PO EKZEKUTOHET!');
-    
     const userInput = document.getElementById('user-input');
     const message = userInput.value.trim();
     
-    console.log('📝 Mesazhi:', message);
-    console.log('🔍 Statusi i motorëve NË handleSendMessage:', window.aiEngineStatus);
+    console.log('🎯 handleSendMessage - Motor i aktivizuar:', window.aiEngineStatus);
     
     if (!message) return;
     
@@ -828,25 +826,16 @@ async function handleSendMessage() {
         chat.appendChild(loadingDiv);
         chat.scrollTop = chat.scrollHeight;
         
-        // ✅ DEBUG I DETAJUAR
-        console.log('🔍 🔍 🔍 DEBUG I PLOTË:');
-        console.log('- aiEngineStatus.openai:', window.aiEngineStatus?.openai);
-        console.log('- aiEngineStatus.gemini:', window.aiEngineStatus?.gemini);
-        console.log('- sendToOpenAI ekziston:', typeof window.sendToOpenAI);
-        console.log('- sendToGemini ekziston:', typeof sendToGemini);
-        
-        // ✅ ZGJIDH MOTORIN ME DEBUG
+        // ✅ ZGJIDH MOTORIN BAZË NË STATUSIN GLOBAL
         let result;
         
         if (window.aiEngineStatus?.openai === true) {
-            console.log('🔮 🔮 🔮 DUKE PËRDORUR OPENAI!');
+            console.log('🔮 🔮 🔮 FRONTEND: Duke dërguar te OpenAI!');
             result = await window.sendToOpenAI(message);
-            console.log('📥 Përgjigje nga OpenAI:', result);
         } 
         else {
-            console.log('🤖 DUKE PËRDORUR GEMINI!');
+            console.log('🤖 🤖 🤖 FRONTEND: Duke dërguar te Gemini!');
             result = await sendToGemini(message);
-            console.log('📥 Përgjigje nga Gemini:', result);
         }
         
         // Hiq loading
@@ -865,6 +854,52 @@ async function handleSendMessage() {
         addMessageToChat('❌ Gabim në server.', 'bot');
     }
 }
+
+// ✅ SIGUROHU QË sendToOpenAI EKZISTON DHE FUNKSIONON
+if (typeof window.sendToOpenAI === 'undefined') {
+    console.log('🔧 Duke krijuar sendToOpenAI...');
+    
+    window.sendToOpenAI = async function(message) {
+        console.log('🔮 sendToOpenAI: Duke dërguar mesazh:', message.substring(0, 50));
+        
+        try {
+            const response = await fetch('/api/openai-enhanced/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({ 
+                    message: message
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            console.log('📥 sendToOpenAI: Përgjigje:', data);
+            return data;
+            
+        } catch (error) {
+            console.error('❌ Gabim në sendToOpenAI:', error);
+            return {
+                success: false,
+                error: 'OpenAI nuk është i disponueshëm: ' + error.message
+            };
+        }
+    };
+}
+
+// ✅ VERIFIKO SISTEMIN PAS NGARKIMIT
+setTimeout(() => {
+    console.log('🔍 VERIFIKIM I SISTEMIT:');
+    console.log('- aiEngineStatus:', window.aiEngineStatus);
+    console.log('- sendToOpenAI:', typeof window.sendToOpenAI);
+    console.log('- sendToGemini:', typeof sendToGemini);
+    console.log('- handleSendMessage:', typeof handleSendMessage);
+}, 2000);
 
 // ==================== 🔧 SISTEMI I BUTONAVE - FIX PERMANENT ====================
 
