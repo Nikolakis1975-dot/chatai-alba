@@ -139,7 +139,6 @@ const contextMemoryRoutes = require('./routes/context-memory');
 const contextMemoryService = new ContextMemoryService();
 const knowledgeRoutes = require('./routes/knowledge');
 const openaiEnhancedRoutes = require('./routes/openai-enhanced');
-const openaiDirectRoutes = require('./routes/openai-direct');
 
 // ======================================================
 // 🆕 SHTESË E RE: RRUFE-TESLA 10.5 INTEGRIMI
@@ -168,7 +167,6 @@ app.use('/api/context-memory', contextMemoryRoutes);
 app.use('/api/tll', tllActivationRoutes);
 app.use('/api/knowledge', knowledgeRoutes);
 app.use('/api/openai-enhanced', openaiEnhancedRoutes);
-app.use('/api/openai-direct', openaiDirectRoutes);
 
 // ======================================================
 // 🆕 OPENAI ROUTES - IMPLEMENTIM I DIREKT NË APP.JS
