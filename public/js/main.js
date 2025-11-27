@@ -988,3 +988,45 @@ if (document.readyState === 'loading') {
 } else {
     initializeAIEngineSystem();
 }
+
+// ==================== 🔍 DEBUG FINAL - KONTROLLO I GJITHË SISTEMI ====================
+
+console.log('🔍 DEBUG FINAL I SISTEMIT:');
+
+// 1. Kontrollo variablat globale
+console.log('1. aiEngineStatus:', window.aiEngineStatus);
+console.log('1. switchAIEngine:', typeof window.switchAIEngine);
+
+// 2. Kontrollo funksionet e dërgimit
+console.log('2. sendToOpenAI:', typeof window.sendToOpenAI);
+console.log('2. sendToGemini:', typeof sendToGemini);
+console.log('2. handleSendMessage:', typeof handleSendMessage);
+
+// 3. Testo sendToOpenAI direkt
+console.log('3. Testo sendToOpenAI direkt:');
+if (typeof window.sendToOpenAI === 'function') {
+    window.sendToOpenAI('Test direkt').then(result => {
+        console.log('📥 Rezultati i sendToOpenAI:', result);
+    });
+}
+
+// 4. Kontrollo nëse handleSendMessage po përdor aiEngineStatus
+console.log('4. Kontrollo handleSendMessage:');
+const handleSendMessageCode = handleSendMessage.toString();
+console.log('4. Përmban aiEngineStatus?', handleSendMessageCode.includes('aiEngineStatus'));
+console.log('4. Përmban sendToOpenAI?', handleSendMessageCode.includes('sendToOpenAI'));
+
+// 5. Aktivizo OpenAI manualisht dhe testo
+console.log('5. Aktivizo OpenAI manualisht:');
+window.switchAIEngine('openai');
+setTimeout(() => {
+    console.log('5. Statusi pas aktivizimit:', window.aiEngineStatus);
+    
+    // Testo handleSendMessage me OpenAI
+    console.log('5. Testo handleSendMessage me OpenAI:');
+    // Krijo një mesazh test
+    document.getElementById('user-input').value = 'Test OpenAI';
+    setTimeout(() => {
+        handleSendMessage();
+    }, 1000);
+}, 2000);
