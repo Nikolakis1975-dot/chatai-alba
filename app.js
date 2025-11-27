@@ -167,7 +167,6 @@ app.use('/api/context-memory', contextMemoryRoutes);
 app.use('/api/tll', tllActivationRoutes);
 app.use('/api/knowledge', knowledgeRoutes);
 app.use('/api/openai-enhanced', openaiEnhancedRoutes);
-app.use('/api/openai-live', require('./routes/openai-live'));
 
 // ======================================================
 // 🆕 OPENAI ROUTES - IMPLEMENTIM I DIREKT NË APP.JS
