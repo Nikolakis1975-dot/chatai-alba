@@ -825,21 +825,17 @@ async function handleSendMessage() {
         chat.appendChild(loadingDiv);
         chat.scrollTop = chat.scrollHeight;
         
-        // ✅ DËRGO MESAZHIN ME STATUSIN E MOTORIT
-        const activeEngine = window.aiEngineStatus?.openai ? 'openai' : 'gemini';
-        console.log('🔧 Duke dërguar me motor:', activeEngine);
+        // ✅ ZGJIDH MOTORIN - VERSION I THJESHTË
+        let result;
         
-        const response = await fetch('/api/chat/message', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            credentials: 'include',
-            body: JSON.stringify({ 
-                message: message,
-                engine: activeEngine  // 🎯 SHTO KËTË PARAMETËR
-            })
-        });
-        
-        const result = await response.json();
+        if (window.aiEngineStatus?.openai === true) {
+            console.log('🔮 🔮 🔮 DUKE PËRDORUR OPENAI!');
+            result = await window.sendToOpenAI(message);
+        } 
+        else {
+            console.log('🤖 🤖 🤖 DUKE PËRDORUR GEMINI!');
+            result = await sendToGemini(message);
+        }
         
         // Hiq loading
         document.getElementById('loading-indicator')?.remove();
@@ -857,7 +853,6 @@ async function handleSendMessage() {
         addMessageToChat('❌ Gabim në server.', 'bot');
     }
 }
-
 
 // ==================================== 🔧 FIX PERMANENT - OPENAI & BUTONAT ==================================
 
