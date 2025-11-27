@@ -149,7 +149,6 @@ function getSimpleNaturalResponse(message) {
 
 // ============================= ✅ RUTA PËR MESAZHET E DREJTPËRDREDHURA (PËR FRONTEND) ============================
 
-// ✅ RIKTHE routes/chat.js NË VERSIONIN ORIGJINAL
 router.post('/message', async (req, res) => {
     try {
         const { message } = req.body;
