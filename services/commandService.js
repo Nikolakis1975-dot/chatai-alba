@@ -346,86 +346,31 @@ isTechnicalRequest(message) {
   
 // ============================ ✅ TRAJTIMI I GJUHËS NATYRORE ME NLU =============================
 
-// ✅ KORRIGJIMI I PLOTË - MER PARAMETRIN ENGINE NGA REQUEST
-async handleNaturalLanguage(message, user, requestData = {}) {
+async handleNaturalLanguage(message, user) {
     try {
-        console.log('🔍 [FIX-OPENAI] handleNaturalLanguage called:', message.substring(0, 50));
+        console.log('🔍 [BACKUP] handleNaturalLanguage called:', message.substring(0, 50));
         
-        // ✅ KONTROLLO MOTORIN AKTIV - VERSION I PËRSUAR
-        let activeEngine = 'gemini'; // default
+        // ✅ GJITHMONË PËRDOR GEMINI (PËR TË RIKTHUR FUNKSIONIMIN)
+        console.log('🤖 [BACKUP] Duke përdorur Gemini si motor i parë...');
         
-        // Metoda 1: Nga request body (nga frontend)
-        if (requestData.engine) {
-            activeEngine = requestData.engine;
-            console.log(`🎯 [FIX-OPENAI] Motor nga frontend: ${activeEngine}`);
-        }
-        // Metoda 2: Nga this.request (nëse ekziston)
-        else if (this.request && this.request.body && this.request.body.engine) {
-            activeEngine = this.request.body.engine;
-            console.log(`🎯 [FIX-OPENAI] Motor nga this.request: ${activeEngine}`);
-        }
-        // Metoda 3: Kontrollo nëse ka OpenAI API Key
-        else if (await this.checkOpenAIAPIKey(user.id)) {
-            activeEngine = 'openai';
-            console.log(`🎯 [FIX-OPENAI] Motor nga OpenAI key: ${activeEngine}`);
-        }
+        // Provo Gemini nëse ka API Key
+        const hasApiKey = await this.checkApiKey(user.id);
+        console.log('🔑 [BACKUP] Gemini API Key status:', hasApiKey);
         
-        console.log(`🎯 [FIX-OPENAI] Motor i aktivizuar: ${activeEngine}`);
-
-        // ✅ DËRGO TE MOTORI I ZGJEDHUR
-        if (activeEngine === 'openai') {
-            console.log('🔮 [FIX-OPENAI] Duke dërguar te OpenAI...');
-            try {
-                const response = await fetch('http://localhost:3000/api/openai-direct/chat', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ message })
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    console.log('✅ [FIX-OPENAI] Përgjigje nga OpenAI');
-                    return data;
-                } else {
-                    console.log('❌ [FIX-OPENAI] OpenAI dështoi, duke provuar Gemini');
-                    activeEngine = 'gemini'; // Fallback në Gemini
-                }
-            } catch (openaiError) {
-                console.error('❌ [FIX-OPENAI] Gabim në OpenAI:', openaiError);
-                activeEngine = 'gemini'; // Fallback në Gemini
+        if (hasApiKey) {
+            const geminiResult = await this.sendToGemini(message, user.id);
+            if (geminiResult && geminiResult.success) {
+                console.log('✅ [BACKUP] Gemini u përgjigj me sukses!');
+                return geminiResult;
             }
         }
-
-        // ✅ NËSE GEMINI ËSHTË AKTIV OSE OPENAI DËSHTOI
-        if (activeEngine === 'gemini') {
-            console.log('🤖 [FIX-OPENAI] Duke dërguar te Gemini...');
-            try {
-                const hasApiKey = await this.checkApiKey(user.id);
-                console.log('🔑 [FIX-OPENAI] Gemini API Key status:', hasApiKey);
-                
-                if (hasApiKey) {
-                    const geminiResult = await this.sendToGemini(message, user.id);
-                    if (geminiResult && geminiResult.success) {
-                        console.log('✅ [FIX-OPENAI] Gemini u përgjigj me sukses!');
-                        return geminiResult;
-                    }
-                }
-            } catch (geminiError) {
-                console.error('❌ [FIX-OPENAI] Gemini dështoi:', geminiError);
-            }
-        }
-
-        // ✅ FALLBACK
-        console.log('⚠️ [FIX-OPENAI] Të dy motorët dështuan, duke kthyer fallback');
+        
+        // ✅ FALLBACK - PËRGJIGJE E THJESHTË
+        console.log('⚠️ [BACKUP] Duke kthyer përgjigje të thjeshtë');
         return this.getBasicNaturalResponse(message);
         
     } catch (error) {
-        console.error('❌ [FIX-OPENAI] Gabim kritik:', error);
+        console.error('❌ [BACKUP] Gabim në handleNaturalLanguage:', error);
         return {
             success: false,
             response: '❌ Gabim në server. Provo përsëri.'
@@ -433,7 +378,8 @@ async handleNaturalLanguage(message, user, requestData = {}) {
     }
 }
 
-// ✅ FUNKSIONI PËR KONTROLLIMIN E OPENAI API KEY
+// ============================✅ FUNKSIONI PËR KONTROLLIMIN E OPENAI API KEY ====================================
+    
 async checkOpenAIAPIKey(userId) {
     try {
         const db = require('../database');
