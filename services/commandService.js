@@ -346,20 +346,33 @@ isTechnicalRequest(message) {
   
 // ============================ ✅ TRAJTIMI I GJUHËS NATYRORE ME NLU =============================
 
-// ✅ KORRIGJIMI I PLOTË I handleNaturalLanguage - MBËSHTET TË DY MOTORËT
+// ✅ KORRIGJIMI I PLOTË I handleNaturalLanguage - VERSION I RREGULLTUAR PËR BACKEND
 async handleNaturalLanguage(message, user) {
     try {
         console.log('🔍 [FIX-OPENAI] handleNaturalLanguage called:', message.substring(0, 50));
         
-        // ✅ KONTROLLO MOTORIN AKTIV NË FRONTEND
+        // ✅ KONTROLLO MOTORIN AKTIV - VERSION I RREGULLTUAR PËR BACKEND
         let activeEngine = 'gemini'; // default
-        if (typeof window !== 'undefined' && window.aiEngineStatus) {
-            if (window.aiEngineStatus.openai === true) {
+        
+        // Metoda 1: Nga request body (nëse dërgohet nga frontend)
+        if (this.request && this.request.body && this.request.body.engine) {
+            activeEngine = this.request.body.engine;
+            console.log(`🎯 [FIX-OPENAI] Motor nga request: ${activeEngine}`);
+        }
+        // Metoda 2: Nga user preferences në database
+        else if (user && user.id) {
+            const userEngine = await this.getUserEnginePreference(user.id);
+            if (userEngine) {
+                activeEngine = userEngine;
+                console.log(`🎯 [FIX-OPENAI] Motor nga database: ${activeEngine}`);
+            }
+        }
+        // Metoda 3: Fallback - kontrollo nëse ka OpenAI API Key
+        else {
+            const hasOpenAIKey = await this.checkOpenAIAPIKey(user.id);
+            if (hasOpenAIKey) {
                 activeEngine = 'openai';
-                console.log('🔮 [FIX-OPENAI] OpenAI aktiv - duke dërguar te OpenAI');
-            } else if (window.aiEngineStatus.gemini === true) {
-                activeEngine = 'gemini';
-                console.log('🤖 [FIX-OPENAI] Gemini aktiv - duke dërguar te Gemini');
+                console.log(`🎯 [FIX-OPENAI] Motor nga OpenAI key check: ${activeEngine}`);
             }
         }
         
@@ -369,12 +382,15 @@ async handleNaturalLanguage(message, user) {
         if (activeEngine === 'openai') {
             console.log('🔮 [FIX-OPENAI] Duke dërguar te OpenAI...');
             try {
-                const response = await fetch('/api/openai-direct/chat', {
+                const response = await fetch('http://localhost:3000/api/openai-direct/chat', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    credentials: 'include',
                     body: JSON.stringify({ message })
                 });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
                 
                 const data = await response.json();
                 
@@ -421,6 +437,65 @@ async handleNaturalLanguage(message, user) {
             success: false,
             response: '❌ Gabim në server. Provo përsëri.'
         };
+    }
+}
+
+// ✅ SHTO KËTO FUNKSIONE NË FUND TË KLASËS (para module.exports):
+
+// ✅ FUNKSIONI PËR KONTROLLIMIN E OPENAI API KEY
+async checkOpenAIAPIKey(userId) {
+    try {
+        const db = require('../database');
+        
+        const result = await new Promise((resolve, reject) => {
+            db.get(
+                'SELECT api_key FROM api_keys WHERE user_id = ? AND service_name = ?',
+                [userId, 'openai'],
+                (err, row) => {
+                    if (err) {
+                        console.error('❌ Gabim në kontrollimin e OpenAI API Key:', err);
+                        resolve(false);
+                    } else {
+                        resolve(!!row);
+                    }
+                }
+            );
+        });
+        
+        console.log('🔍 Statusi i OpenAI API Key:', result ? '✅ Ekziston' : '❌ Nuk ekziston');
+        return result;
+        
+    } catch (error) {
+        console.error('❌ Gabim në checkOpenAIAPIKey:', error);
+        return false;
+    }
+}
+
+// ✅ FUNKSIONI PËR MARRJEN E PREFERENCËS SË MOTORIT NGA DATABASE
+async getUserEnginePreference(userId) {
+    try {
+        const db = require('../database');
+        
+        const result = await new Promise((resolve, reject) => {
+            db.get(
+                'SELECT preferred_engine FROM user_preferences WHERE user_id = ?',
+                [userId],
+                (err, row) => {
+                    if (err) {
+                        console.error('❌ Gabim në marrjen e preferencës së motorit:', err);
+                        resolve(null);
+                    } else {
+                        resolve(row ? row.preferred_engine : null);
+                    }
+                }
+            );
+        });
+        
+        return result;
+        
+    } catch (error) {
+        console.error('❌ Gabim në getUserEnginePreference:', error);
+        return null;
     }
 }
 
