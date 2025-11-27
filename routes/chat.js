@@ -147,37 +147,54 @@ function getSimpleNaturalResponse(message) {
  //   }
 // });
 
-// ============================= ✅ RUTA PËR MESAZHET E DREJTPËRDREDHURA (PËR FRONTEND) ============================
+// ✅ RUTA PËR MESAZHET E DREJTPËRDREDHURA (PËR FRONTEND)
 
+// ✅ RUTA E THJESHTUAR PËR MESAZHE - PUNON ME URËN
 router.post('/message', async (req, res) => {
     try {
-        const { message } = req.body;
-        const userId = req.user?.userId;
+        const { message, userId = 1 } = req.body;
+        
+        console.log('🔍 routes/chat/message: Marrë mesazh për urë:', message?.substring(0, 50));
 
-        console.log('💬 Mesazh i marrë:', message);
-
-        // ✅ KONTROLLO NËSE ËSHTË KOMANDË SPECIALE
-        if (message.startsWith('/')) {
-            const result = await commandService.processCommand(message, { id: userId }, message);
-            return res.json(result);
+        if (!message || message.trim() === '') {
+            return res.json({
+                success: false,
+                response: '❌ Ju lutem shkruani një mesazh'
+            });
         }
 
-        // ✅ PROCESO MESAZHIN NATYROR
-        const result = await commandService.handleNaturalLanguage(message, { id: userId });
+        // ✅ PERDOR DIRECT COMMAND SERVICE (JO URËN, SE URËRA ËSHTË NË APP.JS)
+        console.log('🎯 routes/chat/message: Duke thirrur CommandService direkt...');
+        const CommandService = require('../services/commandService');
         
-        res.json(result);
+        // Merr përdoruesin
+        const db = require('../database');
+        const user = await new Promise((resolve) => {
+            db.get('SELECT * FROM users WHERE id = ?', [userId], (err, user) => {
+                resolve(user || { id: userId, username: 'user' + userId });
+            });
+        });
+
+        const result = await CommandService.processCommand('', user, message);
         
+        console.log('📊 routes/chat/message: Rezultati:', {
+            success: result.success,
+            messageLength: result.response?.length || 0
+        });
+        
+        return res.json(result);
+
     } catch (error) {
-        console.error('❌ Gabim në chat/message:', error);
-        res.json({
+        console.error('❌ routes/chat/message: Gabim i përgjithshëm:', error);
+        return res.json({
             success: false,
-            response: 'Gabim në server'
+            response: '❌ Gabim në server. Provo përsëri.'
         });
     }
 });
 
-// ============================== ✅ RUTA E RE PËR PANELIN E NDIHMËS ME BUTONA ==================================
-
+// ✅ KODI EKZISTUES - MERR HISTORINË E BISEDËS
+// ✅ RUTA E RE PËR PANELIN E NDIHMËS ME BUTONA - Shto në routes/chat.js ekzistues
 router.get('/help-panel', async (req, res) => {
     try {
         const helpPanel = `
