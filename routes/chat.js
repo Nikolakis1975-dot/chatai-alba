@@ -539,4 +539,114 @@ class LocalChatIntelligence {
     }
 }
 
+// =================== 🔮 OPENAI CHAT ROUTE - VERSION I OPTIMIZUAR =====================
+router.post('/openai', async (req, res) => {
+    try {
+        const { message } = req.body;
+        const userId = req.user?.userId || 1; // Merr userId nga authentication
+
+        console.log("🔮 [OPENAI-ROUTE] Mesazh i marrë:", message?.substring(0, 50));
+
+        if (!message || !message.trim()) {
+            return res.json({
+                success: false,
+                error: "❌ Ju lutem shkruani një mesazh."
+            });
+        }
+
+        // 1) ✅ LEXO API KEY NGA DATABASE ME ENKRIPTIM
+        const apiRow = await new Promise((resolve, reject) => {
+            db.get(
+                'SELECT api_key FROM api_keys WHERE user_id = ? AND service_name = ?',
+                [userId, 'openai'],
+                (err, row) => {
+                    if (err) {
+                        console.error('❌ [OPENAI-ROUTE] Gabim database:', err);
+                        resolve(null);
+                    } else {
+                        resolve(row);
+                    }
+                }
+            );
+        });
+
+        if (!apiRow || !apiRow.api_key) {
+            console.log('❌ [OPENAI-ROUTE] Nuk ka OpenAI API Key');
+            return res.json({
+                success: false,
+                error: "❌ Nuk ka API Key OpenAI të konfiguruar. Vendosni API Key në panelin OpenAI."
+            });
+        }
+
+        // 2) ✅ DEKRIPTO API KEY (nëse është i enkriptuar)
+        let decryptedKey;
+        try {
+            const encryption = require('../utils/encryption');
+            decryptedKey = encryption.decrypt(apiRow.api_key);
+            console.log('🔓 [OPENAI-ROUTE] API Key u dekriptua');
+        } catch (decryptError) {
+            console.log('⚠️ [OPENAI-ROUTE] API Key nuk është i enkriptuar, duke përdorur direkt');
+            decryptedKey = apiRow.api_key;
+        }
+
+        // 3) ✅ KONTROLLO NËSE API KEY ËSHTË VALID
+        if (!decryptedKey.startsWith('sk-')) {
+            console.log('❌ [OPENAI-ROUTE] API Key i pavlefshëm:', decryptedKey.substring(0, 10) + '...');
+            return res.json({
+                success: false,
+                error: "❌ API Key i pavlefshëm për OpenAI. Duhet të fillojë me 'sk-'."
+            });
+        }
+
+        // 4) ✅ THIRR OPENAI API
+        console.log('🌐 [OPENAI-ROUTE] Duke thirrur OpenAI API...');
+        
+        const { OpenAI } = require('openai');
+        const openai = new OpenAI({ 
+            apiKey: decryptedKey 
+        });
+
+        const completion = await openai.chat.completions.create({
+            model: "gpt-3.5-turbo", // Përdor gpt-3.5-turbo (më i stabil)
+            messages: [
+                { 
+                    role: "system", 
+                    content: "Ti je RRUFE-TESLA AI. Përgjigju në shqip dhe jep përgjigje të dobishme, kreative dhe intuitive." 
+                },
+                { 
+                    role: "user", 
+                    content: message 
+                }
+            ],
+            max_tokens: 1000,
+            temperature: 0.7
+        });
+
+        const responseText = completion.choices[0].message.content;
+        console.log('✅ [OPENAI-ROUTE] Përgjigje e suksesshme nga OpenAI');
+
+        return res.json({
+            success: true,
+            response: `🔮 **OpenAI RRUFE-TESLA**: ${responseText}`
+        });
+
+    } catch (error) {
+        console.error("❌ [OPENAI-ROUTE] Gabim:", error.message);
+        
+        let errorMessage = "❌ Gabim në OpenAI API";
+        if (error.message.includes('API key')) {
+            errorMessage = "❌ API Key i pavlefshëm për OpenAI";
+        } else if (error.message.includes('rate limit')) {
+            errorMessage = "❌ Kufizim në shpejtësi. Provoni përsëri më vonë.";
+        } else if (error.message.includes('network') || error.message.includes('fetch')) {
+            errorMessage = "❌ Problem me lidhjen e internetit.";
+        }
+
+        return res.json({
+            success: false,
+            error: errorMessage
+        });
+    }
+});
+
 module.exports = router;
