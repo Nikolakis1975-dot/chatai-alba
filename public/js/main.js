@@ -790,7 +790,7 @@ function forceMemoryIntegration() {
         openai: false    // OpenAI i çaktivizuar
     };
 
-   // ✅ FUNKSIONI I RI PËR NDRYSHIMIN E MOTORIT ME CHAT INTEGRIM
+ // ✅ FUNKSIONI I RI PËR NDRYSHIMIN E MOTORIT ME CHAT INTEGRIM
 window.switchAIEngine = function(engine) {
     console.log('🔄 Duke ndryshuar motorin në:', engine);
     
@@ -815,16 +815,35 @@ window.switchAIEngine = function(engine) {
     const engineName = engine === 'gemini' ? '🤖 Gemini' : '🔮 OpenAI';
     const activationMessage = `🔧 **Motor i aktivizuar:** ${engineName} është tani motori aktiv!`;
     
-    // Shfaq mesazhin në chat
-    if (typeof addMessageToChat !== 'undefined') {
-        addMessageToChat(activationMessage, 'system');
-        
-        // ✅ FOKUSO NË INPUT FIELD PAS NDRYSHIMIT
-        const userInput = document.getElementById('user-input');
-        if (userInput) {
-            userInput.focus();
-            userInput.placeholder = `Shkruaj mesazhin këtu... (${engineName} aktiv)`;
+    // ✅ KRIJO FUNKSIONIN PËR TË SHTUAR MESAZH NË CHAT
+    function addMessageToChat(message, sender = 'system') {
+        const chat = document.getElementById('chat');
+        if (!chat) {
+            console.error('❌ Chat container nuk u gjet!');
+            return;
         }
+        
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${sender}`;
+        messageDiv.innerHTML = `
+            <div class="message-text">${message}</div>
+            <div class="message-time">${new Date().toLocaleTimeString()}</div>
+        `;
+        
+        chat.appendChild(messageDiv);
+        chat.scrollTop = chat.scrollHeight;
+        
+        console.log('✅ Mesazhi u shtua në chat:', message);
+    }
+    
+    // ✅ SHFAQ MESAZHIN NË CHAT
+    addMessageToChat(activationMessage, 'system');
+    
+    // ✅ FOKUSO NË INPUT FIELD PAS NDRYSHIMIT
+    const userInput = document.getElementById('user-input');
+    if (userInput) {
+        userInput.focus();
+        userInput.placeholder = `Shkruaj mesazhin këtu... (${engineName} aktiv)`;
     }
     
     // ✅ SHFAQ STATUSIN NË CONSOLE PËR DEBUG
