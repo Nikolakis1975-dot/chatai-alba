@@ -346,31 +346,37 @@ isTechnicalRequest(message) {
   
 // ============================ ✅ TRAJTIMI I GJUHËS NATYRORE ME NLU =============================
 
+// ✅ KORRIGJIMI I PLOTË I handleNaturalLanguage - Në commandService.js
 async handleNaturalLanguage(message, user) {
     try {
-        console.log('🔍 [BACKUP] handleNaturalLanguage called:', message.substring(0, 50));
+        console.log('🔍 [FIX-GEMINI] handleNaturalLanguage called:', message.substring(0, 50));
         
-        // ✅ GJITHMONË PËRDOR GEMINI (PËR TË RIKTHUR FUNKSIONIMIN)
-        console.log('🤖 [BACKUP] Duke përdorur Gemini si motor i parë...');
-        
-        // Provo Gemini nëse ka API Key
+        // ✅ PROVO GEMINI NËSE KA API KEY
         const hasApiKey = await this.checkApiKey(user.id);
-        console.log('🔑 [BACKUP] Gemini API Key status:', hasApiKey);
+        console.log('🔑 [FIX-GEMINI] API Key status:', hasApiKey);
         
         if (hasApiKey) {
-            const geminiResult = await this.sendToGemini(message, user.id);
-            if (geminiResult && geminiResult.success) {
-                console.log('✅ [BACKUP] Gemini u përgjigj me sukses!');
-                return geminiResult;
+            console.log('🚀 [FIX-GEMINI] Duke provuar Gemini për mesazh natyror...');
+            try {
+                const geminiResult = await this.sendToGemini(message, user.id);
+                if (geminiResult && geminiResult.success) {
+                    console.log('✅ [FIX-GEMINI] Gemini u përgjigj me sukses!');
+                    return geminiResult;
+                } else {
+                    console.log('❌ [FIX-GEMINI] Gemini kthye rezultat të pavlefshëm');
+                }
+            } catch (geminiError) {
+                console.error('❌ [FIX-GEMINI] Gemini dështoi:', geminiError.message);
             }
+        } else {
+            console.log('🔑 [FIX-GEMINI] Nuk ka API Key, duke përdorur përgjigje bazë');
         }
-        
-        // ✅ FALLBACK - PËRGJIGJE E THJESHTË
-        console.log('⚠️ [BACKUP] Duke kthyer përgjigje të thjeshtë');
+
+        // ✅ PËRGJIGJE BAZË NËSE NUK KA API KEY OSE GEMINI DËSHTOI
         return this.getBasicNaturalResponse(message);
         
     } catch (error) {
-        console.error('❌ [BACKUP] Gabim në handleNaturalLanguage:', error);
+        console.error('❌ [FIX-GEMINI] Gabim kritik në handleNaturalLanguage:', error);
         return {
             success: false,
             response: '❌ Gabim në server. Provo përsëri.'
@@ -378,65 +384,7 @@ async handleNaturalLanguage(message, user) {
     }
 }
 
-// ============================✅ FUNKSIONI PËR KONTROLLIMIN E OPENAI API KEY ====================================
-    
-async checkOpenAIAPIKey(userId) {
-    try {
-        const db = require('../database');
-        
-        const result = await new Promise((resolve, reject) => {
-            db.get(
-                'SELECT api_key FROM api_keys WHERE user_id = ? AND service_name = ?',
-                [userId, 'openai'],
-                (err, row) => {
-                    if (err) {
-                        console.error('❌ Gabim në kontrollimin e OpenAI API Key:', err);
-                        resolve(false);
-                    } else {
-                        resolve(!!row);
-                    }
-                }
-            );
-        });
-        
-        console.log('🔍 Statusi i OpenAI API Key:', result ? '✅ Ekziston' : '❌ Nuk ekziston');
-        return result;
-        
-    } catch (error) {
-        console.error('❌ Gabim në checkOpenAIAPIKey:', error);
-        return false;
-    }
-}
-
-// ✅ FUNKSIONI PËR MARRJEN E PREFERENCËS SË MOTORIT NGA DATABASE
-async getUserEnginePreference(userId) {
-    try {
-        const db = require('../database');
-        
-        const result = await new Promise((resolve, reject) => {
-            db.get(
-                'SELECT preferred_engine FROM user_preferences WHERE user_id = ?',
-                [userId],
-                (err, row) => {
-                    if (err) {
-                        console.error('❌ Gabim në marrjen e preferencës së motorit:', err);
-                        resolve(null);
-                    } else {
-                        resolve(row ? row.preferred_engine : null);
-                    }
-                }
-            );
-        });
-        
-        return result;
-        
-    } catch (error) {
-        console.error('❌ Gabim në getUserEnginePreference:', error);
-        return null;
-    }
-}
-
-// ✅ FUNKSIONI getBasicNaturalResponse MBRET (MOS E NDRYSHO)
+// ✅ FUNKSION I RI PËR PËRGJIGJE BAZË
 getBasicNaturalResponse(message) {
     const lowerMessage = message.toLowerCase();
     
@@ -466,7 +414,8 @@ getBasicNaturalResponse(message) {
         success: true,
         response: "E kuptoj! 😊 Përdorni /ndihmo për të parë të gjitha komandat e mia."
     };
-}    
+}
+    
     // ============================ ✅ KONTROLLIMI I KNOWLEDGE BASE =============================
     async checkKnowledgeBase(message, userId) {
         try {
