@@ -855,51 +855,54 @@ async function handleSendMessage() {
     }
 }
 
-// ========================== ✅ SIGUROHU QË sendToOpenAI EKZISTON DHE FUNKSIONON ============================
 
+// ==================================== 🔧 FIX PERMANENT - OPENAI & BUTONAT ==================================
+
+// ✅ KRIJO sendToOpenAI NËSE NUK EKZISTON
 if (typeof window.sendToOpenAI === 'undefined') {
-    console.log('🔧 Duke krijuar sendToOpenAI...');
-    
-window.sendToOpenAI = async function(message) {
-    console.log('🔮 sendToOpenAI: Duke dërguar TE OPENAI DIRECT!');
-    
-    try {
-        const response = await fetch('/api/openai-enhanced/chat', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            credentials: 'include',
-            body: JSON.stringify({ message })
-        });
+    window.sendToOpenAI = async function(message) {
+        console.log('🔮 sendToOpenAI: Duke dërguar TE OPENAI!');
         
-        console.log('📡 Statusi i OpenAI:', response.status);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+        try {
+            const response = await fetch('/api/openai-enhanced/chat', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                credentials: 'include',
+                body: JSON.stringify({ message })
+            });
+            
+            console.log('📡 Statusi i OpenAI:', response.status);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            console.log('📥 Përgjigje nga OpenAI:', data);
+            return data;
+            
+        } catch (error) {
+            console.error('❌ Gabim në sendToOpenAI:', error);
+            return {
+                success: false,
+                error: 'OpenAI: ' + error.message
+            };
         }
-        
-        const data = await response.json();
-        console.log('📥 Përgjigje nga OpenAI:', data);
-        return data;
-        
-    } catch (error) {
-        console.error('❌ Gabim në sendToOpenAI:', error);
-        return {
-            success: false,
-            error: 'OpenAI: ' + error.message
-        };
-    }
-};
+    };
+    console.log('✅ sendToOpenAI u krijua në main.js');
+}
 
-// ✅ VERIFIKO SISTEMIN PAS NGARKIMIT
+// ✅ VERIFIKO SISTEMIN
 setTimeout(() => {
-    console.log('🔍 VERIFIKIM I SISTEMIT:');
+    console.log('🔍 VERIFIKIM FINAL:');
     console.log('- aiEngineStatus:', window.aiEngineStatus);
+    console.log('- switchAIEngine:', typeof window.switchAIEngine);
     console.log('- sendToOpenAI:', typeof window.sendToOpenAI);
     console.log('- sendToGemini:', typeof sendToGemini);
-    console.log('- handleSendMessage:', typeof handleSendMessage);
+    console.log('🎉 OPENAI ËSHTË GATI PËR PËRDORIM!');
 }, 2000);
 
-// ==================== 🔧 SISTEMI I BUTONAVE - FIX PERMANENT ====================
+// ==================== 🔧 SISTEMI I BUTONAVE - FIX PERMANENT ====================================
 
 // ✅ INICIALIZO SISTEMIN E BUTONAVE
 function initializeAIEngineSystem() {
