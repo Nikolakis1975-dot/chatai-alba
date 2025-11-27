@@ -1,6 +1,6 @@
-// ======================================================
+// ========================================================
 // 🚀 RRUFE-TESLA 8.0 - MAIN PLATFORM LOADER
-// ======================================================
+// ========================================================
 
 console.log('🚀 RRUFE-TESLA 8.0 Platform po ngarkohet...');
 
@@ -782,183 +782,100 @@ function forceMemoryIntegration() {
     }
 }
 
-// Ekzekuto patch-in pas 5 sekondash
-setTimeout(forceMemoryIntegration, 5000);
+// ==================== 🔮 OPENAI CHAT INTEGRATION ====================
 
-// Gjithashtu ekzekuto kur bëhet login
-const originalLogin = window.login;
-if (originalLogin) {
-    window.login = function() {
-        const result = originalLogin.apply(this, arguments);
-        setTimeout(forceMemoryIntegration, 2000);
-        return result;
-    };
+// ✅ FUNKSION PËR TË SHTUAR MESAZHE NË CHAT
+function addMessageToChat(message, sender) {
+    const chat = document.getElementById('chat');
+    if (!chat) return;
+
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${sender}`;
+    
+    messageDiv.innerHTML = `
+        <div class="message-text">${message}</div>
+    `;
+    
+    chat.appendChild(messageDiv);
+    chat.scrollTop = chat.scrollHeight;
 }
 
-// ==================== 🔧 SISTEMI I BUTONAVE - FIX PERMANENT ====================
-
-// ✅ INICIALIZO SISTEMIN E BUTONAVE ME PRIORITET
-function initializeAIEngineSystem() {
-    console.log('🚀 Duke inicializuar sistemin e motorëve...');
-    
-    // ✅ VARIABLA GLOBALE ME DEFAULT GEMINI
-    window.aiEngineStatus = {
-        gemini: true,    // Default aktiv
-        openai: false
-    };
-    
-    // ✅ FUNKSIONI PËR NDRYSHIMIN E MOTORIT
-    window.switchAIEngine = function(engine) {
-        console.log('🔄 Duke ndryshuar motorin në:', engine);
+// ✅ FUNKSION PËR DËRGIM MESAZHESH NË OPENAI
+async function sendChatMessage(message) {
+    try {
+        console.log('🔮 Duke dërguar në OpenAI:', message);
         
-        if (engine !== 'gemini' && engine !== 'openai') {
-            console.error('❌ Motor i pavlefshëm:', engine);
-            return;
-        }
+        const response = await fetch('/api/openai-enhanced/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({ message })
+        });
         
-        // Çaktivizo të gjithë motorët
-        window.aiEngineStatus.gemini = false;
-        window.aiEngineStatus.openai = false;
+        const data = await response.json();
+        console.log('📥 Përgjigje nga OpenAI:', data);
         
-        // Aktivizo motorin e zgjedhur
-        window.aiEngineStatus[engine] = true;
-        
-        console.log('✅ Statusi i ri i motorëve:', window.aiEngineStatus);
-        
-        // Përditëso butonat
-        updateAIButtons();
-        
-        // Shfaq mesazh në chat
-        const engineName = engine === 'gemini' ? '🤖 Gemini' : '🔮 OpenAI';
-        if (typeof addMessageToChat !== 'undefined') {
-            addMessageToChat(`🔧 **Motor i ndryshuar:** ${engineName} është aktiv tani!`, 'system');
-        }
-        
-        // Ruaj preferencën në localStorage
-        localStorage.setItem('preferredAIEngine', engine);
-    };
-    
-    // ✅ FUNKSIONI PËR PËRDDITËSIMIN E BUTONAVE
-    function updateAIButtons() {
-        const geminiBtn = document.getElementById('gemini-engine-btn');
-        const openaiBtn = document.getElementById('openai-engine-btn');
-        
-        console.log('🎨 Duke përditësuar butonat...');
-        
-        if (geminiBtn) {
-            if (window.aiEngineStatus.gemini) {
-                geminiBtn.style.background = '#4CAF50';
-                geminiBtn.style.color = 'white';
-                geminiBtn.style.border = '2px solid #45a049';
-                geminiBtn.textContent = '🤖 Gemini ✅';
-                geminiBtn.title = 'Gemini është aktiv';
-            } else {
-                geminiBtn.style.background = '#666';
-                geminiBtn.style.color = '#ccc';
-                geminiBtn.style.border = '2px solid #555';
-                geminiBtn.textContent = '🤖 Gemini';
-                geminiBtn.title = 'Kliko për të aktivizuar Gemini';
-            }
-        }
-        
-        if (openaiBtn) {
-            if (window.aiEngineStatus.openai) {
-                openaiBtn.style.background = '#2196F3';
-                openaiBtn.style.color = 'white';
-                openaiBtn.style.border = '2px solid #1976D2';
-                openaiBtn.textContent = '🔮 OpenAI ✅';
-                openaiBtn.title = 'OpenAI është aktiv';
-            } else {
-                openaiBtn.style.background = '#666';
-                openaiBtn.style.color = '#ccc';
-                openaiBtn.style.border = '2px solid #555';
-                openaiBtn.textContent = '🔮 OpenAI';
-                openaiBtn.title = 'Kliko për të aktivizuar OpenAI';
-            }
-        }
-        
-        console.log('✅ Butonat u përditësuan:', window.aiEngineStatus);
-    }
-    
-    // ✅ SHTO EVENT LISTENERS PËR BUTONAT
-    function attachButtonListeners() {
-        const geminiBtn = document.getElementById('gemini-engine-btn');
-        const openaiBtn = document.getElementById('openai-engine-btn');
-        
-        console.log('🔗 Duke shtuar event listeners...');
-        
-        if (geminiBtn) {
-            // Hiq event listeners ekzistues
-            geminiBtn.replaceWith(geminiBtn.cloneNode(true));
-            const newGeminiBtn = document.getElementById('gemini-engine-btn');
-            
-            newGeminiBtn.addEventListener('click', function() {
-                console.log('🎯 Gemini butoni u klikua');
-                window.switchAIEngine('gemini');
-            });
-            console.log('✅ Gemini event listener u shtua');
+        if (data.success) {
+            return {
+                success: true,
+                response: data.response
+            };
         } else {
-            console.error('❌ Gemini butoni nuk u gjet!');
+            return {
+                success: false,
+                error: data.error || 'Gabim i panjohur nga OpenAI'
+            };
         }
-        
-        if (openaiBtn) {
-            // Hiq event listeners ekzistues
-            openaiBtn.replaceWith(openaiBtn.cloneNode(true));
-            const newOpenaiBtn = document.getElementById('openai-engine-btn');
-            
-            newOpenaiBtn.addEventListener('click', function() {
-                console.log('🎯 OpenAI butoni u klikua');
-                window.switchAIEngine('openai');
-            });
-            console.log('✅ OpenAI event listener u shtua');
-        } else {
-            console.error('❌ OpenAI butoni nuk u gjet!');
-        }
+    } catch (error) {
+        console.error('❌ Gabim në OpenAI chat:', error);
+        return {
+            success: false,
+            error: 'Gabim në lidhje me serverin'
+        };
     }
-    
-    // ✅ LOAD PREFERENCE NGA LOCALSTORAGE
-    function loadEnginePreference() {
-        const savedEngine = localStorage.getItem('preferredAIEngine');
-        if (savedEngine && (savedEngine === 'gemini' || savedEngine === 'openai')) {
-            console.log('💾 Duke ngarkuar motorin e ruajtur:', savedEngine);
-            window.switchAIEngine(savedEngine);
-        } else {
-            console.log('💾 Duke përdorur default motor: gemini');
-            window.switchAIEngine('gemini');
-        }
-    }
-    
-    // ✅ EKZEKUTO INICIALIZIMIN
-    setTimeout(() => {
-        console.log('🔧 Duke ekzekutuar inicializimin...');
-        attachButtonListeners();
-        loadEnginePreference();
-        updateAIButtons();
-        console.log('✅ Sistemi i motorëve u inicializua!');
-    }, 1000);
 }
 
-// ✅ MODIFIKO handleSendMessage PËR TË PËRDORUR MOTORIN E DUHUR
+// ✅ MBIVENDOS FUNKSIONIN EKZISTUES TË CHAT-IT
+document.addEventListener('DOMContentLoaded', function() {
+    // Gjej butonin e send dhe input-in
+    const sendBtn = document.getElementById('send-btn');
+    const userInput = document.getElementById('user-input');
+    
+    if (sendBtn && userInput) {
+        // Hiq event listener-et e vjetra
+        sendBtn.replaceWith(sendBtn.cloneNode(true));
+        userInput.replaceWith(userInput.cloneNode(true));
+        
+        // Shto event listener-et e rinj
+        const newSendBtn = document.getElementById('send-btn');
+        const newUserInput = document.getElementById('user-input');
+        
+        newSendBtn.addEventListener('click', handleSendMessage);
+        newUserInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                handleSendMessage();
+            }
+        });
+        
+        console.log('✅ OpenAI chat system u aktivizua');
+    }
+});
+
+// ✅ FUNKSIONI I RI PËR DËRGIM MESAZHESH
 async function handleSendMessage() {
     const userInput = document.getElementById('user-input');
     const message = userInput.value.trim();
     
-    console.log('🎯 handleSendMessage - Motor aktiv:', window.aiEngineStatus);
-    
     if (!message) return;
     
-    // Kontrollo komandë speciale
-    if (processSpecialCommands(message)) {
-        userInput.value = '';
-        return;
-    }
-    
-    // Shto mesazhin e user-it
+    // Shto mesazhin e user-it në chat
     addMessageToChat(message, 'user');
     userInput.value = '';
     
     try {
-        // Loading indicator
+        // Shfaq loading indicator
         const chat = document.getElementById('chat');
         const loadingDiv = document.createElement('div');
         loadingDiv.id = 'loading-indicator';
@@ -967,89 +884,20 @@ async function handleSendMessage() {
         chat.appendChild(loadingDiv);
         chat.scrollTop = chat.scrollHeight;
         
-        // ✅ ZGJIDH MOTORIN BAZË NË STATUSIN GLOBAL
-        let result;
+        // Përdor OpenAI direkt
+        const result = await sendChatMessage(message);
         
-        if (window.aiEngineStatus?.openai === true) {
-            console.log('🔮 🔮 🔮 FRONTEND: Duke dërguar te OpenAI!');
-            result = await window.sendToOpenAI(message);
-        } 
-        else {
-            console.log('🤖 🤖 🤖 FRONTEND: Duke dërguar te Gemini!');
-            result = await sendToGemini(message);
-        }
-        
-        // Hiq loading
+        // Hiq loading indicator
         document.getElementById('loading-indicator')?.remove();
         
-        // Shfaq rezultatin
         if (result.success) {
             addMessageToChat(result.response, 'bot');
         } else {
             addMessageToChat('❌ ' + result.error, 'bot');
         }
-        
     } catch (error) {
-        console.error('❌ Gabim:', error);
+        console.error('❌ Gabim në handleSendMessage:', error);
         document.getElementById('loading-indicator')?.remove();
-        addMessageToChat('❌ Gabim në server.', 'bot');
+        addMessageToChat('❌ Gabim në server. Provoni përsëri.', 'bot');
     }
 }
-
-// ✅ KRIJO sendToOpenAI NËSE NUK EKZISTON
-if (typeof window.sendToOpenAI === 'undefined') {
-    window.sendToOpenAI = async function(message) {
-        console.log('🔮 sendToOpenAI: Duke dërguar te OpenAI...');
-        
-        try {
-            const response = await fetch('/api/openai-direct/chat', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                credentials: 'include',
-                body: JSON.stringify({ message })
-            });
-            
-            console.log('📡 Statusi i OpenAI:', response.status);
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            console.log('📥 Përgjigje nga OpenAI:', data);
-            return data;
-            
-        } catch (error) {
-            console.error('❌ Gabim në sendToOpenAI:', error);
-            return {
-                success: false,
-                error: 'OpenAI: ' + error.message
-            };
-        }
-    };
-    console.log('✅ sendToOpenAI u krijua!');
-}
-
-// ✅ INICIALIZO KUR FAQJA NGARKOHET
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('📄 DOM u ngarkua - duke nisur sistemin e motorëve...');
-    setTimeout(initializeAIEngineSystem, 500);
-});
-
-// ✅ VERIFIKIM FINAL
-setTimeout(() => {
-    console.log('🔍 VERIFIKIM FINAL I SISTEMIT:');
-    console.log('- aiEngineStatus:', window.aiEngineStatus);
-    console.log('- switchAIEngine:', typeof window.switchAIEngine);
-    console.log('- sendToOpenAI:', typeof window.sendToOpenAI);
-    console.log('- sendToGemini:', typeof sendToGemini);
-    console.log('- handleSendMessage:', typeof handleSendMessage);
-    
-    // Testo butonat
-    const geminiBtn = document.getElementById('gemini-engine-btn');
-    const openaiBtn = document.getElementById('openai-engine-btn');
-    console.log('- geminiBtn:', geminiBtn ? '✅ U gjet' : '❌ Nuk u gjet');
-    console.log('- openaiBtn:', openaiBtn ? '✅ U gjet' : '❌ Nuk u gjet');
-    
-    console.log('🎉 SISTEMI I MOTORËVE ËSHTË GATI!');
-}, 3000);
