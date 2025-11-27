@@ -346,37 +346,77 @@ isTechnicalRequest(message) {
   
 // ============================ ✅ TRAJTIMI I GJUHËS NATYRORE ME NLU =============================
 
-// ✅ KORRIGJIMI I PLOTË I handleNaturalLanguage - Në commandService.js
+// ✅ KORRIGJIMI I PLOTË I handleNaturalLanguage - MBËSHTET TË DY MOTORËT
 async handleNaturalLanguage(message, user) {
     try {
-        console.log('🔍 [FIX-GEMINI] handleNaturalLanguage called:', message.substring(0, 50));
+        console.log('🔍 [FIX-OPENAI] handleNaturalLanguage called:', message.substring(0, 50));
         
-        // ✅ PROVO GEMINI NËSE KA API KEY
-        const hasApiKey = await this.checkApiKey(user.id);
-        console.log('🔑 [FIX-GEMINI] API Key status:', hasApiKey);
-        
-        if (hasApiKey) {
-            console.log('🚀 [FIX-GEMINI] Duke provuar Gemini për mesazh natyror...');
-            try {
-                const geminiResult = await this.sendToGemini(message, user.id);
-                if (geminiResult && geminiResult.success) {
-                    console.log('✅ [FIX-GEMINI] Gemini u përgjigj me sukses!');
-                    return geminiResult;
-                } else {
-                    console.log('❌ [FIX-GEMINI] Gemini kthye rezultat të pavlefshëm');
-                }
-            } catch (geminiError) {
-                console.error('❌ [FIX-GEMINI] Gemini dështoi:', geminiError.message);
+        // ✅ KONTROLLO MOTORIN AKTIV NË FRONTEND
+        let activeEngine = 'gemini'; // default
+        if (typeof window !== 'undefined' && window.aiEngineStatus) {
+            if (window.aiEngineStatus.openai === true) {
+                activeEngine = 'openai';
+                console.log('🔮 [FIX-OPENAI] OpenAI aktiv - duke dërguar te OpenAI');
+            } else if (window.aiEngineStatus.gemini === true) {
+                activeEngine = 'gemini';
+                console.log('🤖 [FIX-OPENAI] Gemini aktiv - duke dërguar te Gemini');
             }
-        } else {
-            console.log('🔑 [FIX-GEMINI] Nuk ka API Key, duke përdorur përgjigje bazë');
+        }
+        
+        console.log(`🎯 [FIX-OPENAI] Motor i aktivizuar: ${activeEngine}`);
+
+        // ✅ DËRGO TE MOTORI I ZGJEDHUR
+        if (activeEngine === 'openai') {
+            console.log('🔮 [FIX-OPENAI] Duke dërguar te OpenAI...');
+            try {
+                const response = await fetch('/api/openai-direct/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    credentials: 'include',
+                    body: JSON.stringify({ message })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    console.log('✅ [FIX-OPENAI] Përgjigje nga OpenAI');
+                    return data;
+                } else {
+                    console.log('❌ [FIX-OPENAI] OpenAI dështoi, duke provuar Gemini');
+                    activeEngine = 'gemini'; // Fallback në Gemini
+                }
+            } catch (openaiError) {
+                console.error('❌ [FIX-OPENAI] Gabim në OpenAI:', openaiError);
+                activeEngine = 'gemini'; // Fallback në Gemini
+            }
         }
 
-        // ✅ PËRGJIGJE BAZË NËSE NUK KA API KEY OSE GEMINI DËSHTOI
+        // ✅ NËSE GEMINI ËSHTË AKTIV OSE OPENAI DËSHTOI
+        if (activeEngine === 'gemini') {
+            console.log('🤖 [FIX-OPENAI] Duke dërguar te Gemini...');
+            try {
+                // Provo Gemini nëse ka API Key
+                const hasApiKey = await this.checkApiKey(user.id);
+                console.log('🔑 [FIX-OPENAI] Gemini API Key status:', hasApiKey);
+                
+                if (hasApiKey) {
+                    const geminiResult = await this.sendToGemini(message, user.id);
+                    if (geminiResult && geminiResult.success) {
+                        console.log('✅ [FIX-OPENAI] Gemini u përgjigj me sukses!');
+                        return geminiResult;
+                    }
+                }
+            } catch (geminiError) {
+                console.error('❌ [FIX-OPENAI] Gemini dështoi:', geminiError);
+            }
+        }
+
+        // ✅ FALLBACK - VETËM NËSE TË DY MOTORËT DËSHTOJNË
+        console.log('⚠️ [FIX-OPENAI] Të dy motorët dështuan, duke kthyer fallback');
         return this.getBasicNaturalResponse(message);
         
     } catch (error) {
-        console.error('❌ [FIX-GEMINI] Gabim kritik në handleNaturalLanguage:', error);
+        console.error('❌ [FIX-OPENAI] Gabim kritik në handleNaturalLanguage:', error);
         return {
             success: false,
             response: '❌ Gabim në server. Provo përsëri.'
@@ -384,7 +424,7 @@ async handleNaturalLanguage(message, user) {
     }
 }
 
-// ✅ FUNKSION I RI PËR PËRGJIGJE BAZË
+// ✅ FUNKSIONI getBasicNaturalResponse MBRET (MOS E NDRYSHO)
 getBasicNaturalResponse(message) {
     const lowerMessage = message.toLowerCase();
     
@@ -414,8 +454,7 @@ getBasicNaturalResponse(message) {
         success: true,
         response: "E kuptoj! 😊 Përdorni /ndihmo për të parë të gjitha komandat e mia."
     };
-}
-    
+}    
     // ============================ ✅ KONTROLLIMI I KNOWLEDGE BASE =============================
     async checkKnowledgeBase(message, userId) {
         try {
