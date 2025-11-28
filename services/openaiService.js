@@ -1,4 +1,4 @@
-// 🔥 services/openaiService.js - VERSION I RI ME DATABASE
+// ====================🔥 services/openaiService.js - VERSION I RI ME DATABASE ===============================
 const OpenAI = require("openai");
 const db = require('../database'); // ✅ Shto database connection
 
