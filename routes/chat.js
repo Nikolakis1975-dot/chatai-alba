@@ -25,77 +25,73 @@ async function checkApiKey(userId) {
     });
 }
 
-// ========================================== ✅ RUTA KRYESORE E RISHIKUAR =================================
+// =================================== ✅ RUTA RADIKALE - BYPASS COMMAND SERVICE ===============================
 
 router.post('/message', async (req, res) => {
     try {
         const { message, engine } = req.body;
         const userId = req.user?.userId || 1;
 
-        console.log('💬 [CHAT-FINAL] Mesazh i marrë:', message);
-        console.log('🔧 [CHAT-FINAL] Motor i kërkuar:', engine);
-        console.log('👤 [CHAT-FINAL] User ID:', userId);
+        console.log('💬 [RADICAL] Mesazh:', message);
+        console.log('🔧 [RADICAL] Motor:', engine);
+        console.log('👤 [RADICAL] User ID:', userId);
 
-        // ✅ PROVO COMMAND SERVICE ME DEBUG
-        try {
-            const commandService = require('../services/commandService');
-            
-            console.log('🔍 [CHAT-FINAL] CommandService u gjet:', !!commandService);
-            console.log('🔍 [CHAT-FINAL] handleNaturalLanguage ekziston:', !!commandService.handleNaturalLanguage);
-            
-            if (commandService && commandService.handleNaturalLanguage) {
-                console.log('✅ [CHAT-FINAL] Duke thirrur handleNaturalLanguage...');
-                
-                // ✅ THIRR DIRECT ME DEBUG
-                const result = await commandService.handleNaturalLanguage(message, { id: userId }, engine);
-                
-                console.log('📥 [CHAT-FINAL] Rezultati nga CommandService:', {
-                    success: result.success,
-                    hasResponse: !!result.response,
-                    hasError: !!result.error
+        // ✅ OPENAI DIRECT - PA COMMAND SERVICE
+        if (engine === 'openai') {
+            console.log('🔮 [RADICAL] Duke thirrur OpenAI direkt...');
+            try {
+                const response = await fetch(`http://localhost:3000/api/openai/chat`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ 
+                        message: message, 
+                        userId: userId 
+                    })
                 });
                 
-                return res.json(result);
-            } else {
-                console.log('❌ [CHAT-FINAL] handleNaturalLanguage nuk ekziston');
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                const result = await response.json();
+                console.log('📥 [RADICAL] OpenAI result:', result.success ? 'SUCCESS' : 'FAILED');
+                
+                if (result.success) {
+                    return res.json(result);
+                }
+            } catch (error) {
+                console.error('❌ [RADICAL] OpenAI direkt dështoi:', error.message);
             }
-        } catch (cmdError) {
-            console.error('❌ [CHAT-FINAL] CommandService gabim:', cmdError);
-            console.error('❌ [CHAT-FINAL] Stack:', cmdError.stack);
         }
 
-        // ✅ FALLBACK DIRECT NË OPENAI
-        console.log('🔄 [CHAT-FINAL] Duke përdorur fallback direkt në OpenAI...');
-        try {
-            const response = await fetch(`http://localhost:3000/api/openai/chat`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ 
-                    message: message, 
-                    userId: userId 
-                })
-            });
-            
-            const result = await response.json();
-            console.log('📥 [CHAT-FINAL] Rezultati fallback:', result.success ? 'SUCCESS' : 'FAILED');
-            return res.json(result);
-            
-        } catch (fallbackError) {
-            console.error('❌ [CHAT-FINAL] Fallback dështoi:', fallbackError);
+        // ✅ GEMINI DIRECT - PA COMMAND SERVICE
+        if (engine === 'gemini' || !engine) {
+            console.log('🤖 [RADICAL] Duke thirrur Gemini direkt...');
+            try {
+                // Provo të gjesh Gemini service direkt
+                const geminiService = require('../services/geminiRealService');
+                const result = await geminiService.processMessage(message, userId);
+                
+                if (result && result.success) {
+                    console.log('✅ [RADICAL] Gemini direkt u përgjigj!');
+                    return res.json(result);
+                }
+            } catch (error) {
+                console.error('❌ [RADICAL] Gemini direkt dështoi:', error.message);
+            }
         }
 
         // ✅ FALLBACK FINAL
-        console.log('⚠️ [CHAT-FINAL] Të gjitha metodat dështuan, duke kthyer fallback final');
+        console.log('⚠️ [RADICAL] Të dy motorët dështuan');
         res.json({
             success: true,
-            response: `🤖 **Fallback Final**: ${message} (Motor: ${engine})`
+            response: `🧠 **RRUFE-TESLA AI**\n\n"${message}"\n\n⚡ *Sistemi po proceson...*\n\n🔧 **Motor i kërkuar:** ${engine || 'auto'}`,
+            source: 'radical_fallback'
         });
         
     } catch (error) {
-        console.error('❌ [CHAT-FINAL] Gabim kritik:', error);
+        console.error('❌ [RADICAL] Gabim kritik:', error);
         res.json({ 
             success: false, 
-            response: '❌ Gabim kritik në server' 
+            response: '❌ Gabim në server' 
         });
     }
 });
