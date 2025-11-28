@@ -1,98 +1,65 @@
-// ====================🔥 services/openaiService.js - VERSION I KORREKT ===============================
-const OpenAI = require("openai");
-const db = require('../database');
+// 🔥 routes/openai.js - ROUTES FILE I SAKTË
+const express = require('express');
+const router = express.Router();
+const openaiService = require('../services/openaiService');
 
-const MODE = process.env.NODE_ENV || "production";
+console.log('🚀 OPENAI ROUTES - Loading...');
 
-const models = {
-  development: {
-    chat: "gpt-4o-mini",
-    stt: "gpt-4o-mini-transcribe", 
-    tts: "gpt-4o-mini-tts",
-  },
-  production: {
-    chat: "gpt-4o",
-    stt: "gpt-4o-transcribe",
-    tts: "gpt-4o-tts",
-  },
-};
-
-// ✅ FUNKSION KRYESOR PËR PROCESIM MESAZHESH - VERSION I KORREKT
-async function processMessage(message, userId = 1) {
-  try {
-    console.log('🔮 OpenAI Service - Duke procesuar mesazh për user:', userId);
-    
-    // ✅ 1. MER API KEY NGA DATABASE (PËR USER) - PRIORITET I PARË
-    const sqliteKey = await new Promise((resolve) => {
-      db.get(
-        "SELECT api_key FROM api_keys WHERE service_name='openai' AND user_id = ?",
-        [userId],
-        (err, row) => resolve(row)
-      );
-    });
-
-    // ✅ 2. ZGJIDH API KEY TË PËRDORUR
-    const apiKeyToUse = sqliteKey?.api_key
-      ? sqliteKey.api_key
-      : process.env.OPENAI_API_KEY;
-
-    if (!apiKeyToUse) {
-      throw new Error('Nuk u gjet asnjë API Key për OpenAI. Vendosni API Key në panelin OpenAI.');
-    }
-
-    console.log('🔑 API Key i përdorur:', apiKeyToUse.substring(0, 20) + '...');
-    console.log('🎯 Burimi:', sqliteKey?.api_key ? 'Database (User)' : 'Environment (Server)');
-    
-    // ✅ 3. KRIJO OPENAI CLIENT
-    const openai = new OpenAI({
-      apiKey: apiKeyToUse
-    });
-
-    // ✅ 4. THIRR OPENAI API
-    const completion = await openai.chat.completions.create({
-      model: getModel('chat'),
-      messages: [
-        { 
-          role: "system", 
-          content: "Ti je RRUFE-TESLA AI. Përgjigju në shqip dhe jep përgjigje të dobishme, kreative." 
-        },
-        { 
-          role: "user", 
-          content: message 
+// ✅ ROUTE PËR OPENAI CHAT
+router.post('/chat', async (req, res) => {
+    try {
+        const { message, userId } = req.body;
+        
+        console.log('🔮 OPENAI CHAT ROUTE - Message:', message);
+        
+        if (!message) {
+            return res.json({ success: false, error: 'Nuk ka mesazh' });
         }
-      ],
-      max_tokens: 1000,
-      temperature: 0.7
-    });
 
-    const responseText = completion.choices[0].message.content;
-    console.log('✅ OpenAI Service - Përgjigje e suksesshme!');
-    
-    return {
-      success: true,
-      response: `🔮 **OpenAI RRUFE-TESLA**: ${responseText}`,
-      tokens: completion.usage.total_tokens,
-      source: sqliteKey?.api_key ? 'user' : 'server'
-    };
+        // ✅ THIRR OPENAI SERVICE
+        const result = await openaiService.processMessage(message, userId || 1);
+        
+        console.log('📤 OPENAI CHAT RESULT:', result.success ? 'SUCCESS' : 'FAILED');
+        
+        res.json(result);
+        
+    } catch (error) {
+        console.error('❌ OPENAI CHAT ERROR:', error);
+        res.json({
+            success: false,
+            error: 'OpenAI chat error: ' + error.message
+        });
+    }
+});
 
-  } catch (error) {
-    console.error('❌ OpenAI Service - Gabim:', error.message);
-    
-    return {
-      success: false,
-      error: 'OpenAI: ' + error.message
-    };
-  }
-}
+// ✅ ROUTE PËR STATUS
+router.get('/status', async (req, res) => {
+    try {
+        const db = require('../database');
+        const userId = req.user?.id || 1;
+        
+        const apiKeyRow = await new Promise((resolve) => {
+            db.get(
+                'SELECT api_key FROM api_keys WHERE user_id = ? AND service_name = ?',
+                [userId, 'openai'],
+                (err, row) => resolve(row)
+            );
+        });
+        
+        res.json({
+            success: true,
+            hasApiKey: !!apiKeyRow,
+            message: apiKeyRow ? 'OpenAI i konfiguruar' : 'OpenAI nuk është konfiguruar',
+            userId: userId
+        });
+        
+    } catch (error) {
+        res.json({
+            success: false,
+            error: error.message
+        });
+    }
+});
 
-// ✅ FUNKSIONI GET MODEL (mbetet i njëjtë)
-function getModel(type) {
-  const env = MODE === "development" ? "development" : "production";
-  return models[env][type];
-}
-
-// ✅ EKSPORTO FUNKSIONET
-module.exports = {
-  processMessage,
-  getModel
-};
+// ✅ KY DUHET TË JETË RRESHTI I FUNDIT
+module.exports = router;
