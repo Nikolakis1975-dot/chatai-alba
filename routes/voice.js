@@ -273,4 +273,21 @@ router.delete("/cleanup", (req, res) => {
     }
 });
 
+// ================================ ✅ ROUTE TEST PËR VOICE SERVICE ====================================
+
+router.get('/test', async (req, res) => {
+  try {
+    console.log('🔊 Voice Service Test Route Called');
+    const voiceService = require('../services/voiceService');
+    const result = await voiceService.testVoiceService(req.user?.id || 1);
+    res.json(result);
+  } catch (error) {
+    console.error('❌ Voice Service Test Error:', error);
+    res.json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;
