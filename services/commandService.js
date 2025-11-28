@@ -191,37 +191,27 @@ async handleNaturalLanguage(message, user, preferredEngine = null) {
         }
         
         // ✅ OPENAI - PROVO DIREKT
-        if (preferredEngine === 'openai') {
-            console.log('🔮🔮🔮 [DEBUG-EKSTREM] OPENAI ACTIVATED - Calling directly...');
-            
-            try {
-                // Provo të gjesh openaiService
-                let openaiService;
-                try {
-                    openaiService = require('./openaiService');
-                    console.log('✅✅✅ [DEBUG-EKSTREM] openaiService loaded');
-                } catch (requireError) {
-                    console.error('❌❌❌ [DEBUG-EKSTREM] openaiService require failed:', requireError.message);
-                    throw new Error('openaiService not found');
-                }
-                
-                // Provo të thirrësh funksionin
-                const result = await openaiService.processMessage(message, user.id);
-                console.log('📥📥📥 [DEBUG-EKSTREM] OpenAI result:', result);
-                
-                if (result && result.success) {
-                    console.log('✅✅✅ [DEBUG-EKSTREM] OpenAI SUCCESS!');
-                    return result;
-                } else {
-                    console.log('❌❌❌ [DEBUG-EKSTREM] OpenAI returned error:', result?.error);
-                    throw new Error(result?.error || 'OpenAI failed');
-                }
-                
-            } catch (openaiError) {
-                console.error('❌❌❌ [DEBUG-EKSTREM] OpenAI service error:', openaiError.message);
-                console.error('❌❌❌ [DEBUG-EKSTREM] OpenAI stack:', openaiError.stack);
-            }
+       if (preferredEngine === 'openai') {
+    console.log('🔮 Duke thirrur OpenAI route të re...');
+    try {
+        const response = await fetch('/api/openai/chat', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ 
+                message: message, 
+                userId: user.id 
+            })
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            console.log('✅ OpenAI route u përgjigj!');
+            return result;
         }
+    } catch (error) {
+        console.error('❌ Gabim në OpenAI route:', error);
+    }
+}
         
         // ✅ FALLBACK NË GEMINI
         console.log('🤖🤖🤖 [DEBUG-EKSTREM] Falling back to Gemini...');
