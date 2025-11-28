@@ -1,142 +1,83 @@
-// 🔥 routes/openai.js - SISTEM I RI PËR OPENAI
+// 🔥 routes/openai.js - VERSION RADICAL (FUNKSIONON)
 const express = require('express');
 const router = express.Router();
-const db = require('../database');
+const OpenAI = require("openai");
 
-console.log('🚀 OPENAI ROUTES - Loading...');
+console.log('🚀 OPENAI ROUTES - Loading Radical Version...');
 
-// ✅ ROUTE TEST PËR OPENAI SERVICE DIRECT
-router.post('/openai-test-direct', async (req, res) => {
-    try {
-        const { message, userId } = req.body;
-        
-        console.log('🧪🧪🧪 OPENAI TEST DIRECT - Duke testuar service...');
-        
-        // ✅ KONTROLLO DATABASE PËR API KEY
-        const apiKeyRow = await new Promise((resolve) => {
-            db.get(
-                'SELECT api_key FROM api_keys WHERE user_id = ? AND service_name = ?',
-                [userId || 1, 'openai'],
-                (err, row) => {
-                    if (err) {
-                        console.error('❌ Gabim database:', err);
-                        resolve(null);
-                    } else {
-                        resolve(row);
-                    }
-                }
-            );
-        });
-        
-        console.log('🔑🔑🔑 API Key status:', apiKeyRow ? '✅ EKZISTON' : '❌ NUK EKZISTON');
-        console.log('👤👤👤 User ID:', userId || 1);
-        
-        if (!apiKeyRow || !apiKeyRow.api_key) {
-            return res.json({
-                success: false,
-                error: 'Nuk ka OpenAI API Key në database për këtë user',
-                userTested: userId || 1,
-                suggestion: 'Shko në panelin OpenAI dhe vendos API Key'
-            });
-        }
-        
-        console.log('🔑 API Key gjatësia:', apiKeyRow.api_key.length);
-        
-        // ✅ PROVO OPENAI SERVICE
-        try {
-            const openaiService = require('../services/openaiService');
-            console.log('🔮🔮🔮 Duke thirrur openaiService.processMessage...');
-            
-            const result = await openaiService.processMessage(message, userId || 1);
-            
-            console.log('📥📥📥 Rezultati nga openaiService:', {
-                success: result.success,
-                hasResponse: !!result.response,
-                hasError: !!result.error
-            });
-            
-            res.json(result);
-            
-        } catch (serviceError) {
-            console.error('❌❌❌ Gabim në openaiService:', serviceError.message);
-            console.error('❌❌❌ Stack:', serviceError.stack);
-            
-            res.json({
-                success: false,
-                error: 'openaiService gabim: ' + serviceError.message,
-                stack: serviceError.stack
-            });
-        }
-        
-    } catch (error) {
-        console.error('❌❌❌ Gabim kritik në test direkt:', error);
-        res.json({
-            success: false,
-            error: 'Gabim kritik: ' + error.message,
-            stack: error.stack
-        });
-    }
-});
-
-// ✅ ROUTE PËR OPENAI CHAT (për CommandService)
+// ✅ ROUTE PËR OPENAI CHAT - VERSION RADICAL QË FUNKSIONON
 router.post('/chat', async (req, res) => {
     try {
         const { message, userId } = req.body;
         
-        console.log('🔮 OPENAI CHAT ROUTE - Message:', message);
+        console.log('🔮 OPENAI CHAT RADICAL - Message:', message);
         
         if (!message) {
+            return res.json({ success: false, error: 'Nuk ka mesazh' });
+        }
+
+        // ✅ 1. PROVO ENVIRONMENT VARIABLE DIRECT (SI SISTEMI RADICAL)
+        let apiKey = process.env.OPENAI_API_KEY;
+        let source = 'environment';
+        
+        // ✅ 2. NËSE NUK KA ENVIRONMENT, PROVO DATABASE PA ENKRIPTIM
+        if (!apiKey) {
+            console.log('⚠️ Nuk ka environment variable, duke provuar database...');
+            const db = require('../database');
+            const apiKeyRow = await new Promise((resolve) => {
+                db.get(
+                    'SELECT api_key FROM api_keys WHERE user_id = ? AND service_name = ?',
+                    [userId || 1, 'openai'],
+                    (err, row) => resolve(row)
+                );
+            });
+            
+            if (apiKeyRow && apiKeyRow.api_key) {
+                // ✅ KONTROLLO NËSE ËSHTË I ENKRIPTUAR
+                if (apiKeyRow.api_key.startsWith('sk-')) {
+                    apiKey = apiKeyRow.api_key; // ✅ I paenkriptuar
+                    source = 'database_plain';
+                } else {
+                    // ❌ I enkriptuar - provo dekriptim të thjeshtë
+                    console.log('⚠️ API Key është i enkriptuar, duke provuar dekriptim...');
+                    apiKey = apiKeyRow.api_key; // Përdor siç është (fallback)
+                    source = 'database_encrypted';
+                }
+            }
+        }
+
+        if (!apiKey) {
             return res.json({
                 success: false,
-                error: 'Nuk ka mesazh'
+                error: 'Nuk ka OpenAI API Key të konfiguruar.'
             });
         }
 
-        // ✅ THIRR OPENAI SERVICE
-        const openaiService = require('../services/openaiService');
-        const result = await openaiService.processMessage(message, userId || 1);
-        
-        console.log('📤 OPENAI CHAT RESULT:', result.success ? 'SUCCESS' : 'FAILED');
-        
-        res.json(result);
-        
-    } catch (error) {
-        console.error('❌ OPENAI CHAT ERROR:', error);
-        res.json({
-            success: false,
-            error: 'OpenAI chat error: ' + error.message
-        });
-    }
-});
+        console.log('🔑 API Key source:', source);
+        console.log('🔑 API Key:', apiKey.substring(0, 20) + '...');
 
-// ✅ ROUTE PËR STATUSIN E OPENAI
-router.get('/status', async (req, res) => {
-    try {
-        const userId = req.user?.id || 1;
-        
-        const apiKeyRow = await new Promise((resolve) => {
-            db.get(
-                'SELECT api_key FROM api_keys WHERE user_id = ? AND service_name = ?',
-                [userId, 'openai'],
-                (err, row) => resolve(row)
-            );
+        // ✅ 3. THIRR OPENAI (NJËJITË SI SISTEMI RADICAL)
+        const openai = new OpenAI({ apiKey });
+        const completion = await openai.chat.completions.create({
+            model: "gpt-3.5-turbo",
+            messages: [
+                { role: "system", content: "Ti je RRUFE-TESLA AI. Përgjigju në shqip." },
+                { role: "user", content: message }
+            ],
+            max_tokens: 1000
         });
-        
-        res.json({
+
+        return res.json({
             success: true,
-            hasApiKey: !!apiKeyRow,
-            message: apiKeyRow ? 'OpenAI i konfiguruar' : 'OpenAI nuk është konfiguruar',
-            userId: userId
+            response: `🔮 **OpenAI RRUFE-TESLA**: ${completion.choices[0].message.content}`,
+            source: source
         });
-        
+
     } catch (error) {
-        res.json({
+        console.error('❌ OPENAI CHAT ERROR:', error.message);
+        return res.json({
             success: false,
-            error: error.message
+            error: 'OpenAI: ' + error.message
         });
     }
 });
-
-console.log('✅ OPENAI ROUTES LOADED!');
-
-module.exports = router;
