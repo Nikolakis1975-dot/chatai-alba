@@ -1,7 +1,7 @@
-// ==================== ✅ COMMAND SERVICE - 13.10.2024 ====================
+// ==================== ✅ COMMAND SERVICE - RRUFE TESLA ME OPENAI ====================
 // 📝 DESKRIMI: Shërbim për procesimin e të gjitha komandave të sistemit
-// 🎯 QËLLIMI: Një vend i vetëm për të gjitha komandat
-// 📥 INPUT: command string nga përdoruesi
+// 🎯 QËLLIMI: Një vend i vetëm për të gjitha komandat me support OpenAI
+// 📥 INPUT: command string nga përdoruesi + engine preference
 // 📤 OUTPUT: response ose action
 // 🔧 AUTORI: ChatAI ALBA Team
 // ========================================================================
@@ -26,7 +26,7 @@ try {
 class CommandService {
     
     // ============================ ✅ PROCESIMI I KOMANDËS KRYESORE =============================
-    async processCommand(command, user, message) {
+    async processCommand(command, user, message, engine = null) {
         try {
             const args = message.split(' ');
             const mainCommand = args[0].toLowerCase();
@@ -39,7 +39,7 @@ class CommandService {
 
             // ======================= ✅ ANALIZË NLU PËR MESAZHET JO-KOMANDË ======================
             if (!mainCommand.startsWith('/') && message.trim().length > 2) {
-                return await this.handleNaturalLanguage(message, user);
+                return await this.handleNaturalLanguage(message, user, engine);
             }
             
             switch (mainCommand) {
@@ -84,18 +84,14 @@ class CommandService {
                 
                 // ======================= ✅ KOMANDAT E REJA PËR STUDENTË ======================
                 case '/liber':
-                case '/liber':
                     return await this.studentBookCommand(args.slice(1).join(' '));
                 
-                case '/detyre':
                 case '/detyre':
                     return await this.studentHomeworkCommand(args.slice(1).join(' '));
                 
                 case '/matematike':
-                case '/matematike':
                     return await this.studentMathCommand(args.slice(1).join(' '));
                 
-                case '/referenc':
                 case '/referenc':
                     return {
                         success: true,
@@ -108,7 +104,6 @@ class CommandService {
                         response: `📋 **STRUKTURE PROJEKTI:** "${args.slice(1).join(' ')}"\n\n1. 🎯 **Hyrje** - Prezantimi i temes\n2. 📚 **Literatura** - Burimet e perdorura\n3. 🔬 **Metodologjia** - Si u krye kerkimi\n4. 📊 **Rezultatet** - Gjetjet kryesore\n5. 💭 **Diskutimi** - Analiza e rezultateve\n6. ✅ **Perfundimi** - Konkluzionet\n7. 📖 **Bibliografia** - Lista e burimeve`
                     };
                 
-                case '/fizike':
                 case '/fizike':
                     return {
                         success: true,
@@ -180,86 +175,147 @@ class CommandService {
         }
     }
 
-   // ============================ ✅ KONTROLLIMI I PYETJEVE TEKNIKE =============================
+    // ============================ ✅ TRAJTIMI I GJUHËS NATYRORE ME OPENAI & GEMINI =============================
+    async handleNaturalLanguage(message, user, preferredEngine = null) {
+        try {
+            console.log('🎯 [MOTOR COMMAND] Motor i kërkuar:', preferredEngine);
+            console.log('💬 [MOTOR COMMAND] Mesazh:', message.substring(0, 100));
+            
+            // ✅ OPENAI - NËSE ËSHTË ZGJEDHUR
+            if (preferredEngine === 'openai') {
+                console.log('🔮 [MOTOR COMMAND] OPENAI I AKTIVIZUAR - Duke thirrur OpenAI Service...');
+                try {
+                    const openaiService = require('./openaiService');
+                    const result = await openaiService.processMessage(message, user.id);
+                    
+                    if (result && result.success) {
+                        console.log('✅ [MOTOR COMMAND] OpenAI u përgjigj me sukses!');
+                        return result;
+                    } else {
+                        console.log('❌ [MOTOR COMMAND] OpenAI kthye gabim:', result?.error);
+                        console.log('🔄 [MOTOR COMMAND] Duke kthyer në Gemini...');
+                        // Fallback në Gemini
+                    }
+                } catch (error) {
+                    console.error('❌ [MOTOR COMMAND] Gabim në OpenAI Service:', error.message);
+                    console.log('🔄 [MOTOR COMMAND] Duke kthyer në Gemini...');
+                    // Fallback në Gemini
+                }
+            }
+            
+            // ✅ GEMINI - DEFAULT OSE FALLBACK
+            console.log('🤖 [MOTOR COMMAND] Duke përdorur Gemini...');
+            try {
+                const hasApiKey = await this.checkApiKey(user.id);
+                console.log('🔑 [MOTOR COMMAND] Gemini API Key status:', hasApiKey);
+                
+                if (hasApiKey) {
+                    const geminiResult = await this.sendToGemini(message, user.id);
+                    if (geminiResult && geminiResult.success) {
+                        console.log('✅ [MOTOR COMMAND] Gemini u përgjigj me sukses!');
+                        return geminiResult;
+                    }
+                }
+            } catch (geminiError) {
+                console.error('❌ [MOTOR COMMAND] Gemini dështoi:', geminiError);
+            }
+            
+            // ✅ FALLBACK FINAL - PËRGJIGJE BAZË
+            console.log('⚠️ [MOTOR COMMAND] Të dy motorët dështuan, duke kthyer fallback');
+            return this.getBasicNaturalResponse(message);
+            
+        } catch (error) {
+            console.error('❌ [MOTOR COMMAND] Gabim kritik:', error);
+            return this.getBasicNaturalResponse(message);
+        }
+    }
 
-isTechnicalQuestion(message) {
-    const lowerMessage = message.toLowerCase();
-    return (
-        lowerMessage.includes('kod') || 
-        lowerMessage.includes('code') || 
-        lowerMessage.includes('programim') || 
-        lowerMessage.includes('javascript') ||
-        lowerMessage.includes('python') || 
-        lowerMessage.includes('html') ||
-        lowerMessage.includes('css') || 
-        lowerMessage.includes('chatbot') ||
-        lowerMessage.includes('si te') || 
-        lowerMessage.includes('tutorial') || 
-        lowerMessage.includes('udhezime') ||
-        lowerMessage.includes('ndert') || 
-        lowerMessage.includes('krijo') ||
-        lowerMessage.includes('bej') || 
-        lowerMessage.includes('zbat') || 
-        lowerMessage.includes('implement') ||
-        lowerMessage.includes('funksion') || 
-        lowerMessage.includes('algorit') ||
-        lowerMessage.includes('database') || 
-        lowerMessage.includes('server') ||
-        lowerMessage.includes('web') || 
-        lowerMessage.includes('aplikacion') ||
-        lowerMessage.includes('app') || 
-        lowerMessage.includes('software') ||
-        lowerMessage.includes('softuer') || 
-        lowerMessage.includes('teknologji') ||
-        lowerMessage.includes('develop') || 
-        lowerMessage.includes('zhvill') ||
-        lowerMessage.includes('api') || 
-        lowerMessage.includes('backend') ||
-        lowerMessage.includes('frontend') || 
-        lowerMessage.includes('mobile') ||
-        lowerMessage.includes('android') || 
-        lowerMessage.includes('ios') ||
-        lowerMessage.includes('react') || 
-        lowerMessage.includes('vue') ||
-        lowerMessage.includes('angular') || 
-        lowerMessage.includes('node') ||
-        lowerMessage.includes('express') || 
-        lowerMessage.includes('mysql') ||
-        lowerMessage.includes('mongodb') || 
-        lowerMessage.includes('sql') ||
-        lowerMessage.includes('nosql') ||
+    // ✅ FUNKSION I RI PËR PËRGJIGJE BAZË
+    getBasicNaturalResponse(message) {
+        const lowerMessage = message.toLowerCase();
         
-        // Shto më shumë fjalë kyçe
-        lowerMessage.includes('website') ||
-        lowerMessage.includes('faqe') ||
-        lowerMessage.includes('aplikim') ||
-        lowerMessage.includes('projekt') ||
-        lowerMessage.includes('shembull') ||
-        lowerMessage.includes('struktur') ||
-        lowerMessage.includes('design') ||
-        lowerMessage.includes('dizajn') ||
-        lowerMessage.includes('layout') ||
-        lowerMessage.includes('stil') ||
-        lowerMessage.includes('format')
-    );
-}
+        if (lowerMessage.includes('përshëndetje') || lowerMessage.includes('pershendetje') || lowerMessage.includes('hello') || lowerMessage.includes('tung')) {
+            return {
+                success: true,
+                response: "Përshëndetje! 😊 Mirë se ju gjetëm! Si mund t'ju ndihmoj sot?"
+            };
+        }
+        
+        if (lowerMessage.includes('si je') || lowerMessage.includes('si jeni') || lowerMessage.includes('si kaloni')) {
+            return {
+                success: true, 
+                response: "Jam shumë mirë, faleminderit që pyetët! 😊 Çfarë mund të bëj për ju?"
+            };
+        }
+        
+        if (lowerMessage.includes('faleminderit') || lowerMessage.includes('rrofsh') || lowerMessage.includes('thanks')) {
+            return {
+                success: true,
+                response: "S'ka përse! 😊 Gjithmonë i lumtur të ndihmoj!"
+            };
+        }
 
-// ✅ FUNKSION I RI - PËR DETEKTIMIN E PYETJEVE TEKNIKE
-isTechnicalRequest(message) {
-    const lowerMessage = message.toLowerCase();
-    const techKeywords = [
-        'kod', 'code', 'javascript', 'html', 'css', 'python', 'java',
-        'programim', 'funksion', 'algorithm', 'api', 'database',
-        'server', 'backend', 'frontend', 'chatbot', 'website',
-        'aplikacion', 'software', 'ndërt', 'krijo', 'si të',
-        'tutorial', 'udhëzime', 'zbat', 'implement', 'algorit',
-        'react', 'vue', 'angular', 'node', 'express', 'mysql',
-        'mongodb', 'sql', 'nosql', 'mobile', 'android', 'ios'
-    ];
-    
-    return techKeywords.some(keyword => lowerMessage.includes(keyword));
-}
+        // ✅ PËRGJIGJE DEFAULT
+        return {
+            success: true,
+            response: "E kuptoj! 😊 Përdorni /ndihmo për të parë të gjitha komandat e mia."
+        };
+    }
 
+    // ============================ ✅ KONTROLLIMI I API KEY =============================
+    async checkApiKey(userId) {
+        try {
+            const db = require('../database');
+            
+            const result = await new Promise((resolve, reject) => {
+                db.get(
+                    'SELECT api_key FROM api_keys WHERE user_id = ? AND service_name = ?',
+                    [userId, 'gemini'],
+                    (err, row) => {
+                        if (err) {
+                            console.error('❌ Gabim ne kontrollimin e API Key:', err);
+                            resolve(false);
+                        } else {
+                            resolve(!!row);
+                        }
+                    }
+                );
+            });
+            
+            console.log('🔍 Statusi i API Key:', result ? '✅ Ekziston' : '❌ Nuk ekziston');
+            return result;
+            
+        } catch (error) {
+            console.error('❌ Gabim ne checkApiKey:', error);
+            return false;
+        }
+    }
+
+    // ============================ ✅ DËRGIMI TE GEMINI AI =============================
+    async sendToGemini(message, userId) {
+        try {
+            console.log('🚀 Duke derguar te GeminiRealService:', message.substring(0, 50));
+            
+            // ✅ PËRDOR GEMINI REAL SERVICE
+            const GeminiRealService = require('./geminiRealService');
+            const response = await GeminiRealService.processMessage(message, userId);
+            
+            if (response && response.success) {
+                console.log('✅ GeminiRealService u pergjigj me sukses');
+                return {
+                    success: true,
+                    response: response.response
+                };
+            } else {
+                console.log('❌ GeminiRealService deshtoi:', response?.response);
+                return null;
+            }
+            
+        } catch (error) {
+            console.error('❌ Gabim ne dergimin te GeminiRealService:', error.message);
+            return null;
+        }
+    }
 
     // ============================ ✅ TRAJTIMI I LLOGARITJEVE MATEMATIKE =============================
     async handleMathCalculation(message) {
@@ -343,525 +399,64 @@ isTechnicalRequest(message) {
         }
     }
 
-  
-// ============================ ✅ TRAJTIMI I GJUHËS NATYRORE ME NLU =============================
+    // ============ ✅ KOMANDA /NDIHMO - LISTA E KOMANDAVE ==============
+    async helpCommand(user) {
+        const commandsList = `
+👑 SISTEMI I KOMANDAVE - CHATAI ALBA 👑
 
-// ============================ ✅ TRAJTIMI I GJUHËS NATYRORE ME NLU =============================
+📋 KOMANDAT BAZE:
+• /ndihmo    - Shfaq kete liste
+• /wiki      - Kerko Wikipedia  
+• /perkthim  - Perktih tekst
+• /meso      - Meso dicka te re
+• /moti      - Informacion moti
+• /eksporto  - Eksporto historine
+• /importo   - Importo historine
+• /dil       - Dil nga llogaria
+• /apikey    - Vendos API Key
 
-// ✅ KORRIGJIMI I PLOTË I handleNaturalLanguage - ME SUPORT PËR OPENAI
-async handleNaturalLanguage(message, user, preferredEngine = null) {
-    try {
-        console.log('🔍 [ENGINE-FIX] handleNaturalLanguage called:', message.substring(0, 50));
-        console.log('🔧 [ENGINE-FIX] Motor i preferuar:', preferredEngine);
+🔍 KOMANDA KËRKIMI:
+• /gjej      - Kerkim i thelluar
+• /google    - Kerkim Google
+• /kerko     - Kerkim ne shqip
+
+🎓 KOMANDA PËR STUDENTË:
+• /student   - Menu e studentit
+• /liber     - Gjej libra shkollore
+• /detyre    - Ndihme per detyra
+• /matematike - Zgjidh probleme
+• /projekt   - Strukture projekti
+• /fizike    - Ndihme fizike
+• /kimi      - Ndihme kimi
+• /histori   - Historia shqiptare
+• /gjeografi - Gjeografi shqiptare
+
+👑 KOMANDA ADMIN:
+• /admin     - Komandat e adminit
+• /users     - Te gjithe perdoruesit
+• /stats     - Statistikat
+• /clearall  - Fshi te gjitha
+• /panel     - Paneli i adminit
+
+🚀 MOTORËT AI:
+• 🤖 Gemini  - Motor default
+• 🔮 OpenAI  - Motor alternativ
+
+💡 SHEMBUJ:
+• /wiki Albania
+• /perkthim anglisht "Miredita"
+• /meso "Kryeqyteti"|"Tirana"
+• /moti Tirana
+• /gjej Shqiperia
+• /google teknologji
+• /student
+• /liber "Matematike 10"
+        `.trim();
         
-        // ✅ KONTROLLO MOTORIN - VERSION I RI
-        let activeEngine = 'gemini'; // default
-        
-        if (preferredEngine) {
-            // Përdor motorin nga frontend
-            activeEngine = preferredEngine;
-            console.log(`🎯 [ENGINE-FIX] Motor nga frontend: ${activeEngine}`);
-        } else {
-            console.log(`🎯 [ENGINE-FIX] Duke përdorur motor default: ${activeEngine}`);
-        }
-        
-        console.log(`🎯 [ENGINE-FIX] Motor i aktivizuar: ${activeEngine}`);
-
-        // ✅ DËRGO TE MOTORI I ZGJEDHUR
-        if (activeEngine === 'openai') {
-            console.log('🔮 [ENGINE-FIX] Duke dërguar te OpenAI...');
-            try {
-                // Përdor rrugën e OpenAI direkt
-                const openaiService = require('./openaiService');
-                const openaiResult = await openaiService.processMessage(message, user.id);
-                
-                if (openaiResult && openaiResult.success) {
-                    console.log('✅ [ENGINE-FIX] Përgjigje nga OpenAI');
-                    return openaiResult;
-                } else {
-                    console.log('❌ [ENGINE-FIX] OpenAI dështoi, duke provuar Gemini');
-                    activeEngine = 'gemini'; // Fallback në Gemini
-                }
-            } catch (openaiError) {
-                console.error('❌ [ENGINE-FIX] Gabim në OpenAI:', openaiError);
-                activeEngine = 'gemini'; // Fallback në Gemini
-            }
-        }
-
-        // ✅ NËSE GEMINI ËSHTË AKTIV OSE OPENAI DËSHTOI
-        if (activeEngine === 'gemini') {
-            console.log('🤖 [ENGINE-FIX] Duke dërguar te Gemini...');
-            try {
-                const hasApiKey = await this.checkApiKey(user.id);
-                console.log('🔑 [ENGINE-FIX] Gemini API Key status:', hasApiKey);
-                
-                if (hasApiKey) {
-                    const geminiResult = await this.sendToGemini(message, user.id);
-                    if (geminiResult && geminiResult.success) {
-                        console.log('✅ [ENGINE-FIX] Gemini u përgjigj me sukses!');
-                        return geminiResult;
-                    }
-                }
-            } catch (geminiError) {
-                console.error('❌ [ENGINE-FIX] Gemini dështoi:', geminiError);
-            }
-        }
-
-        // ✅ FALLBACK NËSE TË DY MOTORËT DËSHTOJNË
-        console.log('⚠️ [ENGINE-FIX] Të dy motorët dështuan, duke kthyer fallback');
-        return this.getBasicNaturalResponse(message);
-        
-    } catch (error) {
-        console.error('❌ [ENGINE-FIX] Gabim kritik në handleNaturalLanguage:', error);
-        return {
-            success: false,
-            response: '❌ Gabim në server. Provo përsëri.'
-        };
-    }
-}
-
-// ✅ FUNKSION I RI PËR PËRGJIGJE BAZË
-getBasicNaturalResponse(message) {
-    const lowerMessage = message.toLowerCase();
-    
-    if (lowerMessage.includes('përshëndetje') || lowerMessage.includes('pershendetje') || lowerMessage.includes('hello') || lowerMessage.includes('tung')) {
         return {
             success: true,
-            response: "Përshëndetje! 😊 Mirë se ju gjetëm! Si mund t'ju ndihmoj sot?"
+            response: commandsList
         };
-    }
-    
-    if (lowerMessage.includes('si je') || lowerMessage.includes('si jeni') || lowerMessage.includes('si kaloni')) {
-        return {
-            success: true, 
-            response: "Jam shumë mirë, faleminderit që pyetët! 😊 Çfarë mund të bëj për ju?"
-        };
-    }
-    
-    if (lowerMessage.includes('faleminderit') || lowerMessage.includes('rrofsh') || lowerMessage.includes('thanks')) {
-        return {
-            success: true,
-            response: "S'ka përse! 😊 Gjithmonë i lumtur të ndihmoj!"
-        };
-    }
-
-    // ✅ PËRGJIGJE DEFAULT
-    return {
-        success: true,
-        response: "E kuptoj! 😊 Përdorni /ndihmo për të parë të gjitha komandat e mia."
-    };
-}
-    
-    // ============================ ✅ KONTROLLIMI I KNOWLEDGE BASE =============================
-    async checkKnowledgeBase(message, userId) {
-        try {
-            console.log('🔍 Duke kontrolluar Knowledge Base per:', message.substring(0, 50));
-            
-            const db = require('../database');
-            
-            // Kerko ne knowledge_base per pyetje te sakta
-            const exactKnowledge = await new Promise((resolve, reject) => {
-                db.get(
-                    'SELECT answer FROM knowledge_base WHERE user_id = ? AND LOWER(question) = LOWER(?)',
-                    [userId, message.trim()],
-                    (err, row) => {
-                        if (err) {
-                            console.error('❌ Gabim ne kerkimin e sakte te knowledge base:', err);
-                            resolve(null);
-                        } else {
-                            resolve(row);
-                        }
-                    }
-                );
-            });
-
-            if (exactKnowledge && exactKnowledge.answer) {
-                console.log('✅ Gjetem pergjigje te sakte ne Knowledge Base');
-                return {
-                    success: true,
-                    response: exactKnowledge.answer
-                };
-            }
-
-            // Kerko me pyetje te ngjashme (fjale kyce)
-            const similarKnowledge = await new Promise((resolve, reject) => {
-                db.get(
-                    'SELECT question, answer FROM knowledge_base WHERE user_id = ? AND ? LIKE "%" || question || "%"',
-                    [userId, message.toLowerCase()],
-                    (err, row) => {
-                        if (err) {
-                            console.error('❌ Gabim ne kerkimin e ngjashem te knowledge base:', err);
-                            resolve(null);
-                        } else {
-                            resolve(row);
-                        }
-                    }
-                );
-            });
-
-            if (similarKnowledge && similarKnowledge.answer) {
-                console.log('✅ Gjetem pergjigje te ngjasheme ne Knowledge Base');
-                return {
-                    success: true,
-                    response: similarKnowledge.answer
-                };
-            }
-
-            console.log('ℹ️ Nuk u gjet asnje pergjigje ne Knowledge Base');
-            return null;
-
-        } catch (error) {
-            console.error('❌ Gabim ne checkKnowledgeBase:', error);
-            return null;
-        }
-    }
-
-    // ============================ ✅ KONTROLLIMI I API KEY =============================
-    async checkApiKey(userId) {
-        try {
-            const db = require('../database');
-            
-            const result = await new Promise((resolve, reject) => {
-                db.get(
-                    'SELECT api_key FROM api_keys WHERE user_id = ? AND service_name = ?',
-                    [userId, 'gemini'],
-                    (err, row) => {
-                        if (err) {
-                            console.error('❌ Gabim ne kontrollimin e API Key:', err);
-                            resolve(false);
-                        } else {
-                            resolve(!!row);
-                        }
-                    }
-                );
-            });
-            
-            console.log('🔍 Statusi i API Key:', result ? '✅ Ekziston' : '❌ Nuk ekziston');
-            return result;
-            
-        } catch (error) {
-            console.error('❌ Gabim ne checkApiKey:', error);
-            return false;
-        }
-    }
-
-    // ============================ ✅ DËRGIMI TE GEMINI AI =============================
-    async sendToGemini(message, userId) {
-        try {
-            console.log('🚀 Duke derguar te GeminiRealService:', message.substring(0, 50));
-            
-            // ✅ PËRDOR GEMINI REAL SERVICE
-            const GeminiRealService = require('./geminiRealService');
-            const response = await GeminiRealService.processMessage(message, userId);
-            
-            if (response && response.success) {
-                console.log('✅ GeminiRealService u pergjigj me sukses');
-                return {
-                    success: true,
-                    response: response.response
-                };
-            } else {
-                console.log('❌ GeminiRealService deshtoi:', response?.response);
-                return null;
-            }
-            
-        } catch (error) {
-            console.error('❌ Gabim ne dergimin te GeminiRealService:', error.message);
-            return null;
-        }
-    }
-
-    // ============================ ✅ KONTROLLIMI I PYETJEVE TEKNIKE =============================
-
-isTechnicalQuestion(message) {
-    const lowerMessage = message.toLowerCase();
-    return (
-        lowerMessage.includes('kod') || 
-        lowerMessage.includes('code') || 
-        lowerMessage.includes('programim') || 
-        lowerMessage.includes('javascript') ||
-        lowerMessage.includes('python') || 
-        lowerMessage.includes('html') ||
-        lowerMessage.includes('css') || 
-        lowerMessage.includes('chatbot') ||
-        lowerMessage.includes('si te') || 
-        lowerMessage.includes('tutorial') || 
-        lowerMessage.includes('udhezime') ||
-        lowerMessage.includes('ndert') || 
-        lowerMessage.includes('krijo') ||
-        lowerMessage.includes('bej') || 
-        lowerMessage.includes('zbat') || 
-        lowerMessage.includes('implement') ||
-        lowerMessage.includes('funksion') || 
-        lowerMessage.includes('algorit') ||
-        lowerMessage.includes('database') || 
-        lowerMessage.includes('server') ||
-        lowerMessage.includes('web') || 
-        lowerMessage.includes('aplikacion') ||
-        lowerMessage.includes('app') || 
-        lowerMessage.includes('software') ||
-        lowerMessage.includes('softuer') || 
-        lowerMessage.includes('teknologji') ||
-        lowerMessage.includes('develop') || 
-        lowerMessage.includes('zhvill') ||
-        lowerMessage.includes('api') || 
-        lowerMessage.includes('backend') ||
-        lowerMessage.includes('frontend') || 
-        lowerMessage.includes('mobile') ||
-        lowerMessage.includes('android') || 
-        lowerMessage.includes('ios') ||
-        lowerMessage.includes('react') || 
-        lowerMessage.includes('vue') ||
-        lowerMessage.includes('angular') || 
-        lowerMessage.includes('node') ||
-        lowerMessage.includes('express') || 
-        lowerMessage.includes('mysql') ||
-        lowerMessage.includes('mongodb') || 
-        lowerMessage.includes('sql') ||
-        lowerMessage.includes('nosql') ||
-        
-        // Shto më shumë fjalë kyçe
-        lowerMessage.includes('website') ||
-        lowerMessage.includes('faqe') ||
-        lowerMessage.includes('aplikim') ||
-        lowerMessage.includes('projekt') ||
-        lowerMessage.includes('shembull') ||
-        lowerMessage.includes('struktur') ||
-        lowerMessage.includes('design') ||
-        lowerMessage.includes('dizajn') ||
-        lowerMessage.includes('layout') ||
-        lowerMessage.includes('stil') ||
-        lowerMessage.includes('format')
-    );
-}
-
-    // ============================ ✅ GJENERIMI I PËRGJIGJEVE BAZË NË NLU =============================
-
-   // services/commandService.js - MODIFIKO generateNLUResponse:
-
-async generateNLUResponse(message, analysis, user) {
-    const { intent, sentiment } = analysis;
-    const lowerMessage = message.toLowerCase();
- 
-const hasApiKey = await this.checkApiKey(user.id);
-    console.log('🎯 Generating NLU Response for:', {
-        message: message.substring(0, 50),
-        intent: intent.type,
-        sentiment: sentiment.sentiment
-    });
-
-    // ✅ HEQUR KONTROLLIN E BESIMIT DERISA TË RREGULLOHET NLU SERVICE
-    // ✅ PËRGJIGJE SPECIFIKE PËR PËRSHËNDETJE - PRIORITETI I PARË
-    if (intent.type === 'greeting' || 
-        lowerMessage.includes('pershendetje') || 
-        lowerMessage.includes('si jeni') || 
-        lowerMessage.includes('si je')) {
-        return {
-            success: true,
-            response: this.getGreetingResponse(sentiment, intent.parameters?.timeOfDay)
-        };
-    }
-
-        // ✅ PËRGJIGJE SPECIFIKE PËR PYETJE TË VEÇANTA
-        if (lowerMessage.includes('vjec') || lowerMessage.includes('mosha') || lowerMessage.includes('moshe')) {
-            return {
-                success: true,
-                response: "Une jam nje asistent virtual, krijuar per t'ju ndihmuar! 😊 Mosha ime nuk ka rendesi, por pervoja ime po rritet cdo dite me ndihmen tuaj!"
-            };
-        }
-
-        if (lowerMessage.includes('liber') || lowerMessage.includes('libra')) {
-            return {
-                success: true,
-                response: "Deshironi te gjeni nje liber? 📚 Mund te perdorni komanden /liber <emri_i_librit> per te kerkuar libra, ose me tregoni me shume se cfare lloj libri kerkoni!"
-            };
-        }
-
-        if ((lowerMessage.includes('moti') || lowerMessage.includes('temperatur')) && 
-            !lowerMessage.includes('si jeni') && !lowerMessage.includes('si je')) {
-            return {
-                success: true,
-                response: "Deshironi te dini informacion per motin? 🌤️ Perdorni komanden /moti <qyteti> per te marre informacion te detajuar te motit per cdo qytet!"
-            };
-        }
-
-        // ✅ PËR LOKACIONE - VETËM NËSE MESAZHI PËRMBAJNË FJALË SPECIFIKE
-        if ((lowerMessage.includes('ku ') || lowerMessage.includes('lokacion') || lowerMessage.includes('vendndodhje')) &&
-            !lowerMessage.includes('si jeni') && !lowerMessage.includes('si je') &&
-            !lowerMessage.includes('miku') && !lowerMessage.includes('pershendetje')) {
-            return {
-                success: true,
-                response: "Po kerkoj informacion per lokacione... 🗺️ Mund te me tregoni se cfare lokacioni specifik po kerkoni, ose te perdorni /google per kerkim te gjere!"
-            };
-        }
-
-        if (lowerMessage.includes('or') || lowerMessage.includes('koh') || lowerMessage.includes('sa eshte ora')) {
-            return {
-                success: true,
-                response: `⏰ Ora aktuale eshte: ${new Date().toLocaleTimeString('sq-AL')}. Cfare informacioni specifik per kohen keni nevoje?`
-            };
-        }
-
-        if (lowerMessage.includes('pse') || lowerMessage.includes('arsye') || lowerMessage.includes('shkak')) {
-            return {
-                success: true,
-                response: "Po perpiqem te kuptoj arsyen e pyetjes suaj... 🤔 Mund te me jepni me shume kontekst per t'ju dhene nje pergjigje me te sakte?"
-            };
-        }
-
-        // ✅ PËR PYETJE TEKNIKE/KOD - SUGJERO API KEY (vetem nese nuk ka API Key)
-        if (!hasApiKey && (lowerMessage.includes('kod') || lowerMessage.includes('code') || 
-            lowerMessage.includes('programim') || lowerMessage.includes('javascript') ||
-            lowerMessage.includes('python') || lowerMessage.includes('html') ||
-            lowerMessage.includes('css') || lowerMessage.includes('chatbot'))) {
-            
-            return {
-                success: true,
-                response: `💻 **NDIHME PER KOD/PROGRAMIM**\n\nPyetja juaj "${message}" kerkon nje pergjigje te avancuar teknike! 🤖\n\n🔑 **Vendosni API Key per Gemini AI:**\nPerdorni komanden /apikey <key_jote> per te aktivizuar asistencen e avancuar AI!\n\n📚 **Alternative:**\nPerdorni /google per te kerkuar ne internet.`
-            };
-        }
-
-        // ✅ PËRGJIGJE BAZË NË INTENT
-        switch (intent.type) {
-                        case 'gratitude':
-                return {
-                    success: true,
-                    response: "S'ka perse! 😊 Gjithmone i lumtur te ndihmoj!"
-                };
-
-            case 'question':
-                return {
-                    success: true,
-                    response: this.getQuestionResponse(message, intent, analysis.entities)
-                };
-
-            case 'request':
-                return {
-                    success: true,
-                    response: this.getRequestResponse(message, intent, analysis.entities)
-                };
-
-            case 'statement':
-                return {
-                    success: true,
-                    response: this.getStatementResponse(message, sentiment, analysis.entities)
-                };
-
-            default:
-                return {
-                    success: true,
-                    response: this.getIntelligentResponse(message, analysis)
-                };
-        }
-    }
-
-    // ============================ ✅ METODA PËR PËRGJIGJE SPECIFIKE =============================
-    
-    getGreetingResponse(sentiment, timeOfDay) {
-        const greetings = {
-            morning: ['Miremengjes! ☀️', 'Mengjes i mbare! 🌅', 'Fillim te mbare te dites! ✨'],
-            afternoon: ['Miredita! 🌞', 'Dita e mbare! 😊', 'Pershendetje! 👋'],
-            evening: ['Mirembrema! 🌙', 'Mbremje e mbare! 🌆', 'Pershendetje! 🙏']
-        };
-
-        const timeGreetings = greetings[timeOfDay] || greetings.afternoon;
-        const randomGreeting = timeGreetings[Math.floor(Math.random() * timeGreetings.length)];
-
-        if (sentiment.sentiment === 'positive') {
-            return `${randomGreeting} Jam i lumtur qe ju shoh! Si mund t'ju ndihmoj sot?`;
-        } else if (sentiment.sentiment === 'negative') {
-            return `${randomGreeting} Duket se keni nje dite te veshtire. Si mund t'ju ndihmoj?`;
-        }
-
-        return `${randomGreeting} Si mund t'ju sherbej sot?`;
-    }
-
-    getQuestionResponse(message, intent, entities) {
-        const lowerMessage = message.toLowerCase();
-        
-        if (lowerMessage.includes('si je') || lowerMessage.includes('si jeni')) {
-            return "Jam shume mire, faleminderit qe pyetet! 😊 Jam ketu per t'ju ndihmuar. Cfare mund te bej per ju?";
-        }
-
-        if (lowerMessage.includes('sa eshte') || lowerMessage.includes('llogarit') || lowerMessage.includes('bejn')) {
-            return "Duket se keni nevoje per ndihme me llogaritje! Mund te shkruani shprehjen matematikore direkt ose te perdorni /matematike <problem> per zgjidhje te detajuara.";
-        }
-
-        // Per pyetje komplekse teknike - SHKO TE GEMINI AUTOMATIKISHT
-        if (lowerMessage.includes('kod') || lowerMessage.includes('programim') || 
-            lowerMessage.includes('si te') || lowerMessage.includes('si te') ||
-            lowerMessage.includes('tutorial') || lowerMessage.includes('udhezime')) {
-            
-            return `🤔 **PYETJE KOMPLEKSE**\n\nPyetja juaj "${message}" duket se kerkon nje pergjigje te detajuar teknike!\n\n💡 **Zgjidhje:**\n• Vendosni API Key me /apikey <key_jote>\n• Ose perdorni /google per kerkim te thelluar\n• Ose /wiki per informacion baze`;
-        }
-
-        if (entities.locations && entities.locations.length > 0) {
-            return `Po kerkoj informacion per ${entities.locations.join(', ')}. Mund te perdorni /wiki per me shume detaje.`;
-        }
-
-        return "Kjo eshte nje pyetje interesante! Per pergjigje me te detajuara, vendosni API Key per Gemini AI ose perdorni komandat e kerkimit.";
-    }
-
-    getRequestResponse(message, intent, entities) {
-        const requestType = intent.parameters?.requestType;
-
-        if (requestType === 'help') {
-            return "Sigurisht, jam ketu per t'ju ndihmuar! Cfare saktesisht keni nevoje te dini? Ose mund te perdorni /ndihmo per te pare te gjitha mundesite.";
-        }
-
-        if (requestType === 'information') {
-            return "Me kenaqesi! Cfare lloj informacioni po kerkoni? Mund te perdorni /google per kerkim te gjere ne internet.";
-        }
-
-        return "Deshironi te beni dicka te vecante? Mund te me tregoni me shume ose te perdorni nje komande specifike nga menuja ime.";
-    }
-
-    getStatementResponse(message, sentiment, entities) {
-        if (sentiment.sentiment === 'positive') {
-            return "Kjo eshte e mrekullueshme! 😊 Faleminderit qe e ndertuat. A ka dicka tjeter me te cilen mund t'ju ndihmoj?";
-        }
-
-        if (sentiment.sentiment === 'negative') {
-            return "Duket se keni nje situate te veshtire. 😔 Jam ketu per t'ju ndihmuar nese deshironi te flisni per te ose te kerkoni ndihme.";
-        }
-
-        if (sentiment.irony) {
-            return "Hehe, e kuptoj! 😄 Ironia shqiptare eshte unike. Si mund t'ju ndihmoj vertet?";
-        }
-
-        return "E kuptoj. A deshironi te vazhdoni biseden ose te me kerkoni dicka specifike?";
-    }
-
-    getIntelligentResponse(message, analysis) {
-        // Pergjigje inteligjente bazuar ne analizen e plote
-        const { sentiment, entities, nuances } = analysis;
-
-        if (nuances.figurativeLanguage && nuances.figurativeLanguage.length > 0) {
-            const figurative = nuances.figurativeLanguage[0];
-            return `Ah, po perdorni nje shprehje figurativë! "${figurative.expression}" nenkupton "${figurative.meaning}". Shume elegante!`;
-        }
-
-        if (entities.persons && entities.persons.length > 0) {
-            return `Po flisni per ${entities.persons.join(', ')}? Interesante! Cfare deshironi te dini per ta?`;
-        }
-
-        if (sentiment.sentiment === 'ironic') {
-            return "Haha, e kap ironine! 😄 Shqiptaret jemi te njohur per humorin tone te thate. Si mund t'ju ndihmoj seriozisht?";
-        }
-
-        return "E kam degjuar! A mund te me jepni me shume kontekst ose te perdorni nje komande specifike per te marre ndihme me te detajuar?";
-    }
-
-    getSimpleResponse(message) {
-        const defaultResponses = [
-            "E kuptoj! Si mund t'ju ndihmoj me tej?",
-            "Shume mire! A deshironi te vazhdoni biseden?",
-            "E kam degjuar. Cfare mund te bej per ju?",
-            "Faleminderit per mesazhin! Si mund t'ju sherbej?",
-            "E shkelqyeshme! A keni nevoje per ndihme me dicka specifike?"
-        ];
-
-        return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
     }
 
     // ========================= ✅ KOMANDA /MESO - MËSIM I RI ===========================
@@ -961,180 +556,58 @@ const hasApiKey = await this.checkApiKey(user.id);
         };
     }
 
-    // ============ ✅ KOMANDA /NDIHMO - LISTA E KOMANDAVE ==============
-    async helpCommand(user) {
-        const commandsList = `
-👑 SISTEMI I KOMANDAVE - CHATAI ALBA 👑
-
-📋 KOMANDAT BAZE:
-• /ndihmo    - Shfaq kete liste
-• /wiki      - Kerko Wikipedia  
-• /perkthim  - Perktih tekst
-• /meso      - Meso dicka te re
-• /moti      - Informacion moti
-• /eksporto  - Eksporto historine
-• /importo   - Importo historine
-• /dil       - Dil nga llogaria
-• /apikey    - Vendos API Key
-
-🔍 KOMANDA KËRKIMI:
-• /gjej      - Kerkim i thelluar
-• /google    - Kerkim Google
-• /kerko     - Kerkim ne shqip
-
-🎓 KOMANDA PËR STUDENTË:
-• /student   - Menu e studentit
-• /liber     - Gjej libra shkollore
-• /detyre    - Ndihme per detyra
-• /matematike - Zgjidh probleme
-• /projekt   - Strukture projekti
-• /fizike    - Ndihme fizike
-• /kimi      - Ndihme kimi
-• /histori   - Historia shqiptare
-• /gjeografi - Gjeografi shqiptare
-
-👑 KOMANDA ADMIN:
-• /admin     - Komandat e adminit
-• /users     - Te gjithe perdoruesit
-• /stats     - Statistikat
-• /clearall  - Fshi te gjitha
-• /panel     - Paneli i adminit
-
-💡 SHEMBUJ:
-• /wiki Albania
-• /perkthim anglisht "Miredita"
-• /meso "Kryeqyteti"|"Tirana"
-• /moti Tirana
-• /gjej Shqiperia
-• /google teknologji
-• /student
-• /liber "Matematike 10"
-        `.trim();
-        
-        return {
-            success: true,
-            response: commandsList
-        };
-    }
-
-    // =========================== ✅ KOMANDA /WIKI - KËRKIM WIKIPEDIA =========================
-    async wikiCommand(searchTerm) {
-        if (!searchTerm) {
-            return {
-                success: false,
-                response: '❌ Ju lutem shkruani termin per kerkim: /wiki <fjale>'
-            };
-        }
-        
-        // Implementimi i Wikipedia API ketu
-        const wikiResult = await this.fetchWikipedia(searchTerm);
-        
-        return {
-            success: true,
-            response: wikiResult
-        };
-    }
-
-    // ========================= ✅ KOMANDA /PERKTHIM - PËRKTHIM I TEKSTIT =========================
-    async translationCommand(args) {
-        const [language, ...textParts] = args;
-        const text = textParts.join(' ');
-        
-        if (!language || !text) {
-            return {
-                success: false,
-                response: '❌ Format i gabuar: /perkthim <gjuha> <tekst>'
-            };
-        }
-        
-        // Implementimi i sherbimit te perkthimit
-        const translation = await this.translateText(text, language);
-        
-        return {
-            success: true,
-            response: translation
-        };
-    }
-
     // ======================== ✅ KOMANDA /MOTI - INFORMACION MOTI =============================
     async weatherCommand(city) {
-    if (!city) {
-        return {
-            success: false,
-            response: '❌ Ju lutem shkruani qytetin: /moti <qyteti>'
-        };
-    }
-    
-    console.log(`🌤️ Duke kërkuar motin për: ${city}`);
-    
-    try {
-        // ✅ IMPLEMENTIM I THJESHTË - MUND TË SHTOSH API TË VËRTETË MË VONË
-        const weatherInfo = await this.fetchWeather(city);
-        return weatherInfo;
-    } catch (error) {
-        console.error('❌ Gabim në weatherCommand:', error);
-        return {
-            success: true,
-            response: `🌤️ **INFORMACION MOTI PËR ${city.toUpperCase()}**\n\n🔹 Shërbimi i motit aktualisht po përmirësohet!\n🔹 Së shpejti do të keni informacion të detajuar të motit.\n\n💡 **Opsione alternative:**\n• Shkruani "mot" pa "/" për asistencë\n• Përdorni /google për kërkim në internet`
-        };
-    }
-}
-
-// ======================== ✅ FUNKSIONI FETCHWEATHER =============================
-async fetchWeather(city) {
-    try {
-        // ✅ IMPLEMENTIM I THJESHTË - MUND TË ZGJEROJ MË VONË
-        const weatherResponses = {
-            'tirana': `🌤️ **MOTI NË TIRANË**\n\n🌡️ Temperatura: 18°C - 25°C\n☀️ Kushtet: Diell me re të shpërndara\n💨 Era: 10 km/h nga veriu\n💧 Lagështia: 65%`,
-            'durrës': `🌤️ **MOTI NË DURRËS**\n\n🌡️ Temperatura: 20°C - 27°C\n🌊 Kushtet: Diell, det i qetë\n💨 Era: 8 km/h nga jugu\n💧 Lagështia: 70%`,
-            'vlora': `🌤️ **MOTI NË VLORË**\n\n🌡️ Temperatura: 19°C - 26°C\n🌊 Kushtet: Diell, det i këndshëm\n💨 Era: 12 km/h nga perëndimi\n💧 Lagështia: 68%`,
-            'shkodra': `🌤️ **MOTI NË SHKODËR**\n\n🌡️ Temperatura: 16°C - 23°C\n☁️ Kushtet: Pjesërisht me re\n💨 Era: 5 km/h nga lindja\n💧 Lagështia: 72%`
-        };
-
-        const normalizedCity = city.toLowerCase().trim();
-        
-        if (weatherResponses[normalizedCity]) {
+        if (!city) {
             return {
-                success: true,
-                response: weatherResponses[normalizedCity]
-            };
-        } else {
-            return {
-                success: true,
-                response: `🌤️ **MOTI NË ${city.toUpperCase()}**\n\n🔹 Shërbimi i motit për këtë qytet po përmirësohet!\n🔹 Temperatura e vlerësuar: 15°C - 24°C\n🔹 Kushtet e përgjithshme: Të këndshme\n\n💡 **Qytete të disponueshme:** Tirana, Durrës, Vlorë, Shkodër`
+                success: false,
+                response: '❌ Ju lutem shkruani qytetin: /moti <qyteti>'
             };
         }
-    } catch (error) {
-        console.error('❌ Gabim në fetchWeather:', error);
-        throw error;
-    }
-}
-
-    // ======================== ✅ KOMANDA /EKSPORTO - EKSPORT I HISTORISË =====================
-    async exportCommand(user) {
-        const exportData = await this.generateExport(user.id);
         
-        return {
-            success: true,
-            response: `📥 Eksporti u gjenerua! ${exportData}`,
-            exportData: exportData
-        };
+        console.log(`🌤️ Duke kërkuar motin për: ${city}`);
+        
+        try {
+            // ✅ IMPLEMENTIM I THJESHTË - MUND TË SHTOSH API TË VËRTETË MË VONË
+            const weatherInfo = await this.fetchWeather(city);
+            return weatherInfo;
+        } catch (error) {
+            console.error('❌ Gabim në weatherCommand:', error);
+            return {
+                success: true,
+                response: `🌤️ **INFORMACION MOTI PËR ${city.toUpperCase()}**\n\n🔹 Shërbimi i motit aktualisht po përmirësohet!\n🔹 Së shpejti do të keni informacion të detajuar të motit.\n\n💡 **Opsione alternative:**\n• Shkruani "mot" pa "/" për asistencë\n• Përdorni /google për kërkim në internet`
+            };
+        }
     }
 
-    // ======================== ✅ KOMANDA /IMPORTO - IMPORT I HISTORISË =====================
-    async importCommand(user, data) {
-        return {
-            success: true,
-            response: '📤 Importimi i historise...'
-        };
-    }
+    // ======================== ✅ FUNKSIONI FETCHWEATHER =============================
+    async fetchWeather(city) {
+        try {
+            // ✅ IMPLEMENTIM I THJESHTË - MUND TË ZGJEROJ MË VONË
+            const weatherResponses = {
+                'tirana': `🌤️ **MOTI NË TIRANË**\n\n🌡️ Temperatura: 18°C - 25°C\n☀️ Kushtet: Diell me re të shpërndara\n💨 Era: 10 km/h nga veriu\n💧 Lagështia: 65%`,
+                'durrës': `🌤️ **MOTI NË DURRËS**\n\n🌡️ Temperatura: 20°C - 27°C\n🌊 Kushtet: Diell, det i qetë\n💨 Era: 8 km/h nga jugu\n💧 Lagështia: 70%`,
+                'vlora': `🌤️ **MOTI NË VLORË**\n\n🌡️ Temperatura: 19°C - 26°C\n🌊 Kushtet: Diell, det i këndshëm\n💨 Era: 12 km/h nga perëndimi\n💧 Lagështia: 68%`,
+                'shkodra': `🌤️ **MOTI NË SHKODËR**\n\n🌡️ Temperatura: 16°C - 23°C\n☁️ Kushtet: Pjesërisht me re\n💨 Era: 5 km/h nga lindja\n💧 Lagështia: 72%`
+            };
 
-    // ======================== ✅ KOMANDA /DIL - DILJE =========================
-    async logoutCommand(user) {
-        return {
-            success: true,
-            response: '👋 Dalje nga sistemi...'
-        };
+            const normalizedCity = city.toLowerCase().trim();
+            
+            if (weatherResponses[normalizedCity]) {
+                return {
+                    success: true,
+                    response: weatherResponses[normalizedCity]
+                };
+            } else {
+                return {
+                    success: true,
+                    response: `🌤️ **MOTI NË ${city.toUpperCase()}**\n\n🔹 Shërbimi i motit për këtë qytet po përmirësohet!\n🔹 Temperatura e vlerësuar: 15°C - 24°C\n🔹 Kushtet e përgjithshme: Të këndshme\n\n💡 **Qytete të disponueshme:** Tirana, Durrës, Vlorë, Shkodër`
+                };
+            }
+        } catch (error) {
+            console.error('❌ Gabim në fetchWeather:', error);
+            throw error;
+        }
     }
 
     // ======================== ✅ KOMANDA /APIKEY - KONFIGURIM API KEY =========================
@@ -1156,21 +629,6 @@ async fetchWeather(city) {
     }
 
     // ================================== ✅ METODA NDIHMËSE ===================================
-    async fetchWikipedia(term) {
-        // Implementimi i Wikipedia API
-        return `📚 Wikipedia per "${term}": Informacioni do te shfaqet ketu...`;
-    }
-    
-    async translateText(text, language) {
-        // Implementimi i perkthimit
-        return `🌍 Perkthim (${language}): "${text}" → [Rezultati]`;
-    }
-    
-    async fetchWeather(city) {
-        // Implementimi i weather API
-        return `🌤️ Moti ne ${city}: Temperatura, Kushtet...`;
-    }
-    
     async saveToKnowledgeBase(question, answer) {
         try {
             const db = require('../database');
@@ -1199,11 +657,6 @@ async fetchWeather(city) {
     async saveApiKey(userId, apiKey) {
         // Implementimi i ruajtjes se API Key
         console.log(`🔑 Ruajtur API Key per user ${userId}`);
-    }
-
-    async generateExport(userId) {
-        // Implementimi i gjenerimit te eksportit
-        return "Eksporti i te dhenave";
     }
 
     // ================================ ✅ KOMANDË E PANJOHUR ===================================
