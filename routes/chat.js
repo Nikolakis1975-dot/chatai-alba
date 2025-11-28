@@ -148,20 +148,27 @@ function getSimpleNaturalResponse(message) {
 // });
 
 // ✅ RUTA PËR MESAZHET E DREJTPËRDREDHURA (PËR FRONTEND)
-
-// ✅ RUTA E THJESHTUAR PËR MESAZHE - PUNON ME URËN
 router.post('/message', async (req, res) => {
     try {
-        const { message, userId = 1 } = req.body;
-        
-        console.log('🔍 routes/chat/message: Marrë mesazh për urë:', message?.substring(0, 50));
+        const { message, engine } = req.body; // 🎯 Shto 'engine' parameter
+        const userId = req.user?.userId;
 
-        if (!message || message.trim() === '') {
-            return res.json({
-                success: false,
-                response: '❌ Ju lutem shkruani një mesazh'
-            });
-        }
+        console.log('💬 Mesazh i marrë:', message);
+        console.log('🔧 Motor i kërkuar nga frontend:', engine);
+
+        // ✅ KALO MOTORIN TE COMMAND SERVICE
+        const result = await commandService.handleNaturalLanguage(message, { id: userId }, engine);
+        
+        res.json(result);
+        
+    } catch (error) {
+        console.error('❌ Gabim në chat/message:', error);
+        res.json({
+            success: false,
+            response: 'Gabim në server'
+        });
+    }
+});
 
         // ✅ PERDOR DIRECT COMMAND SERVICE (JO URËN, SE URËRA ËSHTË NË APP.JS)
         console.log('🎯 routes/chat/message: Duke thirrur CommandService direkt...');
