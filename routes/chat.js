@@ -6,11 +6,8 @@ const router = express.Router();
 // ✅ IMPORT I KONSTANTAVE
 const constants = require('../config/constants');
 
-// ✅ IMPORT I COMMAND SERVICE - VETËM NJË HERË
-const CommandService = require('../services/commandService');
-const commandService = new CommandService();
+// ======================================== ✅ FUNKSIONET NDIHMËSE ME DATABASE ================================
 
-// ✅ FUNKSIONET NDIHMËSE ME DATABASE
 async function checkApiKey(userId) {
     return new Promise((resolve, reject) => {
         db.get(
@@ -28,64 +25,21 @@ async function checkApiKey(userId) {
     });
 }
 
-async function getUserById(userId) {
-    return new Promise((resolve, reject) => {
-        db.get(
-            'SELECT * FROM users WHERE id = ?',
-            [userId],
-            (err, user) => {
-                if (err) {
-                    console.error('❌ Gabim në getUserById:', err);
-                    resolve(null);
-                } else {
-                    resolve(user);
-                }
-            }
-        );
-    });
-}
+// ============================✅ RUTA KRYESORE PËR MESAZHET - VERSION I THJESHTË QË FUNKSIONON ====================
 
-function getSimpleNaturalResponse(message) {
-    const lowerMessage = message.toLowerCase();
-    
-    if (lowerMessage.includes('përshëndetje') || lowerMessage.includes('tungjatjeta') || lowerMessage.includes('hello')) {
-        return "Përshëndetje! 😊 Mirë se ju gjetëm! Si mund t'ju ndihmoj sot?";
-    }
-    
-    if (lowerMessage.includes('si je') || lowerMessage.includes('si jeni')) {
-        return "Jam shumë mirë, faleminderit që pyetët! 😊 Çfarë mund të bëj për ju?";
-    }
-    
-    if (lowerMessage.includes('faleminderit') || lowerMessage.includes('rrofsh') || lowerMessage.includes('thanks')) {
-        return "S'ka përse! 😊 Gjithmonë i lumtur të ndihmoj!";
-    }
-    
-    if (lowerMessage.includes('ndihmë') || lowerMessage.includes('help')) {
-        return "Sigurisht! 😊 Çfarë lloj ndihme keni nevojë? Mund të përdorni /ndihmo për të parë të gjitha mundësitë.";
-    }
-    
-    if (lowerMessage.includes('mirëmëngjes')) {
-        return "Mirëmëngjes! ☀️ Fillim të mbarë të ditës! Si mund t'ju ndihmoj sot?";
-    }
-    
-    if (lowerMessage.includes('mirëmbrëma')) {
-        return "Mirëmbrëma! 🌙 Mbrëmje e mbarë! Si mund t'ju shërbej?";
-    }
-    
-    return "E kuptoj! 😊 Përdorni /ndihmo për të parë të gjitha komandat e mia, ose më tregoni më shumë se çfarë keni nevojë.";
-}
-
-// ✅ RUTA KRYESORE PËR MESAZHET - ME SUPORT PËR MOTORËT
 router.post('/message', async (req, res) => {
     try {
         const { message, engine } = req.body; // 🎯 Shto 'engine' parameter
-        const userId = req.user?.userId;
+        const userId = req.user?.userId || 1;
 
         console.log('💬 Mesazh i marrë:', message);
         console.log('🔧 Motor i kërkuar nga frontend:', engine);
 
-        // ✅ KALO MOTORIN TE COMMAND SERVICE
-        const result = await commandService.handleNaturalLanguage(message, { id: userId }, engine);
+        // ✅ KTHE PËRGJIGJE TEST - SË PARI TESTO NËSE ROUTE-I FUNKSIONON
+        const result = {
+            success: true,
+            response: `🎯 **TEST I SUKSESSHËM!** \n\nPyetja: "${message}" \n\nMotor i kërkuar: ${engine} \n\n💡 Tani sistemi po funksionon!`
+        };
         
         res.json(result);
         
@@ -98,7 +52,43 @@ router.post('/message', async (req, res) => {
     }
 });
 
-// ✅ KODI EKZISTUES - RUTA PËR PANELIN E NDIHMËS ME BUTONA
+// ======================================= ✅ RUTA PËR PANELIN E NDIHMËS ======================================
+
+router.get('/help-panel', async (req, res) => {
+    try {
+        const helpPanel = `
+<div class="help-panel" style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+  <div class="panel-header" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px;">
+    <h2 style="margin: 0;">👑 CHATAI ALBA - PANELI I NDIHMËS 👑</h2>
+  </div>
+  <div class="panel-section" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
+    <h3 style="color: #2c3e50; margin-top: 0;">🔹 KOMANDAT BAZË</h3>
+    <div class="button-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+      <button onclick="useCommand('/ndihmo')" style="background: #4CAF50; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">📋 /ndihmo</button>
+      <button onclick="useCommand('/wiki ')" style="background: #2196F3; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">🌐 /wiki</button>
+    </div>
+  </div>
+</div>
+<script>
+function useCommand(command) {
+    const input = document.getElementById('user-input');
+    if (input) {
+        input.value = command;
+        input.focus();
+    }
+}
+</script>`;
+        
+        res.json({ success: true, response: helpPanel });
+        
+    } catch (error) {
+        console.error('❌ Gabim në panelin e ndihmës:', error);
+        res.json({ success: false, response: '❌ Gabim në server' });
+    }
+});
+
+// ========================== ✅ KODI EKZISTUES - RUTA PËR PANELIN E NDIHMËS ME BUTONA =============================
+
 router.get('/help-panel', async (req, res) => {
     try {
         const helpPanel = `
