@@ -175,60 +175,60 @@ class CommandService {
         }
     }
 
-    // ============================ ✅ TRAJTIMI I GJUHËS NATYRORE ME OPENAI & GEMINI =============================
-    async handleNaturalLanguage(message, user, preferredEngine = null) {
-        try {
-            console.log('🎯 [MOTOR COMMAND] Motor i kërkuar:', preferredEngine);
-            console.log('💬 [MOTOR COMMAND] Mesazh:', message.substring(0, 100));
-            
-            // ✅ OPENAI - NËSE ËSHTË ZGJEDHUR
-            if (preferredEngine === 'openai') {
-                console.log('🔮 [MOTOR COMMAND] OPENAI I AKTIVIZUAR - Duke thirrur OpenAI Service...');
-                try {
-                    const openaiService = require('./openaiService');
-                    const result = await openaiService.processMessage(message, user.id);
-                    
-                    if (result && result.success) {
-                        console.log('✅ [MOTOR COMMAND] OpenAI u përgjigj me sukses!');
-                        return result;
-                    } else {
-                        console.log('❌ [MOTOR COMMAND] OpenAI kthye gabim:', result?.error);
-                        console.log('🔄 [MOTOR COMMAND] Duke kthyer në Gemini...');
-                        // Fallback në Gemini
-                    }
-                } catch (error) {
-                    console.error('❌ [MOTOR COMMAND] Gabim në OpenAI Service:', error.message);
+    // ============================ ✅ TRAJTIMI I GJUHËS NATYRORE - VERSION I RI ME OPENAI =============================
+async handleNaturalLanguage(message, user, preferredEngine = null) {
+    try {
+        console.log('🎯 [MOTOR COMMAND] Motor i kërkuar:', preferredEngine);
+        console.log('💬 [MOTOR COMMAND] Mesazh:', message.substring(0, 100));
+        
+        // ✅ OPENAI - NËSE ËSHTË ZGJEDHUR
+        if (preferredEngine === 'openai') {
+            console.log('🔮 [MOTOR COMMAND] OPENAI I AKTIVIZUAR - Duke thirrur OpenAI Service...');
+            try {
+                const openaiService = require('./openaiService');
+                const result = await openaiService.processMessage(message, user.id);
+                
+                if (result && result.success) {
+                    console.log('✅ [MOTOR COMMAND] OpenAI u përgjigj me sukses!');
+                    return result;
+                } else {
+                    console.log('❌ [MOTOR COMMAND] OpenAI kthye gabim:', result?.error);
                     console.log('🔄 [MOTOR COMMAND] Duke kthyer në Gemini...');
                     // Fallback në Gemini
                 }
+            } catch (error) {
+                console.error('❌ [MOTOR COMMAND] Gabim në OpenAI Service:', error.message);
+                console.log('🔄 [MOTOR COMMAND] Duke kthyer në Gemini...');
+                // Fallback në Gemini
             }
-            
-            // ✅ GEMINI - DEFAULT OSE FALLBACK
-            console.log('🤖 [MOTOR COMMAND] Duke përdorur Gemini...');
-            try {
-                const hasApiKey = await this.checkApiKey(user.id);
-                console.log('🔑 [MOTOR COMMAND] Gemini API Key status:', hasApiKey);
-                
-                if (hasApiKey) {
-                    const geminiResult = await this.sendToGemini(message, user.id);
-                    if (geminiResult && geminiResult.success) {
-                        console.log('✅ [MOTOR COMMAND] Gemini u përgjigj me sukses!');
-                        return geminiResult;
-                    }
-                }
-            } catch (geminiError) {
-                console.error('❌ [MOTOR COMMAND] Gemini dështoi:', geminiError);
-            }
-            
-            // ✅ FALLBACK FINAL - PËRGJIGJE BAZË
-            console.log('⚠️ [MOTOR COMMAND] Të dy motorët dështuan, duke kthyer fallback');
-            return this.getBasicNaturalResponse(message);
-            
-        } catch (error) {
-            console.error('❌ [MOTOR COMMAND] Gabim kritik:', error);
-            return this.getBasicNaturalResponse(message);
         }
+        
+        // ✅ GEMINI - DEFAULT OSE FALLBACK
+        console.log('🤖 [MOTOR COMMAND] Duke përdorur Gemini...');
+        try {
+            const hasApiKey = await this.checkApiKey(user.id);
+            if (hasApiKey) {
+                const geminiResult = await this.sendToGemini(message, user.id);
+                if (geminiResult && geminiResult.success) {
+                    return geminiResult;
+                }
+            }
+        } catch (geminiError) {
+            console.error('❌ [MOTOR COMMAND] Gemini dështoi:', geminiError);
+        }
+        
+        // ✅ FALLBACK FINAL
+        console.log('⚠️ [MOTOR COMMAND] Të dy motorët dështuan, duke kthyer fallback');
+        return this.getBasicNaturalResponse(message);
+        
+    } catch (error) {
+        console.error('❌ [MOTOR COMMAND] Gabim kritik në handleNaturalLanguage:', error);
+        return {
+            success: false,
+            response: '❌ Gabim në server. Provo përsëri.'
+        };
     }
+}
 
     // ✅ FUNKSION I RI PËR PËRGJIGJE BAZË
     getBasicNaturalResponse(message) {
