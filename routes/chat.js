@@ -172,7 +172,7 @@ router.post('/message', async (req, res) => {
 
         // ✅ PERDOR DIRECT COMMAND SERVICE (JO URËN, SE URËRA ËSHTË NË APP.JS)
         console.log('🎯 routes/chat/message: Duke thirrur CommandService direkt...');
-        const CommandService = require('../services/commandService');
+        // const CommandService = require('../services/commandService');
         
         // Merr përdoruesin
         const db = require('../database');
