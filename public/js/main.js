@@ -1,3 +1,72 @@
+
+// Në main.js - shto në fillim të skedës
+console.log('🚀 RRUFE-TESLA AI System - Initializing...');
+
+// ✅ FUNKSION PËR AUTENTIFIKIM GLOBAL
+async function initializeUserSession() {
+    try {
+        console.log('👤 Duke inicializuar sesionin e përdoruesit...');
+        
+        // Kontrollo nëse ekziston sesion aktiv
+        const response = await fetch('/api/auth/status', {
+            credentials: 'include'
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log('✅ Sesioni i përdoruesit:', data);
+            
+            if (data.authenticated) {
+                window.currentUser = data.user;
+                console.log('👤 Përdorues i identifikuar:', data.user);
+                return true;
+            }
+        }
+        
+        // Nëse nuk ka sesion, krijo sesion të ri
+        console.log('🆕 Nuk ka sesion aktiv, duke krijuar sesion të ri...');
+        const createResponse = await fetch('/api/auth/auto-create', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            credentials: 'include',
+            body: JSON.stringify({
+                username: 'user_' + Date.now(),
+                autoCreate: true
+            })
+        });
+        
+        if (createResponse.ok) {
+            const userData = await createResponse.json();
+            console.log('✅ Sesion i ri u krijua:', userData);
+            window.currentUser = userData.user;
+            return true;
+        }
+        
+        console.log('❌ Nuk mund të krijohet sesion i ri');
+        return false;
+        
+    } catch (error) {
+        console.error('❌ Gabim në inicializimin e sesionit:', error);
+        return false;
+    }
+}
+
+// ✅ INICIALIZO SESIONIN PAS NGARKIMIT
+document.addEventListener('DOMContentLoaded', async function() {
+    console.log('📄 DOM u ngarkua, duke inicializuar sesionin...');
+    
+    const sessionReady = await initializeUserSession();
+    
+    if (sessionReady) {
+        console.log('🎯 Sesioni u inicializua, sistemi është gati!');
+        // Inicializo sistemin e motorëve pas sesionit
+        setTimeout(initializeAIEngineSystem, 500);
+    } else {
+        console.log('⚠️ Sistemi po funksionon pa sesion të plotë');
+        setTimeout(initializeAIEngineSystem, 500);
+    }
+});
+
 // ========================================================
 // 🚀 RRUFE-TESLA 8.0 - MAIN PLATFORM LOADER
 // ========================================================
