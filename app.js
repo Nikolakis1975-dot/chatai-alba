@@ -138,6 +138,7 @@ const ContextMemoryService = require('./services/contextMemoryService');
 const contextMemoryRoutes = require('./routes/context-memory');
 const contextMemoryService = new ContextMemoryService();
 const knowledgeRoutes = require('./routes/knowledge');
+import openaiRadicalRoutes from './routes/openai-radical.js';
 const openaiEnhancedRoutes = require('./routes/openai-enhanced');
 const openaiDirectRoutes = require('./routes/openai-direct');
 
@@ -167,6 +168,7 @@ app.use('/api/rrufe', rrufeRoutes);
 app.use('/api/context-memory', contextMemoryRoutes);
 app.use('/api/tll', tllActivationRoutes);
 app.use('/api/knowledge', knowledgeRoutes);
+app.use('/api/openai-radical', openaiRadicalRoutes);
 app.use('/api/openai-enhanced', openaiEnhancedRoutes);
 app.use('/api/openai-direct', openaiDirectRoutes);
 
