@@ -190,52 +190,40 @@ async handleNaturalLanguage(message, user, preferredEngine = null) {
         }
         
         // ✅ OPENAI - ME ROUTE TË RE
-        if (preferredEngine === 'openai') {
-            console.log('🔮 [COMMAND-FIX] Duke thirrur OpenAI route të re...');
-            try {
-                const response = await fetch('/api/openai/chat', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ 
-                        message: message, 
-                        userId: user.id 
-                    })
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error: ${response.status}`);
-                }
-                
-                const result = await response.json();
-                console.log('📥 [COMMAND-FIX] Përgjigje nga OpenAI route:', result.success ? 'SUCCESS' : 'FAILED');
-                
-                if (result && result.success) {
-                    console.log('✅ [COMMAND-FIX] OpenAI route u përgjigj me sukses!');
-                    return result;
-                } else {
-                    console.log('❌ [COMMAND-FIX] OpenAI route kthye gabim:', result?.error);
-                    throw new Error(result?.error || 'OpenAI route failed');
-                }
-                
-            } catch (error) {
-                console.error('❌ [COMMAND-FIX] Gabim në OpenAI route:', error.message);
-                // Fallback në Gemini
-                console.log('🔄 [COMMAND-FIX] Duke kthyer në Gemini...');
-            }
+        // ✅ OPENAI - ME ROUTE TË RE QË FUNKSIONON
+if (preferredEngine === 'openai') {
+    console.log('🔮 [COMMAND-FINAL] Duke thirrur OpenAI route...');
+    try {
+        const response = await fetch('/api/openai/chat', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ 
+                message: message, 
+                userId: user.id 
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error: ${response.status}`);
         }
         
-        // ✅ GEMINI FALLBACK
-        console.log('🤖🤖🤖 [DEBUG-EKSTREM] Falling back to Gemini...');
-        return this.getBasicNaturalResponse(message, user, preferredEngine);
+        const result = await response.json();
+        console.log('📥 [COMMAND-FINAL] Rezultati:', result.success ? 'SUCCESS' : 'FAILED');
+        
+        if (result && result.success) {
+            console.log('✅ [COMMAND-FINAL] OpenAI u përgjigj!');
+            return result;
+        } else {
+            console.log('❌ [COMMAND-FINAL] OpenAI dështoi:', result?.error);
+            throw new Error(result?.error || 'OpenAI route failed');
+        }
         
     } catch (error) {
-        console.error('❌❌❌ [DEBUG-EKSTREM] CRITICAL ERROR:', error);
-        return {
-            success: false,
-            response: '❌ Gabim kritik në sistem'
-        };
+        console.error('❌ [COMMAND-FINAL] Gabim:', error.message);
+        // Fallback në Gemini
+        console.log('🔄 [COMMAND-FINAL] Duke kthyer në Gemini...');
     }
-} 
+}
 
 // ============================✅ FUNKSION I RI PËR PËRGJIGJE BAZË - ME LIDHJE DIREKTE ME MOTORËT =======================
     
