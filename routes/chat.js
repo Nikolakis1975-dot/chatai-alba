@@ -29,26 +29,41 @@ async function checkApiKey(userId) {
 
 router.post('/message', async (req, res) => {
     try {
-        const { message, engine } = req.body; // 🎯 Shto 'engine' parameter
+        const { message, engine } = req.body;
         const userId = req.user?.userId || 1;
 
         console.log('💬 Mesazh i marrë:', message);
-        console.log('🔧 Motor i kërkuar nga frontend:', engine);
+        console.log('🔧 Motor i kërkuar:', engine);
 
-        // ✅ KTHE PËRGJIGJE TEST - SË PARI TESTO NËSE ROUTE-I FUNKSIONON
-        const result = {
-            success: true,
-            response: `🎯 **TEST I SUKSESSHËM!** \n\nPyetja: "${message}" \n\nMotor i kërkuar: ${engine} \n\n💡 Tani sistemi po funksionon!`
-        };
-        
-        res.json(result);
+        // ✅ PROVO COMMAND SERVICE PA new
+        try {
+            const commandService = require('../services/commandService');
+            
+            // Kontrollo nëse funksioni ekziston
+            if (commandService && commandService.handleNaturalLanguage) {
+                console.log('✅ CommandService u gjet, duke thirrur handleNaturalLanguage...');
+                const result = await commandService.handleNaturalLanguage(message, { id: userId }, engine);
+                res.json(result);
+            } else {
+                console.log('❌ handleNaturalLanguage nuk ekziston në CommandService');
+                // Fallback
+                res.json({
+                    success: true,
+                    response: `🤖 **Fallback**: ${message} (Motor: ${engine})`
+                });
+            }
+        } catch (cmdError) {
+            console.error('❌ CommandService gabim:', cmdError);
+            // Fallback nëse CommandService dështon
+            res.json({
+                success: true,
+                response: `🤖 **Fallback**: ${message} (Motor: ${engine})`
+            });
+        }
         
     } catch (error) {
-        console.error('❌ Gabim në chat/message:', error);
-        res.json({
-            success: false,
-            response: 'Gabim në server'
-        });
+        console.error('❌ Gabim:', error);
+        res.json({ success: false, response: 'Gabim në server' });
     }
 });
 
