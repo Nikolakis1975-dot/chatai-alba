@@ -178,54 +178,60 @@ class CommandService {
     // ============================ ✅ TRAJTIMI I GJUHËS NATYRORE - VERSION I RI ME OPENAI =============================
 async handleNaturalLanguage(message, user, preferredEngine = null) {
     try {
-        console.log('🎯 [MOTOR COMMAND] Motor i kërkuar:', preferredEngine);
-        console.log('💬 [MOTOR COMMAND] Mesazh:', message.substring(0, 100));
+        // ✅ DEBUG EKSTREM - VERIFIKO PARAMETRAT
+        console.log('🎯🎯🎯 [DEBUG-EKSTREM] handleNaturalLanguage CALLED!');
+        console.log('🎯🎯🎯 [DEBUG-EKSTREM] Message:', message);
+        console.log('🎯🎯🎯 [DEBUG-EKSTREM] User ID:', user?.id);
+        console.log('🎯🎯🎯 [DEBUG-EKSTREM] Preferred Engine:', preferredEngine);
+        console.log('🎯🎯🎯 [DEBUG-EKSTREM] Stack:', new Error().stack);
         
-        // ✅ OPENAI - NËSE ËSHTË ZGJEDHUR
+        // ✅ KONTROLLO NËSE JEMI NË FUNKSIONIN E DUHUR
+        if (!message) {
+            console.log('❌❌❌ [DEBUG-EKSTREM] MESSAGE IS EMPTY!');
+        }
+        
+        // ✅ OPENAI - PROVO DIREKT
         if (preferredEngine === 'openai') {
-            console.log('🔮 [MOTOR COMMAND] OPENAI I AKTIVIZUAR - Duke thirrur OpenAI Service...');
+            console.log('🔮🔮🔮 [DEBUG-EKSTREM] OPENAI ACTIVATED - Calling directly...');
+            
             try {
-                const openaiService = require('./openaiService');
+                // Provo të gjesh openaiService
+                let openaiService;
+                try {
+                    openaiService = require('./openaiService');
+                    console.log('✅✅✅ [DEBUG-EKSTREM] openaiService loaded');
+                } catch (requireError) {
+                    console.error('❌❌❌ [DEBUG-EKSTREM] openaiService require failed:', requireError.message);
+                    throw new Error('openaiService not found');
+                }
+                
+                // Provo të thirrësh funksionin
                 const result = await openaiService.processMessage(message, user.id);
+                console.log('📥📥📥 [DEBUG-EKSTREM] OpenAI result:', result);
                 
                 if (result && result.success) {
-                    console.log('✅ [MOTOR COMMAND] OpenAI u përgjigj me sukses!');
+                    console.log('✅✅✅ [DEBUG-EKSTREM] OpenAI SUCCESS!');
                     return result;
                 } else {
-                    console.log('❌ [MOTOR COMMAND] OpenAI kthye gabim:', result?.error);
-                    console.log('🔄 [MOTOR COMMAND] Duke kthyer në Gemini...');
-                    // Fallback në Gemini
+                    console.log('❌❌❌ [DEBUG-EKSTREM] OpenAI returned error:', result?.error);
+                    throw new Error(result?.error || 'OpenAI failed');
                 }
-            } catch (error) {
-                console.error('❌ [MOTOR COMMAND] Gabim në OpenAI Service:', error.message);
-                console.log('🔄 [MOTOR COMMAND] Duke kthyer në Gemini...');
-                // Fallback në Gemini
+                
+            } catch (openaiError) {
+                console.error('❌❌❌ [DEBUG-EKSTREM] OpenAI service error:', openaiError.message);
+                console.error('❌❌❌ [DEBUG-EKSTREM] OpenAI stack:', openaiError.stack);
             }
         }
         
-        // ✅ GEMINI - DEFAULT OSE FALLBACK
-        console.log('🤖 [MOTOR COMMAND] Duke përdorur Gemini...');
-        try {
-            const hasApiKey = await this.checkApiKey(user.id);
-            if (hasApiKey) {
-                const geminiResult = await this.sendToGemini(message, user.id);
-                if (geminiResult && geminiResult.success) {
-                    return geminiResult;
-                }
-            }
-        } catch (geminiError) {
-            console.error('❌ [MOTOR COMMAND] Gemini dështoi:', geminiError);
-        }
-        
-        // ✅ FALLBACK FINAL
-        console.log('⚠️ [MOTOR COMMAND] Të dy motorët dështuan, duke kthyer fallback');
-        return await this.getBasicNaturalResponse(message, user, preferredEngine);
+        // ✅ FALLBACK NË GEMINI
+        console.log('🤖🤖🤖 [DEBUG-EKSTREM] Falling back to Gemini...');
+        return this.getBasicNaturalResponse(message, user, preferredEngine);
         
     } catch (error) {
-        console.error('❌ [MOTOR COMMAND] Gabim kritik në handleNaturalLanguage:', error);
+        console.error('❌❌❌ [DEBUG-EKSTREM] CRITICAL ERROR:', error);
         return {
             success: false,
-            response: '❌ Gabim në server. Provo përsëri.'
+            response: '❌ Gabim kritik në sistem'
         };
     }
 }
