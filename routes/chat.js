@@ -32,66 +32,99 @@ router.post('/message', async (req, res) => {
         const { message, engine } = req.body;
         const userId = req.user?.userId || 1;
 
-        console.log('💬 [RADICAL] Mesazh:', message);
-        console.log('🔧 [RADICAL] Motor:', engine);
-        console.log('👤 [RADICAL] User ID:', userId);
+        console.log('💬 [FINAL] Mesazh:', message);
+        console.log('🔧 [FINAL] Motor:', engine);
+        console.log('👤 [FINAL] User ID:', userId);
 
-        // ✅ OPENAI DIRECT - PA COMMAND SERVICE
+        // ✅ OPENAI - IMPLEMENTIM I THJESHTË QË FUNKSIONON
         if (engine === 'openai') {
-            console.log('🔮 [RADICAL] Duke thirrur OpenAI direkt...');
+            console.log('🔮 [FINAL] OPENAI I AKTIVIZUAR - Duke thirrur direkt...');
+            
             try {
-                const response = await fetch(`http://localhost:3000/api/openai/chat`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ 
-                        message: message, 
-                        userId: userId 
-                    })
+                // Kontrollo nëse ka API Key
+                const db = require('../database');
+                const apiKeyRow = await new Promise((resolve) => {
+                    db.get(
+                        'SELECT api_key FROM api_keys WHERE user_id = ? AND service_name = ?',
+                        [userId, 'openai'],
+                        (err, row) => resolve(row)
+                    );
                 });
                 
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const apiKeyToUse = apiKeyRow?.api_key || process.env.OPENAI_API_KEY;
                 
-                const result = await response.json();
-                console.log('📥 [RADICAL] OpenAI result:', result.success ? 'SUCCESS' : 'FAILED');
-                
-                if (result.success) {
-                    return res.json(result);
+                if (!apiKeyToUse) {
+                    return res.json({
+                        success: false,
+                        error: 'Nuk ka OpenAI API Key të konfiguruar'
+                    });
                 }
+
+                console.log('🔑 [FINAL] Duke përdorur API Key:', apiKeyToUse.substring(0, 20) + '...');
+
+                // ✅ THIRR OPENAI DIRECT
+                const { OpenAI } = require('openai');
+                const openai = new OpenAI({ apiKey: apiKeyToUse });
+                
+                const completion = await openai.chat.completions.create({
+                    model: "gpt-3.5-turbo",
+                    messages: [
+                        { 
+                            role: "system", 
+                            content: "Ti je RRUFE-TESLA AI. Përgjigju në shqip." 
+                        },
+                        { 
+                            role: "user", 
+                            content: message 
+                        }
+                    ],
+                    max_tokens: 1000
+                });
+
+                const responseText = completion.choices[0].message.content;
+                console.log('✅ [FINAL] OpenAI u përgjigj me sukses!');
+                
+                return res.json({
+                    success: true,
+                    response: `🔮 **OpenAI RRUFE-TESLA**: ${responseText}`,
+                    source: 'openai_direct'
+                });
+
             } catch (error) {
-                console.error('❌ [RADICAL] OpenAI direkt dështoi:', error.message);
+                console.error('❌ [FINAL] OpenAI gabim:', error.message);
+                return res.json({
+                    success: false,
+                    error: 'OpenAI: ' + error.message
+                });
             }
         }
 
-        // ✅ GEMINI DIRECT - PA COMMAND SERVICE
-        if (engine === 'gemini' || !engine) {
-            console.log('🤖 [RADICAL] Duke thirrur Gemini direkt...');
-            try {
-                // Provo të gjesh Gemini service direkt
-                const geminiService = require('../services/geminiRealService');
-                const result = await geminiService.processMessage(message, userId);
-                
-                if (result && result.success) {
-                    console.log('✅ [RADICAL] Gemini direkt u përgjigj!');
-                    return res.json(result);
-                }
-            } catch (error) {
-                console.error('❌ [RADICAL] Gemini direkt dështoi:', error.message);
+        // ✅ FALLBACK NË GEMINI
+        console.log('🤖 [FINAL] Duke përdorur Gemini fallback...');
+        try {
+            const geminiService = require('../services/geminiRealService');
+            const result = await geminiService.processMessage(message, userId);
+            
+            if (result && result.success) {
+                return res.json(result);
             }
+        } catch (geminiError) {
+            console.error('❌ [FINAL] Gemini dështoi:', geminiError.message);
         }
 
         // ✅ FALLBACK FINAL
-        console.log('⚠️ [RADICAL] Të dy motorët dështuan');
+        console.log('⚠️ [FINAL] Të gjitha metodat dështuan');
         res.json({
             success: true,
-            response: `🧠 **RRUFE-TESLA AI**\n\n"${message}"\n\n⚡ *Sistemi po proceson...*\n\n🔧 **Motor i kërkuar:** ${engine || 'auto'}`,
-            source: 'radical_fallback'
+            response: `🧠 **FALLBACK**: ${message}`,
+            source: 'final_fallback'
         });
         
     } catch (error) {
-        console.error('❌ [RADICAL] Gabim kritik:', error);
+        console.error('❌ [FINAL] Gabim kritik:', error);
         res.json({ 
             success: false, 
-            response: '❌ Gabim në server' 
+            error: 'Gabim kritik: ' + error.message 
         });
     }
 });
