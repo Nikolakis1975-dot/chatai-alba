@@ -6,8 +6,9 @@ const router = express.Router();
 // ✅ IMPORT I KONSTANTAVE
 const constants = require('../config/constants');
 
-// ✅ IMPORT I COMMAND SERVICE
+// ✅ IMPORT I COMMAND SERVICE - VETËM NJË HERË
 const CommandService = require('../services/commandService');
+const commandService = new CommandService();
 
 // ✅ FUNKSIONET NDIHMËSE ME DATABASE CORRECT
 async function checkApiKey(userId) {
@@ -74,80 +75,7 @@ function getSimpleNaturalResponse(message) {
     return "E kuptoj! 😊 Përdorni /ndihmo për të parë të gjitha komandat e mia, ose më tregoni më shumë se çfarë keni nevojë.";
 }
 
-// ✅ RUTA KRYESORE PËR MESAZHET - TRAJTON TË GJITHA MESAZHET
-// router.post('/', async (req, res) => {
- //   try {
-   //     const { message, userId } = req.body;
-   //     
-   //     console.log('🔍 routes/chat: Marrë mesazh:', message?.substring(0, 50));
-//
-    //    if (!message) {
-    //        return res.status(constants.HTTP_STATUS.BAD_REQUEST).json({
-   //             success: false,
-   //             response: '❌ Ju lutem shkruani një mesazh'
-  //          });
-  //      }
-//
-     //   // ✅ SË PARI PROVO ME COMMAND SERVICE (SISTEMI I RI)
-     //   try {
-     //       const user = await getUserById(userId || 1);
-    //        
-     //       if (user) {
-     //           console.log('🎯 routes/chat: Duke thirrur CommandService...');
-     //           const result = await CommandService.processCommand('chat', user, message);
-     //           
-    //            // ✅ NËSE COMMAND SERVICE E TRAJTON, KTHEJ PËRGJIGJEN
-    //            if (result.success) {
-   //                 console.log('✅ routes/chat: CommandService e trajtoi mesazhin');
-   //                 return res.status(constants.HTTP_STATUS.OK).json(result);
-   //             }
-   //         }
-  //      } catch (cmdError) {
-  //          console.error('❌ routes/chat: Gabim në CommandService:', cmdError.message);
-  //      }
-//
-    //    // ✅ NËSE COMMAND SERVICE NUK E TRAJTON, SHKO TE SISTEMI I VJETËR (GEMINI)
-     //   console.log('🔄 routes/chat: CommandService nuk e trajtoi, duke shkuar te Gemini...');
-    //    
-     //   try {
-    //        // Kontrollo nëse ka API Key
-    //        const hasApiKey = await checkApiKey(userId || 1);
-    //        
-    //        if (!hasApiKey) {
-     //           // ✅ NËSE NUK KA API KEY, KTHE PËRGJIGJE BAZË
-     //           console.log('ℹ️ routes/chat: Nuk ka API Key, duke kthyer përgjigje bazë');
-     //           return res.status(constants.HTTP_STATUS.OK).json({
-     //               success: true,
-     //               response: getSimpleNaturalResponse(message)
-     //           });
-    //        }
-    //        
-    //        // Nëse ka API Key, shko te Gemini
-    //        console.log('🔑 routes/chat: Ka API Key, duke shkuar te Gemini...');
-   //         const geminiResponse = await require('./gemini').processMessage(message, userId || 1);
-   //         return res.status(constants.HTTP_STATUS.OK).json({
-   //             success: true,
-    //            response: geminiResponse
-   //         });
-   //         
-  //      } catch (geminiError) {
-  //          console.error('❌ routes/chat: Gabim në Gemini:', geminiError);
-  //          return res.status(constants.HTTP_STATUS.OK).json({
- //               success: true,
- //               response: getSimpleNaturalResponse(message)
-  //          });
-//        }
-//
-//    } catch (error) {
-//        console.error('❌ routes/chat: Gabim i përgjithshëm:', error);
-//        return res.status(constants.HTTP_STATUS.INTERNAL_ERROR).json({
- //           success: false,
-   //         response: '❌ Gabim në server. Provo përsëri.'
-   //     });
- //   }
-// });
-
-// ✅ RUTA PËR MESAZHET E DREJTPËRDREDHURA (PËR FRONTEND)
+// ✅ RUTA PËR MESAZHET E DREJTPËRDREDHURA (PËR FRONTEND) - VERSION I KORRIGJUAR
 router.post('/message', async (req, res) => {
     try {
         const { message, engine } = req.body; // 🎯 Shto 'engine' parameter
@@ -170,38 +98,7 @@ router.post('/message', async (req, res) => {
     }
 });
 
-        // ✅ PERDOR DIRECT COMMAND SERVICE (JO URËN, SE URËRA ËSHTË NË APP.JS)
-        console.log('🎯 routes/chat/message: Duke thirrur CommandService direkt...');
-        // const CommandService = require('../services/commandService');
-        
-        // Merr përdoruesin
-        const db = require('../database');
-        const user = await new Promise((resolve) => {
-            db.get('SELECT * FROM users WHERE id = ?', [userId], (err, user) => {
-                resolve(user || { id: userId, username: 'user' + userId });
-            });
-        });
-
-        const result = await CommandService.processCommand('', user, message);
-        
-        console.log('📊 routes/chat/message: Rezultati:', {
-            success: result.success,
-            messageLength: result.response?.length || 0
-        });
-        
-        return res.json(result);
-
-    } catch (error) {
-        console.error('❌ routes/chat/message: Gabim i përgjithshëm:', error);
-        return res.json({
-            success: false,
-            response: '❌ Gabim në server. Provo përsëri.'
-        });
-    }
-});
-
-// ✅ KODI EKZISTUES - MERR HISTORINË E BISEDËS
-// ✅ RUTA E RE PËR PANELIN E NDIHMËS ME BUTONA - Shto në routes/chat.js ekzistues
+// ✅ KODI EKZISTUES - RUTA PËR PANELIN E NDIHMËS ME BUTONA
 router.get('/help-panel', async (req, res) => {
     try {
         const helpPanel = `
@@ -453,98 +350,6 @@ router.post('/feedback', (req, res) => {
         }
     );
 });
-
-// ============================================ Sistemi lokal i inteligjencës =======================================
-class LocalChatIntelligence {
-    constructor() {
-        this.knowledgeBase = {
-            greetings: {
-                patterns: ['pershendetje', 'hello', 'hi', 'tung', 'ciao', 'mirëmëngjes', 'mirëdita', 'mirëmbrëma'],
-                responses: [
-                    'Përshëndetje! 😊 Mirë se ju gjetëm!',
-                    "Hello! Si mund t'ju ndihmoj sot?",
-                    'Tungjatjeta! Gëzohem që ju shoh!',
-                    'Përshëndetje! Çfarë mund të bëj për ju?'
-                ]
-            },
-            farewells: {
-                patterns: ['mirupafshim', 'bye', 'lamtumirë', 'shëndet', 'flm', 'faleminderit'],
-                responses: [
-                    'Mirupafshim! 😊 Ishte kënaqësi të flisja me ju!',
-                    'Lamtumirë! Shpresoj të flasim sërish!',
-                    'Faleminderit! Ju uroj një ditë të mbarë!',
-                    'Shëndet! Mos u largoni shumë!'
-                ]
-            },
-            help: {
-                patterns: ['ndihmo', 'help', 'komanda', 'si punon', 'çfarë mund të bësh'],
-                responses: [
-                    'Unë jam RRUFE-TESLA! Mund të:\n• Të përgjigjem pyetjeve bazë\n• Të llogarit matematikë\n• Të kujtoj bisedat tona\n• Të ndihmoj me informacione\n\nShkruani pyetjen tuaj!'
-                ]
-            },
-            math: {
-                patterns: ['+', '-', '*', '/', '^', 'llogarit', 'sa është'],
-                responses: []
-            },
-            // ... më shumë kategori
-        };
-    }
-
-    processMessage(message) {
-        const lowerMessage = message.toLowerCase();
-        
-        // Kontrollo nëse është matematikë
-        if (this.isMathExpression(message)) {
-            return this.solveMath(message);
-        }
-        
-        // Kontrollo kategori të tjera
-        for (let category in this.knowledgeBase) {
-            for (let pattern of this.knowledgeBase[category].patterns) {
-                if (lowerMessage.includes(pattern)) {
-                    const responses = this.knowledgeBase[category].responses;
-                    return responses[Math.floor(Math.random() * responses.length)];
-                }
-            }
-        }
-        
-        // Përgjigje default
-        return this.getDefaultResponse();
-    }
-
-    isMathExpression(text) {
-        const mathRegex = /^[\d+\-*/().^ ]+$/;
-        return mathRegex.test(text.replace(/\s/g, ''));
-    }
-
-    solveMath(expression) {
-        try {
-            // Pastro dhe siguro shprehjen
-            let cleanExpr = expression.replace(/[^0-9+\-*/().^]/g, '');
-            
-            // Zëvendëso ^ me ** për fuqi
-            cleanExpr = cleanExpr.replace(/\^/g, '**');
-            
-            // Përdor Function constructor për llogaritje të sigurt
-            const result = Function(`"use strict"; return (${cleanExpr})`)();
-            
-            return `🧮 Rezultati: **${result}**`;
-        } catch (error) {
-            return '❌ Nuk mund ta llogaris shprehjen matematikore.';
-        }
-    }
-
-    getDefaultResponse() {
-        const defaultResponses = [
-            'Interesante! Çfarë mendoni ju për këtë?',
-            'E kuptoj! A keni ndonjë pyetje tjetër?',
-            'Faleminderit për këtë informacion!',
-            'Po dëgjoj... vazhdoni ju lutem!',
-            'Kjo është shumë interesante!'
-        ];
-        return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
-    }
-}
 
 // =================== 🔮 OPENAI CHAT ROUTE - VERSION I OPTIMIZUAR =====================
 router.post('/openai', async (req, res) => {
