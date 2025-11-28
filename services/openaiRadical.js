@@ -1,4 +1,4 @@
-// 🔥 OPENAI RADICAL SERVICE - COMMONJS VERSION - RRUFE TESLA
+// ===========🔥 OPENAI RADICAL SERVICE - COMMONJS VERSION - RRUFE TESLA =============
 const OpenAI = require("openai");
 
 console.log('🚀 OPENAI RADICAL SERVICE - RRUFE TESLA - Initializing...');
