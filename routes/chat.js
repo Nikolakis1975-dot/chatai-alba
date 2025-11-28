@@ -27,105 +27,47 @@ async function checkApiKey(userId) {
 
 // =================================== ✅ RUTA RADIKALE - BYPASS COMMAND SERVICE ===============================
 
+// ✅ ROUTE I RI DIRECT PËR OPENAI
 router.post('/message', async (req, res) => {
     try {
         const { message, engine } = req.body;
         const userId = req.user?.userId || 1;
 
-        console.log('💬 [FINAL] Mesazh:', message);
-        console.log('🔧 [FINAL] Motor:', engine);
-        console.log('👤 [FINAL] User ID:', userId);
+        console.log('💬 [CHAT-UI] Mesazh:', message);
+        console.log('🔧 [CHAT-UI] Motor:', engine);
 
-        // ✅ OPENAI - IMPLEMENTIM I THJESHTË QË FUNKSIONON
+        // ✅ OPENAI DIRECT - PA COMMAND SERVICE
         if (engine === 'openai') {
-            console.log('🔮 [FINAL] OPENAI I AKTIVIZUAR - Duke thirrur direkt...');
-            
+            console.log('🔮 [CHAT-UI] Duke thirrur OpenAI direkt...');
             try {
-                // Kontrollo nëse ka API Key
-                const db = require('../database');
-                const apiKeyRow = await new Promise((resolve) => {
-                    db.get(
-                        'SELECT api_key FROM api_keys WHERE user_id = ? AND service_name = ?',
-                        [userId, 'openai'],
-                        (err, row) => resolve(row)
-                    );
-                });
+                // Thirr route-in OpenAI që funksionon
+                const openai = require('../routes/openai');
+                const result = await fetch(`http://localhost:3000/api/openai/chat`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ 
+                        message: message, 
+                        userId: userId 
+                    })
+                }).then(r => r.json());
                 
-                const apiKeyToUse = apiKeyRow?.api_key || process.env.OPENAI_API_KEY;
-                
-                if (!apiKeyToUse) {
-                    return res.json({
-                        success: false,
-                        error: 'Nuk ka OpenAI API Key të konfiguruar'
-                    });
-                }
-
-                console.log('🔑 [FINAL] Duke përdorur API Key:', apiKeyToUse.substring(0, 20) + '...');
-
-                // ✅ THIRR OPENAI DIRECT
-                const { OpenAI } = require('openai');
-                const openai = new OpenAI({ apiKey: apiKeyToUse });
-                
-                const completion = await openai.chat.completions.create({
-                    model: "gpt-3.5-turbo",
-                    messages: [
-                        { 
-                            role: "system", 
-                            content: "Ti je RRUFE-TESLA AI. Përgjigju në shqip." 
-                        },
-                        { 
-                            role: "user", 
-                            content: message 
-                        }
-                    ],
-                    max_tokens: 1000
-                });
-
-                const responseText = completion.choices[0].message.content;
-                console.log('✅ [FINAL] OpenAI u përgjigj me sukses!');
-                
-                return res.json({
-                    success: true,
-                    response: `🔮 **OpenAI RRUFE-TESLA**: ${responseText}`,
-                    source: 'openai_direct'
-                });
-
-            } catch (error) {
-                console.error('❌ [FINAL] OpenAI gabim:', error.message);
-                return res.json({
-                    success: false,
-                    error: 'OpenAI: ' + error.message
-                });
-            }
-        }
-
-        // ✅ FALLBACK NË GEMINI
-        console.log('🤖 [FINAL] Duke përdorur Gemini fallback...');
-        try {
-            const geminiService = require('../services/geminiRealService');
-            const result = await geminiService.processMessage(message, userId);
-            
-            if (result && result.success) {
+                console.log('📥 [CHAT-UI] Rezultati OpenAI:', result.success ? 'SUCCESS' : 'FAILED');
                 return res.json(result);
+                
+            } catch (error) {
+                console.error('❌ [CHAT-UI] Gabim OpenAI:', error);
             }
-        } catch (geminiError) {
-            console.error('❌ [FINAL] Gemini dështoi:', geminiError.message);
         }
 
-        // ✅ FALLBACK FINAL
-        console.log('⚠️ [FINAL] Të gjitha metodat dështuan');
-        res.json({
-            success: true,
-            response: `🧠 **FALLBACK**: ${message}`,
-            source: 'final_fallback'
-        });
+        // ✅ FALLBACK NË COMMAND SERVICE
+        console.log('🔄 [CHAT-UI] Duke përdorur CommandService...');
+        const commandService = require('../services/commandService');
+        const result = await commandService.handleNaturalLanguage(message, { id: userId }, engine);
+        res.json(result);
         
     } catch (error) {
-        console.error('❌ [FINAL] Gabim kritik:', error);
-        res.json({ 
-            success: false, 
-            error: 'Gabim kritik: ' + error.message 
-        });
+        console.error('❌ Gabim:', error);
+        res.json({ success: false, response: 'Gabim në server' });
     }
 });
 
