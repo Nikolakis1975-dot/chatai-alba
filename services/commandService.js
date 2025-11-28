@@ -219,7 +219,7 @@ async handleNaturalLanguage(message, user, preferredEngine = null) {
         
         // ✅ FALLBACK FINAL
         console.log('⚠️ [MOTOR COMMAND] Të dy motorët dështuan, duke kthyer fallback');
-        return this.getBasicNaturalResponse(message);
+        return await this.getBasicNaturalResponse(message, user, preferredEngine);
         
     } catch (error) {
         console.error('❌ [MOTOR COMMAND] Gabim kritik në handleNaturalLanguage:', error);
