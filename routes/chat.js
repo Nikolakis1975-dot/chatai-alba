@@ -10,7 +10,7 @@ const constants = require('../config/constants');
 const CommandService = require('../services/commandService');
 const commandService = new CommandService();
 
-// ✅ FUNKSIONET NDIHMËSE ME DATABASE CORRECT
+// ✅ FUNKSIONET NDIHMËSE ME DATABASE
 async function checkApiKey(userId) {
     return new Promise((resolve, reject) => {
         db.get(
@@ -75,7 +75,7 @@ function getSimpleNaturalResponse(message) {
     return "E kuptoj! 😊 Përdorni /ndihmo për të parë të gjitha komandat e mia, ose më tregoni më shumë se çfarë keni nevojë.";
 }
 
-// ✅ RUTA PËR MESAZHET E DREJTPËRDREDHURA (PËR FRONTEND) - VERSION I KORRIGJUAR
+// ✅ RUTA KRYESORE PËR MESAZHET - ME SUPORT PËR MOTORËT
 router.post('/message', async (req, res) => {
     try {
         const { message, engine } = req.body; // 🎯 Shto 'engine' parameter
