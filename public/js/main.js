@@ -1028,3 +1028,96 @@ window.switchAIEngine = function(engine) {
             statusDiv.className = 'api-status invalid';
         }
     }
+
+// ================================= 🎯 SIMULIM I MENÇUR - KAPJE E MESAZHEVE ================================
+
+// ✅ 1. KAP FUNKSIONIN EKZISTUES TË DËRGIMIT
+function initializeMessageInterceptor() {
+    console.log('🎯 Duke inicializuar intercept për mesazhe...');
+    
+    // Gjej butonin e dërgimit
+    const sendButton = document.querySelector('button[onclick*="send"], button[onclick*="Send"]');
+    const userInput = document.getElementById('user-input');
+    
+    if (!sendButton || !userInput) {
+        console.log('❌ Elementët e dërgimit nuk u gjetën');
+        return;
+    }
+    
+    console.log('✅ Elementët u gjetën:', { sendButton, userInput });
+    
+    // ✅ 2. KAP KLIKIMIN E BUTONIT
+    const originalOnClick = sendButton.onclick;
+    sendButton.onclick = function() {
+        console.log('🔧 Intercept: Butoni u klikua');
+        simulateMessageSend();
+    };
+    
+    // ✅ 3. KAP ENTER KEY
+    userInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            console.log('🔧 Intercept: Enter u shtyp');
+            simulateMessageSend();
+        }
+    });
+    
+    console.log('✅ Intercept u inicializua!');
+}
+
+// ✅ 4. FUNKSIONI I RI PËR DËRGIM SIMULUAR
+async function simulateMessageSend() {
+    const userInput = document.getElementById('user-input');
+    const message = userInput.value.trim();
+    
+    if (!message) return;
+    
+    console.log('🎯 simulateMessageSend - Motor aktiv:', window.aiEngineStatus);
+    
+    // ✅ TREGO SIMULIM NË UI
+    addMessage(message, 'user');
+    userInput.value = '';
+    
+    try {
+        // ✅ SIMULIM LOADING
+        const chat = document.getElementById('chat');
+        const loadingDiv = document.createElement('div');
+        loadingDiv.id = 'simulate-loading';
+        loadingDiv.className = 'message bot';
+        loadingDiv.innerHTML = '<div class="message-text">🔧 SIMULIM: Po dërgoj me motorin e zgjedhur...</div>';
+        chat.appendChild(loadingDiv);
+        chat.scrollTop = chat.scrollHeight;
+        
+        // ✅ DËRGO ME MOTORIN E ZGJEDHUR
+        const activeEngine = window.aiEngineStatus?.openai ? 'openai' : 'gemini';
+        console.log('🔧 [SIMULIM] Duke dërguar me motor:', activeEngine);
+        
+        const response = await fetch('/api/chat/message', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            credentials: 'include',
+            body: JSON.stringify({ 
+                message: message,
+                engine: activeEngine  // 🎯 PARAMETRI I RI
+            })
+        });
+        
+        const result = await response.json();
+        
+        // ✅ HIQ LOADING DHE SHFAQ REZULTATIN
+        document.getElementById('simulate-loading')?.remove();
+        
+        if (result.success) {
+            addMessage(`🔧 **SIMULIM SUKSESS** (Motor: ${activeEngine})\n\n${result.response}`, 'bot');
+        } else {
+            addMessage(`❌ **SIMULIM GABIM**: ${result.error}`, 'bot');
+        }
+        
+    } catch (error) {
+        console.error('❌ Gabim në simulim:', error);
+        document.getElementById('simulate-loading')?.remove();
+        addMessage('❌ Gabim në server gjatë simulimit.', 'bot');
+    }
+}
+
+// ✅ 5. INICIALIZO SIMULIMIN
+setTimeout(initializeMessageInterceptor, 2000);
