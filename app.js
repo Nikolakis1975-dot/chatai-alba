@@ -149,6 +149,46 @@ const openaiDirectRoutes = require('./routes/openai-direct');
 const consciousnessRoutes = require('./routes/rrufe/consciousness-routes');
 app.use('/api/consciousness', consciousnessRoutes);
 
+// ==================== 🔥 OPENAI RADICAL ROUTES - DIRECT ====================
+
+console.log('🚀 LOADING OPENAI RADICAL ROUTES...');
+
+// ✅ TEST ROUTE
+app.get('/api/openai-radical/test', (req, res) => {
+    console.log('🧪 OPENAI RADICAL TEST ROUTE CALLED');
+    res.json({
+        success: true,
+        message: '🔥 OPENAI RADICAL SYSTEM IS WORKING!',
+        timestamp: new Date().toISOString(),
+        apiKeyExists: !!process.env.OPENAI_API_KEY
+    });
+});
+
+// ✅ CHAT ROUTE  
+app.post('/api/openai-radical/chat', async (req, res) => {
+    try {
+        const { message } = req.body;
+        console.log('🎯 OPENAI RADICAL CHAT - Message:', message);
+        
+        if (!message) {
+            return res.json({ success: false, error: 'No message' });
+        }
+
+        // ✅ THIRR SERVICE DIRECT
+        const openaiRadical = require('./services/openaiRadical');
+        const result = await openaiRadical.processMessage(message);
+        
+        console.log('📤 OPENAI RADICAL RESULT:', result.success ? 'SUCCESS' : 'FAILED');
+        res.json(result);
+        
+    } catch (error) {
+        console.error('❌ OPENAI RADICAL ERROR:', error);
+        res.json({ success: false, error: error.message });
+    }
+});
+
+console.log('✅ OPENAI RADICAL ROUTES LOADED!');
+
 // ======================================================
 // 4️⃣ Regjistro të gjitha rutat (vazhdim)
 // ======================================================
