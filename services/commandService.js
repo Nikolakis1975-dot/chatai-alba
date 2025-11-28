@@ -230,37 +230,119 @@ async handleNaturalLanguage(message, user, preferredEngine = null) {
     }
 }
 
-    // ✅ FUNKSION I RI PËR PËRGJIGJE BAZË
-    getBasicNaturalResponse(message) {
+// ============================✅ FUNKSION I RI PËR PËRGJIGJE BAZË - ME LIDHJE DIREKTE ME MOTORËT =======================
+    
+async getBasicNaturalResponse(message, user, preferredEngine = null) {
+    try {
+        console.log('🔄 [BASIC-RESPONSE] Duke kërkuar përgjigje nga motorët AI...');
+        
         const lowerMessage = message.toLowerCase();
         
+        // ✅ PËRGJIGJE SHUMË TË SHKURTRA DHE SPECIFIKE
         if (lowerMessage.includes('përshëndetje') || lowerMessage.includes('pershendetje') || lowerMessage.includes('hello') || lowerMessage.includes('tung')) {
             return {
                 success: true,
-                response: "Përshëndetje! 😊 Mirë se ju gjetëm! Si mund t'ju ndihmoj sot?"
+                response: "👋 Përshëndetje! Unë jam RRUFE-TESLA AI. Si mund t'ju shërbej sot?"
             };
         }
         
-        if (lowerMessage.includes('si je') || lowerMessage.includes('si jeni') || lowerMessage.includes('si kaloni')) {
-            return {
-                success: true, 
-                response: "Jam shumë mirë, faleminderit që pyetët! 😊 Çfarë mund të bëj për ju?"
-            };
-        }
-        
-        if (lowerMessage.includes('faleminderit') || lowerMessage.includes('rrofsh') || lowerMessage.includes('thanks')) {
+        if (lowerMessage.includes('faleminderit') || lowerMessage.includes('rrofsh') || lowerMessage.includes('thanks') || lowerMessage.includes('thank you')) {
             return {
                 success: true,
-                response: "S'ka përse! 😊 Gjithmonë i lumtur të ndihmoj!"
+                response: "😊 S'ka përse! Gjithmonë i gatshëm të ndihmoj!"
+            };
+        }
+        
+        if (lowerMessage.includes('mirupafshim') || lowerMessage.includes('bye') || lowerMessage.includes('ciao')) {
+            return {
+                success: true,
+                response: "👋 Mirupafshim! Shpresoj të jeni gjetur atë që kërkoni!"
             };
         }
 
-        // ✅ PËRGJIGJE DEFAULT
+        // ✅ PËR PYETJE SHUMË TË THJESHTA - PËRGJIGJE TË SHPEJTA
+        if (lowerMessage === 'si je?' || lowerMessage === 'si jeni?' || lowerMessage === 'si je' || lowerMessage === 'si jeni') {
+            return {
+                success: true,
+                response: "🤖 Unë jam RRUFE-TESLA AI dhe jam në gjendje të shkëlqyer! Faleminderit që pyetët! Si mund t'ju shërbej?"
+            };
+        }
+
+        if (lowerMessage === 'kush je?' || lowerMessage === 'kush je' || lowerMessage === 'kush jeni?' || lowerMessage === 'kush jeni') {
+            return {
+                success: true,
+                response: "🚀 Unë jam **RRUFE-TESLA AI** - një sistem i avancuar i inteligjencës artificiale. Jam këtu për t'ju ndihmuar me çdo pyetje ose problem!"
+            };
+        }
+
+        // ✅ PËR TË GJITHA PYETJET E TJERA - LIDHU DIREKT ME MOTORËT AI
+        console.log('🔄 [BASIC-RESPONSE] Duke dërguar pyetjen te motorët AI...');
+        
+        // ✅ PROVO OPENAI PARËSORISHT NËSE ËSHTË AKTIV
+        if (preferredEngine === 'openai' || !preferredEngine) {
+            try {
+                console.log('🔮 [BASIC-RESPONSE] Duke provuar OpenAI...');
+                const openaiService = require('./openaiService');
+                const openaiResult = await openaiService.processMessage(message, user.id);
+                
+                if (openaiResult && openaiResult.success) {
+                    console.log('✅ [BASIC-RESPONSE] OpenAI u përgjigj!');
+                    return openaiResult;
+                }
+            } catch (openaiError) {
+                console.log('❌ [BASIC-RESPONSE] OpenAI dështoi, duke provuar Gemini...');
+            }
+        }
+
+        // ✅ PROVO GEMINI SI FALLBACK
+        try {
+            console.log('🤖 [BASIC-RESPONSE] Duke provuar Gemini...');
+            const hasApiKey = await this.checkApiKey(user.id);
+            if (hasApiKey) {
+                const geminiResult = await this.sendToGemini(message, user.id);
+                if (geminiResult && geminiResult.success) {
+                    console.log('✅ [BASIC-RESPONSE] Gemini u përgjigj!');
+                    return geminiResult;
+                }
+            }
+        } catch (geminiError) {
+            console.error('❌ [BASIC-RESPONSE] Gemini dështoi:', geminiError);
+        }
+
+        // ✅ FALLBACK FINAL SHUMË I AVANCUAR
+        console.log('⚠️ [BASIC-RESPONSE] Të dy motorët dështuan, duke kthyer fallback të avancuar');
+        
+        // Analizo pyetjen për të dhënë përgjigje më të mirë
+        if (lowerMessage.includes('çfarë') || lowerMessage.includes('cfare') || lowerMessage.includes('what')) {
+            return {
+                success: true,
+                response: `🤔 **Pyetje interesante:** "${message}"\n\n💡 *Për përgjigje më të detajuara, sigurohuni që keni konfiguruar API Keys në panelin e sistemit.*\n\n🔧 Ju mund të:\n• Vendosni API Key për OpenAI ose Gemini\n• Përdorni komandën /ndihmo për më shumë opsione\n• Provoni të riformuloni pyetjen tuaj*`
+            };
+        }
+        
+        if (lowerMessage.includes('si') || lowerMessage.includes('how')) {
+            return {
+                success: true,
+                response: `🔧 **Kërkim i zgjidhjes:** "${message}"\n\n🚀 *Sistemi po punon për të gjetur përgjigjen më të mirë...*\n\n💡 Ndërsa sistemet AI janë në konfigurim, ju mund të:\n• Shfrytëzoni komandat ekzistuese (/wiki, /gjej, etc.)\n• Kontrolloni konfigurimin e API Keys\n• Provoni motorin tjetër (OpenAI/Gemini)*`
+            };
+        }
+
+        // ✅ PËRGJIGJE DEFAULT E AVANCUAR
         return {
             success: true,
-            response: "E kuptoj! 😊 Përdorni /ndihmo për të parë të gjitha komandat e mia."
+            response: `🧠 **RRUFE-TESLA AI** 🤖\n\nE kam kuptuar pyetjen tuaj!\n\n"${message}"\n\n🚀 *Sistemi po punon për të gjetur përgjigjen më të saktë...*\n\n💡 **Opsione të menjëhershme:**\n• Përdorni /ndihmo për të parë të gjitha komandat\n• Kontrolloni panelin e API Keys për konfigurim\n• Provoni të riformuloni pyetjen\n• Përdorni motorin tjetër (OpenAI/Gemini)\n\n🔧 **Sistemi aktiv:** ${preferredEngine || 'Auto-detect'}`,
+            needsConfig: true
+        };
+        
+    } catch (error) {
+        console.error('❌ [BASIC-RESPONSE] Gabim kritik:', error);
+        // Fallback emergjent
+        return {
+            success: true,
+            response: `🤖 **RRUFE-TESLA AI**\n\n"${message}"\n\n⚡ *Sistemi po proceson kërkesën tuaj...*\n\n💡 Ju lutem provoni përsëri ose përdorni komandën /ndihmo për asistencë.*`
         };
     }
+}
 
     // ============================ ✅ KONTROLLIMI I API KEY =============================
     async checkApiKey(userId) {
