@@ -1190,3 +1190,63 @@ async function simulateMessageSend() {
 
 // ✅ 5. INICIALIZO SIMULIMIN
 setTimeout(initializeMessageInterceptor, 2000);
+
+// ==================================== ✅ FIX FINAL PËR BUTONIN E DËRGIMIT ==========================================
+
+function fixSendButton() {
+    console.log('🔧 Duke rregulluar butonin e dërgimit...');
+    
+    const sendBtn = document.getElementById('send-btn');
+    const userInput = document.getElementById('user-input');
+    
+    if (!sendBtn) {
+        console.log('❌ Send button nuk u gjet!');
+        return;
+    }
+    
+    // ✅ FSHI ÇDO EVENT LISTENER TË VJETËR
+    sendBtn.replaceWith(sendBtn.cloneNode(true));
+    
+    // ✅ MER BUTONIN E RI
+    const newSendBtn = document.getElementById('send-btn');
+    
+    if (newSendBtn && window.sendMessage) {
+        // ✅ LIDH DIRECT ME FUNKSIONIN
+        newSendBtn.onclick = window.sendMessage;
+        console.log('✅ Send button u lidh me window.sendMessage');
+    }
+    
+    // ✅ LIDH ENTER KEY
+    if (userInput) {
+        userInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                window.sendMessage();
+            }
+        });
+        console.log('✅ Enter key u lidh');
+    }
+    
+    console.log('✅ Butoni i dërgimit u rregullua!');
+}
+
+// ✅ EKZEKUTO MENJËHERË
+setTimeout(fixSendButton, 1000);
+
+// ✅ EKZEKUTO EDHE KUR DOM ËSHTË GATI
+document.addEventListener('DOMContentLoaded', fixSendButton);
+
+// ✅ ALTERNATIVË - MODIFIKO DIRECT NË HTML
+function forceButtonFix() {
+    const sendBtn = document.getElementById('send-btn');
+    if (sendBtn) {
+        // ✅ METODË EKSTREME - NDRYSHO HTML DIRECT
+        sendBtn.setAttribute('onclick', 'window.sendMessage()');
+        console.log('✅ Butoni u modifikua direkt në HTML');
+    }
+}
+
+// ✅ PROVO TË DYJA METODAT
+setTimeout(() => {
+    fixSendButton();
+    setTimeout(forceButtonFix, 500);
+}, 1500);
