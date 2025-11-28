@@ -25,80 +25,78 @@ async function checkApiKey(userId) {
     });
 }
 
-// ============================✅ RUTA KRYESORE PËR MESAZHET - VERSION I THJESHTË QË FUNKSIONON ====================
+// ========================================== ✅ RUTA KRYESORE E RISHIKUAR =================================
 
 router.post('/message', async (req, res) => {
     try {
         const { message, engine } = req.body;
         const userId = req.user?.userId || 1;
 
-        console.log('💬 Mesazh i marrë:', message);
-        console.log('🔧 Motor i kërkuar:', engine);
+        console.log('💬 [CHAT-FINAL] Mesazh i marrë:', message);
+        console.log('🔧 [CHAT-FINAL] Motor i kërkuar:', engine);
+        console.log('👤 [CHAT-FINAL] User ID:', userId);
 
-        // ✅ PROVO COMMAND SERVICE PA new
+        // ✅ PROVO COMMAND SERVICE ME DEBUG
         try {
             const commandService = require('../services/commandService');
             
-            // Kontrollo nëse funksioni ekziston
+            console.log('🔍 [CHAT-FINAL] CommandService u gjet:', !!commandService);
+            console.log('🔍 [CHAT-FINAL] handleNaturalLanguage ekziston:', !!commandService.handleNaturalLanguage);
+            
             if (commandService && commandService.handleNaturalLanguage) {
-                console.log('✅ CommandService u gjet, duke thirrur handleNaturalLanguage...');
+                console.log('✅ [CHAT-FINAL] Duke thirrur handleNaturalLanguage...');
+                
+                // ✅ THIRR DIRECT ME DEBUG
                 const result = await commandService.handleNaturalLanguage(message, { id: userId }, engine);
-                res.json(result);
-            } else {
-                console.log('❌ handleNaturalLanguage nuk ekziston në CommandService');
-                // Fallback
-                res.json({
-                    success: true,
-                    response: `🤖 **Fallback**: ${message} (Motor: ${engine})`
+                
+                console.log('📥 [CHAT-FINAL] Rezultati nga CommandService:', {
+                    success: result.success,
+                    hasResponse: !!result.response,
+                    hasError: !!result.error
                 });
+                
+                return res.json(result);
+            } else {
+                console.log('❌ [CHAT-FINAL] handleNaturalLanguage nuk ekziston');
             }
         } catch (cmdError) {
-            console.error('❌ CommandService gabim:', cmdError);
-            // Fallback nëse CommandService dështon
-            res.json({
-                success: true,
-                response: `🤖 **Fallback**: ${message} (Motor: ${engine})`
-            });
+            console.error('❌ [CHAT-FINAL] CommandService gabim:', cmdError);
+            console.error('❌ [CHAT-FINAL] Stack:', cmdError.stack);
         }
+
+        // ✅ FALLBACK DIRECT NË OPENAI
+        console.log('🔄 [CHAT-FINAL] Duke përdorur fallback direkt në OpenAI...');
+        try {
+            const response = await fetch(`http://localhost:3000/api/openai/chat`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ 
+                    message: message, 
+                    userId: userId 
+                })
+            });
+            
+            const result = await response.json();
+            console.log('📥 [CHAT-FINAL] Rezultati fallback:', result.success ? 'SUCCESS' : 'FAILED');
+            return res.json(result);
+            
+        } catch (fallbackError) {
+            console.error('❌ [CHAT-FINAL] Fallback dështoi:', fallbackError);
+        }
+
+        // ✅ FALLBACK FINAL
+        console.log('⚠️ [CHAT-FINAL] Të gjitha metodat dështuan, duke kthyer fallback final');
+        res.json({
+            success: true,
+            response: `🤖 **Fallback Final**: ${message} (Motor: ${engine})`
+        });
         
     } catch (error) {
-        console.error('❌ Gabim:', error);
-        res.json({ success: false, response: 'Gabim në server' });
-    }
-});
-
-// ======================================= ✅ RUTA PËR PANELIN E NDIHMËS ======================================
-
-router.get('/help-panel', async (req, res) => {
-    try {
-        const helpPanel = `
-<div class="help-panel" style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-  <div class="panel-header" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px;">
-    <h2 style="margin: 0;">👑 CHATAI ALBA - PANELI I NDIHMËS 👑</h2>
-  </div>
-  <div class="panel-section" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
-    <h3 style="color: #2c3e50; margin-top: 0;">🔹 KOMANDAT BAZË</h3>
-    <div class="button-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-      <button onclick="useCommand('/ndihmo')" style="background: #4CAF50; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">📋 /ndihmo</button>
-      <button onclick="useCommand('/wiki ')" style="background: #2196F3; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">🌐 /wiki</button>
-    </div>
-  </div>
-</div>
-<script>
-function useCommand(command) {
-    const input = document.getElementById('user-input');
-    if (input) {
-        input.value = command;
-        input.focus();
-    }
-}
-</script>`;
-        
-        res.json({ success: true, response: helpPanel });
-        
-    } catch (error) {
-        console.error('❌ Gabim në panelin e ndihmës:', error);
-        res.json({ success: false, response: '❌ Gabim në server' });
+        console.error('❌ [CHAT-FINAL] Gabim kritik:', error);
+        res.json({ 
+            success: false, 
+            response: '❌ Gabim kritik në server' 
+        });
     }
 });
 
