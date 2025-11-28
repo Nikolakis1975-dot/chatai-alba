@@ -175,7 +175,7 @@ class CommandService {
         }
     }
 
-    // ============================ ✅ TRAJTIMI I GJUHËS NATYRORE - VERSION I RI ME OPENAI =============================
+// ============================ ✅ TRAJTIMI I GJUHËS NATYRORE - VERSION I RI ME OPENAI =============================
 async handleNaturalLanguage(message, user, preferredEngine = null) {
     try {
         // ✅ DEBUG EKSTREM - VERIFIKO PARAMETRAT
@@ -183,37 +183,48 @@ async handleNaturalLanguage(message, user, preferredEngine = null) {
         console.log('🎯🎯🎯 [DEBUG-EKSTREM] Message:', message);
         console.log('🎯🎯🎯 [DEBUG-EKSTREM] User ID:', user?.id);
         console.log('🎯🎯🎯 [DEBUG-EKSTREM] Preferred Engine:', preferredEngine);
-        console.log('🎯🎯🎯 [DEBUG-EKSTREM] Stack:', new Error().stack);
         
         // ✅ KONTROLLO NËSE JEMI NË FUNKSIONIN E DUHUR
         if (!message) {
             console.log('❌❌❌ [DEBUG-EKSTREM] MESSAGE IS EMPTY!');
         }
         
-        // ✅ OPENAI - PROVO DIREKT
-       if (preferredEngine === 'openai') {
-    console.log('🔮 Duke thirrur OpenAI route të re...');
-    try {
-        const response = await fetch('/api/openai/chat', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ 
-                message: message, 
-                userId: user.id 
-            })
-        });
-        
-        const result = await response.json();
-        if (result.success) {
-            console.log('✅ OpenAI route u përgjigj!');
-            return result;
+        // ✅ OPENAI - ME ROUTE TË RE
+        if (preferredEngine === 'openai') {
+            console.log('🔮 [COMMAND-FIX] Duke thirrur OpenAI route të re...');
+            try {
+                const response = await fetch('/api/openai/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ 
+                        message: message, 
+                        userId: user.id 
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                console.log('📥 [COMMAND-FIX] Përgjigje nga OpenAI route:', result.success ? 'SUCCESS' : 'FAILED');
+                
+                if (result && result.success) {
+                    console.log('✅ [COMMAND-FIX] OpenAI route u përgjigj me sukses!');
+                    return result;
+                } else {
+                    console.log('❌ [COMMAND-FIX] OpenAI route kthye gabim:', result?.error);
+                    throw new Error(result?.error || 'OpenAI route failed');
+                }
+                
+            } catch (error) {
+                console.error('❌ [COMMAND-FIX] Gabim në OpenAI route:', error.message);
+                // Fallback në Gemini
+                console.log('🔄 [COMMAND-FIX] Duke kthyer në Gemini...');
+            }
         }
-    } catch (error) {
-        console.error('❌ Gabim në OpenAI route:', error);
-    }
-}
         
-        // ✅ FALLBACK NË GEMINI
+        // ✅ GEMINI FALLBACK
         console.log('🤖🤖🤖 [DEBUG-EKSTREM] Falling back to Gemini...');
         return this.getBasicNaturalResponse(message, user, preferredEngine);
         
@@ -224,7 +235,7 @@ async handleNaturalLanguage(message, user, preferredEngine = null) {
             response: '❌ Gabim kritik në sistem'
         };
     }
-}
+} 
 
 // ============================✅ FUNKSION I RI PËR PËRGJIGJE BAZË - ME LIDHJE DIREKTE ME MOTORËT =======================
     
