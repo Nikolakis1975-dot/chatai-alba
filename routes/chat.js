@@ -103,18 +103,6 @@ router.post('/message', async (req, res) => {
                 console.error('❌ [CHAT-UI] Gabim Gemini:', error);
             }
         }
-
-        // =============================✅ FALLBACK NË COMMAND SERVICE ===================================
-        console.log('🔄 [CHAT-UI] Duke përdorur CommandService për gjuhë natyrale...');
-        const commandService = require('../services/commandService');
-        const result = await commandService.handleNaturalLanguage(message, { id: userId }, engine);
-        return res.json(result);
-        
-    } catch (error) {
-        console.error('❌ Gabim:', error);
-        res.json({ success: false, response: 'Gabim në server' });
-    }
-});
         
 // =============================✅ FALLBACK NË COMMAND SERVICE ===================================
 console.log('🔄 [CHAT-UI] Duke përdorur CommandService për gjuhë natyrale...');
