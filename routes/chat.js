@@ -27,6 +27,7 @@ async function checkApiKey(userId) {
 
 // =================================== ✅ RUTA RADIKALE - BYPASS COMMAND SERVICE ===============================
 
+// Në routes/chat.js - modifiko funksionin /message
 router.post('/message', async (req, res) => {
     try {
         const { message, engine } = req.body;
@@ -35,66 +36,36 @@ router.post('/message', async (req, res) => {
         console.log('💬 [CHAT-UI] Mesazh:', message);
         console.log('🔧 [CHAT-UI] Motor:', engine);
 
-        // ==================== ✅ KOMANDA & MATEMATIKË - SHTO KËTU ====================
+        // ==================== ✅ KAP KOMANDAT PARA SE T'I DËRGON MOTORËVE AI ====================
         
-        // ✅ 1. KONTROLLO NËSE ËSHTË KOMANDË (FILLON ME /)
         if (message.startsWith('/')) {
             console.log('🎯 [CHAT-UI] Komandë e zbuluar:', message);
             
             try {
+                // PROVO COMMAND SERVICE
                 const CommandService = require('../services/commandService');
+                console.log('✅ [CHAT-UI] CommandService u ngarkua');
+                
+                // PROVO processCommand
                 const commandResult = await CommandService.processCommand('command', { id: userId }, message, engine);
                 
                 if (commandResult && commandResult.success) {
-                    console.log('✅ [CHAT-UI] Komanda u procesua me sukses!');
+                    console.log('✅ [CHAT-UI] Komanda u procesua nga CommandService!');
                     return res.json(commandResult);
                 } else {
-                    console.log('🔄 [CHAT-UI] Komanda dështoi, duke vazhduar me motorin AI...');
-                    // Vazhdo me motorin AI nëse komanda dështon
+                    console.log('🔄 [CHAT-UI] CommandService dështoi, duke vazhduar me motorin AI...');
                 }
                 
             } catch (commandError) {
-                console.error('❌ [CHAT-UI] Gabim në procesimin e komandës:', commandError);
-                // Vazhdo me motorin AI nëse ka gabim
+                console.error('❌ [CHAT-UI] Gabim në CommandService:', commandError);
+                // Vazhdo me motorin AI nëse CommandService dështon
             }
         }
 
-        // ✅ 2. KONTROLLO PËR LLOGARITJE MATEMATIKE
-        const mathPatterns = [
-            /(\d+[\+\-\*\/\^\(\)\d\s]+)/,
-            /sa bejne\s+([\d\+\-\*\/\^\(\)\s]+)/i,
-            /llogarit\s+([\d\+\-\*\/\^\(\)\s]+)/i, 
-            /([\d\.]+\s*[\+\-\*\/\^]\s*[\d\.]+)/
-        ];
-
-        for (const pattern of mathPatterns) {
-            const match = message.match(pattern);
-            if (match && match[1]) {
-                const expression = match[1].trim();
-                if (expression.length > 3) {
-                    console.log('🧮 [CHAT-UI] Shprehje matematikore e zbuluar:', expression);
-                    
-                    try {
-                        const CommandService = require('../services/commandService');
-                        const mathResult = await CommandService.handleMathCalculation(message);
-                        
-                        if (mathResult && mathResult.success) {
-                            console.log('✅ [CHAT-UI] Llogaritja u krye me sukses!');
-                            return res.json(mathResult);
-                        }
-                    } catch (mathError) {
-                        console.log('❌ [CHAT-UI] Gabim në llogaritje:', mathError);
-                    }
-                    break; // Ndal pas shprehjes së parë të gjetur
-                }
-            }
-        }
-
-// =============================✅ OPENAI DIRECT - PA COMMAND SERVICE ===================================
+        // =============================✅ OPENAI DIRECT ===================================
         if (engine === 'openai') {
             console.log('🔮 [CHAT-UI] Duke thirrur OpenAI direkt...');
             try {
-                // Thirr route-in OpenAI që funksionon
                 const openai = require('../routes/openai');
                 const result = await fetch(`http://localhost:3000/api/openai/chat`, {
                     method: 'POST',
@@ -113,60 +84,37 @@ router.post('/message', async (req, res) => {
             }
         }
 
- // ======================================== ✅ SHTO KËTË KOD PAS OPENAI ============================================
+        // =============================✅ GEMINI DIRECT ===================================
+        if (engine === 'gemini') {
+            console.log('🤖 [CHAT-UI] Duke thirrur Gemini direkt...');
+            try {
+                const GeminiRealService = require('../services/geminiRealService');
+                const result = await GeminiRealService.processMessage(message, userId);
+                
+                if (result && result.success) {
+                    console.log('✅ [CHAT-UI] GeminiRealService u përgjigj!');
+                    return res.json({
+                        success: true,
+                        response: `🤖 **Gemini RRUFE-TESLA**: ${result.response}`,
+                        source: 'gemini_real_service'
+                    });
+                }
+            } catch (error) {
+                console.error('❌ [CHAT-UI] Gabim Gemini:', error);
+            }
+        }
 
-// ✅ GEMINI FIX - SHTO PJESËN E RE PËR GEMINI
-if (engine === 'gemini') {
-    console.log('🤖 [CHAT-UI] Duke thirrur Gemini direkt...');
-    try {
-        // PROVO GEMINI REAL SERVICE SË PARI
-        try {
-            const GeminiRealService = require('../services/geminiRealService');
-            const result = await GeminiRealService.processMessage(message, userId);
-            
-            if (result && result.success) {
-                console.log('✅ [CHAT-UI] GeminiRealService u përgjigj!');
-                return res.json({
-                    success: true,
-                    response: `🤖 **Gemini RRUFE-TESLA**: ${result.response}`,
-                    source: 'gemini_real_service'
-                });
-            }
-        } catch (realServiceError) {
-            console.log('🔄 [CHAT-UI] GeminiRealService dështoi, duke provuar geminiService...');
-        }
-        
-        // PROVO GEMINI SERVICE SI FALLBACK
-        try {
-            const geminiService = require('../services/geminiService');
-            const result = await geminiService.processMessage(message, userId);
-            
-            if (result && result.success) {
-                console.log('✅ [CHAT-UI] geminiService u përgjigj!');
-                return res.json({
-                    success: true,
-                    response: `🤖 **Gemini RRUFE-TESLA**: ${result.response}`,
-                    source: 'gemini_service'
-                });
-            }
-        } catch (serviceError) {
-            console.log('🔄 [CHAT-UI] geminiService dështoi...');
-        }
-        
-        // NËSE TË DYJA DËSHTOJNË, KTHE FALLBACK
-        throw new Error('Të dy servicet Gemini dështuan');
+        // =============================✅ FALLBACK NË COMMAND SERVICE ===================================
+        console.log('🔄 [CHAT-UI] Duke përdorur CommandService për gjuhë natyrale...');
+        const commandService = require('../services/commandService');
+        const result = await commandService.handleNaturalLanguage(message, { id: userId }, engine);
+        return res.json(result);
         
     } catch (error) {
-        console.error('❌ [CHAT-UI] Gabim Gemini:', error);
-        
-        // ✅ FALLBACK FINAL - KTHE MESAZH INFORMUES
-        return res.json({
-            success: true,
-            response: `🤖 **Gemini RRUFE-TESLA**: Po punoj për të përmirësuar sistemin! 🔧\n\n**Pyetja juaj:** "${message}"\n\n💡 *Sistemi Gemini po përmirësohet. Ju lutem përdorni OpenAI për tani ose provoni përsëri më vonë.*`,
-            source: 'gemini_fallback_info'
-        });
+        console.error('❌ Gabim:', error);
+        res.json({ success: false, response: 'Gabim në server' });
     }
-}
+});
         
  // =================================== ✅ FALLBACK NË COMMAND SERVICE =======================================
         
