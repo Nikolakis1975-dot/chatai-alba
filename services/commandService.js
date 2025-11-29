@@ -180,7 +180,7 @@ class CommandService {
     }
 
 // ✅ EKSPORTO SI INSTANCË
-module.exports = new CommandService();
+module.exports = CommandService;
 
     // ============================ ✅ TRAJTIMI I LLOGARITJEVE MATEMATIKE =============================
     async handleMathCalculation(message) {
