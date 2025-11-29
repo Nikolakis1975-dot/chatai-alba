@@ -116,18 +116,19 @@ router.post('/message', async (req, res) => {
     }
 });
         
- // =================================== ✅ FALLBACK NË COMMAND SERVICE =======================================
-        
-        console.log('🔄 [CHAT-UI] Duke përdorur CommandService...');
-        const commandService = require('../services/commandService');
-        const result = await commandService.handleNaturalLanguage(message, { id: userId }, engine);
-        res.json(result);
-        
-    } catch (error) {
-        console.error('❌ Gabim:', error);
-        res.json({ success: false, response: 'Gabim në server' });
-    }
-});
+// =============================✅ FALLBACK NË COMMAND SERVICE ===================================
+console.log('🔄 [CHAT-UI] Duke përdorur CommandService për gjuhë natyrale...');
+try {
+    const commandService = require('../services/commandService');
+    const result = await commandService.handleNaturalLanguage(message, { id: userId }, engine);
+    return res.json(result);
+} catch (fallbackError) {
+    console.error('❌ [CHAT-UI] Gabim në fallback:', fallbackError);
+    return res.json({ 
+        success: false, 
+        response: '❌ Gabim në server' 
+    });
+}
 
 // ========================== ✅ KODI EKZISTUES - RUTA PËR PANELIN E NDIHMËS ME BUTONA =============================
 
