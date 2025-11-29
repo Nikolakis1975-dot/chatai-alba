@@ -27,7 +27,6 @@ async function checkApiKey(userId) {
 
 // =================================== ✅ RUTA RADIKALE - BYPASS COMMAND SERVICE ===============================
 
-// ✅ ROUTE I RI DIRECT PËR OPENAI
 router.post('/message', async (req, res) => {
     try {
         const { message, engine } = req.body;
@@ -35,6 +34,61 @@ router.post('/message', async (req, res) => {
 
         console.log('💬 [CHAT-UI] Mesazh:', message);
         console.log('🔧 [CHAT-UI] Motor:', engine);
+
+        // ==================== ✅ KOMANDA & MATEMATIKË - SHTO KËTU ====================
+        
+        // ✅ 1. KONTROLLO NËSE ËSHTË KOMANDË (FILLON ME /)
+        if (message.startsWith('/')) {
+            console.log('🎯 [CHAT-UI] Komandë e zbuluar:', message);
+            
+            try {
+                const CommandService = require('../services/commandService');
+                const commandResult = await CommandService.processCommand('command', { id: userId }, message, engine);
+                
+                if (commandResult && commandResult.success) {
+                    console.log('✅ [CHAT-UI] Komanda u procesua me sukses!');
+                    return res.json(commandResult);
+                } else {
+                    console.log('🔄 [CHAT-UI] Komanda dështoi, duke vazhduar me motorin AI...');
+                    // Vazhdo me motorin AI nëse komanda dështon
+                }
+                
+            } catch (commandError) {
+                console.error('❌ [CHAT-UI] Gabim në procesimin e komandës:', commandError);
+                // Vazhdo me motorin AI nëse ka gabim
+            }
+        }
+
+        // ✅ 2. KONTROLLO PËR LLOGARITJE MATEMATIKE
+        const mathPatterns = [
+            /(\d+[\+\-\*\/\^\(\)\d\s]+)/,
+            /sa bejne\s+([\d\+\-\*\/\^\(\)\s]+)/i,
+            /llogarit\s+([\d\+\-\*\/\^\(\)\s]+)/i, 
+            /([\d\.]+\s*[\+\-\*\/\^]\s*[\d\.]+)/
+        ];
+
+        for (const pattern of mathPatterns) {
+            const match = message.match(pattern);
+            if (match && match[1]) {
+                const expression = match[1].trim();
+                if (expression.length > 3) {
+                    console.log('🧮 [CHAT-UI] Shprehje matematikore e zbuluar:', expression);
+                    
+                    try {
+                        const CommandService = require('../services/commandService');
+                        const mathResult = await CommandService.handleMathCalculation(message);
+                        
+                        if (mathResult && mathResult.success) {
+                            console.log('✅ [CHAT-UI] Llogaritja u krye me sukses!');
+                            return res.json(mathResult);
+                        }
+                    } catch (mathError) {
+                        console.log('❌ [CHAT-UI] Gabim në llogaritje:', mathError);
+                    }
+                    break; // Ndal pas shprehjes së parë të gjetur
+                }
+            }
+        }
 
 // =============================✅ OPENAI DIRECT - PA COMMAND SERVICE ===================================
         if (engine === 'openai') {
