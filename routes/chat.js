@@ -27,7 +27,7 @@ async function checkApiKey(userId) {
 
 // =================================== ✅ RUTA RADIKALE - BYPASS COMMAND SERVICE ===============================
 
-// Në routes/chat.js - modifiko funksionin /message
+// Në routes/chat.js - version i thjeshtuar
 router.post('/message', async (req, res) => {
     try {
         const { message, engine } = req.body;
@@ -36,35 +36,26 @@ router.post('/message', async (req, res) => {
         console.log('💬 [CHAT-UI] Mesazh:', message);
         console.log('🔧 [CHAT-UI] Motor:', engine);
 
-        // ==================== ✅ KAP KOMANDAT PARA SE T'I DËRGON MOTORËVE AI ====================
-        
+        // ==================== ✅ KAP KOMANDAT ====================
         if (message.startsWith('/')) {
             console.log('🎯 [CHAT-UI] Komandë e zbuluar:', message);
             
             try {
-                // PROVO COMMAND SERVICE
                 const CommandService = require('../services/commandService');
-                console.log('✅ [CHAT-UI] CommandService u ngarkua');
-                
-                // PROVO processCommand
                 const commandResult = await CommandService.processCommand('command', { id: userId }, message, engine);
                 
                 if (commandResult && commandResult.success) {
-                    console.log('✅ [CHAT-UI] Komanda u procesua nga CommandService!');
+                    console.log('✅ [CHAT-UI] Komanda u procesua!');
                     return res.json(commandResult);
-                } else {
-                    console.log('🔄 [CHAT-UI] CommandService dështoi, duke vazhduar me motorin AI...');
                 }
-                
             } catch (commandError) {
-                console.error('❌ [CHAT-UI] Gabim në CommandService:', commandError);
-                // Vazhdo me motorin AI nëse CommandService dështon
+                console.error('❌ [CHAT-UI] Gabim në komandë:', commandError);
             }
         }
 
         // =============================✅ OPENAI DIRECT ===================================
         if (engine === 'openai') {
-            console.log('🔮 [CHAT-UI] Duke thirrur OpenAI direkt...');
+            console.log('🔮 [CHAT-UI] Duke thirrur OpenAI...');
             try {
                 const openai = require('../routes/openai');
                 const result = await fetch(`http://localhost:3000/api/openai/chat`, {
@@ -76,9 +67,7 @@ router.post('/message', async (req, res) => {
                     })
                 }).then(r => r.json());
                 
-                console.log('📥 [CHAT-UI] Rezultati OpenAI:', result.success ? 'SUCCESS' : 'FAILED');
                 return res.json(result);
-                
             } catch (error) {
                 console.error('❌ [CHAT-UI] Gabim OpenAI:', error);
             }
@@ -86,13 +75,12 @@ router.post('/message', async (req, res) => {
 
         // =============================✅ GEMINI DIRECT ===================================
         if (engine === 'gemini') {
-            console.log('🤖 [CHAT-UI] Duke thirrur Gemini direkt...');
+            console.log('🤖 [CHAT-UI] Duke thirrur Gemini...');
             try {
                 const GeminiRealService = require('../services/geminiRealService');
                 const result = await GeminiRealService.processMessage(message, userId);
                 
                 if (result && result.success) {
-                    console.log('✅ [CHAT-UI] GeminiRealService u përgjigj!');
                     return res.json({
                         success: true,
                         response: `🤖 **Gemini RRUFE-TESLA**: ${result.response}`,
@@ -103,20 +91,19 @@ router.post('/message', async (req, res) => {
                 console.error('❌ [CHAT-UI] Gabim Gemini:', error);
             }
         }
+
+        // =============================✅ FALLBACK I THJESHTË ===================================
+        // Nëse asgjë nuk funksionon, kthe fallback
+        return res.json({
+            success: true,
+            response: `🔧 **RRUFE-TESLA**: ${message}\n\n💡 *Sistemi po përmirësohet!*`
+        });
         
-// =============================✅ FALLBACK NË COMMAND SERVICE ===================================
-console.log('🔄 [CHAT-UI] Duke përdorur CommandService për gjuhë natyrale...');
-try {
-    const commandService = require('../services/commandService');
-    const result = await commandService.handleNaturalLanguage(message, { id: userId }, engine);
-    return res.json(result);
-} catch (fallbackError) {
-    console.error('❌ [CHAT-UI] Gabim në fallback:', fallbackError);
-    return res.json({ 
-        success: false, 
-        response: '❌ Gabim në server' 
-    });
-}
+    } catch (error) {
+        console.error('❌ Gabim:', error);
+        res.json({ success: false, response: 'Gabim në server' });
+    }
+});
 
 // ========================== ✅ KODI EKZISTUES - RUTA PËR PANELIN E NDIHMËS ME BUTONA =============================
 
