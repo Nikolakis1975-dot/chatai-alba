@@ -36,7 +36,7 @@ router.post('/message', async (req, res) => {
         console.log('💬 [CHAT-UI] Mesazh:', message);
         console.log('🔧 [CHAT-UI] Motor:', engine);
 
-        // ✅ OPENAI DIRECT - PA COMMAND SERVICE
+// =============================✅ OPENAI DIRECT - PA COMMAND SERVICE ===================================
         if (engine === 'openai') {
             console.log('🔮 [CHAT-UI] Duke thirrur OpenAI direkt...');
             try {
@@ -59,7 +59,63 @@ router.post('/message', async (req, res) => {
             }
         }
 
-        // ✅ FALLBACK NË COMMAND SERVICE
+ // ======================================== ✅ SHTO KËTË KOD PAS OPENAI ============================================
+
+// ✅ GEMINI FIX - SHTO PJESËN E RE PËR GEMINI
+if (engine === 'gemini') {
+    console.log('🤖 [CHAT-UI] Duke thirrur Gemini direkt...');
+    try {
+        // PROVO GEMINI REAL SERVICE SË PARI
+        try {
+            const GeminiRealService = require('../services/geminiRealService');
+            const result = await GeminiRealService.processMessage(message, userId);
+            
+            if (result && result.success) {
+                console.log('✅ [CHAT-UI] GeminiRealService u përgjigj!');
+                return res.json({
+                    success: true,
+                    response: `🤖 **Gemini RRUFE-TESLA**: ${result.response}`,
+                    source: 'gemini_real_service'
+                });
+            }
+        } catch (realServiceError) {
+            console.log('🔄 [CHAT-UI] GeminiRealService dështoi, duke provuar geminiService...');
+        }
+        
+        // PROVO GEMINI SERVICE SI FALLBACK
+        try {
+            const geminiService = require('../services/geminiService');
+            const result = await geminiService.processMessage(message, userId);
+            
+            if (result && result.success) {
+                console.log('✅ [CHAT-UI] geminiService u përgjigj!');
+                return res.json({
+                    success: true,
+                    response: `🤖 **Gemini RRUFE-TESLA**: ${result.response}`,
+                    source: 'gemini_service'
+                });
+            }
+        } catch (serviceError) {
+            console.log('🔄 [CHAT-UI] geminiService dështoi...');
+        }
+        
+        // NËSE TË DYJA DËSHTOJNË, KTHE FALLBACK
+        throw new Error('Të dy servicet Gemini dështuan');
+        
+    } catch (error) {
+        console.error('❌ [CHAT-UI] Gabim Gemini:', error);
+        
+        // ✅ FALLBACK FINAL - KTHE MESAZH INFORMUES
+        return res.json({
+            success: true,
+            response: `🤖 **Gemini RRUFE-TESLA**: Po punoj për të përmirësuar sistemin! 🔧\n\n**Pyetja juaj:** "${message}"\n\n💡 *Sistemi Gemini po përmirësohet. Ju lutem përdorni OpenAI për tani ose provoni përsëri më vonë.*`,
+            source: 'gemini_fallback_info'
+        });
+    }
+}
+        
+ // =================================== ✅ FALLBACK NË COMMAND SERVICE =======================================
+        
         console.log('🔄 [CHAT-UI] Duke përdorur CommandService...');
         const commandService = require('../services/commandService');
         const result = await commandService.handleNaturalLanguage(message, { id: userId }, engine);
