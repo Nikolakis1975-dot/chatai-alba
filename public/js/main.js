@@ -1250,3 +1250,131 @@ setTimeout(() => {
     fixSendButton();
     setTimeout(forceButtonFix, 500);
 }, 1500);
+
+// ========================================== ✅ FIX FINAL PËR BUTONIN E DËRGIMIT =======================================
+
+// ✅ FUNKSIONI KRYESOR PËR DËRGIM MESAZHESH
+window.sendMessage = async function() {
+    const userInput = document.getElementById('user-input');
+    const message = userInput.value.trim();
+    
+    if (!message) return;
+
+    console.log('🚀 [SEND-MESSAGE] Duke dërguar mesazh:', message);
+
+    try {
+        // ✅ TREGO MESAZHIN E USER-IT
+        addMessage(message, 'user');
+        userInput.value = '';
+
+        // ✅ TREGO LOADING
+        const chat = document.getElementById('chat');
+        const loadingDiv = document.createElement('div');
+        loadingDiv.id = 'loading-message';
+        loadingDiv.className = 'message bot';
+        loadingDiv.innerHTML = '<div class="message-text">⏳ Po procesoj...</div>';
+        chat.appendChild(loadingDiv);
+        chat.scrollTop = chat.scrollHeight;
+
+        // ✅ MER MOTORIN AKTIV
+        const activeEngine = window.aiEngineStatus?.openai ? 'openai' : 'gemini';
+        console.log('🎯 [SEND-MESSAGE] Motor aktiv:', activeEngine);
+
+        // ✅ DËRGO NË SERVER
+        const response = await fetch('/api/chat/message', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            credentials: 'include',
+            body: JSON.stringify({
+                message: message,
+                engine: activeEngine
+            })
+        });
+
+        // ✅ HIQ LOADING
+        document.getElementById('loading-message')?.remove();
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log('📥 [SEND-MESSAGE] Përgjigja:', data);
+
+        if (data.success) {
+            addMessage(data.response, 'bot');
+        } else {
+            addMessage(`❌ Gabim: ${data.error || 'Gabim në server'}`, 'bot');
+        }
+
+    } catch (error) {
+        console.error('❌ [SEND-MESSAGE] Gabim:', error);
+        document.getElementById('loading-message')?.remove();
+        addMessage('❌ Gabim në lidhje me serverin. Provo përsëri.', 'bot');
+    }
+};
+
+// ✅ FUNKSIONI addMessage NËSE NUK EKZISTON
+if (typeof window.addMessage === 'undefined') {
+    window.addMessage = function(text, sender) {
+        const chat = document.getElementById('chat');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${sender}`;
+        messageDiv.innerHTML = `<div class="message-text">${text}</div>`;
+        chat.appendChild(messageDiv);
+        chat.scrollTop = chat.scrollHeight;
+    };
+}
+
+// ✅ FIX DEFINITIV PËR BUTONIN
+function finalButtonFix() {
+    console.log('🔧 FINAL FIX: Duke lidhur butonin...');
+    
+    const sendBtn = document.getElementById('send-btn');
+    const userInput = document.getElementById('user-input');
+    
+    if (sendBtn) {
+        // ✅ METODË E RE - FSHI DHE RIKRIJO BUTONIN
+        const newSendBtn = sendBtn.cloneNode(true);
+        sendBtn.parentNode.replaceChild(newSendBtn, sendBtn);
+        
+        // ✅ LIDH BUTONIN E RI
+        document.getElementById('send-btn').onclick = window.sendMessage;
+        console.log('✅ Butoni u lidh me sendMessage');
+    }
+    
+    if (userInput) {
+        userInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                window.sendMessage();
+            }
+        });
+        console.log('✅ Enter key u lidh');
+    }
+}
+
+// ✅ INICIALIZO KUR FAQJA ËSHTË GATI
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🎯 DOM u ngarkua - duke inicializuar sistemin...');
+    
+    // Jep kohë për të gjitha modulet të ngarkohen
+    setTimeout(() => {
+        finalButtonFix();
+        
+        // Kontrollo nëse funksionon
+        console.log('🧪 Testi i funksioneve:');
+        console.log('- window.sendMessage:', typeof window.sendMessage);
+        console.log('- window.addMessage:', typeof window.addMessage);
+        console.log('- Butoni onclick:', document.getElementById('send-btn')?.onclick);
+        
+        // Aktivizo motorin default
+        if (!window.aiEngineStatus) {
+            window.aiEngineStatus = { gemini: true, openai: false };
+        }
+        
+        console.log('✅ Sistemi u inicializua plotësisht!');
+    }, 1000);
+});
+
+// ✅ EKZEKUTO EDHE PAS NGARKIMIT
+setTimeout(finalButtonFix, 2000);
