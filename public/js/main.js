@@ -1379,7 +1379,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // ✅ EKZEKUTO EDHE PAS NGARKIMIT
 setTimeout(finalButtonFix, 2000);
 
-// ======================================== ✅ FIX FINAL - VERSION I KORRIGJUAR ===================================
+// ===================================== ✅ FIX FINAL - VERSION I KORRIGJUAR ===================================
 
 console.log('🔧 Duke aktivizuar sistemin përfundimtar...');
 
@@ -1437,95 +1437,75 @@ window.sendMessage = async function() {
 
 async function checkKnowledge(message) {
     try {
-        console.log('💾 [KNOWLEDGE-DEBUG] Duke kërkuar njohuri për:', message);
+        console.log('💾 [KNOWLEDGE-DEEP-DEBUG] Duke kërkuar njohuri për:', message);
         
         if (window.currentUser && window.currentUser.id) {
             const userMessage = message.toLowerCase().trim();
             const userId = window.currentUser.id;
             
-            console.log('👤 [KNOWLEDGE-DEBUG] User ID:', userId);
+            console.log('👤 [KNOWLEDGE-DEEP-DEBUG] User ID:', userId);
+            console.log('🔍 [KNOWLEDGE-DEEP-DEBUG] Pyetja e kërkuar:', userMessage);
             
             // ✅ 1. PROVO ROUTE-IN E DIREKTË
-            console.log('🔍 [KNOWLEDGE-DEBUG] Duke kërkuar direkt...');
+            console.log('\n🎯 [KNOWLEDGE-DEEP-DEBUG] TEST 1: Route i drejtpërdrejtë');
             const directUrl = `/api/chat/knowledge/${userId}/${encodeURIComponent(userMessage)}`;
-            console.log('📡 URL:', directUrl);
+            console.log('📡 URL 1:', directUrl);
             
-            const response = await fetch(directUrl, {
-                credentials: 'include'
-            });
+            const response1 = await fetch(directUrl, { credentials: 'include' });
+            console.log('📊 Statusi 1:', response1.status, response1.statusText);
             
-            console.log('📊 [KNOWLEDGE-DEBUG] Statusi:', response.status, response.statusText);
-            
-            if (response.ok) {
-                const data = await response.json();
-                console.log('📝 [KNOWLEDGE-DEBUG] Përgjigja:', data);
+            if (response1.ok) {
+                const data1 = await response1.json();
+                console.log('📝 Përgjigja 1:', data1);
                 
-                if (data.answer && data.answer !== 'null') {
-                    console.log('✅ [KNOWLEDGE-DEBUG] Gjetëm përgjigje të ruajtur!');
-                    addMessage(`💾 **Përgjigje e ruajtur:** ${data.answer}`, 'bot');
+                if (data1.answer && data1.answer !== 'null') {
+                    console.log('✅ [SUKSES] Gjetëm përgjigje të ruajtur!');
+                    addMessage(`💾 **Përgjigje e ruajtur:** ${data1.answer}`, 'bot');
                     return true;
-                } else {
-                    console.log('❌ [KNOWLEDGE-DEBUG] Nuk ka përgjigje ose përgjigja është null');
-                    
-                    // ✅ 2. PROVO TË GJITHA NJOHURITË
-                    console.log('🎯 [KNOWLEDGE-DEBUG] Duke kontrolluar të gjitha njohuritë...');
-                    await checkAllKnowledge(userId, userMessage);
                 }
-            } else {
-                console.log('❌ [KNOWLEDGE-DEBUG] Gabim në server:', response.status);
             }
-        } else {
-            console.log('❌ [KNOWLEDGE-DEBUG] Nuk ka currentUser');
-        }
-    } catch (error) {
-        console.log('❌ [KNOWLEDGE-DEBUG] Gabim në kërkim:', error.message);
-    }
-    return false;
-}
-
-// ✅ FUNKSION PËR KONTROLLIMIN E TË GJITHA NJOHURIVE
-async function checkAllKnowledge(userId, userMessage) {
-    try {
-        console.log('📚 [ALL-KNOWLEDGE] Duke marrë të gjitha njohuritë...');
-        
-        const exportResponse = await fetch(`/api/chat/export/${userId}`, {
-            credentials: 'include'
-        });
-        
-        console.log('📡 [ALL-KNOWLEDGE] Statusi i eksportit:', exportResponse.status);
-        
-        if (exportResponse.ok) {
-            const allKnowledge = await exportResponse.json();
-            console.log('📊 [ALL-KNOWLEDGE] Të gjitha njohuritë:', allKnowledge);
             
-            if (Array.isArray(allKnowledge) && allKnowledge.length > 0) {
-                console.log(`✅ [ALL-KNOWLEDGE] Ka ${allKnowledge.length} njohuri në database`);
-                
-                // Kërko përgjigje që përputhen
-                for (const knowledge of allKnowledge) {
-                    if (knowledge.question && knowledge.answer) {
-                        const storedQuestion = knowledge.question.toLowerCase().trim();
-                        
-                        console.log(`🔍 [ALL-KNOWLEDGE] Krahasoj: "${userMessage}" me "${storedQuestion}"`);
-                        
-                        // Kontrollo përputhje të thjeshtë
-                        if (userMessage === storedQuestion) {
-                            console.log('✅ [ALL-KNOWLEDGE] Përgjigje e gjetur me përputhje të saktë!');
-                            addMessage(`💾 **Përgjigje e ruajtur:** ${knowledge.answer}`, 'bot');
-                            return true;
-                        }
-                    }
-                }
-                
-                console.log('❌ [ALL-KNOWLEDGE] Nuk u gjet asnjë përgjigje e përshtatshme');
-            } else {
-                console.log('❌ [ALL-KNOWLEDGE] Nuk ka njohuri në database ose format i gabuar');
+            // ✅ 2. PROVO ROUTE TË NDYSHËM
+            console.log('\n🎯 [KNOWLEDGE-DEEP-DEBUG] TEST 2: Route alternative');
+            const altUrl = `/api/knowledge/search?query=${encodeURIComponent(userMessage)}&userId=${userId}`;
+            console.log('📡 URL 2:', altUrl);
+            
+            const response2 = await fetch(altUrl, { credentials: 'include' });
+            console.log('📊 Statusi 2:', response2.status, response2.statusText);
+            
+            if (response2.ok) {
+                const data2 = await response2.json();
+                console.log('📝 Përgjigja 2:', data2);
             }
+            
+            // ✅ 3. PROVO TË GJITHA NJOHURITË
+            console.log('\n🎯 [KNOWLEDGE-DEEP-DEBUG] TEST 3: Të gjitha njohuritë');
+            const exportUrl = `/api/chat/export/${userId}`;
+            console.log('📡 URL 3:', exportUrl);
+            
+            const response3 = await fetch(exportUrl, { credentials: 'include' });
+            console.log('📊 Statusi 3:', response3.status, response3.statusText);
+            
+            if (response3.ok) {
+                const data3 = await response3.json();
+                console.log('📝 Përgjigja 3:', data3);
+                
+                if (Array.isArray(data3) && data3.length > 0) {
+                    console.log(`📚 Gjithsej ${data3.length} njohuri në database`);
+                    
+                    // Shfaq 5 njohuritë e fundit për debug
+                    const recent = data3.slice(-5);
+                    console.log('🗂️ 5 njohuritë e fundit:', recent);
+                }
+            }
+            
+            console.log('\n❌ [KNOWLEDGE-DEEP-DEBUG] Nuk u gjet asnjë përgjigje e ruajtur');
+            
         } else {
-            console.log('❌ [ALL-KNOWLEDGE] Gabim në marrjen e të gjitha njohurive');
+            console.log('❌ [KNOWLEDGE-DEEP-DEBUG] Nuk ka currentUser');
         }
     } catch (error) {
-        console.log('❌ [ALL-KNOWLEDGE] Gabim:', error.message);
+        console.log('❌ [KNOWLEDGE-DEEP-DEBUG] Gabim:', error.message);
     }
     return false;
 }
