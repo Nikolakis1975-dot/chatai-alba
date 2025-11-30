@@ -1491,3 +1491,170 @@ setTimeout(() => {
 }, 2000);
 
 console.log('✅ Sistemi i komandave u aktivizua! Komandat do të procesohën në frontend.');
+
+// ==================== ✅ FIX I SIGURT PËR NJOHURITË & LLOGARITJE ====================
+
+console.log('🔧 Duke aktivizuar sistemin e njohurive dhe llogaritjeve...');
+
+// ✅ METODË E RE: Shto Event Listener pa mbivendosur sendMessage
+function initializeEnhancedSystem() {
+    console.log('🎯 Duke inicializuar sistemin e përmirësuar...');
+    
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+    
+    if (!userInput || !sendBtn) {
+        console.log('❌ Elementët nuk u gjetën, duke provuar përsëri...');
+        setTimeout(initializeEnhancedSystem, 1000);
+        return;
+    }
+    
+    // ✅ 1. KAP ENTER KEY PA NDRYSHUAR sendMessage
+    userInput.addEventListener('keypress', async function(e) {
+        if (e.key === 'Enter') {
+            await processMessageBeforeSend();
+        }
+    });
+    
+    // ✅ 2. KAP KLIKIMIN E BUTONIT PA NDRYSHUAR sendMessage
+    const originalBtnClick = sendBtn.onclick;
+    sendBtn.onclick = async function() {
+        const processed = await processMessageBeforeSend();
+        if (!processed) {
+            // Nëse nuk u procesua, përdor funksionin origjinal
+            if (originalBtnClick) originalBtnClick.call(this);
+            else if (window.sendMessage) window.sendMessage();
+        }
+    };
+    
+    console.log('✅ Sistemi i përmirësuar u inicializua!');
+}
+
+// ✅ FUNKSIONI KRYESOR PËR PROCESIMIN E MESAZHEVE
+async function processMessageBeforeSend() {
+    const userInput = document.getElementById('user-input');
+    const message = userInput.value.trim();
+    
+    if (!message) return false;
+    
+    console.log('🔍 [ENHANCED-SYSTEM] Duke procesuar mesazhin:', message);
+    
+    // ✅ MOS NDAJH KOMANDAT - ato lejohen të vazhdojnë normalisht
+    if (message.startsWith('/')) {
+        console.log('🎯 [ENHANCED-SYSTEM] Komandë, duke lejuar procesimin normal...');
+        return false;
+    }
+    
+    // ✅ 1. KONTROLLO NJOHURITË E RUAJTURA
+    try {
+        console.log('💾 [ENHANCED-SYSTEM] Duke kërkuar njohuri të ruajtura...');
+        
+        if (window.currentUser && window.currentUser.id) {
+            const response = await fetch(`/api/chat/knowledge/${window.currentUser.id}/${encodeURIComponent(message.toLowerCase())}`, {
+                method: 'GET',
+                credentials: 'include'
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('📊 [ENHANCED-SYSTEM] Përgjigja e serverit:', data);
+                
+                if (data.answer && data.answer !== null && data.answer !== 'null') {
+                    console.log('✅ [ENHANCED-SYSTEM] Gjetëm përgjigje të ruajtur!');
+                    addMessage(message, 'user');
+                    addMessage(`💾 **Përgjigje e ruajtur:** ${data.answer}`, 'bot');
+                    userInput.value = '';
+                    return true;
+                }
+            }
+        }
+    } catch (error) {
+        console.log('ℹ️ [ENHANCED-SYSTEM] Nuk ka përgjigje të ruajtur:', error.message);
+    }
+    
+    // ✅ 2. KONTROLLO LLOGARITJE MATEMATIKE
+    try {
+        console.log('🧮 [ENHANCED-SYSTEM] Duke kontrolluar për llogaritje...');
+        
+        // Përdor tryCalculate nga script.js nëse ekziston
+        if (typeof tryCalculate !== 'undefined') {
+            const mathResult = tryCalculate(message);
+            if (mathResult !== null) {
+                console.log('✅ [ENHANCED-SYSTEM] Llogaritje e gjetur nga tryCalculate:', mathResult);
+                addMessage(message, 'user');
+                addMessage(`🧮 **Rezultati**: ${mathResult}`, 'bot');
+                userInput.value = '';
+                return true;
+            }
+        }
+        
+        // Fallback manual për llogaritje
+        const mathPatterns = [
+            /^(\d+[\+\-\*\/\^\(\)\d\s\.]+)$/,
+            /^sa bejne\s+([\d\+\-\*\/\^\(\)\s\.]+)$/i,
+            /^llogarit\s+([\d\+\-\*\/\^\(\)\s\.]+)$/i,
+            /^([\d\.]+\s*[\+\-\*\/\^]\s*[\d\.]+)$/
+        ];
+        
+        for (const pattern of mathPatterns) {
+            const match = message.match(pattern);
+            if (match && match[1]) {
+                const expression = match[1].trim();
+                if (expression.length > 2 && expression.length < 50) { // Sigurohu që nuk është shumë e gjatë
+                    console.log('🔢 [ENHANCED-SYSTEM] Shprehje matematikore e gjetur:', expression);
+                    
+                    try {
+                        // Pastro dhe siguro shprehjen
+                        const cleanExpr = expression
+                            .replace(/[^0-9+\-*/().^√πe\s]/g, '')
+                            .replace(/\s+/g, '')
+                            .replace(/\^/g, '**');
+                        
+                        // Kontrollo sigurinë
+                        if (!/^[0-9+\-*/().\s]+$/.test(cleanExpr.replace(/\*\*/g, ''))) {
+                            throw new Error('Shprehje e pavlefshme');
+                        }
+                        
+                        if (cleanExpr.includes('/0') || cleanExpr.match(/\/\s*0(?!\.)/)) {
+                            throw new Error('Pjesëtimi me zero');
+                        }
+                        
+                        // Ekzekuto llogaritjen
+                        const result = eval(cleanExpr);
+                        const formattedResult = Number.isInteger(result) ? 
+                            result.toString() : 
+                            parseFloat(result.toFixed(6)).toString();
+                        
+                        console.log('✅ [ENHANCED-SYSTEM] Llogaritja u krye:', formattedResult);
+                        addMessage(message, 'user');
+                        addMessage(`🧮 **Rezultati**: ${formattedResult}\n\n📝 *Shprehja: ${expression}*`, 'bot');
+                        userInput.value = '';
+                        return true;
+                        
+                    } catch (evalError) {
+                        console.log('❌ [ENHANCED-SYSTEM] Llogaritja dështoi:', evalError.message);
+                    }
+                    break;
+                }
+            }
+        }
+    } catch (error) {
+        console.log('❌ [ENHANCED-SYSTEM] Gabim në kontrollin e llogaritjeve:', error);
+    }
+    
+    // ✅ 3. NËSE NUK GJETËM NJOHURI OSE LLOGARITJE, LEJO MESAZHIN NORMAL
+    console.log('🔄 [ENHANCED-SYSTEM] Mesazh normal, duke lejuar dërgimin...');
+    return false;
+}
+
+// ✅ INICIALIZO SISTEMIN
+setTimeout(() => {
+    initializeEnhancedSystem();
+    
+    console.log('🔍 Statusi i sistemit të përmirësuar:');
+    console.log('- tryCalculate:', typeof tryCalculate);
+    console.log('- addMessage:', typeof addMessage);
+    console.log('- currentUser:', window.currentUser);
+}, 1500);
+
+console.log('✅ Sistemi i përmirësuar i njohurive dhe llogaritjeve u aktivizua!');
