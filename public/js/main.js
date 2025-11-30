@@ -1564,63 +1564,102 @@ setTimeout(() => {
 
 console.log('✅ Sistemi përfundimtar u aktivizua!');
 
-// ============================================ ✅ FIX AGRESIV - PO FUNKSIONON =======================================
+// ============================================= ✅ FIX FINAL - METODË E THJESHTË ======================================
 
-console.log('🔧 Duke aktivizuar sistemin agresiv...');
+console.log('🔧 Duke aktivizuar sistemin final...');
 
-// ✅ MBIVENDOS sendMessage ME MËNYRËN E DUHUR
-const originalSendMessage = window.sendMessage;
+// ✅ INICIALIZO SISTEMIN
+function initializeFinalSystem() {
+    console.log('🎯 Duke inicializuar sistemin final...');
+    
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+    
+    if (!userInput || !sendBtn) {
+        console.log('❌ Elementët nuk u gjetën, duke provuar përsëri...');
+        setTimeout(initializeFinalSystem, 1000);
+        return;
+    }
+    
+    console.log('✅ Elementët u gjetën!');
+    
+    // ✅ KAP ENTER KEY
+    const originalKeypress = userInput.onkeypress;
+    userInput.onkeypress = function(e) {
+        if (e.key === 'Enter') {
+            handleFinalMessage();
+        } else if (originalKeypress) {
+            originalKeypress.call(this, e);
+        }
+    };
+    
+    // ✅ KAP KLIKIMIN E BUTONIT
+    const originalClick = sendBtn.onclick;
+    sendBtn.onclick = function() {
+        handleFinalMessage();
+    };
+    
+    console.log('🎉 Sistemi final u inicializua!');
+}
 
-window.sendMessage = async function() {
+// ✅ FUNKSIONI FINAL
+function handleFinalMessage() {
     const userInput = document.getElementById('user-input');
     const message = userInput.value.trim();
     
-    if (!message) {
-        if (originalSendMessage) return originalSendMessage.call(this);
-        return;
-    }
-
-    console.log('🚨 [AGRESIVE-FIX] Mesazh:', message);
-
+    if (!message) return;
+    
+    console.log('💬 [FINAL] Mesazh:', message);
+    
     // ✅ SHFAQ MESAZHIN E USER-IT
     addMessage(message, 'user');
     userInput.value = '';
+    
+    // ✅ KONTROLLO NJOHURITË E RUAJTURA
+    checkKnowledgeFinal(message);
+}
 
-    // ✅ 1. KONTROLLO NJOHURITË E RUAJTURA PARA SE TË DËRGOHET
+// ✅ FUNKSIONI PËR KONTROLLIMIN E NJOHURIVE
+async function checkKnowledgeFinal(message) {
     try {
-        console.log('💾 [AGRESIVE-FIX] Duke kërkuar njohuri për:', message);
+        console.log('💾 [FINAL] Duke kërkuar njohuri për:', message);
         
         if (window.currentUser && window.currentUser.id) {
             const response = await fetch(`/api/chat/knowledge/${window.currentUser.id}/${encodeURIComponent(message.toLowerCase())}`, {
                 credentials: 'include'
             });
             
-            console.log('📡 [AGRESIVE-FIX] Statusi:', response.status);
+            console.log('📡 [FINAL] Statusi:', response.status);
             
             if (response.ok) {
                 const data = await response.json();
-                console.log('📊 [AGRESIVE-FIX] Përgjigja:', data);
+                console.log('📊 [FINAL] Përgjigja:', data);
                 
                 if (data.answer && data.answer !== 'null') {
-                    console.log('✅✅✅ [AGRESIVE-FIX] Gjetëm përgjigje të ruajtur!');
+                    console.log('✅✅✅ [FINAL] Gjetëm përgjigje të ruajtur!');
                     addMessage(`💾 **Përgjigje e ruajtur:** ${data.answer}`, 'bot');
-                    return; // MOS DËRGO TE SERVERI
+                    return;
                 } else {
-                    console.log('❌ [AGRESIVE-FIX] Nuk ka përgjigje të ruajtur');
+                    console.log('❌ [FINAL] Nuk ka përgjigje të ruajtur');
+                    // DËRGO TE SERVERI
+                    sendToServerFinal(message);
                 }
             } else {
-                console.log('❌ [AGRESIVE-FIX] Gabim në server:', response.status);
+                console.log('❌ [FINAL] Gabim në server, duke dërguar te AI...');
+                sendToServerFinal(message);
             }
         } else {
-            console.log('❌ [AGRESIVE-FIX] Nuk ka currentUser');
+            console.log('❌ [FINAL] Nuk ka currentUser, duke dërguar te AI...');
+            sendToServerFinal(message);
         }
     } catch (error) {
-        console.log('❌ [AGRESIVE-FIX] Gabim në kërkim:', error.message);
+        console.log('❌ [FINAL] Gabim në kërkim, duke dërguar te AI...');
+        sendToServerFinal(message);
     }
+}
 
-    // ✅ 2. NËSE NUK GJETËM NJOHURI, DËRGO TE SERVERI
-    console.log('🔄 [AGRESIVE-FIX] Duke dërguar te serveri...');
-    
+// ✅ DËRGO TE SERVERI
+async function sendToServerFinal(message) {
     try {
         const activeEngine = window.aiEngineStatus?.openai ? 'openai' : 'gemini';
         
@@ -1641,36 +1680,19 @@ window.sendMessage = async function() {
             addMessage('❌ Gabim në server.', 'bot');
         }
     } catch (error) {
-        console.error('❌ [AGRESIVE-FIX] Gabim në dërgim:', error);
+        console.error('❌ [FINAL] Gabim në dërgim:', error);
         addMessage('❌ Gabim në lidhje.', 'bot');
-    }
-};
-
-// ✅ RREGULLO BUTONIN E OPENAI PANELIT
-function fixOpenAIPanel() {
-    const openaiBtn = document.querySelector('button[onclick*="showOpenAIPanel"]');
-    if (openaiBtn) {
-        console.log('🔧 Duke rregulluar butonin e OpenAI...');
-        
-        const originalOnClick = openaiBtn.onclick;
-        openaiBtn.onclick = function() {
-            console.log('🎯 Butoni i OpenAI u klikua!');
-            if (originalOnClick) originalOnClick.call(this);
-        };
-        
-        console.log('✅ Butoni i OpenAI u rregullua!');
     }
 }
 
 // ✅ INICIALIZO
 setTimeout(() => {
-    fixOpenAIPanel();
+    initializeFinalSystem();
     
-    console.log('🔍 [AGRESIVE-FIX] Statusi:');
-    console.log('- sendMessage:', typeof window.sendMessage);
+    console.log('🔍 [FINAL] Statusi:');
     console.log('- processCommand:', typeof processCommand);
     console.log('- addMessage:', typeof addMessage);
     console.log('- currentUser:', window.currentUser);
-}, 2000);
+}, 1500);
 
-console.log('✅ Sistemi agresiv u aktivizua!');
+console.log('✅ Sistemi final u aktivizua!');
