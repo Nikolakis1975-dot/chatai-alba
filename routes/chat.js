@@ -27,7 +27,7 @@ async function checkApiKey(userId) {
 
 // =================================== ✅ RUTA RADIKALE - BYPASS COMMAND SERVICE ===============================
 
-// Në routes/chat.js - version i thjeshtuar
+// Në routes/chat.js - modifiko funksionin /message
 router.post('/message', async (req, res) => {
     try {
         const { message, engine } = req.body;
@@ -36,21 +36,68 @@ router.post('/message', async (req, res) => {
         console.log('💬 [CHAT-UI] Mesazh:', message);
         console.log('🔧 [CHAT-UI] Motor:', engine);
 
-        // ==================== ✅ KAP KOMANDAT ====================
+        // ==================== ✅ KAP KOMANDAT - VERSION I FORTUAR ====================
         if (message.startsWith('/')) {
             console.log('🎯 [CHAT-UI] Komandë e zbuluar:', message);
             
+            // ✅ KTHE PJEGJIGJE DIRECT PËR /ndihmo
+            if (message === '/ndihmo') {
+                console.log('✅ [CHAT-UI] Duke kthyer /ndihmo direkt...');
+                return res.json({
+                    success: true,
+                    response: `👑 **SISTEMI I KOMANDAVE - RRUFE-TESLA** 👑
+
+📋 **KOMANDAT BAZE:**
+• /ndihmo - Kjo liste
+• /wiki <temë> - Kërkim Wikipedia  
+• /moti <qytet> - Informacion moti
+• /meso <pyetje>|<përgjigje> - Mëso diçka të re
+• /apikey <key> - Vendos API Key
+• /eksporto - Eksporto të dhënat
+• /importo - Importo të dhënat
+• /dil - Dil nga sistemi
+
+🚀 **KËRKIM:**
+• /gjej <kërkim> - Kërkim i thelluar
+• /google <kërkim> - Kërkim Google
+
+🎓 **STUDENT:**
+• /student - Menu studenti
+• /liber <emër> - Gjej libra
+• /detyre <lendë> - Ndihmë detyrash
+
+👑 **ADMIN:**
+• /admin - Paneli i adminit (vetëm për administratorë)
+
+🔧 **Motor aktiv:** ${engine}`,
+                    source: 'command_direct'
+                });
+            }
+
+            // ✅ PROVO COMMAND SERVICE PËR KOMANDA TË TJERA
             try {
                 const CommandService = require('../services/commandService');
+                console.log('🔧 [CHAT-UI] Duke thirrur CommandService...');
+                
                 const commandResult = await CommandService.processCommand('command', { id: userId }, message, engine);
                 
                 if (commandResult && commandResult.success) {
-                    console.log('✅ [CHAT-UI] Komanda u procesua!');
+                    console.log('✅ [CHAT-UI] CommandService u përgjigj!');
                     return res.json(commandResult);
+                } else {
+                    console.log('❌ [CHAT-UI] CommandService dështoi ose nuk dha përgjigje');
                 }
             } catch (commandError) {
-                console.error('❌ [CHAT-UI] Gabim në komandë:', commandError);
+                console.error('❌ [CHAT-UI] Gabim në CommandService:', commandError.message);
             }
+
+            // ✅ NËSE COMMAND SERVICE DËSHTOI, KTHE FALLBACK
+            console.log('🔄 [CHAT-UI] Duke kthyer fallback për komandën...');
+            return res.json({
+                success: true,
+                response: `🔧 **Komanda:** ${message}\n\n💡 *Sistemi i komandave po përmirësohet. Ju lutem përdorni /ndihmo për listën e plotë.*`,
+                source: 'command_fallback'
+            });
         }
 
         // =============================✅ OPENAI DIRECT ===================================
@@ -92,8 +139,7 @@ router.post('/message', async (req, res) => {
             }
         }
 
-        // =============================✅ FALLBACK I THJESHTË ===================================
-        // Nëse asgjë nuk funksionon, kthe fallback
+        // =============================✅ FALLBACK FINAL ===================================
         return res.json({
             success: true,
             response: `🔧 **RRUFE-TESLA**: ${message}\n\n💡 *Sistemi po përmirësohet!*`
