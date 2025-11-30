@@ -1379,161 +1379,71 @@ document.addEventListener('DOMContentLoaded', function() {
 // ✅ EKZEKUTO EDHE PAS NGARKIMIT
 setTimeout(finalButtonFix, 2000);
 
-// ================================================ ✅ FIX I THJESHTË & EFEKTIV ========================================
+// ================================== ✅ SISTEMI BAZË - KTHIM NË FUNKSIONALITETIN E VJETËR =============================
 
-console.log('🔧 Duke aktivizuar sistemin e thjeshtë...');
+console.log('🔧 Duke rikthyer funksionalitetin bazë...');
 
-// ✅ VARIABEL PËR TË PARANDALUAR DËRGIMET E DYBËFISHTA
-let isProcessing = false;
-
-// ✅ INICIALIZO SISTEMIN
-function initializeSimpleSystem() {
-    console.log('🎯 Duke inicializuar sistemin e thjeshtë...');
+// ✅ INICIALIZO SISTEMIN BAZË
+function initializeBaseSystem() {
+    console.log('🎯 Duke inicializuar sistemin bazë...');
     
-    const userInput = document.getElementById('user-input');
-    const sendBtn = document.getElementById('send-btn');
-    
-    if (!userInput || !sendBtn) {
-        console.log('❌ Elementët nuk u gjetën, duke provuar përsëri...');
-        setTimeout(initializeSimpleSystem, 1000);
-        return;
-    }
-    
-    console.log('✅ Elementët u gjetën!');
-    
-    // ✅ KAP ENTER KEY
-    userInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            handleSimpleMessage();
-        }
-    });
-    
-    // ✅ KAP KLIKIMIN E BUTONIT
-    sendBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        handleSimpleMessage();
-    });
-    
-    console.log('🎉 Sistemi i thjeshtë u inicializua!');
-}
-
-// ✅ FUNKSIONI KRYESOR
-async function handleSimpleMessage() {
-    if (isProcessing) return;
-    isProcessing = true;
-    
-    const userInput = document.getElementById('user-input');
-    const message = userInput.value.trim();
-    
-    if (!message) {
-        isProcessing = false;
-        return;
-    }
-    
-    console.log('💬 Mesazh:', message);
-    
-    // ✅ SHFAQ MESAZHIN E USER-IT
-    addMessage(message, 'user');
-    userInput.value = '';
-    
-    // ✅ 1. KONTROLLO NËSE ËSHTË KOMANDË
-    if (message.startsWith('/')) {
-        console.log('🎯 Komandë e zbuluar!');
-        if (typeof processCommand === 'function') {
-            await processCommand(message);
-        } else {
-            addMessage('❌ Sistemi i komandave nuk është i disponueshëm.', 'bot');
-        }
-        isProcessing = false;
-        return;
-    }
-    
-    // ✅ 2. KONTROLLO NJOHURITË E RUAJTURA
-    try {
-        console.log('💾 Duke kërkuar njohuri të ruajtura...');
-        
-        if (window.currentUser && window.currentUser.id) {
-            const response = await fetch(`/api/chat/knowledge/${window.currentUser.id}/${encodeURIComponent(message.toLowerCase())}`, {
-                credentials: 'include'
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                console.log('📊 Përgjigja:', data);
-                
-                if (data.answer && data.answer !== 'null') {
-                    console.log('✅ Gjetëm përgjigje të ruajtur!');
-                    addMessage(`💾 **Përgjigje e ruajtur:** ${data.answer}`, 'bot');
-                    isProcessing = false;
-                    return;
-                }
-            }
-        }
-    } catch (error) {
-        console.log('ℹ️ Nuk ka përgjigje të ruajtur');
-    }
-    
-    // ✅ 3. KONTROLLO LLOGARITJE MATEMATIKE ME tryCalculate
-    console.log('🧮 Duke kontrolluar për llogaritje...');
-    if (typeof tryCalculate === 'function') {
-        const mathResult = tryCalculate(message);
-        if (mathResult !== null) {
-            console.log('✅ Llogaritje e gjetur:', mathResult);
-            addMessage(`🧮 **Rezultati**: ${mathResult}`, 'bot');
-            isProcessing = false;
-            return;
-        }
-    } else {
-        console.log('❌ tryCalculate nuk ekziston');
-    }
-    
-    // ✅ 4. NËSE NUK GJETËM GJË, DËRGO TE SERVERI
-    console.log('🔄 Duke dërguar te serveri...');
-    await sendToServer(message);
-    isProcessing = false;
-}
-
-// ✅ DËRGO TE SERVERI
-async function sendToServer(message) {
-    try {
-        const activeEngine = window.aiEngineStatus?.openai ? 'openai' : 'gemini';
-        
-        const response = await fetch('/api/chat/message', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            credentials: 'include',
-            body: JSON.stringify({
-                message: message,
-                engine: activeEngine
-            })
-        });
-        
-        const data = await response.json();
-        if (data.success) {
-            addMessage(data.response, 'bot');
-        } else {
-            addMessage('❌ Gabim në server.', 'bot');
-        }
-    } catch (error) {
-        console.error('❌ Gabim në dërgim:', error);
-        addMessage('❌ Gabim në lidhje.', 'bot');
-    }
-}
-
-// ✅ INICIALIZO PAS NGARKIMIT
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('📄 DOM u ngarkua, duke nisur sistemin...');
-    setTimeout(initializeSimpleSystem, 500);
-});
-
-// ✅ KONTROLLO FUNKSIONET
-setTimeout(() => {
-    console.log('🔍 Statusi i sistemit:');
+    // KONTROLLO FUNKSIONET
+    console.log('🔍 Kontrolli i funksioneve:');
     console.log('- processCommand:', typeof processCommand);
     console.log('- addMessage:', typeof addMessage);
     console.log('- tryCalculate:', typeof tryCalculate);
-    console.log('- currentUser:', window.currentUser);
-}, 2000);
+    
+    // NËSE PROCESSCOMMAND EKZISTON, SISTEMI ËSHTË I GATI
+    if (typeof processCommand !== 'undefined') {
+        console.log('✅ processCommand u gjet - komandat do të funksionojnë!');
+    } else {
+        console.log('❌ processCommand nuk u gjet - komandat nuk do të funksionojnë');
+    }
+}
 
-console.log('✅ Sistemi i thjeshtë u ngarkua!');
+// ✅ MBIVENDOS FUNKSIONIN sendMessage PËR KOMANDAT (METODË E PROVUAR)
+const originalSendMessage = window.sendMessage;
+
+window.sendMessage = async function() {
+    const userInput = document.getElementById('user-input');
+    const message = userInput.value.trim();
+    
+    if (!message) return;
+
+    console.log('💬 Mesazh:', message);
+
+    // ✅ KONTROLLO NËSE ËSHTË KOMANDË
+    if (message.startsWith('/')) {
+        console.log('🎯 Komandë e zbuluar, duke thirrur processCommand...');
+        
+        // SHFAQ MESAZHIN E USER-IT
+        addMessage(message, 'user');
+        userInput.value = '';
+
+        try {
+            // THIRR PROCESSCOMMAND DIRECT
+            if (typeof processCommand === 'function') {
+                await processCommand(message);
+            } else {
+                addMessage('❌ Sistemi i komandave nuk është i disponueshëm.', 'bot');
+            }
+            return; // MOS E DËRGO KOMANDËN TE SERVERI
+            
+        } catch (error) {
+            console.error('❌ Gabim në processCommand:', error);
+            addMessage('❌ Gabim në ekzekutimin e komandës.', 'bot');
+            return;
+        }
+    }
+
+    // ✅ NËSE NUK ËSHTË KOMANDË, PËRDOR FUNKSIONIN ORIGJINAL
+    console.log('🔄 Mesazh normal, duke dërguar te serveri...');
+    await originalSendMessage.call(this);
+};
+
+// ✅ INICIALIZO
+setTimeout(() => {
+    initializeBaseSystem();
+}, 1000);
+
+console.log('✅ Sistemi bazë u aktivizua!');
