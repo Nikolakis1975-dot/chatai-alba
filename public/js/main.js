@@ -1379,12 +1379,11 @@ document.addEventListener('DOMContentLoaded', function() {
 // ✅ EKZEKUTO EDHE PAS NGARKIMIT
 setTimeout(finalButtonFix, 2000);
 
+// ======================================== ✅ FIX FINAL - VERSION I KORRIGJUAR ===================================
 
-// ======================================= ✅ FIX FINAL PËR NJOHURITË & LLOGARITJE ======================================
+console.log('🔧 Duke aktivizuar sistemin përfundimtar...');
 
-console.log('🔧 Duke aktivizuar sistemin përfundimtar për njohuri dhe llogaritje...');
-
-// ✅ MBIVENDOS FUNKSIONIN sendMessage PËR TRAJTIMIN E MESAZHEVE NORMALE
+// ✅ MBIVENDOS FUNKSIONIN sendMessage PËR TRAJTIMIN E TË GJITHA MESAZHEVE
 const originalSendMessage = window.sendMessage;
 
 window.sendMessage = async function() {
@@ -1398,27 +1397,39 @@ window.sendMessage = async function() {
 
     console.log('💬 [FINAL-FIX] Mesazh:', message);
 
-    // ✅ KONTROLLO NËSE ËSHTË KOMANDË
-    if (message.startsWith('/')) {
-        console.log('🎯 [FINAL-FIX] Komandë, duke përdorur procesin normal...');
-        if (originalSendMessage) return originalSendMessage.call(this);
-        return;
-    }
-
     // ✅ SHFAQ MESAZHIN E USER-IT
     addMessage(message, 'user');
     userInput.value = '';
 
-    // ✅ 1. KONTROLLO NJOHURITË E RUAJTURA
+    // ✅ 1. KONTROLLO NËSE ËSHTË KOMANDË - THIRR PROCESSCOMMAND
+    if (message.startsWith('/')) {
+        console.log('🎯 [FINAL-FIX] Komandë, duke thirrur processCommand...');
+        
+        try {
+            if (typeof processCommand === 'function') {
+                await processCommand(message);
+            } else {
+                // FALLBACK NËSE PROCESSCOMMAND NUK EKZISTON
+                console.log('❌ processCommand nuk u gjet, duke dërguar te serveri...');
+                await sendToAI(message);
+            }
+        } catch (error) {
+            console.error('❌ [FINAL-FIX] Gabim në processCommand:', error);
+            addMessage('❌ Gabim në ekzekutimin e komandës.', 'bot');
+        }
+        return;
+    }
+
+    // ✅ 2. KONTROLLO NJOHURITË E RUAJTURA
     const hasKnowledge = await checkKnowledge(message);
     if (hasKnowledge) return;
 
-    // ✅ 2. KONTROLLO LLOGARITJE MATEMATIKE
+    // ✅ 3. KONTROLLO LLOGARITJE MATEMATIKE
     const hasMath = await checkMath(message);
     if (hasMath) return;
 
-    // ✅ 3. NËSE NUK GJETËM GJË, DËRGO TE SERVERI
-    console.log('🔄 [FINAL-FIX] Duke dërguar te serveri...');
+    // ✅ 4. NËSE NUK GJETËM GJË, DËRGO TE SERVERI
+    console.log('🔄 [FINAL-FIX] Mesazh normal, duke dërguar te serveri...');
     await sendToAI(message);
 };
 
@@ -1520,9 +1531,10 @@ async function sendToAI(message) {
 // ✅ KONTROLLO FUNKSIONET
 setTimeout(() => {
     console.log('🔍 [FINAL-FIX] Statusi:');
+    console.log('- processCommand:', typeof processCommand);
     console.log('- tryCalculate:', typeof tryCalculate);
     console.log('- addMessage:', typeof addMessage);
     console.log('- currentUser:', window.currentUser);
 }, 2000);
 
-console.log('✅ Sistemi përfundimtar për njohuri dhe llogaritje u aktivizua!');
+console.log('✅ Sistemi përfundimtar u aktivizua!');
