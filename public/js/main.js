@@ -1379,7 +1379,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // ✅ EKZEKUTO EDHE PAS NGARKIMIT
 setTimeout(finalButtonFix, 2000);
 
-// ===================================== ✅ FIX FINAL - VERSION I KORRIGJUAR ===================================
+// ======================================== ✅ FIX FINAL - VERSION I KORRIGJUAR ===================================
 
 console.log('🔧 Duke aktivizuar sistemin përfundimtar...');
 
@@ -1432,6 +1432,33 @@ window.sendMessage = async function() {
     console.log('🔄 [FINAL-FIX] Mesazh normal, duke dërguar te serveri...');
     await sendToAI(message);
 };
+
+// ✅ FUNKSIONI PËR KONTROLLIMIN E NJOHURIVE
+async function checkKnowledge(message) {
+    try {
+        console.log('💾 [FINAL-FIX] Duke kërkuar njohuri për:', message);
+        
+        if (window.currentUser && window.currentUser.id) {
+            const response = await fetch(`/api/chat/knowledge/${window.currentUser.id}/${encodeURIComponent(message.toLowerCase())}`, {
+                credentials: 'include'
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('📊 [FINAL-FIX] Përgjigja e njohurive:', data);
+                
+                if (data.answer && data.answer !== 'null') {
+                    console.log('✅ [FINAL-FIX] Gjetëm përgjigje të ruajtur!');
+                    addMessage(`💾 **Përgjigje e ruajtur:** ${data.answer}`, 'bot');
+                    return true;
+                }
+            }
+        }
+    } catch (error) {
+        console.log('ℹ️ [FINAL-FIX] Nuk ka përgjigje të ruajtur:', error.message);
+    }
+    return false;
+}
 
 // ================================================================
 //  ✅ LLOGARITJE 100% SAFE
@@ -1497,3 +1524,87 @@ async function checkMath(message) {
 
     return false;
 }
+
+// ================================= ✅ FUNKSIONI PËR DËRGIMIN TE SERVERI =======================================
+
+async function sendToAI(message) {
+    try {
+        const activeEngine = window.aiEngineStatus?.openai ? 'openai' : 'gemini';
+        
+        const response = await fetch('/api/chat/message', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            credentials: 'include',
+            body: JSON.stringify({
+                message: message,
+                engine: activeEngine
+            })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            addMessage(data.response, 'bot');
+        } else {
+            addMessage('❌ Gabim në server.', 'bot');
+        }
+    } catch (error) {
+        console.error('❌ [FINAL-FIX] Gabim në dërgim:', error);
+        addMessage('❌ Gabim në lidhje.', 'bot');
+    }
+}
+
+// ✅ KONTROLLO FUNKSIONET
+setTimeout(() => {
+    console.log('🔍 [FINAL-FIX] Statusi:');
+    console.log('- processCommand:', typeof processCommand);
+    console.log('- tryCalculate:', typeof tryCalculate);
+    console.log('- addMessage:', typeof addMessage);
+    console.log('- currentUser:', window.currentUser);
+}, 2000);
+
+console.log('✅ Sistemi përfundimtar u aktivizua!');
+
+// ========================================= ✅ DEBUG PËR NJOHURITË E RUAJTURA ========================================
+
+console.log('🔧 Duke aktivizuar debug për njohuritë...');
+
+// ✅ TESTO DIRECT NJOHURITË E RUAJTURA
+async function debugStoredKnowledge() {
+    console.log('🔍 DEBUG: Duke testuar njohuritë e ruajtura...');
+    
+    const testQuestion = 'si kaluat sot me festen?';
+    
+    try {
+        if (window.currentUser && window.currentUser.id) {
+            console.log('👤 User ID:', window.currentUser.id);
+            
+            const response = await fetch(`/api/chat/knowledge/${window.currentUser.id}/${encodeURIComponent(testQuestion.toLowerCase())}`, {
+                credentials: 'include'
+            });
+            
+            console.log('📡 Statusi i përgjigjes:', response.status);
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('📊 DEBUG - Përgjigja e serverit:', data);
+                
+                if (data.answer && data.answer !== 'null') {
+                    console.log('✅ DEBUG - Gjetëm përgjigje të ruajtur:', data.answer);
+                } else {
+                    console.log('❌ DEBUG - Nuk ka përgjigje të ruajtur ose përgjigja është null');
+                }
+            } else {
+                console.log('❌ DEBUG - Gabim në server:', response.status);
+            }
+        } else {
+            console.log('❌ DEBUG - Nuk ka currentUser');
+        }
+    } catch (error) {
+        console.log('❌ DEBUG - Gabim në fetch:', error.message);
+    }
+}
+
+// ✅ TESTO PAS 3 SEKONDA
+setTimeout(() => {
+    debugStoredKnowledge();
+}, 3000);
