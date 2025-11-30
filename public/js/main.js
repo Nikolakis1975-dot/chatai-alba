@@ -1573,38 +1573,106 @@ async function debugStoredKnowledge() {
     console.log('🔍 DEBUG: Duke testuar njohuritë e ruajtura...');
     
     const testQuestion = 'si kaluat sot me festen?';
+    const testQuestion2 = 'une jam nga shqiperia po ti nga je?';
+    
+    console.log('🧪 Test pyetje 1:', testQuestion);
+    console.log('🧪 Test pyetje 2:', testQuestion2);
     
     try {
         if (window.currentUser && window.currentUser.id) {
             console.log('👤 User ID:', window.currentUser.id);
+            console.log('👤 User:', window.currentUser);
             
-            const response = await fetch(`/api/chat/knowledge/${window.currentUser.id}/${encodeURIComponent(testQuestion.toLowerCase())}`, {
+            // TESTO PYETJEN E PARË
+            console.log('\n📡 Duke testuar pyetjen 1...');
+            const response1 = await fetch(`/api/chat/knowledge/${window.currentUser.id}/${encodeURIComponent(testQuestion.toLowerCase())}`, {
                 credentials: 'include'
             });
             
-            console.log('📡 Statusi i përgjigjes:', response.status);
+            console.log('📊 Statusi i përgjigjes 1:', response1.status, response1.statusText);
             
-            if (response.ok) {
-                const data = await response.json();
-                console.log('📊 DEBUG - Përgjigja e serverit:', data);
+            if (response1.ok) {
+                const data1 = await response1.json();
+                console.log('📝 Përgjigja e serverit 1:', JSON.stringify(data1));
                 
-                if (data.answer && data.answer !== 'null') {
-                    console.log('✅ DEBUG - Gjetëm përgjigje të ruajtur:', data.answer);
+                if (data1.answer && data1.answer !== 'null') {
+                    console.log('✅ Gjetëm përgjigje të ruajtur 1:', data1.answer);
                 } else {
-                    console.log('❌ DEBUG - Nuk ka përgjigje të ruajtur ose përgjigja është null');
+                    console.log('❌ Nuk ka përgjigje të ruajtur për pyetjen 1');
                 }
-            } else {
-                console.log('❌ DEBUG - Gabim në server:', response.status);
             }
+            
+            // TESTO PYETJEN E DYTË
+            console.log('\n📡 Duke testuar pyetjen 2...');
+            const response2 = await fetch(`/api/chat/knowledge/${window.currentUser.id}/${encodeURIComponent(testQuestion2.toLowerCase())}`, {
+                credentials: 'include'
+            });
+            
+            console.log('📊 Statusi i përgjigjes 2:', response2.status, response2.statusText);
+            
+            if (response2.ok) {
+                const data2 = await response2.json();
+                console.log('📝 Përgjigja e serverit 2:', JSON.stringify(data2));
+                
+                if (data2.answer && data2.answer !== 'null') {
+                    console.log('✅ Gjetëm përgjigje të ruajtur 2:', data2.answer);
+                } else {
+                    console.log('❌ Nuk ka përgjigje të ruajtur për pyetjen 2');
+                }
+            }
+            
         } else {
-            console.log('❌ DEBUG - Nuk ka currentUser');
+            console.log('❌ DEBUG - Nuk ka currentUser ose currentUser.id');
+            console.log('💡 currentUser:', window.currentUser);
         }
     } catch (error) {
         console.log('❌ DEBUG - Gabim në fetch:', error.message);
+        console.log('🔧 Stack:', error.stack);
+    }
+}
+
+// ✅ KONTROLLO EDHE ROUTE-ET E DISPONUESHME
+async function debugAvailableRoutes() {
+    try {
+        console.log('\n🌐 Duke kontrolluar route-et e disponueshme...');
+        
+        const response = await fetch('/api/chat/knowledge', {
+            method: 'GET',
+            credentials: 'include'
+        });
+        
+        console.log('📡 Knowledge route status:', response.status);
+        
+        // Provo të gjitha route-et e njohura
+        const routes = [
+            '/api/chat/knowledge',
+            '/api/knowledge', 
+            '/api/chat/meso',
+            '/api/knowledge-base'
+        ];
+        
+        for (const route of routes) {
+            try {
+                const testResponse = await fetch(route, {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                console.log(`🔍 ${route}:`, testResponse.status);
+            } catch (e) {
+                console.log(`🔍 ${route}: ERROR -`, e.message);
+            }
+        }
+        
+    } catch (error) {
+        console.log('❌ Gabim në kontrollimin e route-ve:', error.message);
     }
 }
 
 // ✅ TESTO PAS 3 SEKONDA
 setTimeout(() => {
+    console.log('🚀 DUKE FILLUAR DEBUG...');
     debugStoredKnowledge();
+    debugAvailableRoutes();
 }, 3000);
+
+console.log('✅ Debug system u aktivizua!');
