@@ -1564,107 +1564,113 @@ setTimeout(() => {
 
 console.log('✅ Sistemi përfundimtar u aktivizua!');
 
-// =========================================== ✅ FIX I SIGURT I NJOHURIVE ================================================
+// ============================================ ✅ FIX AGRESIV - PO FUNKSIONON =======================================
 
-console.log('🔧 Duke aktivizuar sistemin e sigurt...');
+console.log('🔧 Duke aktivizuar sistemin agresiv...');
 
-// ✅ METODË E RE: Përdor Event Listener pa mbivendosur sendMessage
-function initializeSafeSystem() {
-    console.log('🎯 Duke inicializuar sistemin e sigurt...');
-    
-    const userInput = document.getElementById('user-input');
-    const sendBtn = document.getElementById('send-btn');
-    
-    if (!userInput || !sendBtn) {
-        console.log('❌ Elementët nuk u gjetën, duke provuar përsëri...');
-        setTimeout(initializeSafeSystem, 1000);
-        return;
-    }
-    
-    console.log('✅ Elementët u gjetën!');
-    
-    // ✅ 1. KAP ENTER KEY PA NDRYSHUAR sendMessage
-    userInput.addEventListener('keypress', async function(e) {
-        if (e.key === 'Enter') {
-            await processMessageSafely();
-        }
-    });
-    
-    // ✅ 2. KAP KLIKIMIN E BUTONIT PA NDRYSHUAR sendMessage
-    sendBtn.addEventListener('click', async function() {
-        await processMessageSafely();
-    });
-    
-    console.log('🎉 Sistemi i sigurt u inicializua!');
-}
+// ✅ MBIVENDOS sendMessage ME MËNYRËN E DUHUR
+const originalSendMessage = window.sendMessage;
 
-// ✅ FUNKSIONI I SIGURT PËR PROCESIMIN E MESAZHEVE
-async function processMessageSafely() {
+window.sendMessage = async function() {
     const userInput = document.getElementById('user-input');
     const message = userInput.value.trim();
     
-    if (!message) return;
-    
-    console.log('💬 [SAFE-SYSTEM] Mesazh:', message);
-    
-    // ✅ MOS NDAJH KOMANDAT - ato lejohen të vazhdojnë normalisht
-    if (message.startsWith('/')) {
-        console.log('🎯 [SAFE-SYSTEM] Komandë, duke lejuar procesimin normal...');
-        
-        // Përdor sendMessage origjinal për komandat
-        if (typeof window.sendMessage === 'function') {
-            window.sendMessage();
-        }
+    if (!message) {
+        if (originalSendMessage) return originalSendMessage.call(this);
         return;
     }
-    
-    // ✅ KONTROLLO NJOHURITË E RUAJTURA
+
+    console.log('🚨 [AGRESIVE-FIX] Mesazh:', message);
+
+    // ✅ SHFAQ MESAZHIN E USER-IT
+    addMessage(message, 'user');
+    userInput.value = '';
+
+    // ✅ 1. KONTROLLO NJOHURITË E RUAJTURA PARA SE TË DËRGOHET
     try {
-        console.log('💾 [SAFE-SYSTEM] Duke kërkuar njohuri të ruajtura...');
+        console.log('💾 [AGRESIVE-FIX] Duke kërkuar njohuri për:', message);
         
         if (window.currentUser && window.currentUser.id) {
             const response = await fetch(`/api/chat/knowledge/${window.currentUser.id}/${encodeURIComponent(message.toLowerCase())}`, {
                 credentials: 'include'
             });
             
+            console.log('📡 [AGRESIVE-FIX] Statusi:', response.status);
+            
             if (response.ok) {
                 const data = await response.json();
-                console.log('📊 [SAFE-SYSTEM] Përgjigja e njohurive:', data);
+                console.log('📊 [AGRESIVE-FIX] Përgjigja:', data);
                 
                 if (data.answer && data.answer !== 'null') {
-                    console.log('✅ [SAFE-SYSTEM] Gjetëm përgjigje të ruajtur!');
-                    
-                    // SHFAQ MESAZHET
-                    addMessage(message, 'user');
+                    console.log('✅✅✅ [AGRESIVE-FIX] Gjetëm përgjigje të ruajtur!');
                     addMessage(`💾 **Përgjigje e ruajtur:** ${data.answer}`, 'bot');
-                    userInput.value = '';
-                    return;
+                    return; // MOS DËRGO TE SERVERI
+                } else {
+                    console.log('❌ [AGRESIVE-FIX] Nuk ka përgjigje të ruajtur');
                 }
+            } else {
+                console.log('❌ [AGRESIVE-FIX] Gabim në server:', response.status);
             }
+        } else {
+            console.log('❌ [AGRESIVE-FIX] Nuk ka currentUser');
         }
     } catch (error) {
-        console.log('ℹ️ [SAFE-SYSTEM] Nuk ka përgjigje të ruajtur');
+        console.log('❌ [AGRESIVE-FIX] Gabim në kërkim:', error.message);
     }
+
+    // ✅ 2. NËSE NUK GJETËM NJOHURI, DËRGO TE SERVERI
+    console.log('🔄 [AGRESIVE-FIX] Duke dërguar te serveri...');
     
-    // ✅ NËSE NUK GJETËM NJOHURI, LEJO MESAZHIN NORMAL
-    console.log('🔄 [SAFE-SYSTEM] Mesazh normal, duke lejuar dërgimin...');
-    
-    // Përdor sendMessage origjinal për mesazhet normale
-    if (typeof window.sendMessage === 'function') {
-        window.sendMessage();
+    try {
+        const activeEngine = window.aiEngineStatus?.openai ? 'openai' : 'gemini';
+        
+        const response = await fetch('/api/chat/message', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            credentials: 'include',
+            body: JSON.stringify({
+                message: message,
+                engine: activeEngine
+            })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            addMessage(data.response, 'bot');
+        } else {
+            addMessage('❌ Gabim në server.', 'bot');
+        }
+    } catch (error) {
+        console.error('❌ [AGRESIVE-FIX] Gabim në dërgim:', error);
+        addMessage('❌ Gabim në lidhje.', 'bot');
+    }
+};
+
+// ✅ RREGULLO BUTONIN E OPENAI PANELIT
+function fixOpenAIPanel() {
+    const openaiBtn = document.querySelector('button[onclick*="showOpenAIPanel"]');
+    if (openaiBtn) {
+        console.log('🔧 Duke rregulluar butonin e OpenAI...');
+        
+        const originalOnClick = openaiBtn.onclick;
+        openaiBtn.onclick = function() {
+            console.log('🎯 Butoni i OpenAI u klikua!');
+            if (originalOnClick) originalOnClick.call(this);
+        };
+        
+        console.log('✅ Butoni i OpenAI u rregullua!');
     }
 }
 
-// ✅ INICIALIZO SISTEMIN E SIGURT
+// ✅ INICIALIZO
 setTimeout(() => {
-    initializeSafeSystem();
+    fixOpenAIPanel();
     
-    // DEBUG: Kontrollo funksionet
-    console.log('🔍 [SAFE-SYSTEM] Statusi:');
+    console.log('🔍 [AGRESIVE-FIX] Statusi:');
     console.log('- sendMessage:', typeof window.sendMessage);
     console.log('- processCommand:', typeof processCommand);
     console.log('- addMessage:', typeof addMessage);
     console.log('- currentUser:', window.currentUser);
-}, 1500);
+}, 2000);
 
-console.log('✅ Sistemi i sigurt u aktivizua!');
+console.log('✅ Sistemi agresiv u aktivizua!');
