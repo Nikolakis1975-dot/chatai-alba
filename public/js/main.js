@@ -1564,47 +1564,116 @@ setTimeout(() => {
 
 console.log('✅ Sistemi përfundimtar u aktivizua!');
 
-// ========================================= ✅ DEBUG PËR NJOHURITË E RUAJTURA ========================================
+// ============================================== ✅ DEBUG ULTIMATIV NJUHURITE ===================================
 
-console.log('🔧 Duke aktivizuar debug për njohuritë...');
+console.log('🔧 DEBUG ULTIMATIV: Duke kontrolluar sistemin...');
 
-// ✅ TESTO DIRECT NJOHURITË E RUAJTURA
-async function debugStoredKnowledge() {
-    console.log('🔍 DEBUG: Duke testuar njohuritë e ruajtura...');
+// ✅ MBIVENDOS FUNKSIONIN sendMessage ME DEBUG TË DETAJSHËM
+const originalSendMessage = window.sendMessage;
+
+window.sendMessage = async function() {
+    const userInput = document.getElementById('user-input');
+    const message = userInput.value.trim();
     
-    const testQuestion = 'si kaluat sot me festen?';
+    if (!message) {
+        if (originalSendMessage) return originalSendMessage.call(this);
+        return;
+    }
+
+    console.log('🚨🚨🚨 DEBUG ULTIMATIV - MESAZHI:', message);
+
+    // ✅ SHFAQ MESAZHIN E USER-IT
+    addMessage(message, 'user');
+    userInput.value = '';
+
+    // ✅ 1. KONTROLLO NËSE ËSHTË KOMANDË
+    if (message.startsWith('/')) {
+        console.log('🎯 DEBUG: Komandë, duke thirrur processCommand...');
+        if (typeof processCommand === 'function') {
+            await processCommand(message);
+        }
+        return;
+    }
+
+    // ✅ 2. DEBUG: TREGO SE PO KONTROLLOHET NJOHURIA
+    console.log('🔍 DEBUG: Duke kontrolluar njohuritë e ruajtura...');
     
+    // ✅ 3. KONTROLLO NJOHURITË E RUAJTURA ME DEBUG
     try {
+        console.log('💾 DEBUG: Duke kërkuar njohuri për:', message);
+        
         if (window.currentUser && window.currentUser.id) {
-            console.log('👤 User ID:', window.currentUser.id);
+            const userId = window.currentUser.id;
+            const userMessage = message.toLowerCase();
             
-            const response = await fetch(`/api/chat/knowledge/${window.currentUser.id}/${encodeURIComponent(testQuestion.toLowerCase())}`, {
+            console.log('👤 DEBUG: User ID:', userId);
+            console.log('🔍 DEBUG: Pyetja e kërkuar:', userMessage);
+            
+            const knowledgeUrl = `/api/chat/knowledge/${userId}/${encodeURIComponent(userMessage)}`;
+            console.log('📡 DEBUG: URL i kërkuar:', knowledgeUrl);
+            
+            const response = await fetch(knowledgeUrl, {
                 credentials: 'include'
             });
             
-            console.log('📡 Statusi i përgjigjes:', response.status);
+            console.log('📊 DEBUG: Statusi i përgjigjes:', response.status);
             
             if (response.ok) {
                 const data = await response.json();
-                console.log('📊 DEBUG - Përgjigja e serverit:', data);
+                console.log('📝 DEBUG: Përgjigja e serverit:', data);
                 
                 if (data.answer && data.answer !== 'null') {
-                    console.log('✅ DEBUG - Gjetëm përgjigje të ruajtur:', data.answer);
+                    console.log('✅✅✅ DEBUG: Gjetëm përgjigje të ruajtur:', data.answer);
+                    addMessage(`💾 **Përgjigje e ruajtur:** ${data.answer}`, 'bot');
+                    return;
                 } else {
-                    console.log('❌ DEBUG - Nuk ka përgjigje të ruajtur ose përgjigja është null');
+                    console.log('❌ DEBUG: Nuk ka përgjigje të ruajtur ose përgjigja është null');
                 }
             } else {
-                console.log('❌ DEBUG - Gabim në server:', response.status);
+                console.log('❌ DEBUG: Gabim në server:', response.status);
             }
         } else {
-            console.log('❌ DEBUG - Nuk ka currentUser');
+            console.log('❌ DEBUG: Nuk ka currentUser:', window.currentUser);
         }
     } catch (error) {
-        console.log('❌ DEBUG - Gabim në fetch:', error.message);
+        console.log('❌ DEBUG: Gabim në kërkim:', error.message);
     }
-}
 
-// ✅ TESTO PAS 3 SEKONDA
-setTimeout(() => {
-    debugStoredKnowledge();
-}, 3000);
+    // ✅ 4. KONTROLLO LLOGARITJE MATEMATIKE
+    console.log('🧮 DEBUG: Duke kontrolluar për llogaritje...');
+    if (typeof tryCalculate === 'function') {
+        const mathResult = tryCalculate(message);
+        if (mathResult !== null) {
+            console.log('✅ DEBUG: Llogaritje e gjetur:', mathResult);
+            addMessage(`🧮 **Rezultati**: ${mathResult}`, 'bot');
+            return;
+        }
+    }
+
+    // ✅ 5. NËSE NUK GJETËM GJË, DËRGO TE SERVERI
+    console.log('🔄 DEBUG: Duke dërguar te serveri (OpenAI/Gemini)...');
+    
+    try {
+        const activeEngine = window.aiEngineStatus?.openai ? 'openai' : 'gemini';
+        
+        const response = await fetch('/api/chat/message', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            credentials: 'include',
+            body: JSON.stringify({
+                message: message,
+                engine: activeEngine
+            })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            addMessage(data.response, 'bot');
+        }
+    } catch (error) {
+        console.error('❌ DEBUG: Gabim në dërgim:', error);
+        addMessage('❌ Gabim në lidhje.', 'bot');
+    }
+};
+
+console.log('✅ DEBUG ULTIMATIV u aktivizua!');
