@@ -1378,3 +1378,116 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // ✅ EKZEKUTO EDHE PAS NGARKIMIT
 setTimeout(finalButtonFix, 2000);
+
+// ================================= ✅ FIX PËR KOMANDAT REALE NË SCRIPT.JS ======================================
+
+console.log('🔧 Duke aktivizuar komandat reale nga script.js...');
+
+// ✅ MBIVENDOS FUNKSIONIN sendMessage PËR TË KAPUR KOMANDAT
+const originalSendMessage = window.sendMessage;
+
+window.sendMessage = async function() {
+    const userInput = document.getElementById('user-input');
+    const message = userInput.value.trim();
+    
+    if (!message) return;
+
+    console.log('🚀 [SEND-MESSAGE-FIX] Mesazh:', message);
+
+    // ✅ KONTROLLO NËSE ËSHTË KOMANDË - THIRR DIRECT PROCESSCOMMAND
+    if (message.startsWith('/')) {
+        console.log('🎯 [SEND-MESSAGE-FIX] Komandë e zbuluar, duke thirrur processCommand...');
+        
+        // SHFAQ MESAZHIN E USER-IT
+        if (typeof addMessage !== 'undefined') {
+            addMessage(message, 'user');
+        }
+        userInput.value = '';
+
+        try {
+            // TREGO LOADING
+            const chat = document.getElementById('chat');
+            if (chat) {
+                const loadingDiv = document.createElement('div');
+                loadingDiv.id = 'command-loading';
+                loadingDiv.className = 'message bot';
+                loadingDiv.innerHTML = '<div class="message-text">⏳ Po ekzekutoj komandën...</div>';
+                chat.appendChild(loadingDiv);
+                chat.scrollTop = chat.scrollHeight;
+            }
+
+            // ✅ THIRR DIRECT PROCESSCOMMAND NGA SCRIPT.JS
+            if (typeof processCommand === 'function') {
+                console.log('✅ [SEND-MESSAGE-FIX] Duke ekzekutuar processCommand...');
+                await processCommand(message);
+            } else {
+                console.log('❌ [SEND-MESSAGE-FIX] processCommand nuk është funksion');
+                addMessage('❌ Sistemi i komandave nuk është i disponueshëm.', 'bot');
+            }
+
+            // HIQ LOADING
+            setTimeout(() => {
+                document.getElementById('command-loading')?.remove();
+            }, 1000);
+            
+            return; // MOS E DËRGO KOMANDËN TE SERVERI
+
+        } catch (error) {
+            console.error('❌ [SEND-MESSAGE-FIX] Gabim në processCommand:', error);
+            document.getElementById('command-loading')?.remove();
+            addMessage('❌ Gabim në ekzekutimin e komandës.', 'bot');
+            return;
+        }
+    }
+
+    // ✅ NËSE NUK ËSHTË KOMANDË, PËRDOR FUNKSIONIN ORIGJINAL
+    console.log('🔄 [SEND-MESSAGE-FIX] Mesazh normal, duke dërguar te serveri...');
+    await originalSendMessage.call(this);
+};
+
+// ✅ VERIFIKO QË SCRIPT.JS ËSHTË I NGARKUAR
+function checkScriptJSLoaded() {
+    console.log('🔍 Duke kontrolluar nëse script.js është i ngarkuar...');
+    
+    // Kontrollo nëse funksionet nga script.js ekzistojnë
+    const functionsToCheck = [
+        'processCommand', 'addMessage', 'showTypingIndicator', 
+        'removeTypingIndicator', 'tryCalculate'
+    ];
+    
+    functionsToCheck.forEach(func => {
+        console.log(`- ${func}:`, typeof window[func]);
+    });
+    
+    // Kontrollo nëse script.js është i përfshirë në HTML
+    const scripts = Array.from(document.getElementsByTagName('script'));
+    const scriptJS = scripts.find(script => script.src.includes('script.js'));
+    
+    if (scriptJS) {
+        console.log('✅ script.js u gjet në HTML:', scriptJS.src);
+    } else {
+        console.log('❌ script.js nuk u gjet në HTML - shtoje në index.html');
+    }
+}
+
+// ✅ INICIALIZO PAS NGARKIMIT
+setTimeout(() => {
+    checkScriptJSLoaded();
+    
+    if (typeof processCommand === 'function') {
+        console.log('🎉 Komandat reale janë gati! Të gjitha komandat (/wiki, /moti, /eksporto, etj) do të funksionojnë!');
+    } else {
+        console.log('⚠️ processCommand nuk u gjet. Kontrollo nëse script.js është i ngarkuar.');
+        
+        // ALTERNATIVE: Ngarko script.js dinamikisht nëse nuk ekziston
+        if (!document.querySelector('script[src*="script.js"]')) {
+            console.log('🔄 Duke ngarkuar script.js dinamikisht...');
+            const script = document.createElement('script');
+            script.src = '/js/script.js';
+            script.onload = () => console.log('✅ script.js u ngarkua dinamikisht!');
+            document.head.appendChild(script);
+        }
+    }
+}, 2000);
+
+console.log('✅ Sistemi i komandave u aktivizua! Komandat do të procesohën në frontend.');
