@@ -1460,48 +1460,73 @@ async function checkKnowledge(message) {
     return false;
 }
 
-// ✅ FUNKSIONI PËR KONTROLLIMIN E LLOGARITJEVE
+// ================================================================
+//  ✅ LLOGARITJE 100% SAFE
+// ================================================================
+
+// Funksion që kryen llogaritje në mënyrë të sigurt
+function safeCalculate(expression) {
+    // Lejo vetëm numra dhe operatorë matematikorë
+    if (!/^[0-9+\-*/().^ ]+$/.test(expression)) {
+        return null;
+    }
+
+    try {
+        // Zëvendëso ^ me ** (fuqizimi)
+        const cleaned = expression.replace(/\^/g, "**");
+
+        // Përdor Function (më i sigurt se eval)
+        const result = Function(`"use strict"; return (${cleaned})`)();
+
+        if (isNaN(result) || result === undefined) return null;
+
+        return result;
+    } catch {
+        return null;
+    }
+}
+
+// Funksioni yt origjinal, por safe
 async function checkMath(message) {
     try {
-        console.log('🧮 [FINAL-FIX] Duke kontrolluar për llogaritje...');
-        
-        // PROVO tryCalculate NGA SCRIPT.JS
+        console.log('🧮 [SAFE] Duke kontrolluar për llogaritje...');
+
+        // Provo me tryCalculate nëse ekziston
         if (typeof tryCalculate === 'function') {
             const result = tryCalculate(message);
             if (result !== null) {
-                console.log('✅ [FINAL-FIX] Llogaritje e gjetur nga tryCalculate:', result);
+                console.log('✅ [SAFE] Llogaritje e gjetur nga tryCalculate:', result);
                 addMessage(`🧮 **Rezultati**: ${result}`, 'bot');
                 return true;
             }
         }
-        
-        // FALLBACK MANUAL PËR LLOGARITJE
-        const mathMatch = message.match(/^([\d\+\-\*\/\s\.\(\)]+)$/);
-        if (mathMatch) {
-            const expression = mathMatch[1].replace(/\s+/g, '');
-            if (expression.length > 2) {
-                try {
-                    // KONTROLLO SIGURINË
-                    if (!/^[\d\+\-\*\/\(\)\.]+$/.test(expression)) {
-                        throw new Error('Shprehje e pavlefshme');
-                    }
-                    
-                    const result = eval(expression);
-                    console.log('✅ [FINAL-FIX] Llogaritja manuale u krye:', result);
-                    addMessage(`🧮 **Rezultati**: ${result}`, 'bot');
-                    return true;
-                } catch (e) {
-                    console.log('❌ [FINAL-FIX] Llogaritja dështoi:', e.message);
-                }
-            }
+
+        // Kontrollo shprehje matematikore
+        const match = message.match(/^([0-9+\-*/().^ ]+)$/);
+
+        if (!match) return false;
+
+        const expression = match[1];
+
+        const result = safeCalculate(expression);
+
+        if (result !== null) {
+            console.log('✅ [SAFE] Llogaritje e kryer me sukses:', result);
+            addMessage(`🧮 **Rezultati**: ${result}`, 'bot');
+            return true;
         }
+
+        console.log('❌ [SAFE] Shprehja nuk u llogarit dot');
+
     } catch (error) {
-        console.log('❌ [FINAL-FIX] Gabim në llogaritje:', error);
+        console.log('❌ [SAFE] Gabim në llogaritje:', error);
     }
+
     return false;
 }
 
-// ✅ FUNKSIONI PËR DËRGIMIN TE SERVERI
+// ================================= ✅ FUNKSIONI PËR DËRGIMIN TE SERVERI =======================================
+
 async function sendToAI(message) {
     try {
         const activeEngine = window.aiEngineStatus?.openai ? 'openai' : 'gemini';
