@@ -1564,116 +1564,107 @@ setTimeout(() => {
 
 console.log('✅ Sistemi përfundimtar u aktivizua!');
 
-// ============================================== ✅ DEBUG ULTIMATIV NJUHURITE ===================================
+// =========================================== ✅ FIX I SIGURT I NJOHURIVE ================================================
 
-console.log('🔧 DEBUG ULTIMATIV: Duke kontrolluar sistemin...');
+console.log('🔧 Duke aktivizuar sistemin e sigurt...');
 
-// ✅ MBIVENDOS FUNKSIONIN sendMessage ME DEBUG TË DETAJSHËM
-const originalSendMessage = window.sendMessage;
+// ✅ METODË E RE: Përdor Event Listener pa mbivendosur sendMessage
+function initializeSafeSystem() {
+    console.log('🎯 Duke inicializuar sistemin e sigurt...');
+    
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+    
+    if (!userInput || !sendBtn) {
+        console.log('❌ Elementët nuk u gjetën, duke provuar përsëri...');
+        setTimeout(initializeSafeSystem, 1000);
+        return;
+    }
+    
+    console.log('✅ Elementët u gjetën!');
+    
+    // ✅ 1. KAP ENTER KEY PA NDRYSHUAR sendMessage
+    userInput.addEventListener('keypress', async function(e) {
+        if (e.key === 'Enter') {
+            await processMessageSafely();
+        }
+    });
+    
+    // ✅ 2. KAP KLIKIMIN E BUTONIT PA NDRYSHUAR sendMessage
+    sendBtn.addEventListener('click', async function() {
+        await processMessageSafely();
+    });
+    
+    console.log('🎉 Sistemi i sigurt u inicializua!');
+}
 
-window.sendMessage = async function() {
+// ✅ FUNKSIONI I SIGURT PËR PROCESIMIN E MESAZHEVE
+async function processMessageSafely() {
     const userInput = document.getElementById('user-input');
     const message = userInput.value.trim();
     
-    if (!message) {
-        if (originalSendMessage) return originalSendMessage.call(this);
-        return;
-    }
-
-    console.log('🚨🚨🚨 DEBUG ULTIMATIV - MESAZHI:', message);
-
-    // ✅ SHFAQ MESAZHIN E USER-IT
-    addMessage(message, 'user');
-    userInput.value = '';
-
-    // ✅ 1. KONTROLLO NËSE ËSHTË KOMANDË
+    if (!message) return;
+    
+    console.log('💬 [SAFE-SYSTEM] Mesazh:', message);
+    
+    // ✅ MOS NDAJH KOMANDAT - ato lejohen të vazhdojnë normalisht
     if (message.startsWith('/')) {
-        console.log('🎯 DEBUG: Komandë, duke thirrur processCommand...');
-        if (typeof processCommand === 'function') {
-            await processCommand(message);
+        console.log('🎯 [SAFE-SYSTEM] Komandë, duke lejuar procesimin normal...');
+        
+        // Përdor sendMessage origjinal për komandat
+        if (typeof window.sendMessage === 'function') {
+            window.sendMessage();
         }
         return;
     }
-
-    // ✅ 2. DEBUG: TREGO SE PO KONTROLLOHET NJOHURIA
-    console.log('🔍 DEBUG: Duke kontrolluar njohuritë e ruajtura...');
     
-    // ✅ 3. KONTROLLO NJOHURITË E RUAJTURA ME DEBUG
+    // ✅ KONTROLLO NJOHURITË E RUAJTURA
     try {
-        console.log('💾 DEBUG: Duke kërkuar njohuri për:', message);
+        console.log('💾 [SAFE-SYSTEM] Duke kërkuar njohuri të ruajtura...');
         
         if (window.currentUser && window.currentUser.id) {
-            const userId = window.currentUser.id;
-            const userMessage = message.toLowerCase();
-            
-            console.log('👤 DEBUG: User ID:', userId);
-            console.log('🔍 DEBUG: Pyetja e kërkuar:', userMessage);
-            
-            const knowledgeUrl = `/api/chat/knowledge/${userId}/${encodeURIComponent(userMessage)}`;
-            console.log('📡 DEBUG: URL i kërkuar:', knowledgeUrl);
-            
-            const response = await fetch(knowledgeUrl, {
+            const response = await fetch(`/api/chat/knowledge/${window.currentUser.id}/${encodeURIComponent(message.toLowerCase())}`, {
                 credentials: 'include'
             });
             
-            console.log('📊 DEBUG: Statusi i përgjigjes:', response.status);
-            
             if (response.ok) {
                 const data = await response.json();
-                console.log('📝 DEBUG: Përgjigja e serverit:', data);
+                console.log('📊 [SAFE-SYSTEM] Përgjigja e njohurive:', data);
                 
                 if (data.answer && data.answer !== 'null') {
-                    console.log('✅✅✅ DEBUG: Gjetëm përgjigje të ruajtur:', data.answer);
+                    console.log('✅ [SAFE-SYSTEM] Gjetëm përgjigje të ruajtur!');
+                    
+                    // SHFAQ MESAZHET
+                    addMessage(message, 'user');
                     addMessage(`💾 **Përgjigje e ruajtur:** ${data.answer}`, 'bot');
+                    userInput.value = '';
                     return;
-                } else {
-                    console.log('❌ DEBUG: Nuk ka përgjigje të ruajtur ose përgjigja është null');
                 }
-            } else {
-                console.log('❌ DEBUG: Gabim në server:', response.status);
             }
-        } else {
-            console.log('❌ DEBUG: Nuk ka currentUser:', window.currentUser);
         }
     } catch (error) {
-        console.log('❌ DEBUG: Gabim në kërkim:', error.message);
+        console.log('ℹ️ [SAFE-SYSTEM] Nuk ka përgjigje të ruajtur');
     }
-
-    // ✅ 4. KONTROLLO LLOGARITJE MATEMATIKE
-    console.log('🧮 DEBUG: Duke kontrolluar për llogaritje...');
-    if (typeof tryCalculate === 'function') {
-        const mathResult = tryCalculate(message);
-        if (mathResult !== null) {
-            console.log('✅ DEBUG: Llogaritje e gjetur:', mathResult);
-            addMessage(`🧮 **Rezultati**: ${mathResult}`, 'bot');
-            return;
-        }
-    }
-
-    // ✅ 5. NËSE NUK GJETËM GJË, DËRGO TE SERVERI
-    console.log('🔄 DEBUG: Duke dërguar te serveri (OpenAI/Gemini)...');
     
-    try {
-        const activeEngine = window.aiEngineStatus?.openai ? 'openai' : 'gemini';
-        
-        const response = await fetch('/api/chat/message', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            credentials: 'include',
-            body: JSON.stringify({
-                message: message,
-                engine: activeEngine
-            })
-        });
-        
-        const data = await response.json();
-        if (data.success) {
-            addMessage(data.response, 'bot');
-        }
-    } catch (error) {
-        console.error('❌ DEBUG: Gabim në dërgim:', error);
-        addMessage('❌ Gabim në lidhje.', 'bot');
+    // ✅ NËSE NUK GJETËM NJOHURI, LEJO MESAZHIN NORMAL
+    console.log('🔄 [SAFE-SYSTEM] Mesazh normal, duke lejuar dërgimin...');
+    
+    // Përdor sendMessage origjinal për mesazhet normale
+    if (typeof window.sendMessage === 'function') {
+        window.sendMessage();
     }
-};
+}
 
-console.log('✅ DEBUG ULTIMATIV u aktivizua!');
+// ✅ INICIALIZO SISTEMIN E SIGURT
+setTimeout(() => {
+    initializeSafeSystem();
+    
+    // DEBUG: Kontrollo funksionet
+    console.log('🔍 [SAFE-SYSTEM] Statusi:');
+    console.log('- sendMessage:', typeof window.sendMessage);
+    console.log('- processCommand:', typeof processCommand);
+    console.log('- addMessage:', typeof addMessage);
+    console.log('- currentUser:', window.currentUser);
+}, 1500);
+
+console.log('✅ Sistemi i sigurt u aktivizua!');
