@@ -1379,83 +1379,77 @@ document.addEventListener('DOMContentLoaded', function() {
 // ✅ EKZEKUTO EDHE PAS NGARKIMIT
 setTimeout(finalButtonFix, 2000);
 
-// ================================================ ✅ SISTEMI I RI - KOMPLET I PUNUAR ===================================
+// ================================================ ✅ FIX I THJESHTË & EFEKTIV ========================================
 
-console.log('🚀 Duke ngarkuar sistemin e ri të plotë...');
+console.log('🔧 Duke aktivizuar sistemin e thjeshtë...');
 
-// ✅ INICIALIZIMI I SISTEMIT
-function initializeNewSystem() {
-    console.log('🎯 Duke inicializuar sistemin e ri...');
+// ✅ VARIABEL PËR TË PARANDALUAR DËRGIMET E DYBËFISHTA
+let isProcessing = false;
+
+// ✅ INICIALIZO SISTEMIN
+function initializeSimpleSystem() {
+    console.log('🎯 Duke inicializuar sistemin e thjeshtë...');
     
     const userInput = document.getElementById('user-input');
     const sendBtn = document.getElementById('send-btn');
     
     if (!userInput || !sendBtn) {
-        console.log('⏳ Elementët nuk u gjetën, duke provuar përsëri...');
-        setTimeout(initializeNewSystem, 1000);
+        console.log('❌ Elementët nuk u gjetën, duke provuar përsëri...');
+        setTimeout(initializeSimpleSystem, 1000);
         return;
     }
     
     console.log('✅ Elementët u gjetën!');
     
     // ✅ KAP ENTER KEY
-    userInput.addEventListener('keypress', async function(e) {
+    userInput.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
-            e.preventDefault(); // Parandalojmë dërgimin e parazbrastë
-            await handleUserMessage();
+            e.preventDefault();
+            handleSimpleMessage();
         }
     });
     
     // ✅ KAP KLIKIMIN E BUTONIT
-    sendBtn.addEventListener('click', async function(e) {
-        e.preventDefault(); // Parandalojmë veprimin e parazbrastë
-        await handleUserMessage();
+    sendBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        handleSimpleMessage();
     });
     
-    console.log('🎉 Sistemi i ri u inicializua me sukses!');
+    console.log('🎉 Sistemi i thjeshtë u inicializua!');
 }
 
 // ✅ FUNKSIONI KRYESOR
-async function handleUserMessage() {
+async function handleSimpleMessage() {
+    if (isProcessing) return;
+    isProcessing = true;
+    
     const userInput = document.getElementById('user-input');
     const message = userInput.value.trim();
     
-    if (!message) return;
+    if (!message) {
+        isProcessing = false;
+        return;
+    }
     
-    console.log('💬 Mesazhi i përdoruesit:', message);
+    console.log('💬 Mesazh:', message);
     
     // ✅ SHFAQ MESAZHIN E USER-IT
-    if (typeof addMessage !== 'undefined') {
-        addMessage(message, 'user');
-    }
+    addMessage(message, 'user');
     userInput.value = '';
     
-    // ✅ KONTROLLO NËSE ËSHTË KOMANDË
+    // ✅ 1. KONTROLLO NËSE ËSHTË KOMANDË
     if (message.startsWith('/')) {
-        console.log('🎯 Komandë e zbuluar, duke procesuar...');
-        if (typeof processCommand !== 'undefined') {
+        console.log('🎯 Komandë e zbuluar!');
+        if (typeof processCommand === 'function') {
             await processCommand(message);
         } else {
             addMessage('❌ Sistemi i komandave nuk është i disponueshëm.', 'bot');
         }
+        isProcessing = false;
         return;
     }
     
-    // ✅ KONTROLLO NJOHURITË E RUAJTURA
-    const hasStoredKnowledge = await checkStoredKnowledge(message);
-    if (hasStoredKnowledge) return;
-    
-    // ✅ KONTROLLO LLOGARITJE MATEMATIKE
-    const hasMathCalculation = await checkMathCalculation(message);
-    if (hasMathCalculation) return;
-    
-    // ✅ NËSE NUK GJETËM GJË, DËRGO TE SERVERI
-    console.log('🔄 Duke dërguar mesazh normal te serveri...');
-    await sendToServer(message);
-}
-
-// ✅ KONTROLLO NJOHURITË E RUAJTURA
-async function checkStoredKnowledge(message) {
+    // ✅ 2. KONTROLLO NJOHURITË E RUAJTURA
     try {
         console.log('💾 Duke kërkuar njohuri të ruajtura...');
         
@@ -1471,48 +1465,33 @@ async function checkStoredKnowledge(message) {
                 if (data.answer && data.answer !== 'null') {
                     console.log('✅ Gjetëm përgjigje të ruajtur!');
                     addMessage(`💾 **Përgjigje e ruajtur:** ${data.answer}`, 'bot');
-                    return true;
+                    isProcessing = false;
+                    return;
                 }
             }
         }
     } catch (error) {
         console.log('ℹ️ Nuk ka përgjigje të ruajtur');
     }
-    return false;
-}
-
-// ✅ KONTROLLO LLOGARITJE MATEMATIKE
-async function checkMathCalculation(message) {
-    try {
-        console.log('🧮 Duke kontrolluar për llogaritje...');
-        
-        // PROVO tryCalculate
-        if (typeof tryCalculate !== 'undefined') {
-            const result = tryCalculate(message);
-            if (result !== null) {
-                console.log('✅ Llogaritje e gjetur:', result);
-                addMessage(`🧮 **Rezultati**: ${result}`, 'bot');
-                return true;
-            }
+    
+    // ✅ 3. KONTROLLO LLOGARITJE MATEMATIKE ME tryCalculate
+    console.log('🧮 Duke kontrolluar për llogaritje...');
+    if (typeof tryCalculate === 'function') {
+        const mathResult = tryCalculate(message);
+        if (mathResult !== null) {
+            console.log('✅ Llogaritje e gjetur:', mathResult);
+            addMessage(`🧮 **Rezultati**: ${mathResult}`, 'bot');
+            isProcessing = false;
+            return;
         }
-        
-        // FALLBACK MANUAL
-        const mathMatch = message.match(/^(\d+[\+\-\*\/\d\s\.]+)$/);
-        if (mathMatch) {
-            const expression = mathMatch[1].replace(/\s+/g, '');
-            try {
-                const result = eval(expression);
-                console.log('✅ Llogaritja manuale u krye:', result);
-                addMessage(`🧮 **Rezultati**: ${result}`, 'bot');
-                return true;
-            } catch (e) {
-                console.log('❌ Llogaritja dështoi');
-            }
-        }
-    } catch (error) {
-        console.log('❌ Gabim në llogaritje');
+    } else {
+        console.log('❌ tryCalculate nuk ekziston');
     }
-    return false;
+    
+    // ✅ 4. NËSE NUK GJETËM GJË, DËRGO TE SERVERI
+    console.log('🔄 Duke dërguar te serveri...');
+    await sendToServer(message);
+    isProcessing = false;
 }
 
 // ✅ DËRGO TE SERVERI
@@ -1542,16 +1521,19 @@ async function sendToServer(message) {
     }
 }
 
-// ✅ INICIALIZO SISTEMIN
+// ✅ INICIALIZO PAS NGARKIMIT
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📄 DOM u ngarkua, duke nisur sistemin...');
+    setTimeout(initializeSimpleSystem, 500);
+});
+
+// ✅ KONTROLLO FUNKSIONET
 setTimeout(() => {
-    initializeNewSystem();
-    
-    // DEBUG
-    console.log('🔍 Statusi:');
+    console.log('🔍 Statusi i sistemit:');
     console.log('- processCommand:', typeof processCommand);
     console.log('- addMessage:', typeof addMessage);
     console.log('- tryCalculate:', typeof tryCalculate);
     console.log('- currentUser:', window.currentUser);
-}, 1000);
+}, 2000);
 
-console.log('✅ Sistemi i ri u ngarkua!');
+console.log('✅ Sistemi i thjeshtë u ngarkua!');
