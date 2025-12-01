@@ -707,53 +707,10 @@ async function saveToHistory(content, sender, timestamp) {
 async function loadHistory() {
     if (!currentUser) return;
     
-    console.log('📜 [SCRIPT] Duke provuar të ngarkoj historinë...');
+    console.log('📜 [SCRIPT] Funksioni loadHistory është çaktivizuar për optimizim');
     
-    try {
-        // ✅ PROVO ROUTE TË NDYSHME OSE DISABLE
-        const possibleRoutes = [
-            `/api/chat/export/${currentUser.id}`,
-            `/api/chat/messages/${currentUser.id}`,
-            `/api/chat/conversations/${currentUser.id}`
-        ];
-        
-        let historyData = [];
-        
-        for (const route of possibleRoutes) {
-            try {
-                console.log(`🔍 Duke provuar route: ${route}`);
-                const response = await fetch(route, {
-                    credentials: 'include'
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log(`✅ Route ${route} funksionoi!`);
-                    
-                    if (data.success && data.history) {
-                        historyData = data.history;
-                    } else if (Array.isArray(data)) {
-                        historyData = data;
-                    }
-                    break;
-                }
-            } catch (routeError) {
-                console.log(`❌ Route ${route} dështoi:`, routeError.message);
-            }
-        }
-        
-        // ✅ NËSE NUK GJETËM ASNJË ROUTE, KTHE ARRAY BOSH
-        if (historyData.length === 0) {
-            console.log(⚠️ Nuk u gjet route për historinë, duke përdorur array bosh');
-            historyData = [];
-        }
-        
-        return historyData;
-        
-    } catch (error) {
-        console.log('⚠️ [SCRIPT] Historiku nuk u ngarkua (nuk është problem):', error.message);
-        return []; // Kthe array bosh në vend që të dështojë plotësisht
-    }
+    // ✅ KTHE VETËM ARRAY BOSH PA ERROR
+    return [];
 }
 
 async function clearHistory() {
