@@ -1379,41 +1379,86 @@ document.addEventListener('DOMContentLoaded', function() {
 // ✅ EKZEKUTO EDHE PAS NGARKIMIT
 setTimeout(finalButtonFix, 2000);
 
-// ============================= ✅ FUNKSIONI PËR KONTROLLIMIN E NJOHURIVE =========================
+// ======================================== ✅ FIX FINAL - VERSION I KORRIGJUAR ===================================
 
-// ✅ FUNKSIONI I RI PËR KONTROLLIMIN E NJOHURIVE
+console.log('🔧 Duke aktivizuar sistemin përfundimtar...');
+
+// ✅ MBIVENDOS FUNKSIONIN sendMessage PËR TRAJTIMIN E TË GJITHA MESAZHEVE
+const originalSendMessage = window.sendMessage;
+
+window.sendMessage = async function() {
+    const userInput = document.getElementById('user-input');
+    const message = userInput.value.trim();
+    
+    if (!message) {
+        if (originalSendMessage) return originalSendMessage.call(this);
+        return;
+    }
+
+    console.log('💬 [FINAL-FIX] Mesazh:', message);
+
+    // ✅ SHFAQ MESAZHIN E USER-IT
+    addMessage(message, 'user');
+    userInput.value = '';
+
+    // ✅ 1. KONTROLLO NËSE ËSHTË KOMANDË - THIRR PROCESSCOMMAND
+    if (message.startsWith('/')) {
+        console.log('🎯 [FINAL-FIX] Komandë, duke thirrur processCommand...');
+        
+        try {
+            if (typeof processCommand === 'function') {
+                await processCommand(message);
+            } else {
+                // FALLBACK NËSE PROCESSCOMMAND NUK EKZISTON
+                console.log('❌ processCommand nuk u gjet, duke dërguar te serveri...');
+                await sendToAI(message);
+            }
+        } catch (error) {
+            console.error('❌ [FINAL-FIX] Gabim në processCommand:', error);
+            addMessage('❌ Gabim në ekzekutimin e komandës.', 'bot');
+        }
+        return;
+    }
+
+    // ✅ 2. KONTROLLO NJOHURITË E RUAJTURA
+    const hasKnowledge = await checkKnowledge(message);
+    if (hasKnowledge) return;
+
+    // ✅ 3. KONTROLLO LLOGARITJE MATEMATIKE
+    const hasMath = await checkMath(message);
+    if (hasMath) return;
+
+    // ✅ 4. NËSE NUK GJETËM GJË, DËRGO TE SERVERI
+    console.log('🔄 [FINAL-FIX] Mesazh normal, duke dërguar te serveri...');
+    await sendToAI(message);
+};
+
+// ✅ FUNKSIONI PËR KONTROLLIMIN E NJOHURIVE
 async function checkKnowledge(message) {
     try {
-        console.log('💾 [MAIN] Duke kontrolluar njohuritë...');
+        console.log('💾 [FINAL-FIX] Duke kërkuar njohuri për:', message);
         
-        // ✅ PËRDOR FUNKSIONIN checkStoredKnowledge NGA chat.js
-        if (typeof checkStoredKnowledge === 'function') {
-            console.log('✅ [MAIN] checkStoredKnowledge u gjet!');
-            const answer = await checkStoredKnowledge(message);
-            if (answer) {
-                console.log('✅✅✅ [MAIN] Duke shfaqur përgjigjen e ruajtur!');
-                addMessage(`💾 **Përgjigje e ruajtur:** ${answer}`, 'bot');
-                return true;
-            } else {
-                console.log('❌ [MAIN] Nuk u gjet përgjigje e ruajtur');
+        if (window.currentUser && window.currentUser.id) {
+            const response = await fetch(`/api/chat/knowledge/${window.currentUser.id}/${encodeURIComponent(message.toLowerCase())}`, {
+                credentials: 'include'
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('📊 [FINAL-FIX] Përgjigja e njohurive:', data);
+                
+                if (data.answer && data.answer !== 'null') {
+                    console.log('✅ [FINAL-FIX] Gjetëm përgjigje të ruajtur!');
+                    addMessage(`💾 **Përgjigje e ruajtur:** ${data.answer}`, 'bot');
+                    return true;
+                }
             }
-        } else {
-            console.log('❌ [MAIN] checkStoredKnowledge nuk ekziston');
         }
     } catch (error) {
-        console.log('❌ [MAIN] Gabim në checkKnowledge:', error);
+        console.log('ℹ️ [FINAL-FIX] Nuk ka përgjigje të ruajtur:', error.message);
     }
     return false;
 }
-
-// ✅ VERIFIKIMI I SISTEMIT
-setTimeout(() => {
-    console.log('🔍 [MAIN] Statusi i sistemit:');
-    console.log('- checkStoredKnowledge:', typeof checkStoredKnowledge);
-    console.log('- processCommand:', typeof processCommand);
-    console.log('- addMessage:', typeof addMessage);
-    console.log('- currentUser:', window.currentUser);
-}, 2000);
 
 // ================================================================
 //  ✅ LLOGARITJE 100% SAFE
@@ -1479,3 +1524,87 @@ async function checkMath(message) {
 
     return false;
 }
+
+// ================================= ✅ FUNKSIONI PËR DËRGIMIN TE SERVERI =======================================
+
+async function sendToAI(message) {
+    try {
+        const activeEngine = window.aiEngineStatus?.openai ? 'openai' : 'gemini';
+        
+        const response = await fetch('/api/chat/message', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            credentials: 'include',
+            body: JSON.stringify({
+                message: message,
+                engine: activeEngine
+            })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            addMessage(data.response, 'bot');
+        } else {
+            addMessage('❌ Gabim në server.', 'bot');
+        }
+    } catch (error) {
+        console.error('❌ [FINAL-FIX] Gabim në dërgim:', error);
+        addMessage('❌ Gabim në lidhje.', 'bot');
+    }
+}
+
+// ✅ KONTROLLO FUNKSIONET
+setTimeout(() => {
+    console.log('🔍 [FINAL-FIX] Statusi:');
+    console.log('- processCommand:', typeof processCommand);
+    console.log('- tryCalculate:', typeof tryCalculate);
+    console.log('- addMessage:', typeof addMessage);
+    console.log('- currentUser:', window.currentUser);
+}, 2000);
+
+console.log('✅ Sistemi përfundimtar u aktivizua!');
+
+// ========================================= ✅ DEBUG PËR NJOHURITË E RUAJTURA ========================================
+
+console.log('🔧 Duke aktivizuar debug për njohuritë...');
+
+// ✅ TESTO DIRECT NJOHURITË E RUAJTURA
+async function debugStoredKnowledge() {
+    console.log('🔍 DEBUG: Duke testuar njohuritë e ruajtura...');
+    
+    const testQuestion = 'si kaluat sot me festen?';
+    
+    try {
+        if (window.currentUser && window.currentUser.id) {
+            console.log('👤 User ID:', window.currentUser.id);
+            
+            const response = await fetch(`/api/chat/knowledge/${window.currentUser.id}/${encodeURIComponent(testQuestion.toLowerCase())}`, {
+                credentials: 'include'
+            });
+            
+            console.log('📡 Statusi i përgjigjes:', response.status);
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('📊 DEBUG - Përgjigja e serverit:', data);
+                
+                if (data.answer && data.answer !== 'null') {
+                    console.log('✅ DEBUG - Gjetëm përgjigje të ruajtur:', data.answer);
+                } else {
+                    console.log('❌ DEBUG - Nuk ka përgjigje të ruajtur ose përgjigja është null');
+                }
+            } else {
+                console.log('❌ DEBUG - Gabim në server:', response.status);
+            }
+        } else {
+            console.log('❌ DEBUG - Nuk ka currentUser');
+        }
+    } catch (error) {
+        console.log('❌ DEBUG - Gabim në fetch:', error.message);
+    }
+}
+
+// ✅ TESTO PAS 3 SEKONDA
+setTimeout(() => {
+    debugStoredKnowledge();
+}, 3000);
