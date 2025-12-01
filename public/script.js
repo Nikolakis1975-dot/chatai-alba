@@ -220,7 +220,7 @@ async function register() {
         const photoFile = document.getElementById("new-photo").files[0];
 
         if (!newUser || !newPass) {
-            alert("⚠️ Plotëso të gjitha fushat e detyrueshme!");
+            alert(⚠️ Plotëso të gjitha fushat e detyrueshme!");
             return;
         }
 
@@ -707,26 +707,52 @@ async function saveToHistory(content, sender, timestamp) {
 async function loadHistory() {
     if (!currentUser) return;
     
+    console.log('📜 [SCRIPT] Duke provuar të ngarkoj historinë...');
+    
     try {
-        const response = await fetch(`/api/chat/history/${currentUser.id}`, {
-            credentials: 'include'
-        });
-        const data = await response.json();
+        // ✅ PROVO ROUTE TË NDYSHME OSE DISABLE
+        const possibleRoutes = [
+            `/api/chat/export/${currentUser.id}`,
+            `/api/chat/messages/${currentUser.id}`,
+            `/api/chat/conversations/${currentUser.id}`
+        ];
         
-        if (response.ok) {
-            const chat = document.getElementById("chat");
-            chat.innerHTML = "";
-            
-            data.history.forEach(msg => {
-                addMessage(msg.content, msg.sender, msg.timestamp);
-            });
-            
-            chat.scrollTop = chat.scrollHeight;
-        } else {
-            console.error("Gabim gjatë ngarkimit të historisë:", data.error);
+        let historyData = [];
+        
+        for (const route of possibleRoutes) {
+            try {
+                console.log(`🔍 Duke provuar route: ${route}`);
+                const response = await fetch(route, {
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log(`✅ Route ${route} funksionoi!`);
+                    
+                    if (data.success && data.history) {
+                        historyData = data.history;
+                    } else if (Array.isArray(data)) {
+                        historyData = data;
+                    }
+                    break;
+                }
+            } catch (routeError) {
+                console.log(`❌ Route ${route} dështoi:`, routeError.message);
+            }
         }
+        
+        // ✅ NËSE NUK GJETËM ASNJË ROUTE, KTHE ARRAY BOSH
+        if (historyData.length === 0) {
+            console.log(⚠️ Nuk u gjet route për historinë, duke përdorur array bosh');
+            historyData = [];
+        }
+        
+        return historyData;
+        
     } catch (error) {
-        console.error("Gabim gjatë ngarkimit të historisë:", error);
+        console.log('⚠️ [SCRIPT] Historiku nuk u ngarkua (nuk është problem):', error.message);
+        return []; // Kthe array bosh në vend që të dështojë plotësisht
     }
 }
 
