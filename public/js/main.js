@@ -1379,86 +1379,41 @@ document.addEventListener('DOMContentLoaded', function() {
 // ✅ EKZEKUTO EDHE PAS NGARKIMIT
 setTimeout(finalButtonFix, 2000);
 
-// ======================================== ✅ FIX FINAL - VERSION I KORRIGJUAR ===================================
+// ============================= ✅ FUNKSIONI PËR KONTROLLIMIN E NJOHURIVE =========================
 
-console.log('🔧 Duke aktivizuar sistemin përfundimtar...');
-
-// ✅ MBIVENDOS FUNKSIONIN sendMessage PËR TRAJTIMIN E TË GJITHA MESAZHEVE
-const originalSendMessage = window.sendMessage;
-
-window.sendMessage = async function() {
-    const userInput = document.getElementById('user-input');
-    const message = userInput.value.trim();
-    
-    if (!message) {
-        if (originalSendMessage) return originalSendMessage.call(this);
-        return;
-    }
-
-    console.log('💬 [FINAL-FIX] Mesazh:', message);
-
-    // ✅ SHFAQ MESAZHIN E USER-IT
-    addMessage(message, 'user');
-    userInput.value = '';
-
-    // ✅ 1. KONTROLLO NËSE ËSHTË KOMANDË - THIRR PROCESSCOMMAND
-    if (message.startsWith('/')) {
-        console.log('🎯 [FINAL-FIX] Komandë, duke thirrur processCommand...');
-        
-        try {
-            if (typeof processCommand === 'function') {
-                await processCommand(message);
-            } else {
-                // FALLBACK NËSE PROCESSCOMMAND NUK EKZISTON
-                console.log('❌ processCommand nuk u gjet, duke dërguar te serveri...');
-                await sendToAI(message);
-            }
-        } catch (error) {
-            console.error('❌ [FINAL-FIX] Gabim në processCommand:', error);
-            addMessage('❌ Gabim në ekzekutimin e komandës.', 'bot');
-        }
-        return;
-    }
-
-    // ✅ 2. KONTROLLO NJOHURITË E RUAJTURA
-    const hasKnowledge = await checkKnowledge(message);
-    if (hasKnowledge) return;
-
-    // ✅ 3. KONTROLLO LLOGARITJE MATEMATIKE
-    const hasMath = await checkMath(message);
-    if (hasMath) return;
-
-    // ✅ 4. NËSE NUK GJETËM GJË, DËRGO TE SERVERI
-    console.log('🔄 [FINAL-FIX] Mesazh normal, duke dërguar te serveri...');
-    await sendToAI(message);
-};
-
-// ✅ FUNKSIONI PËR KONTROLLIMIN E NJOHURIVE
+// ✅ FUNKSIONI I RI PËR KONTROLLIMIN E NJOHURIVE
 async function checkKnowledge(message) {
     try {
-        console.log('💾 [FINAL-FIX] Duke kërkuar njohuri për:', message);
+        console.log('💾 [MAIN] Duke kontrolluar njohuritë...');
         
-        if (window.currentUser && window.currentUser.id) {
-            const response = await fetch(`/api/chat/knowledge/${window.currentUser.id}/${encodeURIComponent(message.toLowerCase())}`, {
-                credentials: 'include'
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                console.log('📊 [FINAL-FIX] Përgjigja e njohurive:', data);
-                
-                if (data.answer && data.answer !== 'null') {
-                    console.log('✅ [FINAL-FIX] Gjetëm përgjigje të ruajtur!');
-                    addMessage(`💾 **Përgjigje e ruajtur:** ${data.answer}`, 'bot');
-                    return true;
-                }
+        // ✅ PËRDOR FUNKSIONIN checkStoredKnowledge NGA chat.js
+        if (typeof checkStoredKnowledge === 'function') {
+            console.log('✅ [MAIN] checkStoredKnowledge u gjet!');
+            const answer = await checkStoredKnowledge(message);
+            if (answer) {
+                console.log('✅✅✅ [MAIN] Duke shfaqur përgjigjen e ruajtur!');
+                addMessage(`💾 **Përgjigje e ruajtur:** ${answer}`, 'bot');
+                return true;
+            } else {
+                console.log('❌ [MAIN] Nuk u gjet përgjigje e ruajtur');
             }
+        } else {
+            console.log('❌ [MAIN] checkStoredKnowledge nuk ekziston');
         }
     } catch (error) {
-        console.log('ℹ️ [FINAL-FIX] Nuk ka përgjigje të ruajtur:', error.message);
+        console.log('❌ [MAIN] Gabim në checkKnowledge:', error);
     }
     return false;
 }
+
+// ✅ VERIFIKIMI I SISTEMIT
+setTimeout(() => {
+    console.log('🔍 [MAIN] Statusi i sistemit:');
+    console.log('- checkStoredKnowledge:', typeof checkStoredKnowledge);
+    console.log('- processCommand:', typeof processCommand);
+    console.log('- addMessage:', typeof addMessage);
+    console.log('- currentUser:', window.currentUser);
+}, 2000);
 
 // ================================================================
 //  ✅ LLOGARITJE 100% SAFE
@@ -1563,136 +1518,3 @@ setTimeout(() => {
 }, 2000);
 
 console.log('✅ Sistemi përfundimtar u aktivizua!');
-
-// ============================================= ✅ FIX FINAL - METODË E THJESHTË ======================================
-
-console.log('🔧 Duke aktivizuar sistemin final...');
-
-// ✅ INICIALIZO SISTEMIN
-function initializeFinalSystem() {
-    console.log('🎯 Duke inicializuar sistemin final...');
-    
-    const userInput = document.getElementById('user-input');
-    const sendBtn = document.getElementById('send-btn');
-    
-    if (!userInput || !sendBtn) {
-        console.log('❌ Elementët nuk u gjetën, duke provuar përsëri...');
-        setTimeout(initializeFinalSystem, 1000);
-        return;
-    }
-    
-    console.log('✅ Elementët u gjetën!');
-    
-    // ✅ KAP ENTER KEY
-    const originalKeypress = userInput.onkeypress;
-    userInput.onkeypress = function(e) {
-        if (e.key === 'Enter') {
-            handleFinalMessage();
-        } else if (originalKeypress) {
-            originalKeypress.call(this, e);
-        }
-    };
-    
-    // ✅ KAP KLIKIMIN E BUTONIT
-    const originalClick = sendBtn.onclick;
-    sendBtn.onclick = function() {
-        handleFinalMessage();
-    };
-    
-    console.log('🎉 Sistemi final u inicializua!');
-}
-
-// ✅ FUNKSIONI FINAL
-function handleFinalMessage() {
-    const userInput = document.getElementById('user-input');
-    const message = userInput.value.trim();
-    
-    if (!message) return;
-    
-    console.log('💬 [FINAL] Mesazh:', message);
-    
-    // ✅ SHFAQ MESAZHIN E USER-IT
-    addMessage(message, 'user');
-    userInput.value = '';
-    
-    // ✅ KONTROLLO NJOHURITË E RUAJTURA
-    checkKnowledgeFinal(message);
-}
-
-// ✅ FUNKSIONI PËR KONTROLLIMIN E NJOHURIVE
-async function checkKnowledgeFinal(message) {
-    try {
-        console.log('💾 [FINAL] Duke kërkuar njohuri për:', message);
-        
-        if (window.currentUser && window.currentUser.id) {
-            const response = await fetch(`/api/chat/knowledge/${window.currentUser.id}/${encodeURIComponent(message.toLowerCase())}`, {
-                credentials: 'include'
-            });
-            
-            console.log('📡 [FINAL] Statusi:', response.status);
-            
-            if (response.ok) {
-                const data = await response.json();
-                console.log('📊 [FINAL] Përgjigja:', data);
-                
-                if (data.answer && data.answer !== 'null') {
-                    console.log('✅✅✅ [FINAL] Gjetëm përgjigje të ruajtur!');
-                    addMessage(`💾 **Përgjigje e ruajtur:** ${data.answer}`, 'bot');
-                    return;
-                } else {
-                    console.log('❌ [FINAL] Nuk ka përgjigje të ruajtur');
-                    // DËRGO TE SERVERI
-                    sendToServerFinal(message);
-                }
-            } else {
-                console.log('❌ [FINAL] Gabim në server, duke dërguar te AI...');
-                sendToServerFinal(message);
-            }
-        } else {
-            console.log('❌ [FINAL] Nuk ka currentUser, duke dërguar te AI...');
-            sendToServerFinal(message);
-        }
-    } catch (error) {
-        console.log('❌ [FINAL] Gabim në kërkim, duke dërguar te AI...');
-        sendToServerFinal(message);
-    }
-}
-
-// ✅ DËRGO TE SERVERI
-async function sendToServerFinal(message) {
-    try {
-        const activeEngine = window.aiEngineStatus?.openai ? 'openai' : 'gemini';
-        
-        const response = await fetch('/api/chat/message', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            credentials: 'include',
-            body: JSON.stringify({
-                message: message,
-                engine: activeEngine
-            })
-        });
-        
-        const data = await response.json();
-        if (data.success) {
-            addMessage(data.response, 'bot');
-        } else {
-            addMessage('❌ Gabim në server.', 'bot');
-        }
-    } catch (error) {
-        console.error('❌ [FINAL] Gabim në dërgim:', error);
-        addMessage('❌ Gabim në lidhje.', 'bot');
-    }
-}
-
-// ✅ INICIALIZO
-setTimeout(() => {
-    initializeFinalSystem();
-    
-    console.log('🔍 [FINAL] Statusi:');
-    console.log('- processCommand:', typeof processCommand);
-    console.log('- addMessage:', typeof addMessage);
-    console.log('- currentUser:', window.currentUser);
-}, 1500);
-
-console.log('✅ Sistemi final u aktivizua!');
