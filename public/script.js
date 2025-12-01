@@ -220,7 +220,7 @@ async function register() {
         const photoFile = document.getElementById("new-photo").files[0];
 
         if (!newUser || !newPass) {
-            alert(⚠️ Plotëso të gjitha fushat e detyrueshme!");
+            alert("⚠️ Plotëso të gjitha fushat e detyrueshme!");
             return;
         }
 
@@ -707,10 +707,27 @@ async function saveToHistory(content, sender, timestamp) {
 async function loadHistory() {
     if (!currentUser) return;
     
-    console.log('📜 [SCRIPT] Funksioni loadHistory është çaktivizuar për optimizim');
-    
-    // ✅ KTHE VETËM ARRAY BOSH PA ERROR
-    return [];
+    try {
+        const response = await fetch(`/api/chat/history/${currentUser.id}`, {
+            credentials: 'include'
+        });
+        const data = await response.json();
+        
+        if (response.ok) {
+            const chat = document.getElementById("chat");
+            chat.innerHTML = "";
+            
+            data.history.forEach(msg => {
+                addMessage(msg.content, msg.sender, msg.timestamp);
+            });
+            
+            chat.scrollTop = chat.scrollHeight;
+        } else {
+            console.error("Gabim gjatë ngarkimit të historisë:", data.error);
+        }
+    } catch (error) {
+        console.error("Gabim gjatë ngarkimit të historisë:", error);
+    }
 }
 
 async function clearHistory() {
