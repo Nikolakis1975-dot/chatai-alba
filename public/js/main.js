@@ -1479,3 +1479,57 @@ async function checkMath(message) {
 
     return false;
 }
+
+// ========================================== ✅ DEBUG PËR SISTEMIN ============================================
+
+console.log('🔧 DEBUG: Duke kontrolluar sistemin...');
+
+// ✅ DEBUG: Kontrollo nëse ka sendMessage
+console.log('📡 sendMessage ekziston?:', typeof window.sendMessage);
+
+// ✅ DEBUG: Kontrollo nëse processCommand funksionon
+if (typeof processCommand === 'function') {
+    console.log('✅ processCommand ekziston!');
+    
+    // Testo një komandë të thjeshtë
+    setTimeout(() => {
+        console.log('🧪 Test i komandës /ndihmo...');
+        processCommand('/ndihmo');
+    }, 2000);
+} else {
+    console.log('❌ processCommand NUK ekziston!');
+}
+
+// ✅ DEBUG: Kontrollo chat.js
+console.log('💾 checkStoredKnowledge ekziston?:', typeof checkStoredKnowledge);
+
+// ✅ DEBUG: Kontrollo currentUser
+console.log('👤 currentUser:', window.currentUser);
+
+// ✅ DEBUG: Provo të kapim mesazhet manualisht
+function addMessageDebugListener() {
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+    
+    if (userInput && sendBtn) {
+        // Mbivendos Enter
+        userInput.addEventListener('keypress', async function(e) {
+            if (e.key === 'Enter') {
+                const message = this.value.trim();
+                console.log('🎹 DEBUG: Enter u shtyp, mesazh:', message);
+                
+                if (message) {
+                    // Kontrollo manualisht
+                    if (typeof checkStoredKnowledge === 'function') {
+                        const answer = await checkStoredKnowledge(message);
+                        console.log('💾 DEBUG: checkStoredKnowledge ktheu:', answer);
+                    }
+                }
+            }
+        });
+        
+        console.log('✅ DEBUG: Listener u shtua!');
+    }
+}
+
+setTimeout(addMessageDebugListener, 1000);
