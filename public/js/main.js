@@ -1963,56 +1963,16 @@ setTimeout(() => {
 
 console.log('✅ Efektet e gjalla për mesazhe u aktivizuan!');
 
-// ========================================= ✅ CODE SYNTAX HIGHLIGHTING ================================================
+// ================================================= ✅ FIX PËR CODE HIGHLIGHTING =========================================
 
-console.log('🌈 Duke aktivizuar syntax highlighting për kodet...');
+console.log('🔧 Duke rregulluar code highlighting...');
 
-// ✅ FUNKSIONI PËR SYNTAX HIGHLIGHT
-function highlightCodeInMessages() {
-    // Kontrollo nëse highlight.js është i ngarkuar
-    if (typeof hljs === 'undefined') {
-        console.log('⚠️ highlight.js nuk është i ngarkuar');
-        return;
-    }
-    
-    console.log('✅ highlight.js u gjet!');
-    
-    // ✅ 1. HLJES KODET EKZISTUESE
-    document.querySelectorAll('pre code').forEach((block) => {
-        hljs.highlightElement(block);
-    });
-    
-    // ✅ 2. OBSERVER PËR KODE TË REJA
-    const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-            mutation.addedNodes.forEach((node) => {
-                if (node.nodeType === 1) { // Element node
-                    // Kontrollo nëse është mesazh
-                    if (node.classList && node.classList.contains('message')) {
-                        // Gjej të gjitha kodet brenda mesazhit
-                        node.querySelectorAll('pre code').forEach((block) => {
-                            hljs.highlightElement(block);
-                        });
-                    }
-                }
-            });
-        });
-    });
-    
-    // Vëzhgo chat container
-    const chat = getChatElement();
-    if (chat) {
-        observer.observe(chat, { childList: true, subtree: true });
-        console.log('👀 Observer për kodet e reja u aktivizua!');
-    }
-}
-
-// ✅ FUNKSIONI PËR FORMATIMIN E KODEVE NË MESAZHE
-function formatCodeInText(text) {
-    // Zëvendëso code blocks me HTML të formatuar
-    return text.replace(/```([\s\S]*?)```/g, (match, code) => {
-        const language = code.split('\n')[0].trim() || 'javascript';
-        const codeContent = code.split('\n').slice(1).join('\n').trim();
+// ✅ FUNKSIONI I THJESHTË PËR FORMATIMIN E KODEVE
+function formatCodeSimple(text) {
+    // Zëvendëso code blocks
+    let formatted = text.replace(/```(\w+)?\s*([\s\S]*?)```/g, (match, lang, code) => {
+        const language = lang || 'javascript';
+        const codeContent = code.trim();
         
         return `
         <div class="code-block">
@@ -2020,48 +1980,52 @@ function formatCodeInText(text) {
                 <span class="code-language">${language}</span>
                 <button class="copy-code-btn" onclick="copyCodeToClipboard(this)">📋 Kopjo</button>
             </div>
-            <pre><code class="language-${language}">${escapeHtml(codeContent)}</code></pre>
+            <pre><code class="hljs language-${language}">${codeContent}</code></pre>
         </div>`;
-    }).replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
-}
-
-// ✅ FUNKSION PËR ESCAPING HTML
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-// ✅ FUNKSION PËR KOPJIMIN E KODEVE
-function copyCodeToClipboard(button) {
-    const codeBlock = button.closest('.code-block');
-    const code = codeBlock.querySelector('code').textContent;
-    
-    navigator.clipboard.writeText(code).then(() => {
-        const originalText = button.textContent;
-        button.textContent = '✅ Kopjuar!';
-        button.style.background = '#4CAF50';
-        
-        setTimeout(() => {
-            button.textContent = originalText;
-            button.style.background = '';
-        }, 2000);
     });
+    
+    // Zëvendëso inline code
+    formatted = formatted.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
+    
+    // Formatizo bold text
+    formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    
+    // Formatizo line breaks
+    formatted = formatted.replace(/\n/g, '<br>');
+    
+    return formatted;
 }
 
-// ✅ STILET PËR CODE BLOCKS
-function addCodeHighlightStyles() {
-    if (document.getElementById('code-highlight-styles')) return;
+// ✅ FUNKSIONI I MODIFIKUAR addMessageLive
+if (typeof addMessageLive !== 'undefined') {
+    const originalAddMessageLive = addMessageLive;
+    
+    window.addMessageLive = async function(text, sender, options = {}) {
+        // Formatizo tekstin ME PARË
+        const formattedText = formatCodeSimple(text);
+        
+        // Përdor funksionin origjinal me tekstin e formatuar
+        return await originalAddMessageLive.call(this, formattedText, sender, options);
+    };
+    
+    console.log('✅ addMessageLive u modifikua për code highlighting!');
+}
+
+// ✅ STILET E THJESHTA PËR CODE
+function addSimpleCodeStyles() {
+    if (document.getElementById('simple-code-styles')) return;
     
     const style = document.createElement('style');
-    style.id = 'code-highlight-styles';
+    style.id = 'simple-code-styles';
     style.textContent = `
+        /* Code blocks */
         .code-block {
             background: #1e1e1e;
             border-radius: 8px;
             margin: 10px 0;
             overflow: hidden;
             border: 1px solid #333;
+            font-family: 'Fira Code', monospace;
         }
         
         .code-header {
@@ -2071,11 +2035,11 @@ function addCodeHighlightStyles() {
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid #333;
+            color: #fff;
         }
         
         .code-language {
             color: #ccc;
-            font-family: 'Fira Code', monospace;
             font-size: 12px;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -2089,7 +2053,6 @@ function addCodeHighlightStyles() {
             border-radius: 4px;
             cursor: pointer;
             font-size: 11px;
-            font-family: 'Fira Code', monospace;
         }
         
         .copy-code-btn:hover {
@@ -2100,14 +2063,17 @@ function addCodeHighlightStyles() {
             margin: 0;
             padding: 15px;
             overflow-x: auto;
-        }
-        
-        .code-block code {
-            font-family: 'Fira Code', monospace;
+            color: #d4d4d4;
             font-size: 13px;
             line-height: 1.5;
         }
         
+        .code-block code {
+            display: block;
+            white-space: pre;
+        }
+        
+        /* Inline code */
         .inline-code {
             background: #f0f0f0;
             padding: 2px 6px;
@@ -2117,51 +2083,61 @@ function addCodeHighlightStyles() {
             color: #d63384;
         }
         
-        /* Stilet e highlight.js */
-        .hljs-keyword { color: #569cd6; }
-        .hljs-string { color: #ce9178; }
-        .hljs-number { color: #b5cea8; }
-        .hljs-comment { color: #6a9955; }
-        .hljs-function { color: #dcdcaa; }
-        .hljs-params { color: #9cdcfe; }
-        .hljs-title { color: #4ec9b0; }
-        .hljs-built_in { color: #4ec9b0; }
+        /* Basic syntax coloring (nëse nuk ka highlight.js) */
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .number { color: #b5cea8; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .function { color: #dcdcaa; }
     `;
     
     document.head.appendChild(style);
-    console.log('🎨 Stilet për code highlighting u shtuan!');
+    console.log('🎨 Stilet e thjeshta për kode u shtuan!');
 }
 
-// ✅ MBIVENDOS addMessageLive PËR TË PËRFSHIRË CODE HIGHLIGHT
-function enhanceMessageWithCodeHighlight() {
-    if (typeof addMessageLive === 'function') {
-        const originalAddMessageLive = addMessageLive;
+// ✅ KONTROLLO NËSE HIGHLIGHT.JS ËSHTË I NGARKUAR
+function checkHighlightJS() {
+    if (typeof hljs !== 'undefined') {
+        console.log('✅ highlight.js është i ngarkuar!');
         
-        window.addMessageLive = async function(text, sender, options = {}) {
-            // Formatizo tekstin (shto code highlighting)
-            const formattedText = formatCodeInText(text);
-            
-            // Përdor funksionin origjinal me tekstin e formatuar
-            return await originalAddMessageLive.call(this, formattedText, sender, options);
-        };
-        
-        console.log('🔄 addMessageLive u përmirësua me code highlighting!');
+        // Aplikoi highlight në të gjitha kodet ekzistuese
+        setTimeout(() => {
+            document.querySelectorAll('.code-block code').forEach((block) => {
+                hljs.highlightElement(block);
+            });
+        }, 500);
+    } else {
+        console.log('⚠️ highlight.js nuk është i ngarkuar - duke përdorur stilet bazë');
     }
 }
 
 // ✅ INICIALIZO
 setTimeout(() => {
-    addCodeHighlightStyles();
-    enhanceMessageWithCodeHighlight();
+    // 1. Shto stilet
+    addSimpleCodeStyles();
     
-    // Priti që highlight.js të ngarkohet
-    setTimeout(() => {
-        highlightCodeInMessages();
-    }, 1000);
+    // 2. Kontrollo highlight.js
+    checkHighlightJS();
     
-    console.log('🔍 Statusi i code highlighting:');
-    console.log('- highlight.js:', typeof hljs);
-    console.log('- Code styles added:', !!document.getElementById('code-highlight-styles'));
-}, 2000);
+    // 3. Testo me një mesazh demo
+    console.log('🧪 Duke testuar code formatting...');
+    
+    // Krijo një mesazh test me kod
+    const testCode = `Këtu është një shembull kodi:
 
-console.log('✅ Code syntax highlighting u aktivizua!');
+\`\`\`javascript
+function pershendetje() {
+    console.log("Përshëndetje botë!");
+    return "U krye!";
+}
+\`\`\`
+
+Dhe këtu është inline code: \`const x = 10\``;
+    
+    // Formatizo për testim
+    const formatted = formatCodeSimple(testCode);
+    console.log('📝 Test formatted:', formatted.substring(0, 200) + '...');
+    
+}, 1500);
+
+console.log('✅ Code highlighting fix u aktivizua!');
