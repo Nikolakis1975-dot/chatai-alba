@@ -1757,3 +1757,208 @@ setTimeout(() => {
 }, 2000);
 
 console.log('✅ Funksionet e chat element u shtuan!');
+
+// ======================================== ✅ EFEKTET "TË GJALLA" PËR MESAZHE =======================================
+
+console.log('🎬 Duke aktivizuar efektet e gjalla për mesazhe...');
+
+// ✅ TYPING INDICATOR (efekti "duke shkruar")
+function showTypingIndicator() {
+    const chat = getChatElement();
+    if (!chat) return;
+    
+    // Kontrollo nëse ekziston tashmë
+    if (document.getElementById('typing-indicator')) return;
+    
+    const typingDiv = document.createElement('div');
+    typingDiv.id = 'typing-indicator';
+    typingDiv.className = 'message bot typing';
+    typingDiv.innerHTML = `
+        <div class="message-text">
+            <span class="typing-dots">
+                <span>.</span><span>.</span><span>.</span>
+            </span>
+        </div>
+    `;
+    
+    chat.appendChild(typingDiv);
+    chat.scrollTop = chat.scrollHeight;
+    
+    console.log('⌛ Typing indicator u shfaq');
+}
+
+function removeTypingIndicator() {
+    const typing = document.getElementById('typing-indicator');
+    if (typing) {
+        typing.remove();
+        console.log('✅ Typing indicator u hoq');
+    }
+}
+
+// ✅ VERSIONI I GJALLË I addMessage ME DELAY DHE ANIMACION
+function addMessageLive(text, sender, options = {}) {
+    return new Promise(async (resolve) => {
+        const chat = getChatElement();
+        if (!chat) return resolve(null);
+        
+        const { 
+            typingDelay = 800,      // Koha e "shkrimit"
+            charDelay = 30,         // Koha ndërmjet karaktereve
+            showTyping = true,      // Shfaq efekti "duke shkruar"
+            removeAfterTyping = true // Hiq typing indicator pas përfundimit
+        } = options;
+        
+        // Krijo elementin e mesazhit (bosh fillimisht)
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${sender}`;
+        
+        const textDiv = document.createElement('div');
+        textDiv.className = 'message-text';
+        messageDiv.appendChild(textDiv);
+        
+        chat.appendChild(messageDiv);
+        
+        // Auto-scroll
+        chat.scrollTop = chat.scrollHeight;
+        
+        // ✅ NËSE ËSHTË BOT, SHFAQ TYPING EFFECT
+        if (sender === 'bot' && showTyping) {
+            showTypingIndicator();
+            await new Promise(r => setTimeout(r, typingDelay));
+            if (removeAfterTyping) removeTypingIndicator();
+        }
+        
+        // ✅ ANIMIMI I TEKSTIT KARAKTER-PËR-KARAKTER
+        let displayText = text
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\n/g, '<br>');
+        
+        // Nëse don animacion karakter-per-karakter
+        if (sender === 'bot' && charDelay > 0) {
+            textDiv.innerHTML = '';
+            let currentIndex = 0;
+            
+            const typeNextChar = () => {
+                if (currentIndex < displayText.length) {
+                    const char = displayText[currentIndex];
+                    
+                    // Kontrollo për HTML tags
+                    if (char === '<') {
+                        // Gjej tag-in e plotë
+                        const tagEnd = displayText.indexOf('>', currentIndex);
+                        if (tagEnd !== -1) {
+                            const tag = displayText.substring(currentIndex, tagEnd + 1);
+                            textDiv.innerHTML += tag;
+                            currentIndex = tagEnd + 1;
+                        } else {
+                            textDiv.innerHTML += char;
+                            currentIndex++;
+                        }
+                    } else {
+                        textDiv.innerHTML += char;
+                        currentIndex++;
+                    }
+                    
+                    chat.scrollTop = chat.scrollHeight;
+                    setTimeout(typeNextChar, charDelay);
+                } else {
+                    console.log(`💬 ${sender.toUpperCase()}: ${text.substring(0, 50)}${text.length > 50 ? '...' : ''}`);
+                    resolve(messageDiv);
+                }
+            };
+            
+            typeNextChar();
+        } else {
+            // Pa animacion (user messages dhe opsione të tjera)
+            textDiv.innerHTML = displayText;
+            console.log(`💬 ${sender.toUpperCase()}: ${text.substring(0, 50)}${text.length > 50 ? '...' : ''}`);
+            resolve(messageDiv);
+        }
+    });
+}
+
+// ✅ STILI PËR TYPING INDICATOR
+function addTypingStyles() {
+    if (document.getElementById('typing-styles')) return;
+    
+    const style = document.createElement('style');
+    style.id = 'typing-styles';
+    style.textContent = `
+        .typing {
+            opacity: 0.7;
+            font-style: italic;
+        }
+        
+        .typing-dots {
+            display: inline-block;
+        }
+        
+        .typing-dots span {
+            opacity: 0;
+            animation: typingDot 1.5s infinite;
+            font-size: 24px;
+            margin: 0 2px;
+        }
+        
+        .typing-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typingDot {
+            0%, 60%, 100% { opacity: 0; }
+            30% { opacity: 1; }
+        }
+        
+        .message.bot {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    `;
+    
+    document.head.appendChild(style);
+    console.log('🎨 Stilet për typing animation u shtuan!');
+}
+
+// ✅ MBIVENDOS addMessage EKZISTUES PËR TË PËRDORUR VERSIONIN E GJALLË
+function enhanceExistingAddMessage() {
+    if (typeof window.addMessage === 'function') {
+        const originalAddMessage = window.addMessage;
+        
+        window.addMessage = function(text, sender) {
+            // Nëse është bot, përdor versionin e gjallë
+            if (sender === 'bot') {
+                return addMessageLive(text, sender, {
+                    typingDelay: 500,
+                    charDelay: 20,
+                    showTyping: true
+                });
+            } else {
+                // Për user, përdor originalin
+                return originalAddMessage.call(this, text, sender);
+            }
+        };
+        
+        console.log('🔄 addMessage u përmirësua me efekte të gjalla!');
+    }
+}
+
+// ✅ INICIALIZO
+setTimeout(() => {
+    addTypingStyles();
+    enhanceExistingAddMessage();
+    
+    console.log('🔍 Statusi i efekteve të gjalla:');
+    console.log('- addMessageLive:', typeof addMessageLive);
+    console.log('- showTypingIndicator:', typeof showTypingIndicator);
+    console.log('- Typing styles added:', !!document.getElementById('typing-styles'));
+}, 1500);
+
+console.log('✅ Efektet e gjalla për mesazhe u aktivizuan!');
