@@ -1608,3 +1608,152 @@ async function debugStoredKnowledge() {
 setTimeout(() => {
     debugStoredKnowledge();
 }, 3000);
+
+// ========================================== ✅ FUNKSIONET PËR CHAT ELEMENT ========================================
+
+console.log('🔧 Duke shtuar funksionet e chat element...');
+
+// ✅ FUNKSIONI PËR TË GJETUR ELEMENTIN E CHAT-IT
+function getChatElement() {
+    // Provo ID-në "chat" (është <main> element)
+    let chat = document.getElementById('chat');
+    
+    // DEBUG: Kontrollo
+    if (chat) {
+        console.log('✅ Chat elementi u gjet via ID "chat":', {
+            tagName: chat.tagName,
+            id: chat.id,
+            className: chat.className,
+            childrenCount: chat.children.length
+        });
+    } else {
+        console.log('❌ Elementi me ID "chat" nuk u gjet!');
+        
+        // Provo selektorë të tjerë
+        chat = document.querySelector('main') || 
+               document.querySelector('section') ||
+               document.querySelector('.chat-container') ||
+               document.querySelector('[class*="message"]');
+        
+        if (chat) {
+            console.log('✅ Chat u gjet via selektor:', chat.tagName);
+        }
+    }
+    
+    return chat;
+}
+
+// ✅ FUNKSIONI PËR SHTIMIN E MESAZHEVE
+function addMessage(text, sender) {
+    const chat = getChatElement();
+    
+    if (!chat) {
+        console.error('❌ NUK MUND TË SHTOHET MESAZH: Chat elementi nuk u gjet!');
+        // Krijo element emergjent nëse nuk ekziston
+        const newChat = document.createElement('div');
+        newChat.id = 'chat-fallback';
+        newChat.className = 'chat-messages';
+        document.body.appendChild(newChat);
+        return addMessage(text, sender); // Provo përsëri
+    }
+    
+    // Krijo elementin e mesazhit
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${sender}`;
+    
+    // Formato mesazhin
+    const formattedText = text
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n/g, '<br>');
+    
+    messageDiv.innerHTML = `<div class="message-text">${formattedText}</div>`;
+    
+    // Shto në chat
+    chat.appendChild(messageDiv);
+    
+    // Auto-scroll
+    chat.scrollTop = chat.scrollHeight;
+    
+    // Log
+    console.log(`💬 ${sender.toUpperCase()}: ${text.substring(0, 50)}${text.length > 50 ? '...' : ''}`);
+    
+    return messageDiv;
+}
+
+// ✅ FUNKSIONI PËR PASTRIMIN E CHAT-IT
+function clearChat() {
+    const chat = getChatElement();
+    
+    if (!chat) {
+        console.error('❌ NUK MUND TË PASTROHET CHAT: Elementi nuk u gjet!');
+        return;
+    }
+    
+    if (confirm('A jeni i sigurt që dëshironi të fshini të gjithë chat-in?')) {
+        chat.innerHTML = '';
+        console.log('✅ Chat-u u pastrua me sukses!');
+        
+        // Shto mesazhin e konfirmimit
+        addMessage('🗑️ **Chat-u u pastrua!** Mund të filloni një bisedë të re.', 'system');
+    }
+}
+
+// ✅ BUTONI PËR CLEAR CHAT
+function addClearChatButton() {
+    // Kontrollo nëse butoni ekziston tashmë
+    if (document.getElementById('clear-chat-btn')) return;
+    
+    const header = document.querySelector('header');
+    if (!header) {
+        console.log('❌ Header nuk u gjet për të shtuar butonin');
+        return;
+    }
+    
+    // Krijo butonin
+    const clearBtn = document.createElement('button');
+    clearBtn.id = 'clear-chat-btn';
+    clearBtn.innerHTML = '🗑️ Fshi Chat';
+    clearBtn.title = 'Fshi të gjithë mesazhet nga chat-i';
+    clearBtn.style.cssText = `
+        background: #f44336;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 20px;
+        cursor: pointer;
+        margin-left: 10px;
+        font-size: 12px;
+    `;
+    
+    clearBtn.onclick = clearChat;
+    
+    // Shto pas butonit të fundit ekzistues
+    const lastButton = header.querySelector('button:last-child');
+    if (lastButton) {
+        lastButton.parentNode.insertBefore(clearBtn, lastButton.nextSibling);
+    } else {
+        header.appendChild(clearBtn);
+    }
+    
+    console.log('✅ Butoni "Fshi Chat" u shtua në header!');
+}
+
+// ✅ VERIFIKO FUNKSIONET
+setTimeout(() => {
+    console.log('🔍 Duke kontrolluar sistemin e chat-it...');
+    
+    // Testo nëse elementet ekzistojnë
+    console.log('- getChatElement:', typeof getChatElement);
+    console.log('- addMessage:', typeof addMessage);
+    console.log('- clearChat:', typeof clearChat);
+    
+    // Testo gjetjen e chat-it
+    const chat = getChatElement();
+    console.log('- Chat element found:', !!chat);
+    
+    // Shto butonin e clear chat
+    addClearChatButton();
+    
+}, 2000);
+
+console.log('✅ Funksionet e chat element u shtuan!');
