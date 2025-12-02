@@ -1758,16 +1758,15 @@ setTimeout(() => {
 
 console.log('✅ Funksionet e chat element u shtuan!');
 
-// ==================== ✅ VETËM TYPING INDICATOR (PA NDËRHYRË) ====================
+// ==================== ✅ TYPING INDICATOR ME EVENT LISTENER ====================
 
-console.log('⌛ Duke aktivizuar typing indicator pa ndërhyrë...');
+console.log('🎬 Duke aktivizuar typing indicator me metodë të sigurt...');
 
 // ✅ FUNKSIONET PËR TYPING (STANDALONE)
 function showTyping() {
     const chat = document.getElementById('chat');
     if (!chat) return;
     
-    // Kontrollo nëse ekziston
     if (document.querySelector('.typing-indicator')) return;
     
     const typingDiv = document.createElement('div');
@@ -1797,6 +1796,8 @@ typingStyle.textContent = `
     .typing-indicator {
         opacity: 0.6;
         animation: fadeIn 0.3s ease-in;
+        margin: 10px;
+        padding: 10px;
     }
     
     .typing-dots {
@@ -1836,41 +1837,104 @@ typingStyle.textContent = `
 `;
 document.head.appendChild(typingStyle);
 
-// ✅ MBIVENDOS FUNKSIONIN ORIGJINAL sendMessage PA E PRISHUR
-const originalSendMessage = window.sendMessage;
-if (originalSendMessage) {
-    window.sendMessage = async function() {
-        const userInput = document.getElementById('user-input');
+// ✅ METODË E SIGURT: EVENT LISTENER PA MBIVENDOSJE
+function setupTypingIndicator() {
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+    
+    if (!userInput || !sendBtn) {
+        console.log('❌ Elementet nuk u gjetën, provo përsëri...');
+        setTimeout(setupTypingIndicator, 1000);
+        return;
+    }
+    
+    console.log('✅ Elementet u gjetën, duke shtuar event listener...');
+    
+    // ✅ FUNKSIONI PËR TRAJTIMIN E MESAZHEVE
+    async function handleUserMessage() {
         const message = userInput.value.trim();
+        if (!message) return;
         
-        if (!message) {
-            if (originalSendMessage) return originalSendMessage.call(this);
-            return;
-        }
+        console.log('💬 Mesazh i përdoruesit:', message);
         
-        // Shtyp mesazhin e user-it
+        // 1. Shfaq mesazhin e user-it (përdor sistemin ekzistues)
         if (typeof addMessage === 'function') {
             addMessage(message, 'user');
+        } else {
+            // Fallback nëse addMessage nuk ekziston
+            const chat = document.getElementById('chat');
+            if (chat) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message user';
+                messageDiv.innerHTML = `<div class="message-text">${message}</div>`;
+                chat.appendChild(messageDiv);
+            }
         }
         
+        // 2. Pastro input
         userInput.value = '';
         
-        // Shfaq typing indicator për 1 sekondë
+        // 3. Shfaq typing indicator
         showTyping();
         
-        // Prit 1 sekondë për efekt
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Fshi typing indicator
-        hideTyping();
-        
-        // Dërgo te serveri (përdor origjinalin)
-        if (originalSendMessage) {
-            await originalSendMessage.call(this);
+        // 4. Dërgo mesazhin në server (përdor sendMessage origjinal)
+        if (typeof window.sendMessage === 'function') {
+            // Prit 1 sekondë për efektin e typing
+            await new Promise(resolve => setTimeout(resolve, 800));
+            
+            // Fshi typing indicator
+            hideTyping();
+            
+            // Dërgo te serveri
+            window.sendMessage();
+        } else {
+            // Fallback nëse sendMessage nuk ekziston
+            hideTyping();
+            console.error('❌ sendMessage nuk ekziston!');
         }
-    };
+    }
     
-    console.log('✅ Typing indicator u integrua pa prishur sistemin!');
+    // ✅ SHTO EVENT LISTENER PËR ENTER
+    userInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault(); // Parandalo sjelljen normale
+            handleUserMessage();
+        }
+    });
+    
+    // ✅ SHTO EVENT LISTENER PËR KLIK
+    sendBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        handleUserMessage();
+    });
+    
+    // ✅ MOS PRISH BUTONAT E TIJER (OpenAI panel, etj.)
+    console.log('✅ Event listener u shtua pa prishur butona të tjerë!');
+    
+    // ✅ DEBUG: Kontrollo butonat
+    const openaiBtn = document.querySelector('button[onclick*="showOpenAIPanel"]');
+    console.log('🔍 Butoni OpenAI ekziston?:', !!openaiBtn);
+    
+    if (openaiBtn) {
+        // Kontrollo nëse funksionon
+        openaiBtn.addEventListener('click', function() {
+            console.log('🎯 Butoni OpenAI u klikua!');
+        });
+    }
 }
 
-console.log('🎬 Typing indicator system gati!');
+// ✅ INICIALIZO PAS 2 SEKONDA
+setTimeout(() => {
+    console.log('🔧 Duke inicializuar sistemin e typing indicator...');
+    setupTypingIndicator();
+    
+    // Kontrollo statusin
+    console.log('📊 Statusi:');
+    console.log('- sendMessage ekziston?:', typeof window.sendMessage);
+    console.log('- addMessage ekziston?:', typeof addMessage);
+    console.log('- processCommand ekziston?:', typeof processCommand);
+    console.log('- hljs ekziston?:', typeof hljs);
+    
+}, 2000);
+
+console.log('🎬 Typing indicator system u ngarkua (metodë e sigurt)!');
