@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🔥 OPENAI RADICAL TEST</title>
+    <style>
+        body { font-family: Arial; margin: 20px; background: #1a1a1a; color: white; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .input-area { margin: 20px 0; }
+        input, button { padding: 10px; margin: 5px; border: none; border-radius: 5px; }
+        input { width: 300px; background: #333; color: white; }
+        button { background: #007bff; color: white; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .response { background: #2a2a2a; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .success { border-left: 5px solid #28a745; }
+        .error { border-left: 5px solid #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔥 RRUFE TESLA RADICAL TEST SYSTEM</h1>
+        <p>Ky është sistemi RADIKAL i pastër për RRUFE TESLEN - Ketu mund t'i beni pyetje sistemit RRUFE TESLA!</p>
+        
+        <div class="input-area">
+            <input type="text" id="messageInput" placeholder="Shkruaj mesazhin këtu..." />
+            <button onclick="sendMessage()">➤ Dërgo në RRUFE TESLA</button>
+            <button onclick="testRoute()">🧪 Test Route</button>
+        </div>
+        
+        <div id="responseArea"></div>
+    </div>
+
+    <script>
+        async function testRoute() {
+            console.log('🧪 Testing OpenAI Radical Route...');
+            try {
+                const response = await fetch('/api/openai-radical/test');
+                const data = await response.json();
+                showResponse(data);
+            } catch (error) {
+                showResponse({ success: false, error: error.message });
+            }
+        }
+
+        async function sendMessage() {
+            const message = document.getElementById('messageInput').value;
+            if (!message) return;
+
+            console.log('🚀 Sending to OpenAI Radical:', message);
+            
+            try {
+                const response = await fetch('/api/openai-radical/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message })
+                });
+                
+                const data = await response.json();
+                showResponse(data);
+            } catch (error) {
+                showResponse({ success: false, error: error.message });
+            }
+        }
+
+        function showResponse(data) {
+            const area = document.getElementById('responseArea');
+            const div = document.createElement('div');
+            div.className = `response ${data.success ? 'success' : 'error'}`;
+            
+            if (data.success) {
+                div.innerHTML = `
+                    <strong>✅ SUKSES:</strong>
+                    <div>${data.response}</div>
+                    <small>Source: ${data.source} | ${new Date().toLocaleTimeString()}</small>
+                `;
+            } else {
+                div.innerHTML = `
+                    <strong>❌ GABIM:</strong>
+                    <div>${data.error}</div>
+                    <small>Source: ${data.source} | ${new Date().toLocaleTimeString()}</small>
+                `;
+            }
+            
+            area.prepend(div);
+        }
+
+        // Testo automatikisht kur faqa ngarkohet
+        setTimeout(testRoute, 1000);
+    </script>
+</body>
+</html>
