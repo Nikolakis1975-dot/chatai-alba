@@ -2157,3 +2157,47 @@ def hello_world():
 }, 2000);
 
 console.log('✅ Manual highlighting system u aktivizua!');
+
+// ========================================= ✅ FALLBACK: CSS MANUAL HIGHLIGHTING ================================
+
+console.log('🎨 Duke aktivizuar manual CSS highlighting...');
+
+function addManualHighlightCSS() {
+    const style = document.createElement('style');
+    style.id = 'manual-highlight-css';
+    style.textContent = `
+        /* JavaScript */
+        .language-javascript .hljs-keyword { color: #569cd6; }
+        .language-javascript .hljs-string { color: #ce9178; }
+        .language-javascript .hljs-number { color: #b5cea8; }
+        .language-javascript .hljs-function { color: #dcdcaa; }
+        .language-javascript .hljs-params { color: #9cdcfe; }
+        .language-javascript .hljs-built_in { color: #4ec9b0; }
+        
+        /* Python */
+        .language-python .hljs-keyword { color: #569cd6; }
+        .language-python .hljs-string { color: #ce9178; }
+        .language-python .hljs-number { color: #b5cea8; }
+        .language-python .hljs-function { color: #dcdcaa; }
+        
+        /* HTML */
+        .language-html .hljs-tag { color: #569cd6; }
+        .language-html .hljs-name { color: #9cdcfe; }
+        .language-html .hljs-attr { color: #9cdcfe; }
+        .language-html .hljs-string { color: #ce9178; }
+        
+        /* CSS */
+        .language-css .hljs-selector-class { color: #d7ba7d; }
+        .language-css .hljs-property { color: #9cdcfe; }
+        .language-css .hljs-value { color: #ce9178; }
+        
+        /* Bazë */
+        .hljs { color: #d4d4d4; background: #1e1e1e; }
+        .hljs-comment { color: #6a9955; }
+    `;
+    
+    document.head.appendChild(style);
+    console.log('✅ Manual CSS highlighting u shtua!');
+}
+
+// Shto këtë në fund të main.js dhe testo
