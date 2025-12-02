@@ -1963,146 +1963,197 @@ setTimeout(() => {
 
 console.log('✅ Efektet e gjalla për mesazhe u aktivizuan!');
 
-// =================================================== ✅ FIX: VERSIONI ME innerHTML ==================================
+// =================================================== ✅ FIX: MANUAL HIGHLIGHT.JS ========================================
 
-console.log('🔧 Duke fixuar addMessage për HTML support...');
+console.log('🔧 Duke aktivizuar manual highlight.js...');
 
-// Gjej funksionin origjinal addMessage në script.js
-function findAndFixAddMessage() {
-    // Kontrollo nëse është në window
-    if (typeof window.addMessage === 'function') {
-        console.log('🔍 Gjetëm addMessage në window');
-        
-        const originalAddMessage = window.addMessage;
-        
-        // Versioni i ri që përdor innerHTML
-        window.addMessage = function(text, sender) {
-            const chat = getChatElement();
-            if (!chat) {
-                console.error('❌ Chat element nuk u gjet');
-                return null;
-            }
-            
-            console.log(`➕ Duke shtuar mesazh me HTML (${sender}):`, text.substring(0, 50));
-            
-            // Krijo elementin
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${sender}`;
-            
-            // Përdor innerHTML (jo innerText/textContent)
-            messageDiv.innerHTML = `<div class="message-text">${text}</div>`;
-            
-            // Shto në chat
-            chat.appendChild(messageDiv);
-            
-            // Auto-scroll
-            chat.scrollTop = chat.scrollHeight;
-            
-            return messageDiv;
-        };
-        
-        console.log('✅ addMessage u fixua për HTML support!');
-        return true;
+// ✅ FUNKSIONI PËR TË HIGHLIGHT-UR TË GJITHA KODET
+function highlightAllCodeBlocks() {
+    if (typeof hljs === 'undefined') {
+        console.log('⚠️ highlight.js nuk është i ngarkuar, duke ngarkuar...');
+        loadHighlightJS();
+        return;
     }
     
-    console.log('❌ addMessage nuk u gjet në window');
-    return false;
-}
-
-// ✅ FUNKSIONI I THJESHTË PËR CODE FORMATING
-function formatCodeForHTML(text) {
-    let formatted = text;
+    console.log('🎯 Duke highlight-ur të gjitha kodet...');
     
-    // 1. Code blocks me ```
-    formatted = formatted.replace(/```(\w+)?\s*([\s\S]*?)```/g, function(match, lang, code) {
-        const language = lang || 'javascript';
-        return `<div class="code-block">
-            <div class="code-header">${language}</div>
-            <pre><code>${code.trim()}</code></pre>
-        </div>`;
+    // Highlight të gjitha kodet ekzistuese
+    document.querySelectorAll('pre code').forEach((block) => {
+        try {
+            hljs.highlightElement(block);
+            console.log('✅ U highlight-ua:', block.className);
+        } catch (error) {
+            console.log('❌ Gabim në highlight:', error);
+        }
     });
     
-    // 2. Inline code me `
-    formatted = formatted.replace(/`([^`]+)`/g, '<code class="inline">$1</code>');
-    
-    // 3. Bold me **
-    formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-    
-    // 4. Line breaks
-    formatted = formatted.replace(/\n/g, '<br>');
-    
-    return formatted;
+    // Highlight kodet inline
+    document.querySelectorAll('code:not(pre code)').forEach((block) => {
+        if (!block.className.includes('hljs')) {
+            try {
+                hljs.highlightElement(block);
+            } catch (error) {
+                // Mos bëj asgjë për inline
+            }
+        }
+    });
 }
 
-// ✅ STILET PËR CODE
-function addBasicCodeStyles() {
-    const style = document.createElement('style');
-    style.textContent = `
-        .code-block {
-            background: #1e1e1e;
-            color: #fff;
-            border-radius: 5px;
-            margin: 10px 0;
-            padding: 10px;
-            font-family: 'Fira Code', monospace;
-            overflow-x: auto;
-        }
-        
-        .code-header {
-            color: #888;
-            font-size: 12px;
-            margin-bottom: 5px;
-            text-transform: uppercase;
-        }
-        
-        .code-block pre {
-            margin: 0;
-        }
-        
-        .code-block code {
-            display: block;
-            white-space: pre-wrap;
-        }
-        
-        .inline {
-            background: #f0f0f0;
-            padding: 2px 5px;
-            border-radius: 3px;
-            font-family: 'Fira Code', monospace;
-            color: #d63384;
-        }
-    `;
+// ✅ NGARKO HIGHLIGHT.JS NËSE NUK EKZISTON
+function loadHighlightJS() {
+    // Kontrollo nëse është tashmë në process
+    if (window.highlightJSLoading) return;
+    window.highlightJSLoading = true;
     
-    document.head.appendChild(style);
-    console.log('🎨 Stilet bazë për kod u shtuan');
+    console.log('📥 Duke ngarkuar highlight.js...');
+    
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js';
+    script.onload = function() {
+        console.log('✅ highlight.js u ngarkua!');
+        
+        // Ngarko gjuhët shtesë
+        const languages = ['javascript', 'python', 'html', 'css', 'json', 'bash'];
+        
+        languages.forEach(lang => {
+            const langScript = document.createElement('script');
+            langScript.src = `https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/${lang}.min.js`;
+            document.head.appendChild(langScript);
+        });
+        
+        // Kur të ngarkohen të gjitha, highlight
+        setTimeout(() => {
+            highlightAllCodeBlocks();
+            window.highlightJSLoading = false;
+        }, 1000);
+    };
+    
+    script.onerror = function() {
+        console.log('❌ Dështoi ngarkimi i highlight.js');
+        window.highlightJSLoading = false;
+    };
+    
+    document.head.appendChild(script);
 }
 
-// ✅ TEST
+// ✅ OBSERVER PËR KODE TË REJA
+function setupCodeObserver() {
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            mutation.addedNodes.forEach((node) => {
+                if (node.nodeType === 1) { // Element
+                    // Kontrollo për kod të ri
+                    const newCodeBlocks = node.querySelectorAll ? node.querySelectorAll('pre code') : [];
+                    newCodeBlocks.forEach(block => {
+                        if (typeof hljs !== 'undefined') {
+                            setTimeout(() => hljs.highlightElement(block), 100);
+                        }
+                    });
+                }
+            });
+        });
+    });
+    
+    // Vëzhgo të gjithë body
+    observer.observe(document.body, { 
+        childList: true, 
+        subtree: true 
+    });
+    
+    console.log('👀 Observer për kodet e reja u aktivizua!');
+}
+
+// ✅ MBIVENDOS addMessage PËR TË SHTUAR KLASAT E DUHURA
+function enhanceMessageForHighlighting() {
+    if (typeof window.addMessage !== 'function') {
+        console.log('❌ addMessage nuk ekziston');
+        return;
+    }
+    
+    const originalAddMessage = window.addMessage;
+    
+    window.addMessage = function(text, sender) {
+        // Para se të shtohet, shto klasat për highlight
+        let processedText = text;
+        
+        // Shto klasën language-* për code blocks
+        processedText = processedText.replace(/```(\w+)?\s*([\s\S]*?)```/g, (match, lang, code) => {
+            const language = lang || 'javascript';
+            return `<pre><code class="language-${language} hljs">${code.trim()}</code></pre>`;
+        });
+        
+        // Shto klasën për inline code
+        processedText = processedText.replace(/`([^`]+)`/g, '<code class="hljs inline">$1</code>');
+        
+        // Përdor versionin origjinal
+        const result = originalAddMessage.call(this, processedText, sender);
+        
+        // Highlight pasi të jetë shtuar
+        if (typeof hljs !== 'undefined') {
+            setTimeout(() => {
+                const newCode = result?.querySelectorAll('pre code, code.hljs');
+                newCode?.forEach(block => {
+                    try {
+                        hljs.highlightElement(block);
+                    } catch (e) {
+                        console.log('⚠️ Gabim në highlight:', e);
+                    }
+                });
+            }, 100);
+        }
+        
+        return result;
+    };
+    
+    console.log('✅ addMessage u përmirësua për highlighting!');
+}
+
+// ✅ INICIALIZO
 setTimeout(() => {
-    console.log('🚀 Duke inicializuar fix...');
+    console.log('🚀 Duke nisur sistemin e highlighting...');
     
-    // 1. Gjej dhe fix addMessage
-    const fixed = findAndFixAddMessage();
+    // 1. Kontrollo nëse highlight.js ekziston
+    if (typeof hljs === 'undefined') {
+        console.log('📥 highlight.js nuk ekziston, duke ngarkuar...');
+        loadHighlightJS();
+    } else {
+        console.log('✅ highlight.js ekziston!');
+        highlightAllCodeBlocks();
+    }
     
-    if (fixed) {
-        // 2. Shto stilet
-        addBasicCodeStyles();
+    // 2. Setup observer
+    setupCodeObserver();
+    
+    // 3. Përmirëso addMessage
+    enhanceMessageForHighlighting();
+    
+    // 4. Testo me një mesazh
+    setTimeout(() => {
+        console.log('🧪 Test final i highlighting...');
         
-        // 3. Testo me një mesazh
-        console.log('🧪 Duke testuar me kod...');
-        
-        const testMessage = `Këtu është kod:
+        const testCode = `Këtu është kod:
 
 \`\`\`javascript
-function test() {
-    console.log("Hello");
-    return 42;
+function pershendetje() {
+    const emri = "Bot";
+    console.log("Përshëndetje " + emri);
+    return true;
 }
 \`\`\`
 
-Dhe \`inline code\` **bold text**.`;
+Kodi inline: \`let x = 10\`
+
+Dhe këtu është Python:
+
+\`\`\`python
+def hello_world():
+    print("Hello World")
+    return 42
+\`\`\``;
         
-        const formatted = formatCodeForHTML(testMessage);
-        addMessage(formatted, 'bot');
-    }
+        addMessage(testCode, 'bot');
+        
+    }, 3000);
 }, 2000);
+
+console.log('✅ Manual highlighting system u aktivizua!');
