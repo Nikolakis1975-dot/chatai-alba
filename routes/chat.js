@@ -575,4 +575,181 @@ router.post('/clear-test-data', async (req, res) => {
     }
 });
 
+// ============================================== ✅ ROUTE DEBUG PËR NJOHURITË =====================================
+
+// ✅ ROUTE 1: Shfaq të gjitha njohuritë e një user-i
+router.get('/debug-knowledge/:userId', (req, res) => {
+    const { userId } = req.params;
+    
+    console.log('🔍 [DEBUG] Duke kontrolluar të gjitha njohuritë për user:', userId);
+    
+    db.all(
+        'SELECT id, question, answer, created_at FROM knowledge_base WHERE user_id = ? ORDER BY created_at DESC',
+        [userId],
+        (err, rows) => {
+            if (err) {
+                console.error('❌ Database error:', err);
+                return res.status(500).json({ success: false, error: err.message });
+            }
+            
+            console.log(`📚 Gjithsej ${rows.length} njohuri për user ${userId}`);
+            
+            // Shfaq 10 të fundit me detaje
+            const recent = rows.slice(0, 10);
+            recent.forEach((item, index) => {
+                console.log(`${index + 1}. ID: ${item.id}`);
+                console.log(`   Q: "${item.question}"`);
+                console.log(`   A: "${item.answer.substring(0, 50)}..."`);
+                console.log(`   At: ${item.created_at}`);
+                console.log('   ---');
+            });
+            
+            res.json({
+                success: true,
+                count: rows.length,
+                knowledge: rows,
+                recent: recent
+            });
+        }
+    );
+});
+
+// ✅ ROUTE 2: Test i drejtpërdrejtë i kërkimit
+router.get('/debug-search/:userId/:question', (req, res) => {
+    const { userId, question } = req.params;
+    const decodedQuestion = decodeURIComponent(question).toLowerCase().trim();
+    
+    console.log('🔍 [DEBUG-SEARCH] Test i drejtpërdrejtë:');
+    console.log('- User ID:', userId);
+    console.log('- Question (raw):', question);
+    console.log('- Question (decoded):', decodedQuestion);
+    console.log('- Question (length):', decodedQuestion.length);
+    
+    // 1. Së pari, kontrollo nëse ka ndonjë njohuri për këtë user
+    db.all(
+        'SELECT question, answer FROM knowledge_base WHERE user_id = ?',
+        [userId],
+        (err, allRows) => {
+            if (err) {
+                console.error('❌ Error getting all knowledge:', err);
+                return res.status(500).json({ error: err.message });
+            }
+            
+            console.log(`- User ${userId} ka ${allRows.length} njohuri totale`);
+            
+            // 2. Provo kërkimin me LIKE (si në kodin aktual)
+            db.get(
+                'SELECT answer FROM knowledge_base WHERE user_id = ? AND LOWER(question) LIKE "%" || ? || "%" LIMIT 1',
+                [userId, decodedQuestion],
+                (err, row) => {
+                    console.log('\n🧪 TEST 1: Kërkim me LIKE "%?%":');
+                    console.log('- SQL Query: SELECT answer FROM knowledge_base WHERE user_id = ? AND LOWER(question) LIKE "%" || ? || "%"');
+                    console.log('- Params:', [userId, decodedQuestion]);
+                    console.log('- Error:', err);
+                    console.log('- Result:', row);
+                    
+                    if (row && row.answer) {
+                        console.log('✅✅✅ TEST 1 SUCCESS! Gjetëm përgjigje!');
+                        return res.json({ 
+                            success: true, 
+                            answer: row.answer,
+                            method: 'like_search',
+                            test: 'PASSED'
+                        });
+                    }
+                    
+                    // 3. Provo kërkim të saktë
+                    db.get(
+                        'SELECT answer FROM knowledge_base WHERE user_id = ? AND LOWER(question) = ?',
+                        [userId, decodedQuestion],
+                        (err, exactRow) => {
+                            console.log('\n🧪 TEST 2: Kërkim i saktë:');
+                            console.log('- SQL Query: SELECT answer FROM knowledge_base WHERE user_id = ? AND LOWER(question) = ?');
+                            console.log('- Params:', [userId, decodedQuestion]);
+                            console.log('- Error:', err);
+                            console.log('- Result:', exactRow);
+                            
+                            if (exactRow && exactRow.answer) {
+                                console.log('✅✅✅ TEST 2 SUCCESS! Gjetëm me match të saktë!');
+                                return res.json({ 
+                                    success: true, 
+                                    answer: exactRow.answer,
+                                    method: 'exact_match',
+                                    test: 'PASSED'
+                                });
+                            }
+                            
+                            // 4. Shfaq të gjitha pyetjet për krahasim manual
+                            console.log('\n📝 Krahasimi manual i pyetjeve:');
+                            allRows.forEach((item, index) => {
+                                const dbQuestion = item.question.toLowerCase().trim();
+                                console.log(`${index + 1}. DB: "${dbQuestion}"`);
+                                console.log(`   User: "${decodedQuestion}"`);
+                                console.log(`   Match: ${dbQuestion === decodedQuestion ? '✅ EKZAKT' : dbQuestion.includes(decodedQuestion) ? '✅ DB përmban USER' : decodedQuestion.includes(dbQuestion) ? '✅ USER përmban DB' : '❌ NO MATCH'}`);
+                                console.log(`   ---`);
+                            });
+                            
+                            console.log('❌❌❌ TË GJITHA TESTET DËSHTUAN!');
+                            res.json({
+                                success: false,
+                                answer: null,
+                                method: 'all_failed',
+                                debug: {
+                                    userQuestion: decodedQuestion,
+                                    totalKnowledge: allRows.length,
+                                    allQuestions: allRows.map(r => r.question)
+                                }
+                            });
+                        }
+                    );
+                }
+            );
+        }
+    );
+});
+
+// ✅ ROUTE 3: Kontrollo strukturën e tabelës
+router.get('/debug-database', (req, res) => {
+    console.log('🔍 [DEBUG-DATABASE] Duke kontrolluar strukturën e database...');
+    
+    // 1. Kontrollo tabelat
+    db.all("SELECT name FROM sqlite_master WHERE type='table'", (err, tables) => {
+        if (err) {
+            console.error('❌ Error getting tables:', err);
+            return res.json({ error: err.message });
+        }
+        
+        console.log('📊 Tabelat në database:', tables);
+        
+        // 2. Kontrollo strukturën e knowledge_base
+        db.all("PRAGMA table_info(knowledge_base)", (err, columns) => {
+            if (err) {
+                console.error('❌ Error getting table info:', err);
+                return res.json({ error: err.message });
+            }
+            
+            console.log('📋 Kolonat e knowledge_base:');
+            columns.forEach(col => {
+                console.log(`   ${col.name} (${col.type})`);
+            });
+            
+            // 3. Numri i rreshtave
+            db.get("SELECT COUNT(*) as count FROM knowledge_base", (err, countRow) => {
+                if (err) {
+                    console.error('❌ Error getting count:', err);
+                    return res.json({ error: err.message });
+                }
+                
+                console.log(`📈 Total rreshta në knowledge_base: ${countRow.count}`);
+                
+                res.json({
+                    tables: tables,
+                    columns: columns,
+                    rowCount: countRow.count
+                });
+            });
+        });
+    });
+});
+
 module.exports = router;
