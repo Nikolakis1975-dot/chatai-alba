@@ -549,30 +549,61 @@ router.post('/openai', async (req, res) => {
     }
 });
 
-// ====================================== ✅ Route për të pastruar testet e vjetra =====================================
+// ======================================== ✅ DEBUG ROUTE - KONTROLLO REAL-TIME ======================================
 
-router.post('/clear-test-data', async (req, res) => {
-    try {
-        const { userId } = req.body;
-        console.log('🧹 Duke pastruar të dhënat e testit për user:', userId);
-        
-        db.run(
-            'DELETE FROM knowledge_base WHERE user_id = ? AND category = ?',
-            [userId, 'test_radikal'],
-            (err) => {
-                if (err) {
-                    console.error('❌ Gabim në pastrim:', err);
-                    res.json({ success: false, error: err.message });
-                } else {
-                    console.log('✅ Të dhënat e testit u pastruan!');
-                    res.json({ success: true });
-                }
+router.get('/debug-knowledge/:userId', (req, res) => {
+    const { userId } = req.params;
+    
+    console.log('🔍 [DEBUG-REAL] Duke kontrolluar knowledge_base për user:', userId);
+    
+    // 1. Kontrollo nëse ka të dhëna
+    db.all(
+        'SELECT * FROM knowledge_base WHERE user_id = ? ORDER BY created_at DESC',
+        [userId],
+        (err, rows) => {
+            if (err) {
+                console.error('❌ Database error:', err);
+                return res.json({ error: err.message });
             }
-        );
-    } catch (error) {
-        console.error('❌ Gabim në /clear-test-data:', error);
-        res.json({ success: false, error: error.message });
-    }
+            
+            console.log(`📊 Gjithsej ${rows.length} rreshta në knowledge_base për user ${userId}`);
+            
+            // Shfaq të gjitha pyetjet
+            rows.forEach((row, index) => {
+                console.log(`${index + 1}. ID: ${row.id}`);
+                console.log(`   User ID: ${row.user_id}`);
+                console.log(`   Question: "${row.question}"`);
+                console.log(`   Answer: "${row.answer.substring(0, 50)}..."`);
+                console.log(`   Created: ${row.created_at}`);
+                console.log('   ---');
+            });
+            
+            // 2. Testo një kërkim specifik
+            const testQuestion = "si kaluat sot miku im?";
+            const testQuestionLower = testQuestion.toLowerCase().trim();
+            
+            console.log('\n🧪 Test search for:', testQuestion);
+            
+            db.get(
+                'SELECT answer FROM knowledge_base WHERE user_id = ? AND LOWER(question) = ?',
+                [userId, testQuestionLower],
+                (err, row) => {
+                    console.log('🔍 Test result:', { err: err?.message, row });
+                    
+                    res.json({
+                        status: 'debug_complete',
+                        total_records: rows.length,
+                        records: rows,
+                        test_search: {
+                            question: testQuestion,
+                            result: row ? 'FOUND' : 'NOT FOUND',
+                            answer: row?.answer
+                        }
+                    });
+                }
+            );
+        }
+    );
 });
 
 module.exports = router;
