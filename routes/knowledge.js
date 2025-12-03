@@ -1,290 +1,150 @@
-// ===========================================knowledge =================================================
+// routes/knowledge.js - SISTEMI I THJESHTË DHE FUNKSIONAL
 const express = require('express');
 const router = express.Router();
-const db = require('../database'); // Përdor database.js ekzistues
+const db = require('../database');
 
-// ==================== API ROUTES PËR KNOWLEDGE DISTILLER ====================
+console.log('🧠 RRUFE-TESLA: Knowledge system loaded');
 
-// ✅ Kontrollo statusin e databazës
-router.get('/database/status', (req, res) => {
-    console.log('🔍 Duke kontrolluar statusin e databazës...');
+// ✅ 1. SHTO NJOHURI TË RE (për /meso)
+router.post('/learn', (req, res) => {
+    const { userId, question, answer } = req.body;
     
-    try {
-        res.json({ 
-            success: true, 
-            database: 'connected',
-            type: 'SQLite', 
-            path: process.env.NODE_ENV === 'production' ? '/tmp/chat.db' : './data/chat.db',
-            timestamp: new Date().toISOString()
-        });
-    } catch (error) {
-        console.error('❌ Gabim në kontrollin e databazës:', error);
-        res.status(500).json({ 
+    console.log('💾 [KNOWLEDGE-LEARN] Saving:', { userId, question, answer });
+    
+    if (!userId || !question || !answer) {
+        return res.status(400).json({ 
             success: false, 
-            error: 'Database connection failed' 
+            error: 'Missing data' 
         });
     }
-});
-
-// ✅ Ngarko njohuritë nga databaza
-router.get('/load', async (req, res) => {
-    console.log('📥 Duke ngarkuar njohuritë nga databaza...');
     
-    try {
-        // Merr user ID nga session ose localStorage (përmes frontend)
-        const userId = req.headers['user-id'] || req.query.userId || 'anonymous';
-        
-        console.log(`🔍 Duke kërkuar njohuri për user: ${userId}`);
-        
-        // Merr të dhënat nga databaza
-        db.get(
-            'SELECT knowledge_data FROM user_knowledge WHERE user_id = ? ORDER BY updated_at DESC LIMIT 1',
-            [userId],
-            (err, row) => {
-                if (err) {
-                    console.error('❌ Gabim në query:', err);
-                    return res.status(500).json({ 
-                        success: false, 
-                        error: err.message 
-                    });
-                }
-                
-                if (row && row.knowledge_data) {
-                    try {
-                        const knowledgeData = JSON.parse(row.knowledge_data);
-                        const categories = Object.keys(knowledgeData).length;
-                        const totalEntries = Object.values(knowledgeData).reduce(
-                            (sum, category) => sum + Object.keys(category).length, 0
-                        );
-                        
-                        console.log(`✅ U gjetën ${categories} kategori me ${totalEntries} njohuri`);
-                        
-                        res.json({
-                            success: true,
-                            knowledge: knowledgeData,
-                            message: 'Knowledge loaded from database'
-                        });
-                    } catch (parseError) {
-                        console.error('❌ Gabim në parsing JSON:', parseError);
-                        res.json({
-                            success: true,
-                            knowledge: {},
-                            message: 'Error parsing knowledge data'
-                        });
-                    }
-                } else {
-                    console.log('ℹ️ Nuk u gjetën njohuri për këtë user');
-                    res.json({
-                        success: true,
-                        knowledge: {},
-                        message: 'No knowledge found for user'
-                    });
-                }
+    // Ruaj në database
+    db.run(
+        `INSERT INTO knowledge_base (user_id, question, answer, created_at) 
+         VALUES (?, ?, ?, datetime('now'))`,
+        [userId, question, answer],
+        function(err) {
+            if (err) {
+                console.error('❌ Save error:', err);
+                return res.status(500).json({ 
+                    success: false, 
+                    error: 'Database error' 
+                });
             }
-        );
-        
-    } catch (error) {
-        console.error('❌ Gabim në ngarkimin e njohurive:', error);
-        res.status(500).json({ 
-            success: false, 
-            error: error.message,
-            knowledge: {}
-        });
-    }
-});
-
-// ✅ Ruaj njohuritë në databazë
-router.post('/save', async (req, res) => {
-    console.log('💾 Duke ruajtur njohuritë në databazë...');
-    
-    try {
-        const { userId, knowledge, timestamp, version } = req.body;
-        
-        if (!userId) {
-            return res.status(400).json({ 
-                success: false, 
-                error: 'User ID required' 
+            
+            console.log('✅ Saved knowledge with ID:', this.lastID);
+            res.json({ 
+                success: true, 
+                message: '✅ Mësova diçka të re!',
+                id: this.lastID 
             });
         }
-        
-        const categories = Object.keys(knowledge).length;
-        const totalEntries = Object.values(knowledge).reduce(
-            (sum, category) => sum + Object.keys(category).length, 0
-        );
-        
-        console.log(`📊 Duke ruajtur ${categories} kategori me ${totalEntries} njohuri për user: ${userId}`);
-        
-        // Ruaj ose update të dhënat
-        db.run(
-            `INSERT OR REPLACE INTO user_knowledge 
-             (user_id, knowledge_data, version, updated_at) 
-             VALUES (?, ?, ?, ?)`,
-            [userId, JSON.stringify(knowledge), version || '2.0-sql', timestamp || new Date().toISOString()],
-            function(err) {
-                if (err) {
-                    console.error('❌ Gabim në ruajtjen e njohurive:', err);
-                    return res.status(500).json({ 
-                        success: false, 
-                        error: err.message 
-                    });
-                }
-                
-                console.log('✅ Njohuritë u ruajtën me sukses në databazë, ID:', this.lastID);
-                
-                res.json({ 
+    );
+});
+
+// ✅ 2. KËRKO NJOHURI (për checkKnowledge)
+router.get('/search/:userId/:question', (req, res) => {
+    const { userId, question } = req.params;
+    const searchText = decodeURIComponent(question).toLowerCase().trim();
+    
+    console.log('🔍 [KNOWLEDGE-SEARCH] Looking for:', { userId, question: searchText });
+    
+    // Kërko me 3 metoda:
+    // 1. Match i saktë
+    // 2. Pyetja përmban pyetjen e ruajtur
+    // 3. Pyetja e ruajtur përmban pyetjen
+    
+    const query = `
+        SELECT answer 
+        FROM knowledge_base 
+        WHERE user_id = ? 
+        AND (
+            LOWER(question) = ? 
+            OR ? LIKE '%' || LOWER(question) || '%'
+            OR LOWER(question) LIKE '%' || ? || '%'
+        )
+        ORDER BY 
+            CASE 
+                WHEN LOWER(question) = ? THEN 1
+                WHEN ? LIKE '%' || LOWER(question) || '%' THEN 2
+                WHEN LOWER(question) LIKE '%' || ? || '%' THEN 3
+                ELSE 4
+            END
+        LIMIT 1
+    `;
+    
+    db.get(query, 
+        [userId, searchText, searchText, searchText, searchText, searchText], 
+        (err, row) => {
+            if (err) {
+                console.error('❌ Search error:', err);
+                return res.json({ success: true, answer: null });
+            }
+            
+            if (row && row.answer) {
+                console.log('✅✅✅ Found answer!');
+                return res.json({ 
                     success: true, 
-                    message: 'Knowledge saved to database',
-                    id: this.lastID 
+                    found: true,
+                    answer: row.answer 
                 });
             }
-        );
-        
-    } catch (error) {
-        console.error('❌ Gabim në ruajtjen e njohurive:', error);
-        res.status(500).json({ 
-            success: false, 
-            error: error.message 
-        });
-    }
-});
-
-// ✅ Kërko njohuri
-router.get('/search', async (req, res) => {
-    try {
-        const { query, category, userId } = req.query;
-        
-        if (!query) {
-            return res.status(400).json({ 
-                success: false, 
-                error: 'Search query required' 
+            
+            console.log('❌ No match found');
+            res.json({ 
+                success: true, 
+                found: false,
+                answer: null 
             });
         }
-        
-        console.log(`🔍 Duke kërkuar: "${query}" për user: ${userId}`);
-        
-        // Merr të dhënat e userit
-        db.get(
-            'SELECT knowledge_data FROM user_knowledge WHERE user_id = ? ORDER BY updated_at DESC LIMIT 1',
-            [userId || 'anonymous'],
-            (err, row) => {
-                if (err) {
-                    console.error('❌ Gabim në query:', err);
-                    return res.status(500).json({ 
-                        success: false, 
-                        error: err.message 
-                    });
-                }
-                
-                if (!row) {
-                    return res.json({
-                        success: true,
-                        results: [],
-                        message: 'No knowledge found'
-                    });
-                }
-                
-                try {
-                    const knowledgeData = JSON.parse(row.knowledge_data);
-                    const results = [];
-                    const searchTerms = query.toLowerCase().split(' ');
-                    
-                    // Implemento logjikën e kërkimit
-                    Object.entries(knowledgeData).forEach(([cat, entries]) => {
-                        if (category && category !== cat) return;
-                        
-                        Object.entries(entries).forEach(([key, data]) => {
-                            const keyLower = key.toLowerCase();
-                            const valueLower = JSON.stringify(data.value).toLowerCase();
-                            
-                            const matchScore = searchTerms.reduce((score, term) => {
-                                if (keyLower.includes(term)) score += 3;
-                                if (valueLower.includes(term)) score += 1;
-                                return score;
-                            }, 0);
-                            
-                            if (matchScore > 0) {
-                                results.push({
-                                    key: key,
-                                    category: cat,
-                                    data: data.value,
-                                    score: matchScore,
-                                    usageCount: data.usageCount || 0
-                                });
-                            }
-                        });
-                    });
-                    
-                    // Rendit sipas relevancës
-                    results.sort((a, b) => b.score - a.score);
-                    
-                    res.json({
-                        success: true,
-                        results: results,
-                        count: results.length
-                    });
-                    
-                } catch (parseError) {
-                    console.error('❌ Gabim në parsing JSON:', parseError);
-                    res.status(500).json({ 
-                        success: false, 
-                        error: 'Error parsing knowledge data' 
-                    });
-                }
-            }
-        );
-        
-    } catch (error) {
-        console.error('❌ Gabim në kërkim:', error);
-        res.status(500).json({ 
-            success: false, 
-            error: error.message 
-        });
-    }
+    );
 });
 
-// ✅ Fshi njohuritë e userit
-router.delete('/clear', async (req, res) => {
-    try {
-        const { userId } = req.query;
-        
-        if (!userId) {
-            return res.status(400).json({ 
-                success: false, 
-                error: 'User ID required' 
+// ✅ 3. DEBUG: SHFAQ TË GJITHA NJOHURITË
+router.get('/debug/:userId', (req, res) => {
+    const { userId } = req.params;
+    
+    console.log('🔍 [KNOWLEDGE-DEBUG] All knowledge for user:', userId);
+    
+    db.all(
+        'SELECT id, question, answer, created_at FROM knowledge_base WHERE user_id = ? ORDER BY created_at DESC',
+        [userId],
+        (err, rows) => {
+            if (err) {
+                console.error('❌ Debug error:', err);
+                return res.json({ success: false, error: err.message });
+            }
+            
+            console.log(`📚 Total ${rows.length} knowledge entries`);
+            
+            rows.forEach((row, index) => {
+                console.log(`${index + 1}. ID: ${row.id}`);
+                console.log(`   Q: "${row.question}"`);
+                console.log(`   A: "${row.answer.substring(0, 50)}..."`);
+            });
+            
+            res.json({ 
+                success: true, 
+                count: rows.length,
+                knowledge: rows 
             });
         }
-        
-        console.log(`🗑️ Duke fshirë njohuritë për user: ${userId}`);
-        
-        db.run(
-            'DELETE FROM user_knowledge WHERE user_id = ?',
-            [userId],
-            function(err) {
-                if (err) {
-                    console.error('❌ Gabim në fshirjen e njohurive:', err);
-                    return res.status(500).json({ 
-                        success: false, 
-                        error: err.message 
-                    });
-                }
-                
-                console.log('✅ Njohuritë u fshinë për user:', userId);
-                
-                res.json({
-                    success: true,
-                    message: 'Knowledge cleared successfully',
-                    changes: this.changes
-                });
-            }
-        );
-        
-    } catch (error) {
-        console.error('❌ Gabim në fshirjen e njohurive:', error);
-        res.status(500).json({ 
-            success: false, 
-            error: error.message 
-        });
-    }
+    );
+});
+
+// ✅ 4. TEST ROUTE
+router.get('/test', (req, res) => {
+    console.log('🧪 Testing knowledge system...');
+    
+    res.json({ 
+        success: true, 
+        message: 'Knowledge system is working!',
+        endpoints: {
+            'POST /api/knowledge/learn': 'Save new knowledge',
+            'GET /api/knowledge/search/:userId/:question': 'Search knowledge',
+            'GET /api/knowledge/debug/:userId': 'Debug all knowledge'
+        }
+    });
 });
 
 module.exports = router;
