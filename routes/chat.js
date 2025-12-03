@@ -532,4 +532,30 @@ router.post('/openai', async (req, res) => {
     }
 });
 
+// ====================================== ✅ Route për të pastruar testet e vjetra =====================================
+
+router.post('/clear-test-data', async (req, res) => {
+    try {
+        const { userId } = req.body;
+        console.log('🧹 Duke pastruar të dhënat e testit për user:', userId);
+        
+        db.run(
+            'DELETE FROM knowledge_base WHERE user_id = ? AND category = ?',
+            [userId, 'test_radikal'],
+            (err) => {
+                if (err) {
+                    console.error('❌ Gabim në pastrim:', err);
+                    res.json({ success: false, error: err.message });
+                } else {
+                    console.log('✅ Të dhënat e testit u pastruan!');
+                    res.json({ success: true });
+                }
+            }
+        );
+    } catch (error) {
+        console.error('❌ Gabim në /clear-test-data:', error);
+        res.json({ success: false, error: error.message });
+    }
+});
+
 module.exports = router;
