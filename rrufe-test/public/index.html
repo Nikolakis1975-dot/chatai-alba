@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧪 RRUFE-TEST - Knowledge System Test</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 RRUFE-TEST - Knowledge System</h1>
+        
+        <div class="test-section">
+            <h2>🔧 Test Automatik</h2>
+            <button onclick="runAutoTest()">🚀 Ekzekuto Testin e Plotë</button>
+            <div id="auto-test-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>💾 Testo Ruajtjen (/meso)</h2>
+            <input type="text" id="learn-question" placeholder="Pyetja">
+            <input type="text" id="learn-answer" placeholder="Përgjigja">
+            <button onclick="testLearn()">💾 Ruaj Njohuri</button>
+            <div id="learn-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🔍 Testo Kërkimin</h2>
+            <input type="text" id="search-question" placeholder="Shkruaj pyetjen">
+            <button onclick="testSearch()">🔍 Kërko Njohuri</button>
+            <div id="search-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📊 Debug - Të gjitha të dhënat</h2>
+            <button onclick="showAllData()">📋 Shfaq të gjitha njohuritë</button>
+            <pre id="debug-output"></pre>
+        </div>
+    </div>
+    
+    <script src="chat.js"></script>
+</body>
+</html>
