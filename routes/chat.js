@@ -265,23 +265,61 @@ router.post('/save', (req, res) => {
     );
 });
 
-// ✅ KODI EKZISTUES - RUAJ NJOHURI TË REJA
+// ====================================== ✅ KODI I PËRMIRËSUAR - ME LOGGING DHE DEBUG ===================================
+
 router.post('/knowledge', (req, res) => {
+    console.log('🧠 [KNOWLEDGE-SAVE] 📨 Request received at:', new Date().toISOString());
+    console.log('📦 Request body:', JSON.stringify(req.body));
+    
     const { userId, question, answer } = req.body;
 
     if (!userId || !question || !answer) {
+        console.log('❌ Missing data:', { userId: !!userId, question: !!question, answer: !!answer });
         return res.status(400).json({ error: 'Të dhëna të pamjaftueshme' });
     }
+
+    console.log('💾 Attempting to save:', { 
+        userId, 
+        question: question.substring(0, 50),
+        answer: answer.substring(0, 50) 
+    });
 
     db.run(
         'INSERT INTO knowledge_base (user_id, question, answer) VALUES (?, ?, ?)',
         [userId, question, answer],
         function(err) {
             if (err) {
-                return res.status(500).json({ error: 'Gabim gjatë ruajtjes së njohurive' });
+                console.error('❌ DATABASE ERROR:', err.message);
+                console.error('❌ Full error:', err);
+                return res.status(500).json({ 
+                    error: 'Gabim gjatë ruajtjes së njohurive',
+                    details: err.message 
+                });
             }
 
-            res.json({ message: 'Njohuria u ruajt me sukses', id: this.lastID });
+            console.log('✅✅✅ SUCCESS! Saved with ID:', this.lastID);
+            console.log('📝 Question saved:', question);
+            
+            // VERIFIKO MENJËHERË NËSE ËSHTË RUAJTUR
+            db.get('SELECT * FROM knowledge_base WHERE id = ?', [this.lastID], 
+                (verifyErr, verifyRow) => {
+                    if (verifyErr) {
+                        console.error('❌ VERIFICATION ERROR:', verifyErr);
+                    } else if (verifyRow) {
+                        console.log('🔍 VERIFICATION SUCCESS: Found in database');
+                        console.log('   Stored question:', verifyRow.question);
+                        console.log('   Stored answer:', verifyRow.answer);
+                    } else {
+                        console.log('⚠️ VERIFICATION WARNING: Saved but not found in database!');
+                    }
+                }
+            );
+
+            res.json({ 
+                success: true,
+                message: '✅ Mësova diçka të re!',
+                id: this.lastID 
+            });
         }
     );
 });
