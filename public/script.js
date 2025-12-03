@@ -958,39 +958,43 @@ async function processCommand(text) {
     break;
 
         case "/meso":
-            const split = text.replace("/meso", "").split("|");
-            if (split.length === 2) {
-                const q = split[0].trim().toLowerCase();
-                const a = split[1].trim();
-                
-                try {
-                    const response = await fetch('/api/chat/knowledge', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        credentials: 'include',
-                        body: JSON.stringify({
-                            userId: currentUser.id,
-                            question: q,
-                            answer: a
-                        })
-                    });
+    const split = text.replace("/meso", "").split("|");
+    if (split.length === 2) {
+        const q = split[0].trim().toLowerCase();
+        const a = split[1].trim();
+        
+        try {
+            const response = await fetch('/api/chat/knowledge', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    userId: currentUser.id,
+                    question: q,
+                    answer: a
+                })
+            });
 
-                    const data = await response.json();
-                    if (response.ok) {
-                        knowledgeBase[q] = a;
-                        addMessage("✅ Mësova diçka të re!", "bot");
-                    } else {
-                        addMessage("⚠️ Gabim gjatë ruajtjes së njohurive: " + data.error, "bot");
-                    }
-                } catch (error) {
-                    addMessage("⚠️ Gabim gjatë ruajtjes së njohurive.", "bot");
-                }
+            const data = await response.json();
+            if (response.ok) {
+                // ✅ PËRDITËSO CACHE LOCAL
+                if (!window.knowledgeBase) window.knowledgeBase = {};
+                window.knowledgeBase[q] = a;
+                
+                console.log('💾 [KNOWLEDGE] U ruajt në cache lokal:', q, '→', a);
+                addMessage("✅ Mësova diçka të re!", "bot");
             } else {
-                addMessage("⚠️ Përdorimi: /meso pyetje | përgjigje", "bot");
+                addMessage("⚠️ Gabim gjatë ruajtjes së njohurive: " + data.error, "bot");
             }
-            break;
+        } catch (error) {
+            addMessage("⚠️ Gabim gjatë ruajtjes së njohurive.", "bot");
+        }
+    } else {
+        addMessage("⚠️ Përdorimi: /meso pyetje | përgjigje", "bot");
+    }
+    break;
 
         case "/wiki":
             const query = parts.slice(1).join(" ");
@@ -2087,3 +2091,145 @@ async function showSystemStats() {
     }
 }
 
+// =========================================== ✅ CHECK KNOWLEDGE SYSTEM - RRUFE TESLA ==================================
+
+// 1. Funksioni kryesor për kontrollin e njohurive
+async function checkKnowledge(message) {
+    try {
+        console.log('🧠 [KNOWLEDGE-CHECK] Duke kërkuar për:', message);
+        
+        // Kontrollo nëse ka përdorues
+        if (!currentUser || !currentUser.id) {
+            console.log('⚠️ [KNOWLEDGE] Nuk ka user aktiv');
+            return false;
+        }
+        
+        const msgLower = message.toLowerCase().trim();
+        const userId = currentUser.id;
+        
+        // Së pari, kontrollo në cache lokal
+        if (window.knowledgeBase && window.knowledgeBase[msgLower]) {
+            console.log('✅ [KNOWLEDGE] Gjetëm në cache lokal:', window.knowledgeBase[msgLower]);
+            addMessage(`💾 **Përgjigje e ruajtur:** ${window.knowledgeBase[msgLower]}`, 'bot');
+            return true;
+        }
+        
+        console.log('🔍 [KNOWLEDGE] Kërko në API për user', userId, ':', msgLower);
+        
+        // Kërko në database përmes API
+        const response = await fetch(`/api/chat/knowledge/${userId}/${encodeURIComponent(msgLower)}`, {
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            console.log('❌ [KNOWLEDGE] API gabim:', response.status);
+            return false;
+        }
+        
+        const data = await response.json();
+        console.log('📊 [KNOWLEDGE] Përgjigja nga API:', data);
+        
+        // Nëse gjen përgjigje
+        if (data.answer && data.answer !== 'null') {
+            console.log('✅✅✅ [KNOWLEDGE] GJETËM PËRGJIGJE NË DATABASE!');
+            
+            // Ruaj në cache lokal
+            if (!window.knowledgeBase) window.knowledgeBase = {};
+            window.knowledgeBase[msgLower] = data.answer;
+            
+            addMessage(`💾 **Përgjigje e ruajtur:** ${data.answer}`, 'bot');
+            return true;
+        }
+        
+        console.log('❌ [KNOWLEDGE] Nuk u gjet përgjigje');
+        return false;
+        
+    } catch (error) {
+        console.log('❌ [KNOWLEDGE] Gabim:', error.message);
+        return false;
+    }
+}
+
+// 2. Inicializo knowledgeBase në fillim të sistemit
+if (typeof knowledgeBase === 'undefined') {
+    window.knowledgeBase = {};
+    console.log('📚 [KNOWLEDGE] knowledgeBase u inicializua');
+}
+
+// 3. MBIVENDOS FUNKSIONIN sendMessage EKZISTUES
+function integrateKnowledgeToSendMessage() {
+    console.log('🔗 [KNOWLEDGE] Duke integruar me sendMessage...');
+    
+    if (typeof window.sendMessage !== 'function') {
+        console.log('⚠️ [KNOWLEDGE] sendMessage nuk ekziston');
+        return;
+    }
+    
+    // Ruaj versionin origjinal
+    const originalSendMessage = window.sendMessage;
+    
+    // Krijo versionin e ri
+    window.sendMessage = async function() {
+        const userInput = document.getElementById('user-input');
+        const message = userInput?.value?.trim();
+        
+        if (!message) {
+            console.log('⚠️ [KNOWLEDGE] Mesazh bosh');
+            return originalSendMessage.call(this);
+        }
+        
+        console.log('💬 [KNOWLEDGE] Përdoruesi shkroi:', message);
+        
+        // Nëse është komandë /meso, ekzekuto direkt
+        if (message.startsWith('/meso')) {
+            return originalSendMessage.call(this);
+        }
+        
+        // Kontrollo nëse ka njohuri për këtë mesazh
+        const hasKnowledge = await checkKnowledge(message);
+        
+        if (hasKnowledge) {
+            console.log('✅ [KNOWLEDGE] Përdorëm njohuri, nuk dërgojmë te AI');
+            // Pastro input
+            if (userInput) userInput.value = '';
+            return;
+        }
+        
+        console.log('🤖 [KNOWLEDGE] Nuk gjetëm njohuri, duke dërguar te AI...');
+        
+        // Nëse nuk gjetëm njohuri, ekzekuto versionin origjinal
+        return originalSendMessage.call(this);
+    };
+    
+    console.log('✅ [KNOWLEDGE] sendMessage u përditësua me checkKnowledge!');
+}
+
+// 4. INICIALIZIMI - ekzekuto kur faqja të jetë gati
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeKnowledgeSystem);
+} else {
+    initializeKnowledgeSystem();
+}
+
+function initializeKnowledgeSystem() {
+    console.log('🚀 [KNOWLEDGE] Duke inicializuar sistemin...');
+    
+    // Jep 2 sekonda për të ngarkuar sistemin ekzistues
+    setTimeout(() => {
+        integrateKnowledgeToSendMessage();
+        
+        // Testo sistemin
+        console.log('🧪 [KNOWLEDGE] Statusi:');
+        console.log('- checkKnowledge:', typeof checkKnowledge);
+        console.log('- knowledgeBase:', typeof window.knowledgeBase);
+        console.log('- currentUser.id:', currentUser?.id);
+        console.log('- sendMessage:', typeof window.sendMessage);
+        
+        // Shto një mesazh test në chat
+        if (typeof addMessage === 'function') {
+            addMessage('🧠 **Sistemi i njohurive RRUFE-TESLA u aktivizua!**', 'bot');
+        }
+    }, 2000);
+}
+
+console.log('🎯 [KNOWLEDGE] Sistemi i njohurive u ngarkua në script.js');
