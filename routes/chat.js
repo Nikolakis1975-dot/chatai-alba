@@ -295,30 +295,47 @@ router.get('/knowledge/:userId/:question', (req, res) => {
         .toLowerCase()
         .trim();
 
+    console.log('🔍 [KNOWLEDGE-SEARCH] Duke kërkuar:');
+    console.log('- User ID:', userId);
+    console.log('- Pyetja e kërkuar:', cleaned);
+    
+    // ✅ OPSIONI 1: Kërko me match të saktë (më e thjeshtë)
     db.get(
-        `
-        SELECT answer 
-        FROM knowledge_base 
-        WHERE user_id = ?
-        AND LOWER(question) LIKE '%' || ? || '%'
-        LIMIT 1
-        `,
+        `SELECT answer FROM knowledge_base WHERE user_id = ? AND LOWER(question) = ?`,
         [userId, cleaned],
         (err, row) => {
-
             if (err) {
-                console.error("❌ Gabim në kërkim:", err);
-                return res.status(500).json({ success: false, error: 'Gabim gjatë kërkimit të njohurive' });
+                console.error("❌ Gabim në database:", err);
+                return res.status(500).json({ success: false, error: 'Gabim në database' });
             }
 
-            if (!row) {
-                return res.json({ success: true, answer: null });
+            console.log('- Rezultati i kërkimit:', row ? 'Gjetëm!' : 'Nuk u gjet');
+            
+            if (row && row.answer) {
+                console.log('✅✅✅ Përgjigja e gjetur:', row.answer.substring(0, 50));
+                return res.json({ success: true, answer: row.answer });
             }
 
-            res.json({
-                success: true,
-                answer: row.answer
-            });
+            // Nëse nuk gjen me match të saktë, kërko me LIKE
+            console.log('🔄 Duke provuar me LIKE search...');
+            db.get(
+                `SELECT answer FROM knowledge_base WHERE user_id = ? AND ? LIKE '%' || LOWER(question) || '%'`,
+                [userId, cleaned],
+                (err, row2) => {
+                    if (err) {
+                        console.error("❌ Gabim në LIKE search:", err);
+                        return res.json({ success: true, answer: null });
+                    }
+                    
+                    if (row2 && row2.answer) {
+                        console.log('✅✅✅ Përgjigja e gjetur me LIKE:', row2.answer.substring(0, 50));
+                        return res.json({ success: true, answer: row2.answer });
+                    }
+                    
+                    console.log('❌ Nuk u gjet asgjë');
+                    res.json({ success: true, answer: null });
+                }
+            );
         }
     );
 });
