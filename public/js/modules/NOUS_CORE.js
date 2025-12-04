@@ -1,3 +1,17 @@
+// Në fillim të NOUS_CORE.js, shto:
+if (typeof require !== 'undefined') {
+    // Kodi për Node.js
+    const module = require('some-module');
+} else {
+    // Kodi për browser
+    console.log('🧠 NOUS_CORE: Running in browser mode');
+    // Krijo një version të thjeshtë për browser
+    window.NOUS_CORE = {
+        version: '1.0.0',
+        mode: 'browser'
+    };
+}
+
 /**
  * 🧠 NOUS_CORE.js - BËRTHAMA QENDRORE RRUFE-TESLA 10.5 - ME MEMORY VAULT
  * @description Sistemi i Integruar i 4 Shtyllave + Ethical Memory Vault
