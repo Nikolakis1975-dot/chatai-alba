@@ -2091,145 +2091,173 @@ async function showSystemStats() {
     }
 }
 
-// =========================================== ✅ CHECK KNOWLEDGE SYSTEM - RRUFE TESLA ==================================
+// =========================================== 🎯 SIMPLE KNOWLEDGE FIX - MINIMAL ==================================
 
-// 1. Funksioni kryesor për kontrollin e njohurive
-async function checkKnowledge(message) {
+console.log('🎯 [KNOWLEDGE-MINIMAL] Duke ngarkuar sistemin minimal...');
+
+// 1. Funksioni BAZË për kontrollin e njohurive
+async function checkKnowledgeBasic(message) {
     try {
-        console.log('🧠 [KNOWLEDGE-CHECK] Duke kërkuar për:', message);
+        console.log('🔍 [BASIC] Duke kërkuar për:', message);
         
-        // Kontrollo nëse ka përdorues
+        // Kontrollo nëse ka user
         if (!currentUser || !currentUser.id) {
-            console.log('⚠️ [KNOWLEDGE] Nuk ka user aktiv');
+            console.log('⚠️ [BASIC] Nuk ka currentUser');
             return false;
         }
         
-        const msgLower = message.toLowerCase().trim();
         const userId = currentUser.id;
+        const question = message.toLowerCase().trim();
         
-        // Së pari, kontrollo në cache lokal
-        if (window.knowledgeBase && window.knowledgeBase[msgLower]) {
-            console.log('✅ [KNOWLEDGE] Gjetëm në cache lokal:', window.knowledgeBase[msgLower]);
-            addMessage(`💾 **Përgjigje e ruajtur:** ${window.knowledgeBase[msgLower]}`, 'bot');
-            return true;
-        }
-        
-        console.log('🔍 [KNOWLEDGE] Kërko në API për user', userId, ':', msgLower);
-        
-        // Kërko në database përmes API
-        const response = await fetch(`/api/chat/knowledge/${userId}/${encodeURIComponent(msgLower)}`, {
-            credentials: 'include'
-        });
+        // Kërko DIREKT në API
+        console.log('🌐 [BASIC] Duke thirrur API...');
+        const response = await fetch(`/api/chat/knowledge/${userId}/${encodeURIComponent(question)}`);
         
         if (!response.ok) {
-            console.log('❌ [KNOWLEDGE] API gabim:', response.status);
+            console.log('❌ [BASIC] API error:', response.status);
             return false;
         }
         
         const data = await response.json();
-        console.log('📊 [KNOWLEDGE] Përgjigja nga API:', data);
+        console.log('📦 [BASIC] API response:', data);
         
-        // Nëse gjen përgjigje
         if (data.answer && data.answer !== 'null') {
-            console.log('✅✅✅ [KNOWLEDGE] GJETËM PËRGJIGJE NË DATABASE!');
+            console.log('✅✅✅ [BASIC] GJETËM PËRGJIGJE:', data.answer);
             
-            // Ruaj në cache lokal
-            if (!window.knowledgeBase) window.knowledgeBase = {};
-            window.knowledgeBase[msgLower] = data.answer;
+            // Shto mesazhin në chat
+            const chat = document.getElementById('chat');
+            if (chat) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message bot';
+                messageDiv.innerHTML = `<div class="message-text">💾 <strong>Përgjigje e ruajtur:</strong> ${data.answer}</div>`;
+                chat.appendChild(messageDiv);
+                chat.scrollTop = chat.scrollHeight;
+            }
             
-            addMessage(`💾 **Përgjigje e ruajtur:** ${data.answer}`, 'bot');
             return true;
         }
         
-        console.log('❌ [KNOWLEDGE] Nuk u gjet përgjigje');
+        console.log('❌ [BASIC] Nuk u gjet përgjigje');
         return false;
         
     } catch (error) {
-        console.log('❌ [KNOWLEDGE] Gabim:', error.message);
+        console.log('🔥 [BASIC] Error:', error.message);
         return false;
     }
 }
 
-// 2. Inicializo knowledgeBase në fillim të sistemit
-if (typeof knowledgeBase === 'undefined') {
-    window.knowledgeBase = {};
-    console.log('📚 [KNOWLEDGE] knowledgeBase u inicializua');
-}
-
-// 3. MBIVENDOS FUNKSIONIN sendMessage EKZISTUES
-function integrateKnowledgeToSendMessage() {
-    console.log('🔗 [KNOWLEDGE] Duke integruar me sendMessage...');
+// 2. MBIVENDOS PROCESIMIN E MESAZHEVE NË MËNYRËN MË TË THJESHTË
+function setupSimpleKnowledgeHandler() {
+    console.log('⚙️ [BASIC] Duke setup sistemin...');
     
-    if (typeof window.sendMessage !== 'function') {
-        console.log('⚠️ [KNOWLEDGE] sendMessage nuk ekziston');
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+    
+    if (!userInput || !sendBtn) {
+        console.log('⚠️ [BASIC] Elementet nuk u gjetën');
+        setTimeout(setupSimpleKnowledgeHandler, 1000);
         return;
     }
     
-    // Ruaj versionin origjinal
-    const originalSendMessage = window.sendMessage;
+    console.log('✅ [BASIC] Elementet u gjetën');
     
-    // Krijo versionin e ri
-    window.sendMessage = async function() {
-        const userInput = document.getElementById('user-input');
-        const message = userInput?.value?.trim();
+    // Funksioni për trajtimin e mesazhit
+    async function handleUserMessage() {
+        const message = userInput.value.trim();
+        if (!message) return;
         
-        if (!message) {
-            console.log('⚠️ [KNOWLEDGE] Mesazh bosh');
-            return originalSendMessage.call(this);
-        }
+        console.log('📨 [BASIC] Përpunimi i mesazhit:', message);
         
-        console.log('💬 [KNOWLEDGE] Përdoruesi shkroi:', message);
-        
-        // Nëse është komandë /meso, ekzekuto direkt
+        // Nëse është komandë /meso, lëre të vazhdojë normalisht
         if (message.startsWith('/meso')) {
-            return originalSendMessage.call(this);
-        }
-        
-        // Kontrollo nëse ka njohuri për këtë mesazh
-        const hasKnowledge = await checkKnowledge(message);
-        
-        if (hasKnowledge) {
-            console.log('✅ [KNOWLEDGE] Përdorëm njohuri, nuk dërgojmë te AI');
-            // Pastro input
-            if (userInput) userInput.value = '';
+            console.log('🔧 [BASIC] Është komandë /meso, lëre të vazhdojë');
             return;
         }
         
-        console.log('🤖 [KNOWLEDGE] Nuk gjetëm njohuri, duke dërguar te AI...');
+        // Kontrollo nëse ka njohuri
+        const hasKnowledge = await checkKnowledgeBasic(message);
         
-        // Nëse nuk gjetëm njohuri, ekzekuto versionin origjinal
-        return originalSendMessage.call(this);
+        if (hasKnowledge) {
+            console.log('✅ [BASIC] Përdorëm njohuri, NUK dërgojmë te AI');
+            userInput.value = ''; // Pastro input
+            return;
+        }
+        
+        console.log('🤖 [BASIC] Nuk gjetëm njohuri, vazhdo normalisht');
+    }
+    
+    // Shto event listener të RI pa prishur ato ekzistuese
+    sendBtn.addEventListener('click', function(e) {
+        console.log('🖱️ [BASIC] Butoni u klikua');
+        handleUserMessage();
+    });
+    
+    userInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            console.log('↵ [BASIC] Enter u shtyp');
+            handleUserMessage();
+        }
+    });
+    
+    console.log('🎉 [BASIC] Sistemi minimal u setup!');
+}
+
+// 3. TEST I DREJTPËRDREJTË - butoni testues
+function addTestButton() {
+    const header = document.querySelector('header');
+    if (!header) {
+        setTimeout(addTestButton, 1000);
+        return;
+    }
+    
+    const testBtn = document.createElement('button');
+    testBtn.textContent = '🧪 Test Knowledge';
+    testBtn.style.cssText = `
+        margin-left: 10px;
+        padding: 8px 15px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 20px;
+        cursor: pointer;
+        font-weight: bold;
+    `;
+    
+    testBtn.onclick = async () => {
+        console.log('🧪🧪🧪 DUKE TESTUAR SISTEMIN 🧪🧪🧪');
+        
+        // Test 1: Shkruaj direkt
+        const testQuestion = 'test2';
+        console.log('1️⃣ Test për:', testQuestion);
+        await checkKnowledgeBasic(testQuestion);
+        
+        // Test 2: Shkruaj në input dhe shtyp butonin
+        const userInput = document.getElementById('user-input');
+        if (userInput) {
+            userInput.value = 'test2';
+            console.log('2️⃣ Duke simuluar klikimin e butonit...');
+            const sendBtn = document.getElementById('send-btn');
+            if (sendBtn) sendBtn.click();
+        }
     };
     
-    console.log('✅ [KNOWLEDGE] sendMessage u përditësua me checkKnowledge!');
+    header.appendChild(testBtn);
+    console.log('🔧 [BASIC] Butoni test u shtua');
 }
 
-// 4. INICIALIZIMI - ekzekuto kur faqja të jetë gati
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeKnowledgeSystem);
-} else {
-    initializeKnowledgeSystem();
-}
-
-function initializeKnowledgeSystem() {
-    console.log('🚀 [KNOWLEDGE] Duke inicializuar sistemin...');
+// 4. INICIALIZIMI
+setTimeout(() => {
+    console.log('🚀 [BASIC] Duke inicializuar...');
+    setupSimpleKnowledgeHandler();
+    addTestButton();
     
-    // Jep 2 sekonda për të ngarkuar sistemin ekzistues
-    setTimeout(() => {
-        integrateKnowledgeToSendMessage();
-        
-        // Testo sistemin
-        console.log('🧪 [KNOWLEDGE] Statusi:');
-        console.log('- checkKnowledge:', typeof checkKnowledge);
-        console.log('- knowledgeBase:', typeof window.knowledgeBase);
-        console.log('- currentUser.id:', currentUser?.id);
-        console.log('- sendMessage:', typeof window.sendMessage);
-        
-        // Shto një mesazh test në chat
-        if (typeof addMessage === 'function') {
-            addMessage('🧠 **Sistemi i njohurive RRUFE-TESLA u aktivizua!**', 'bot');
-        }
-    }, 2000);
-}
+    // Testo menjëherë
+    console.log('🧪 [BASIC] Duke testuar API-n direkt...');
+    if (currentUser && currentUser.id) {
+        fetch(`/api/chat/knowledge/${currentUser.id}/test2`)
+            .then(res => res.json())
+            .then(data => console.log('📡 [BASIC] Test API result:', data));
+    }
+}, 2000);
 
-console.log('🎯 [KNOWLEDGE] Sistemi i njohurive u ngarkua në script.js');
+console.log('🎯 [KNOWLEDGE-MINIMAL] Sistem minimal i ngarkuar!');
