@@ -351,54 +351,82 @@ router.post('/knowledge', (req, res) => {
 
 router.get('/knowledge/:userId/:question', (req, res) => {
     const { userId, question } = req.params;
-
-    const cleaned = decodeURIComponent(question)
-        .toLowerCase()
-        .trim();
-
-    console.log('🔍 [KNOWLEDGE-SEARCH] Duke kërkuar:');
-    console.log('- User ID:', userId);
-    console.log('- Pyetja e kërkuar:', cleaned);
+    const searchText = decodeURIComponent(question).toLowerCase().trim();
     
-    // ✅ OPSIONI 1: Kërko me match të saktë (më e thjeshtë)
-    db.get(
-        `SELECT answer FROM knowledge_base WHERE user_id = ? AND LOWER(question) = ?`,
-        [userId, cleaned],
-        (err, row) => {
-            if (err) {
-                console.error("❌ Gabim në database:", err);
-                return res.status(500).json({ success: false, error: 'Gabim në database' });
-            }
-
-            console.log('- Rezultati i kërkimit:', row ? 'Gjetëm!' : 'Nuk u gjet');
-            
-            if (row && row.answer) {
-                console.log('✅✅✅ Përgjigja e gjetur:', row.answer.substring(0, 50));
-                return res.json({ success: true, answer: row.answer });
-            }
-
-            // Nëse nuk gjen me match të saktë, kërko me LIKE
-            console.log('🔄 Duke provuar me LIKE search...');
-            db.get(
-                `SELECT answer FROM knowledge_base WHERE user_id = ? AND ? LIKE '%' || LOWER(question) || '%'`,
-                [userId, cleaned],
-                (err, row2) => {
-                    if (err) {
-                        console.error("❌ Gabim në LIKE search:", err);
-                        return res.json({ success: true, answer: null });
-                    }
-                    
-                    if (row2 && row2.answer) {
-                        console.log('✅✅✅ Përgjigja e gjetur me LIKE:', row2.answer.substring(0, 50));
-                        return res.json({ success: true, answer: row2.answer });
-                    }
-                    
-                    console.log('❌ Nuk u gjet asgjë');
-                    res.json({ success: true, answer: null });
-                }
-            );
+    console.log('🔍 [KNOWLEDGE-DEBUG] Duke kërkuar:');
+    console.log('- User ID:', userId);
+    console.log('- Search text:', searchText);
+    console.log('- Search text length:', searchText.length);
+    
+    // 1. Së pari, shfaq të gjitha të dhënat për këtë user
+    db.all('SELECT * FROM knowledge_base WHERE user_id = ?', [userId], (err, allRows) => {
+        if (err) {
+            console.error('❌ Error getting all data:', err);
+            return res.json({ success: true, answer: null });
         }
-    );
+        
+        console.log(`📊 User ${userId} ka ${allRows.length} njohuri:`);
+        
+        // Shfaq të gjitha pyetjet
+        allRows.forEach((row, index) => {
+            console.log(`${index + 1}. "${row.question}" -> "${row.answer}"`);
+            console.log(`   Lowercase: "${row.question.toLowerCase().trim()}"`);
+            console.log(`   Match me "${searchText}": ${row.question.toLowerCase().trim() === searchText ? '✅' : '❌'}`);
+        });
+        
+        // 2. Provo të gjitha metodat e kërkimit
+        
+        // Metoda 1: Exact match
+        db.get(
+            'SELECT answer FROM knowledge_base WHERE user_id = ? AND LOWER(TRIM(question)) = ?',
+            [userId, searchText],
+            (err, exactRow) => {
+                console.log('\n🧪 Metoda 1 (Exact match):');
+                console.log('- SQL:', 'SELECT answer FROM knowledge_base WHERE user_id = ? AND LOWER(TRIM(question)) = ?');
+                console.log('- Params:', [userId, searchText]);
+                console.log('- Error:', err);
+                console.log('- Result:', exactRow);
+                
+                if (exactRow && exactRow.answer) {
+                    console.log('✅✅✅ GJETËM ME EXACT MATCH!');
+                    return res.json({ success: true, answer: exactRow.answer });
+                }
+                
+                // Metoda 2: LIKE search
+                db.get(
+                    'SELECT answer FROM knowledge_base WHERE user_id = ? AND LOWER(question) LIKE ?',
+                    [userId, '%' + searchText + '%'],
+                    (err, likeRow) => {
+                        console.log('\n🧪 Metoda 2 (LIKE):');
+                        console.log('- SQL:', 'SELECT answer FROM knowledge_base WHERE user_id = ? AND LOWER(question) LIKE ?');
+                        console.log('- Params:', [userId, '%' + searchText + '%']);
+                        console.log('- Error:', err);
+                        console.log('- Result:', likeRow);
+                        
+                        if (likeRow && likeRow.answer) {
+                            console.log('✅✅✅ GJETËM ME LIKE!');
+                            return res.json({ success: true, answer: likeRow.answer });
+                        }
+                        
+                        // Metoda 3: Kërko manualisht
+                        console.log('\n🧪 Metoda 3 (Manual search):');
+                        for (const row of allRows) {
+                            const dbQuestion = row.question.toLowerCase().trim();
+                            
+                            if (dbQuestion.includes(searchText) || searchText.includes(dbQuestion)) {
+                                console.log(`✅ Gjetëm match manual: "${dbQuestion}" me "${searchText}"`);
+                                console.log(`   Përgjigja: ${row.answer}`);
+                                return res.json({ success: true, answer: row.answer });
+                            }
+                        }
+                        
+                        console.log('❌❌❌ TË GJITHA METODAT DËSHTUAN!');
+                        res.json({ success: true, answer: null, debug: 'no_match' });
+                    }
+                );
+            }
+        );
+    });
 });
 
 // ===================================== ✅ KODI EKZISTUES - EKSPORTO NJOHURITË =====================================
