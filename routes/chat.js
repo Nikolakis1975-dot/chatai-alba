@@ -265,24 +265,25 @@ router.post('/save', (req, res) => {
     );
 });
 
-// ===============================================✅ ROUTE PËR HISTORI ========================================
+// ===============================================✅ ROUTE HISTORI ========================================
 
 router.get('/history/:userId', (req, res) => {
     const { userId } = req.params;
     
-    console.log('📜 [HISTORY] Duke kërkuar historinë për user:', userId);
+    console.log('📜 [HISTORY-FIX] Duke kërkuar për user:', userId);
     
+    // Kërko mesazhet
     db.all(
-        'SELECT * FROM messages WHERE user_id = ? ORDER BY timestamp DESC LIMIT 50',
+        'SELECT content, sender, timestamp FROM messages WHERE user_id = ? ORDER BY timestamp ASC LIMIT 20',
         [userId],
         (err, rows) => {
             if (err) {
-                console.error('❌ Gabim në histori:', err);
-                return res.status(500).json({ error: 'Database error' });
+                console.error('❌ Database error:', err);
+                return res.json({ error: 'Database error' });
             }
             
-            console.log(`✅ Gjetëm ${rows.length} mesazhe`);
-            res.json({ messages: rows });
+            console.log(`✅ Dërguar ${rows.length} mesazhe`);
+            res.json({ history: rows });
         }
     );
 });
