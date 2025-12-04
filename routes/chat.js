@@ -265,6 +265,28 @@ router.post('/save', (req, res) => {
     );
 });
 
+// ===============================================✅ ROUTE PËR HISTORI ========================================
+
+router.get('/history/:userId', (req, res) => {
+    const { userId } = req.params;
+    
+    console.log('📜 [HISTORY] Duke kërkuar historinë për user:', userId);
+    
+    db.all(
+        'SELECT * FROM messages WHERE user_id = ? ORDER BY timestamp DESC LIMIT 50',
+        [userId],
+        (err, rows) => {
+            if (err) {
+                console.error('❌ Gabim në histori:', err);
+                return res.status(500).json({ error: 'Database error' });
+            }
+            
+            console.log(`✅ Gjetëm ${rows.length} mesazhe`);
+            res.json({ messages: rows });
+        }
+    );
+});
+
 // ====================================== ✅ KODI I PËRMIRËSUAR - ME LOGGING DHE DEBUG ===================================
 
 router.post('/knowledge', (req, res) => {
