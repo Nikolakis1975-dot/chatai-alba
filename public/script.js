@@ -2114,3 +2114,121 @@ async function showSystemStats() {
         addMessage("📊 **STATISTIKAT E SISTEMIT:**\n\n✅ Sistemi është online\n🔧 Funksionaliteti aktiv\n🛡️ Siguria e garantuar\n🚀 Performancë e qëndrueshme", "bot");
     }
 }
+
+// ================================================== 🎯 KNOWLEDGE CHECK SYSTEM =======================================
+
+// RRUFE-TESLA Knowledge Integration
+// Data: $(new Date().toISOString())
+
+console.log('🧠 [KNOWLEDGE-SYSTEM] RRUFE-TESLA Knowledge System loading...');
+
+// 1. Funksioni për të kontrolluar njohuritë
+async function checkUserKnowledge(message) {
+    try {
+        console.log('🔍 [KNOWLEDGE-CHECK] Checking for:', message);
+        
+        // Kontrollo nëse ka user
+        if (!window.currentUser || !window.currentUser.id) {
+            console.log('⚠️ No user session');
+            return null;
+        }
+        
+        const userId = window.currentUser.id;
+        const question = message.toLowerCase().trim();
+        
+        // Kontrollo në database
+        const response = await fetch(`/api/chat/knowledge/${userId}/${encodeURIComponent(question)}`);
+        const data = await response.json();
+        
+        if (data.answer) {
+            console.log('✅✅✅ KNOWLEDGE FOUND:', data.answer.substring(0, 50));
+            return data.answer;
+        }
+        
+        console.log('❌ No knowledge found');
+        return null;
+        
+    } catch (error) {
+        console.log('⚠️ Knowledge check error:', error.message);
+        return null;
+    }
+}
+
+// 2. INTEGRO NË SEND BUTTON
+function integrateWithSendButton() {
+    console.log('⚙️ [INTEGRATION] Attaching to send button...');
+    
+    const sendBtn = document.getElementById('send-btn');
+    const userInput = document.getElementById('user-input');
+    
+    if (!sendBtn || !userInput) {
+        console.log('⚠️ Elements not found, retrying...');
+        setTimeout(integrateWithSendButton, 1000);
+        return;
+    }
+    
+    console.log('✅ Elements found, integrating...');
+    
+    // Ruaj funksionin origjinal
+    const originalOnClick = sendBtn.onclick;
+    
+    // Krijo funksionin e ri
+    async function enhancedSendHandler(e) {
+        const message = userInput.value.trim();
+        
+        if (!message) {
+            // Mesazh bosh - lëre sistemin origjinal
+            if (originalOnClick) return originalOnClick.call(this, e);
+            return;
+        }
+        
+        console.log('💬 User message:', message);
+        
+        // Hapi 1: Nëse është komandë, lëre të vazhdojë normalisht
+        if (message.startsWith('/')) {
+            console.log('🔧 It\'s a command, using original system');
+            if (originalOnClick) return originalOnClick.call(this, e);
+            return;
+        }
+        
+        // Hapi 2: Kontrollo nëse ka njohuri
+        const knowledgeAnswer = await checkUserKnowledge(message);
+        
+        if (knowledgeAnswer) {
+            console.log('🎯 Using knowledge answer, NOT sending to AI');
+            
+            // Shto mesazhin e përdoruesit
+            if (typeof addMessage === 'function') {
+                addMessage(message, 'user');
+            }
+            
+            // Shto përgjigjen nga knowledge
+            setTimeout(() => {
+                if (typeof addMessage === 'function') {
+                    addMessage(`💾 **Përgjigje e ruajtur:** ${knowledgeAnswer}`, 'bot');
+                }
+            }, 300);
+            
+            // Pastro input
+            userInput.value = '';
+            return;
+        }
+        
+        // Hapi 3: Nëse nuk ka njohuri, dërgo te AI
+        console.log('🤖 No knowledge found, sending to AI...');
+        if (originalOnClick) {
+            return originalOnClick.call(this, e);
+        }
+    }
+    
+    // Zëvendëso handler-in
+    sendBtn.onclick = enhancedSendHandler;
+    
+    console.log('✅✅✅ KNOWLEDGE SYSTEM INTEGRATED SUCCESSFULLY!');
+}
+
+// 3. INICIALIZO
+setTimeout(() => {
+    console.log('🚀 Initializing knowledge system...');
+    integrateWithSendButton();
+}, 2000);
