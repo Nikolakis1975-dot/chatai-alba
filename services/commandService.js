@@ -421,60 +421,6 @@ module.exports = CommandService;
         };
     }
 
-    // ======================== ✅ KOMANDA /MOTI - INFORMACION MOTI =============================
-    async weatherCommand(city) {
-        if (!city) {
-            return {
-                success: false,
-                response: '❌ Ju lutem shkruani qytetin: /moti <qyteti>'
-            };
-        }
-        
-        console.log(`🌤️ Duke kërkuar motin për: ${city}`);
-        
-        try {
-            // ✅ IMPLEMENTIM I THJESHTË - MUND TË SHTOSH API TË VËRTETË MË VONË
-            const weatherInfo = await this.fetchWeather(city);
-            return weatherInfo;
-        } catch (error) {
-            console.error('❌ Gabim në weatherCommand:', error);
-            return {
-                success: true,
-                response: `🌤️ **INFORMACION MOTI PËR ${city.toUpperCase()}**\n\n🔹 Shërbimi i motit aktualisht po përmirësohet!\n🔹 Së shpejti do të keni informacion të detajuar të motit.\n\n💡 **Opsione alternative:**\n• Shkruani "mot" pa "/" për asistencë\n• Përdorni /google për kërkim në internet`
-            };
-        }
-    }
-
-    // ======================== ✅ FUNKSIONI FETCHWEATHER =============================
-    async fetchWeather(city) {
-        try {
-            // ✅ IMPLEMENTIM I THJESHTË - MUND TË ZGJEROJ MË VONË
-            const weatherResponses = {
-                'tirana': `🌤️ **MOTI NË TIRANË**\n\n🌡️ Temperatura: 18°C - 25°C\n☀️ Kushtet: Diell me re të shpërndara\n💨 Era: 10 km/h nga veriu\n💧 Lagështia: 65%`,
-                'durrës': `🌤️ **MOTI NË DURRËS**\n\n🌡️ Temperatura: 20°C - 27°C\n🌊 Kushtet: Diell, det i qetë\n💨 Era: 8 km/h nga jugu\n💧 Lagështia: 70%`,
-                'vlora': `🌤️ **MOTI NË VLORË**\n\n🌡️ Temperatura: 19°C - 26°C\n🌊 Kushtet: Diell, det i këndshëm\n💨 Era: 12 km/h nga perëndimi\n💧 Lagështia: 68%`,
-                'shkodra': `🌤️ **MOTI NË SHKODËR**\n\n🌡️ Temperatura: 16°C - 23°C\n☁️ Kushtet: Pjesërisht me re\n💨 Era: 5 km/h nga lindja\n💧 Lagështia: 72%`
-            };
-
-            const normalizedCity = city.toLowerCase().trim();
-            
-            if (weatherResponses[normalizedCity]) {
-                return {
-                    success: true,
-                    response: weatherResponses[normalizedCity]
-                };
-            } else {
-                return {
-                    success: true,
-                    response: `🌤️ **MOTI NË ${city.toUpperCase()}**\n\n🔹 Shërbimi i motit për këtë qytet po përmirësohet!\n🔹 Temperatura e vlerësuar: 15°C - 24°C\n🔹 Kushtet e përgjithshme: Të këndshme\n\n💡 **Qytete të disponueshme:** Tirana, Durrës, Vlorë, Shkodër`
-                };
-            }
-        } catch (error) {
-            console.error('❌ Gabim në fetchWeather:', error);
-            throw error;
-        }
-    }
-
     // ======================== ✅ KOMANDA /APIKEY - KONFIGURIM API KEY =========================
     async apiKeyCommand(user, apiKey) {
         if (!apiKey) {
