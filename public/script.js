@@ -928,8 +928,34 @@ async function processCommand(text) {
             break;
 
         case "/ndihmo":
-            addMessage("📌 Komandat: /ndihmo, /wiki <fjale>, /perkthim <gjuha> <tekst>, /meso <pyetje>|<përgjigje>, /moti <qyteti>, /eksporto, /importo, /dil, /apikey", "bot");
-            break;
+    const activeEngine = window.aiEngineStatus?.openai ? 'openai' : 'gemini';
+    addMessage(`👑 **SISTEMI I KOMANDAVE - RRUFE-TESLA** 👑
+
+📋 **KOMANDAT BAZE:**
+• /ndihmo - Kjo liste
+• /wiki <temë> - Kërkim Wikipedia
+• /moti <qytet> - Informacion moti  
+• /meso <pyetje>|<përgjigje> - Mëso diçka të re
+• /perkthim [gjuha] [tekst] - Përkthim (shembuj: /perkthim en Pershendetje)
+• /apikey <key> - Vendos API Key
+• /eksporto - Eksporto të dhënat
+• /importo - Importo të dhënat
+• /dil - Dil nga sistemi
+
+🚀 **KËRKIM:**
+• /gjej <kërkim> - Kërkim i thelluar
+• /google <kërkim> - Kërkim Google
+
+🎓 **STUDENT:**
+• /student - Menu studenti
+• /liber <emër> - Gjej libra
+• /detyre <lendë> - Ndihmë detyrash
+
+👑 **ADMIN:**
+• /admin - Paneli i adminit (vetëm për administratorë)
+
+🔧 **Motor aktiv:** ${activeEngine}`, "bot");
+    break;
 
         case "/meso":
             const split = text.replace("/meso", "").split("|");
@@ -982,26 +1008,44 @@ async function processCommand(text) {
             }
             break;
 
-        case "/perkthim":
-            if (parts.length < 3) return addMessage("⚠️ Përdorimi: /perkthim [gjuha] [tekst]", "bot");
-            const targetLang = parts[1].toLowerCase();
-            const tekst = parts.slice(2).join(" ");
-            const sourceLang = (targetLang === "sq") ? "en" : "sq";
+case "/perkthim":
+    if (parts.length < 2) {
+        addMessage("⚠️ **Përdorimi i saktë:** /perkthim [gjuha] [tekst]\n\n🌐 **Shembuj:**\n• `/perkthim en Pershendetje` - Përkthen 'Pershendetje' në anglisht\n• `/perkthim it Mirëdita` - Përkthen 'Mirëdita' në italisht\n• `/perkthim es Si jeni?` - Përkthen 'Si jeni?' në spanjisht\n\n📝 **Gjuhet e mbështetura:** en, it, es, fr, de, etj.", "bot");
+        break;
+    }
+    
+    // Nëse ka vetëm 2 pjesë, përdor anglishten si default
+    let targetLang, tekst;
+    if (parts.length === 2) {
+        targetLang = 'en'; // Default to English
+        tekst = parts[1];
+        addMessage("🔍 **Shënim:** Duke përdorur anglishten (en) si gjuhë default. Përdor `/perkthim [gjuha] [tekst]` për gjuhë të tjera.", "bot");
+    } else {
+        targetLang = parts[1].toLowerCase();
+        tekst = parts.slice(2).join(" ");
+    }
+    
+    const sourceLang = (targetLang === "sq") ? "en" : "sq";
+    
+    showTypingIndicator();
+    
+    fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(tekst)}&langpair=${sourceLang}|${targetLang}`)
+        .then(r => r.json())
+        .then(d => {
+            removeTypingIndicator();
+            if (d.responseData && d.responseData.translatedText) {
+                addMessage(`🌐 **Përkthim (${sourceLang} → ${targetLang}):**\n${d.responseData.translatedText}`, "bot");
+            } else {
+                addMessage("❌ Gabim përkthimi. Provoni përsëri.", "bot");
+            }
+        })
+        .catch((error) => {
+            removeTypingIndicator();
+            console.error('Gabim përkthimi:', error);
+            addMessage("⚠️ Gabim në lidhje me shërbimin e përkthimit.", "bot");
+        });
             
-            showTypingIndicator();
-            
-            fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(tekst)}&langpair=${sourceLang}|${targetLang}`)
-                .then(r => r.json())
-                .then(d => {
-                    removeTypingIndicator();
-                    const translatedText = d?.responseData?.translatedText || "❌ Gabim përkthimi.";
-                    addMessage(translatedText, "bot");
-                })
-                .catch(() => {
-                    removeTypingIndicator();
-                    addMessage("⚠️ Gabim përkthimi.", "bot");
-                });
-            break;
+    break;
 
         case "/eksporto":
             try {
