@@ -1,3 +1,38 @@
+// ==================== 🔍 DEBUG - ÇFARË SISTEM PËRDOR ====================
+
+console.log('🔍 [DEBUG-SYSTEM] Duke analizuar sistemin...');
+
+// Kontrollo të gjitha mënyrat se si dërgohet mesazhi
+setTimeout(() => {
+    const sendBtn = document.getElementById('send-btn');
+    const userInput = document.getElementById('user-input');
+    
+    if (sendBtn && userInput) {
+        console.log('🎯 [DEBUG] Send button onclick:', sendBtn.onclick?.toString().substring(0, 200));
+        
+        // Shiko se çfarë ndodh kur klikohet
+        const originalClick = sendBtn.onclick;
+        
+        sendBtn.onclick = function(e) {
+            console.log('🖱️ [DEBUG] Butoni u klikua!');
+            console.log('💬 [DEBUG] Mesazhi:', userInput.value);
+            console.log('🔗 [DEBUG] Po ekzekutohet:', originalClick?.toString().substring(0, 100));
+            
+            if (originalClick) {
+                return originalClick.call(this, e);
+            }
+        };
+        
+        // Shiko se çfarë ndodh kur shtypet Enter
+        userInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                console.log('↵ [DEBUG] Enter u shtyp!');
+                console.log('📝 [DEBUG] Mesazhi:', this.value);
+            }
+        });
+    }
+}, 2000);
+
 // ======================================================
 // 🎯 BRIDGE LOADER I PLOTË - RRUFEJA 347
 // ======================================================
