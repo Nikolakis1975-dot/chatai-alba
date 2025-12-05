@@ -353,53 +353,51 @@ router.get('/knowledge/:userId/:question', (req, res) => {
     const { userId, question } = req.params;
     const searchText = decodeURIComponent(question);
     
-    console.log('🎯 [KNOWLEDGE] Searching for user', userId, ':', searchText);
+    console.log('🎯 [KNOWLEDGE-SIMPLE] Duke kërkuar:');
+    console.log('- User:', userId);
+    console.log('- Pyetja e kërkuar:', searchText);
+    console.log('- Gjatësia:', searchText.length);
     
-    // 1. Provo exact match (mënyra më e thjeshtë)
-    db.get(
-        `SELECT answer FROM knowledge_base WHERE user_id = ? AND question = ?`,
-        [userId, searchText],
-        (err, row) => {
-            if (err) {
-                console.error('❌ Database error:', err);
-                return res.json({ success: true, answer: null });
-            }
-            
-            if (row && row.answer) {
-                console.log('✅✅✅ FOUND WITH EXACT MATCH!');
-                return res.json({ success: true, answer: row.answer });
-            }
-            
-            // 2. Nëse nuk gjen, kontrollo çfarë ka në database
-            db.all(
-                'SELECT question, answer FROM knowledge_base WHERE user_id = ?',
-                [userId],
-                (err, allRows) => {
-                    if (err) {
-                        console.error('❌ Error getting all:', err);
-                        return res.json({ success: true, answer: null });
-                    }
-                    
-                    console.log(`📊 User ${userId} has ${allRows.length} records`);
-                    
-                    // 3. Provo manual match
-                    const searchLower = searchText.toLowerCase().trim();
-                    
-                    for (const item of allRows) {
-                        const dbQuestion = item.question.toLowerCase().trim();
-                        
-                        if (dbQuestion === searchLower) {
-                            console.log('✅✅✅ FOUND WITH CASE-INSENSITIVE MATCH!');
-                            return res.json({ success: true, answer: item.answer });
-                        }
-                    }
-                    
-                    console.log('❌ No match found');
-                    res.json({ success: true, answer: null });
-                }
-            );
+    // 1. Merr të gjitha të dhënat për këtë user
+    db.all('SELECT question, answer FROM knowledge_base WHERE user_id = ?', [userId], (err, allRows) => {
+        if (err) {
+            console.error('❌ Gabim në database:', err);
+            return res.json({ success: true, answer: null });
         }
-    );
+        
+        console.log(`📊 User ${userId} ka ${allRows.length} njohuri:`);
+        
+        // 2. Kërko manualisht
+        const searchLower = searchText.toLowerCase().trim();
+        console.log('- Duke kërkuar për:', `"${searchLower}"`);
+        
+        let found = false;
+        let foundAnswer = null;
+        
+        for (const row of allRows) {
+            const dbQuestion = row.question.toLowerCase().trim();
+            console.log(`🔍 Krahasoj me: "${dbQuestion}"`);
+            
+            if (dbQuestion === searchLower) {
+                console.log('✅✅✅ GJETËM MATCH TË SAKTË!');
+                found = true;
+                foundAnswer = row.answer;
+                break;
+            }
+        }
+        
+        if (found) {
+            console.log('🎉 Përgjigja e gjetur:', foundAnswer);
+            res.json({ success: true, answer: foundAnswer });
+        } else {
+            console.log('❌ Nuk u gjet match');
+            console.log('📋 Të gjitha pyetjet në database:');
+            allRows.forEach((row, index) => {
+                console.log(`${index + 1}. "${row.question}"`);
+            });
+            res.json({ success: true, answer: null });
+        }
+    });
 });
 
 // ================================================= 🔍 KNOWLEDGE DEBUG - SIMPLE ======================================
