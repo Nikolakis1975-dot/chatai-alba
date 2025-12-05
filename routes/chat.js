@@ -351,6 +351,36 @@ router.post('/knowledge', (req, res) => {
     );
 });
 
+// =========================================== 🔍 CHECK DATABASE DIRECTLY ==========================================
+
+router.get('/check-database', (req, res) => {
+    console.log('🔍 [CHECK-DB] Duke kontrolluar të gjithë database...');
+    
+    // 1. Tabelat
+    db.all("SELECT name FROM sqlite_master WHERE type='table'", (err, tables) => {
+        console.log('📊 Tables:', tables?.map(t => t.name));
+        
+        // 2. Knowledge_base table
+        db.all('SELECT * FROM knowledge_base', (err, knowledgeRows) => {
+            console.log(`📚 knowledge_base has ${knowledgeRows?.length || 0} rows`);
+            
+            if (knowledgeRows && knowledgeRows.length > 0) {
+                knowledgeRows.forEach(row => {
+                    console.log(`ID: ${row.id}, User: ${row.user_id}, Q: "${row.question}", A: "${row.answer}"`);
+                });
+            } else {
+                console.log('❌ knowledge_base is EMPTY!');
+            }
+            
+            res.json({
+                tables: tables?.map(t => t.name) || [],
+                knowledge_base_count: knowledgeRows?.length || 0,
+                knowledge_base_data: knowledgeRows || []
+            });
+        });
+    });
+});
+
 // ==================================== ✅ KODI EKZISTUES - KËRKO NJOHURI ========================================
 
 router.get('/knowledge/:userId/:question', (req, res) => {
