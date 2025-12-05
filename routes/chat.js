@@ -265,7 +265,10 @@ router.post('/save', (req, res) => {
     );
 });
 
-// ✅ KODI EKZISTUES - RUAJ NJOHURI TË REJA
+
+// ============================================ ✅ ROUTE BAZE PËR NJOHURITË =========================================
+
+// POST: Ruaj njohuri të re (/meso)
 router.post('/knowledge', (req, res) => {
     const { userId, question, answer } = req.body;
 
@@ -278,10 +281,42 @@ router.post('/knowledge', (req, res) => {
         [userId, question, answer],
         function(err) {
             if (err) {
-                return res.status(500).json({ error: 'Gabim gjatë ruajtjes së njohurive' });
+                console.error('❌ Gabim në ruajtje:', err);
+                return res.status(500).json({ error: 'Gabim në database' });
             }
 
-            res.json({ message: 'Njohuria u ruajt me sukses', id: this.lastID });
+            res.json({ 
+                success: true, 
+                message: '✅ Mësova diçka të re!',
+                id: this.lastID 
+            });
+        }
+    );
+});
+
+// GET: Kërko njohuri
+router.get('/knowledge/:userId/:question', (req, res) => {
+    const { userId, question } = req.params;
+    const searchText = decodeURIComponent(question).toLowerCase().trim();
+
+    console.log('🔍 [KNOWLEDGE] Kërkim për user', userId, ':', searchText);
+
+    db.get(
+        'SELECT answer FROM knowledge_base WHERE user_id = ? AND LOWER(question) = ?',
+        [userId, searchText],
+        (err, row) => {
+            if (err) {
+                console.error('❌ Database error:', err);
+                return res.json({ success: true, answer: null });
+            }
+
+            if (row && row.answer) {
+                console.log('✅✅✅ Gjetëm përgjigje:', row.answer);
+                return res.json({ success: true, answer: row.answer });
+            }
+
+            console.log('❌ Nuk u gjet përgjigje');
+            res.json({ success: true, answer: null });
         }
     );
 });
