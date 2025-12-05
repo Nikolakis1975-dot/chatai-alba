@@ -1,37 +1,41 @@
-// ==================== 🔍 DEBUG - ÇFARË SISTEM PËRDOR ====================
+// ==================== 🎯 SIMPLE TEST - WILL IT EXECUTE? ====================
 
-console.log('🔍 [DEBUG-SYSTEM] Duke analizuar sistemin...');
+console.log('🎯 [SIMPLE-TEST] Script.js is loading...');
 
-// Kontrollo të gjitha mënyrat se si dërgohet mesazhi
+// Test 1: Ky do të ekzekutohet menjëherë
+alert('🎯 Script.js is loading! Click OK to continue.');
+
+// Test 2: Krijo një buton shumë të thjeshtë
 setTimeout(() => {
-    const sendBtn = document.getElementById('send-btn');
-    const userInput = document.getElementById('user-input');
+    console.log('🔧 [SIMPLE] Creating test button...');
     
-    if (sendBtn && userInput) {
-        console.log('🎯 [DEBUG] Send button onclick:', sendBtn.onclick?.toString().substring(0, 200));
-        
-        // Shiko se çfarë ndodh kur klikohet
-        const originalClick = sendBtn.onclick;
-        
-        sendBtn.onclick = function(e) {
-            console.log('🖱️ [DEBUG] Butoni u klikua!');
-            console.log('💬 [DEBUG] Mesazhi:', userInput.value);
-            console.log('🔗 [DEBUG] Po ekzekutohet:', originalClick?.toString().substring(0, 100));
-            
-            if (originalClick) {
-                return originalClick.call(this, e);
-            }
-        };
-        
-        // Shiko se çfarë ndodh kur shtypet Enter
-        userInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                console.log('↵ [DEBUG] Enter u shtyp!');
-                console.log('📝 [DEBUG] Mesazhi:', this.value);
-            }
-        });
-    }
-}, 2000);
+    const testBtn = document.createElement('button');
+    testBtn.textContent = '🎯 TEST BUTTON';
+    testBtn.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px;
+        background: red;
+        color: white;
+        font-size: 20px;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        z-index: 9999;
+    `;
+    
+    testBtn.onclick = () => {
+        alert('🎯 TEST BUTTON CLICKED!');
+        console.log('✅ Test button clicked!');
+    };
+    
+    document.body.appendChild(testBtn);
+    console.log('✅ Test button added to body');
+    
+}, 1000);
+
+console.log('🎯 [SIMPLE-TEST] Code executed!');
 
 // ======================================================
 // 🎯 BRIDGE LOADER I PLOTË - RRUFEJA 347
