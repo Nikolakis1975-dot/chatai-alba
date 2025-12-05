@@ -6,106 +6,48 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
 
-console.log('🚀 RRUFE-TESLA: Database System Initializing...');
-console.log('🌍 Environment:', process.env.NODE_ENV || 'development');
+// Krijo drejtorinë data nëse nuk ekziston
+const dataDir = path.join(__dirname, 'data');
+if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+    console.log('✅ U krijua drejtoria data/');
+}
 
-// ==================== ✅ FIX PËR DIGITALOCEAN APPS ====================
+// ==================== ✅ SIMPLE FIX FOR DIGITALOCEAN ====================
 
-// Përcakto rrugën e databazës për DigitalOcean Apps
+// Përcakto rrugën e databazës
 let dbPath;
 
-// NË DIGITALOCEAN APPS, përdor /tmp/ me backup automatik
 if (process.env.NODE_ENV === 'production') {
-    // ✅ PËR DIGITALOCEAN APPS: /tmp/ është i vetmi vend i shkruajtshëm
+    // ✅ NË DIGITALOCEAN: Përdor /tmp/ (e vetmja opsion)
     dbPath = '/tmp/chat.db';
-    console.log('🚀 DIGITALOCEAN APPS: Database në /tmp/chat.db');
-    console.log('⚠️  KUJDES: /tmp/ mund të fshihet pas rindezjeve');
+    console.log('🚀 DIGITALOCEAN: Database në /tmp/chat.db');
     
 } else {
-    // Në development lokal
+    // Në development
     const devDataDir = path.join(__dirname, 'data');
     if (!fs.existsSync(devDataDir)) {
         fs.mkdirSync(devDataDir, { recursive: true });
-        console.log('✅ U krijua drejtoria e zhvillimit:', devDataDir);
+        console.log('✅ U krijua drejtoria data/');
     }
     
     dbPath = path.join(devDataDir, 'chat.db');
     console.log('🔧 DEVELOPMENT: Database në:', dbPath);
 }
 
-console.log(`🗄️  Rruga përfundimtare e databazës: ${dbPath}`);
-
-// ==================== ✅ SISTEM BACKUP AUTOMATIK ====================
-
-// Krijo një sistem backup automatik për DigitalOcean Apps
-function setupAutoBackup() {
-    console.log('💾 Duke konfiguruar sistemin e backup automatik...');
-    
-    // Backup çdo 1 orë (3600000 ms)
-    setInterval(() => {
-        const backupDir = '/tmp/chat-backups';
-        if (!fs.existsSync(backupDir)) {
-            try {
-                fs.mkdirSync(backupDir, { recursive: true });
-            } catch (err) {
-                console.error('❌ Nuk mund të krijohet backup directory:', err.message);
-                return;
-            }
-        }
-        
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        const backupPath = path.join(backupDir, `chat-backup-${timestamp}.db`);
-        
-        // Krijo backup
-        db.backup(backupPath, (err) => {
-            if (err) {
-                console.error('❌ Backup failed:', err.message);
-            } else {
-                try {
-                    const size = fs.statSync(backupPath).size;
-                    console.log(`✅ Backup created: ${backupPath} (${size} bytes)`);
-                } catch (statErr) {
-                    console.log(`✅ Backup created: ${backupPath}`);
-                }
-            }
-        });
-    }, 3600000); // 1 orë
-    
-    console.log('✅ Sistemi i backup automatik u konfigurua (çdo 1 orë)');
-}
+console.log(`🗄️  Rruga e databazës: ${dbPath}`);
 
 // Krijo një instance të re të bazës së të dhënave
 const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
     if (err) {
         console.error('❌ Gabim gjatë lidhjes me databazën:', err.message);
         console.error('❌ Detajet e gabimit:', err);
-        
-        // Provo të krijohet në vend tjetër
-        console.log('🔄 Duke provuar alternative path...');
-        const altPath = path.join(__dirname, 'chat-temp.db');
-        const altDb = new sqlite3.Database(altPath, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (altErr) => {
-            if (altErr) {
-                console.error('❌ Alternative database failed too');
-                process.exit(1);
-            }
-        });
+        process.exit(1); // Ndalo aplikacionin nëse nuk lidhet me databazën
     } else {
         console.log('✅ U lidhë me sukses me databazën SQLite.');
-        
-        // Verifiko lidhjen
-        db.get("SELECT 1 as test", (err, row) => {
-            if (err) {
-                console.error('❌ Test query failed:', err.message);
-            } else {
-                console.log('✅ Database connection test passed');
-                initializeDatabase();
-                setupAutoBackup();
-            }
-        });
+        initializeDatabase();
     }
 });
-
-// ==================== ✅ FUNKSIONE NDIHMËSE ====================
 
 // ✅ FUNKSION I KORRIGJUAR PËR TË SHTUAR KOLONËN UPDATED_AT
 function addUpdatedAtColumnToApiKeys() {
@@ -117,6 +59,7 @@ function addUpdatedAtColumnToApiKeys() {
             return;
         }
         
+        // ✅ KORRIGJIMI KRYESOR - trajto si array
         const columnNames = Array.isArray(columns) 
             ? columns.map(col => col.name) 
             : [];
@@ -126,12 +69,14 @@ function addUpdatedAtColumnToApiKeys() {
         if (!columnNames.includes('updated_at')) {
             console.log('🔄 Duke shtuar kolonën updated_at në tabelën ekzistuese...');
             
+            // ✅ KORRIGJIM: Përdor DEFAULT NULL në vend të CURRENT_TIMESTAMP
             db.run('ALTER TABLE api_keys ADD COLUMN updated_at DATETIME DEFAULT NULL', (err) => {
                 if (err) {
                     console.error('❌ Gabim në shtimin e kolonës updated_at:', err);
                 } else {
                     console.log('✅ Kolona updated_at u shtua me sukses në tabelën ekzistuese');
                     
+                    // ✅ PËRDITËSO REKORDET EKZISTUESE ME VLERËN E created_at
                     db.run('UPDATE api_keys SET updated_at = created_at WHERE updated_at IS NULL', (err) => {
                         if (err) {
                             console.error('❌ Gabim në përditësimin e vlerave:', err);
@@ -179,10 +124,9 @@ function addResponseColumnToMessages() {
     });
 }
 
-// ==================== ✅ INICIALIZIMI I DATABASE ====================
-
+// Funksioni për të inicializuar tabelat nëse nuk ekzistojnë
 function initializeDatabase() {
-    console.log('🔄 Duke inicializuar databazën RRUFE-TESLA 10.5...');
+    console.log('🔄 Duke inicializuar databazën...');
     
     // 🆕 TABELA E RE: SOUL PROFILES - RRUFE-TESLA 10.5
     db.run(`CREATE TABLE IF NOT EXISTS soul_profiles (
@@ -199,7 +143,7 @@ function initializeDatabase() {
         }
     });
     
-    // ✅ TABELA E PËRDORUESVE
+    // ✅ TABELA E PËRDORUESVE - VERSION I THJESHTUAR
     db.run(`CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE NOT NULL,
@@ -218,14 +162,13 @@ function initializeDatabase() {
         }
     });
 
-    // ✅ TABELA E API_KEYS
+    // ✅ TABELA E API_KEYS PA KOLONËN UPDATED_AT (DO E SHTOJME ME VONE)
     db.run(`CREATE TABLE IF NOT EXISTS api_keys (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
         api_key TEXT NOT NULL,
         service_name TEXT NOT NULL DEFAULT 'gemini',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT NULL,
         FOREIGN KEY (user_id) REFERENCES users (id)
     )`, (err) => {
         if (err) {
@@ -235,7 +178,7 @@ function initializeDatabase() {
         }
     });
 
-    // ✅ TABELA E MESAZHEVE
+    // ✅ TABELA E MESAZHEVE - ME KOLONËN RESPONSE
     db.run(`CREATE TABLE IF NOT EXISTS messages (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
@@ -252,48 +195,37 @@ function initializeDatabase() {
         }
     });
 
-    // ✅✅✅ TABELA E NJOHURIVE - KRYESORE
+    // Tabela e njohurive
     db.run(`CREATE TABLE IF NOT EXISTS knowledge_base (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
         question TEXT NOT NULL,
         answer TEXT NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        search_count INTEGER DEFAULT 0,
         FOREIGN KEY (user_id) REFERENCES users (id)
     )`, (err) => {
         if (err) {
             console.error('❌ Gabim në tabelën knowledge_base:', err);
         } else {
-            console.log('✅✅✅ Tabela knowledge_base u inicializua');
-            
-            // Krijo indeks për kërkim të shpejtë
-            db.run('CREATE INDEX IF NOT EXISTS idx_knowledge_user_question ON knowledge_base(user_id, question)', (indexErr) => {
-                if (indexErr) {
-                    console.error('❌ Gabim në krijimin e indeksit:', indexErr);
-                } else {
-                    console.log('✅ Indeksi për kërkim të shpejtë u krijua');
-                }
-            });
+            console.log('✅ Tabela knowledge_base u inicializua');
         }
     });
 
-    // 🆕 TABELA E RE: USER_KNOWLEDGE
-    db.run(`CREATE TABLE IF NOT EXISTS user_knowledge (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id TEXT NOT NULL,
-        knowledge_data TEXT NOT NULL,
-        version TEXT DEFAULT '1.0',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )`, (err) => {
-        if (err) {
-            console.error('❌ Gabim në tabelën user_knowledge:', err);
-        } else {
-            console.log('✅ Tabela user_knowledge u inicializua - Knowledge Distiller');
-        }
-    });
+// 🆕 TABELA E RE: USER_KNOWLEDGE - PËR KNOWLEDGE DISTILLER
+db.run(`CREATE TABLE IF NOT EXISTS user_knowledge (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    knowledge_data TEXT NOT NULL,
+    version TEXT DEFAULT '1.0',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`, (err) => {
+    if (err) {
+        console.error('❌ Gabim në tabelën user_knowledge:', err);
+    } else {
+        console.log('✅ Tabela user_knowledge u inicializua - Knowledge Distiller');
+    }
+});
 
     // Tabela e feedback-ut
     db.run(`CREATE TABLE IF NOT EXISTS feedback (
@@ -311,9 +243,9 @@ function initializeDatabase() {
         }
     });
 
-    console.log('✅ Inicializimi i databazës RRUFE-TESLA përfundoi!');
+    console.log('✅ Inicializimi i databazës përfundoi!');
     
-    // ✅ THIRRE FUNKSIONET PAS INICIALIZIMIT
+    // ✅ THIRRE FUNKSIONET PËR SHTIMIN E KOLONAVE PAS INICIALIZIMIT
     setTimeout(() => {
         addUpdatedAtColumnToApiKeys();
         addResponseColumnToMessages();
