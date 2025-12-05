@@ -2086,3 +2086,4 @@ async function showSystemStats() {
         addMessage("📊 **STATISTIKAT E SISTEMIT:**\n\n✅ Sistemi është online\n🔧 Funksionaliteti aktiv\n🛡️ Siguria e garantuar\n🚀 Performancë e qëndrueshme", "bot");
     }
 }
+
