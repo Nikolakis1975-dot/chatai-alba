@@ -1001,6 +1001,14 @@ async function processCommand(text) {
         const q = split[0].trim().toLowerCase();
         const a = split[1].trim();
         
+        // ✅ DEBUG: Shfaq user ID-në që përdoret
+        console.log('🔧 [/meso DEBUG] Duke ruajtur njohuri:');
+        console.log('- Pyetja:', q);
+        console.log('- Përgjigja:', a);
+        console.log('- currentUser:', currentUser);
+        console.log('- currentUser.id:', currentUser?.id);
+        console.log('- currentUser.username:', currentUser?.username);
+        
         try {
             const response = await fetch('/api/chat/knowledge', {
                 method: 'POST',
@@ -1016,13 +1024,29 @@ async function processCommand(text) {
             });
 
             const data = await response.json();
+            
+            // ✅ DEBUG: Shfaq përgjigjen nga serveri
+            console.log('📡 [/meso Response]:', data);
+            
             if (response.ok) {
-                // ✅ PËRDITËSO CACHE LOCAL
-                if (!window.knowledgeBase) window.knowledgeBase = {};
-                window.knowledgeBase[q] = a;
-                
-                console.log('💾 [KNOWLEDGE] U ruajt në cache lokal:', q, '→', a);
+                knowledgeBase[q] = a;
                 addMessage("✅ Mësova diçka të re!", "bot");
+                
+                // ✅ Testo menjëherë nëse është ruajtur
+                console.log('🧪 [/meso TEST] Duke testuar nëse u ruajt...');
+                setTimeout(() => {
+                    fetch(`/api/chat/knowledge/${currentUser.id}/${encodeURIComponent(q)}`)
+                        .then(r => r.json())
+                        .then(testData => {
+                            console.log('📊 Test result:', testData);
+                            if (testData.answer) {
+                                console.log('✅✅✅ CONFIRMED: Data saved and retrievable!');
+                            } else {
+                                console.log('❌❌❌ PROBLEM: Data saved but not retrievable!');
+                            }
+                        });
+                }, 1000);
+                
             } else {
                 addMessage("⚠️ Gabim gjatë ruajtjes së njohurive: " + data.error, "bot");
             }
