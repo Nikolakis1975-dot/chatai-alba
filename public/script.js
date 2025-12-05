@@ -1104,23 +1104,45 @@ case "/perkthim":
             break;
 
         case "/moti":
-            if (parts.length < 2) {
-                addMessage("⚠️ Përdorimi: /moti [qyteti]", "bot");
-            } else {
-                const qyteti = parts.slice(1).join(" ");
-                showTypingIndicator();
-                fetch(`https://wttr.in/${encodeURIComponent(qyteti)}?format=%c+%t+%w+%h`)
-                    .then(res => res.text())
-                    .then(data => {
-                        removeTypingIndicator();
-                        addMessage("🌍 Moti në " + qyteti + ": " + data, "bot");
-                    })
-                    .catch(() => {
-                        removeTypingIndicator();
-                        addMessage("⚠️ Gabim gjatë marrjes së motit.", "bot");
-                    });
-            }
-            break;
+    showTypingIndicator();
+    const city = args.trim();
+    
+    console.log('🌍 [MOTI-DEBUG] Duke kërkuar motin për:', city);
+    
+    if (!city) {
+        removeTypingIndicator();
+        addMessage("⚠️ Specifiko një qytet (p.sh. /moti Tiranë)", "bot");
+        break;
+    }
+    
+    try {
+        // Provo të gjitha API-t e mundshme
+        const apis = [
+            `https://wttr.in/${encodeURIComponent(city)}?format=%C+%t+%w+%h&lang=sq`,
+            `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=YOUR_API_KEY&units=metric&lang=sq`,
+            `https://goweather.herokuapp.com/weather/${encodeURIComponent(city)}`
+        ];
+        
+        console.log('🔗 Duke provuar API-t:', apis[0]);
+        
+        const response = await fetch(apis[0], { timeout: 5000 });
+        
+        if (response.ok) {
+            const data = await response.text();
+            console.log('✅ API response:', data);
+            removeTypingIndicator();
+            addMessage(`🌍 Moti në ${city}: ${data}`, "bot");
+        } else {
+            console.log('❌ API error:', response.status);
+            removeTypingIndicator();
+            addMessage("⚠️ Nuk mund të merret informacioni i motit për momentin.", "bot");
+        }
+    } catch (error) {
+        console.error('❌ Gabim në /moti:', error.message);
+        removeTypingIndicator();
+        addMessage("⚠️ Gabim në lidhje me shërbimin e motit.", "bot");
+    }
+    break;
 
         case "/apikey":
             if (parts.length < 2) {
