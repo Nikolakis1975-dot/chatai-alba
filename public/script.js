@@ -1,3 +1,41 @@
+// ==================== 🔍 USER ID DEBUG ====================
+
+console.log('🔍 [USER-DEBUG] Duke kontrolluar user ID...');
+
+// Funksion për të shfaqur user ID-në aktuale
+function showCurrentUser() {
+    console.log('👤 currentUser objekt:', window.currentUser);
+    console.log('👤 currentUser.id:', window.currentUser?.id);
+    console.log('👤 currentUser.username:', window.currentUser?.username);
+    console.log('👤 typeof currentUser.id:', typeof window.currentUser?.id);
+    
+    // Krijo një buton për të testuar
+    const debugBtn = document.createElement('button');
+    debugBtn.textContent = '👤 Debug User';
+    debugBtn.style.cssText = `
+        position: fixed;
+        bottom: 70px;
+        right: 20px;
+        padding: 10px 15px;
+        background: #34a853;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        z-index: 9998;
+    `;
+    
+    debugBtn.onclick = () => {
+        alert(`Current User Info:\n\nID: ${window.currentUser?.id}\nUsername: ${window.currentUser?.username}\n\nTest URL: /api/chat/knowledge/${window.currentUser?.id}/test`);
+    };
+    
+    document.body.appendChild(debugBtn);
+    console.log('✅ Debug button added');
+}
+
+// Ekzekuto pas 2 sekondash
+setTimeout(showCurrentUser, 2000);
+
 // ======================================================
 // 🎯 BRIDGE LOADER I PLOTË - RRUFE TESLA 10.5
 // ======================================================
