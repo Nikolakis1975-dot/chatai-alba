@@ -1,3 +1,152 @@
+// ==================== 🔧 KNOWLEDGE FIX - SIMPLE ====================
+// RRUFE-TESLA Knowledge System Fix
+// Date: $(new Date().toISOString())
+
+console.log('🎯 [KNOWLEDGE-FIX] Activating knowledge system...');
+
+// 1. Funksioni për të kontrolluar njohuritë
+window.checkKnowledge = async function(message) {
+    console.log('🔍 [KNOWLEDGE] Checking for:', message);
+    
+    try {
+        // Gjej user ID
+        let userId = 1; // Default
+        if (window.currentUser && window.currentUser.id) {
+            userId = window.currentUser.id;
+        }
+        
+        console.log('👤 Using user ID:', userId);
+        
+        // Kontrollo në database
+        const response = await fetch(`/api/chat/knowledge/${userId}/${encodeURIComponent(message.toLowerCase().trim())}`);
+        const data = await response.json();
+        
+        console.log('📊 API Response:', data);
+        
+        if (data.answer) {
+            console.log('✅✅✅ KNOWLEDGE FOUND!');
+            return data.answer;
+        }
+        
+        console.log('❌ No knowledge found');
+        return null;
+        
+    } catch (error) {
+        console.log('⚠️ Knowledge check error:', error.message);
+        return null;
+    }
+};
+
+// 2. MBIVENDOS PROCESIMIN E MESAZHEVE
+function overrideMessageProcessing() {
+    console.log('⚙️ [OVERRIDE] Hooking into message system...');
+    
+    // Kontrollo nëse sendMessage ekziston
+    if (typeof window.sendMessage !== 'function') {
+        console.log('⚠️ sendMessage not found, trying other methods...');
+        
+        // Provo me send button
+        const sendBtn = document.getElementById('send-btn');
+        if (sendBtn) {
+            console.log('✅ Found send button');
+            
+            const originalClick = sendBtn.onclick;
+            
+            sendBtn.onclick = async function(e) {
+                const input = document.getElementById('user-input');
+                const message = input?.value?.trim();
+                
+                if (!message) {
+                    if (originalClick) return originalClick.call(this, e);
+                    return;
+                }
+                
+                console.log('💬 User wrote:', message);
+                
+                // Skip komandat
+                if (message.startsWith('/')) {
+                    console.log('🔧 It\'s a command');
+                    if (originalClick) return originalClick.call(this, e);
+                    return;
+                }
+                
+                // Kontrollo njohuritë
+                const knowledgeAnswer = await window.checkKnowledge(message);
+                
+                if (knowledgeAnswer) {
+                    console.log('🎯 Using knowledge answer');
+                    
+                    // Shto mesazhin e përdoruesit
+                    if (typeof addMessage === 'function') {
+                        addMessage(message, 'user');
+                    }
+                    
+                    // Shto përgjigjen nga knowledge
+                    setTimeout(() => {
+                        if (typeof addMessage === 'function') {
+                            addMessage(`💾 **Përgjigje e ruajtur:** ${knowledgeAnswer}`, 'bot');
+                        }
+                    }, 300);
+                    
+                    // Pastro input
+                    if (input) input.value = '';
+                    return;
+                }
+                
+                console.log('🤖 No knowledge, sending to AI');
+                if (originalClick) return originalClick.call(this, e);
+            };
+            
+            console.log('✅ Send button overridden!');
+        }
+    } else {
+        console.log('✅ sendMessage function exists');
+    }
+}
+
+// 3. INICIALIZO
+setTimeout(() => {
+    console.log('🚀 Initializing...');
+    overrideMessageProcessing();
+    
+    // Testo sistemin
+    console.log('🧪 Testing system...');
+    console.log('- checkKnowledge function:', typeof window.checkKnowledge);
+    console.log('- currentUser:', window.currentUser);
+    console.log('- currentUser.id:', window.currentUser?.id);
+    
+    // Shto buton test
+    const testBtn = document.createElement('button');
+    testBtn.textContent = '🎯 Test Knowledge';
+    testBtn.style.cssText = `
+        position: fixed;
+        bottom: 70px;
+        right: 20px;
+        padding: 10px 15px;
+        background: #34a853;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        z-index: 9999;
+    `;
+    
+    testBtn.onclick = async () => {
+        console.log('🧪🧪🧪 MANUAL TEST 🧪🧪🧪');
+        const answer = await window.checkKnowledge('si shkoj puna sot?');
+        console.log('Test result:', answer);
+        if (answer) {
+            alert(`✅ KNOWLEDGE FOUND:\n\n${answer}`);
+        } else {
+            alert('❌ No knowledge found');
+        }
+    };
+    
+    document.body.appendChild(testBtn);
+    console.log('✅ Test button added');
+    
+}, 2000);
+
 // ======================================================
 // 🎯 BRIDGE LOADER I PLOTË - RRUFE TESLA 10.5
 // ======================================================
