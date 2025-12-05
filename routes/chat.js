@@ -353,80 +353,87 @@ router.get('/knowledge/:userId/:question', (req, res) => {
     const { userId, question } = req.params;
     const searchText = decodeURIComponent(question).toLowerCase().trim();
     
-    console.log('🔍 [KNOWLEDGE-DEBUG] Duke kërkuar:');
-    console.log('- User ID:', userId);
-    console.log('- Search text:', searchText);
-    console.log('- Search text length:', searchText.length);
+    console.log('🎯 [KNOWLEDGE-FINAL] Duke kërkuar:');
+    console.log('- User:', userId);
+    console.log('- Kërkuar:', searchText);
+    console.log('- Length:', searchText.length);
     
-    // 1. Së pari, shfaq të gjitha të dhënat për këtë user
-    db.all('SELECT * FROM knowledge_base WHERE user_id = ?', [userId], (err, allRows) => {
-        if (err) {
-            console.error('❌ Error getting all data:', err);
-            return res.json({ success: true, answer: null });
-        }
-        
-        console.log(`📊 User ${userId} ka ${allRows.length} njohuri:`);
-        
-        // Shfaq të gjitha pyetjet
-        allRows.forEach((row, index) => {
-            console.log(`${index + 1}. "${row.question}" -> "${row.answer}"`);
-            console.log(`   Lowercase: "${row.question.toLowerCase().trim()}"`);
-            console.log(`   Match me "${searchText}": ${row.question.toLowerCase().trim() === searchText ? '✅' : '❌'}`);
-        });
-        
-        // 2. Provo të gjitha metodat e kërkimit
-        
-        // Metoda 1: Exact match
-        db.get(
-            'SELECT answer FROM knowledge_base WHERE user_id = ? AND LOWER(TRIM(question)) = ?',
-            [userId, searchText],
-            (err, exactRow) => {
-                console.log('\n🧪 Metoda 1 (Exact match):');
-                console.log('- SQL:', 'SELECT answer FROM knowledge_base WHERE user_id = ? AND LOWER(TRIM(question)) = ?');
-                console.log('- Params:', [userId, searchText]);
-                console.log('- Error:', err);
-                console.log('- Result:', exactRow);
-                
-                if (exactRow && exactRow.answer) {
-                    console.log('✅✅✅ GJETËM ME EXACT MATCH!');
-                    return res.json({ success: true, answer: exactRow.answer });
-                }
-                
-                // Metoda 2: LIKE search
-                db.get(
-                    'SELECT answer FROM knowledge_base WHERE user_id = ? AND LOWER(question) LIKE ?',
-                    [userId, '%' + searchText + '%'],
-                    (err, likeRow) => {
-                        console.log('\n🧪 Metoda 2 (LIKE):');
-                        console.log('- SQL:', 'SELECT answer FROM knowledge_base WHERE user_id = ? AND LOWER(question) LIKE ?');
-                        console.log('- Params:', [userId, '%' + searchText + '%']);
-                        console.log('- Error:', err);
-                        console.log('- Result:', likeRow);
-                        
-                        if (likeRow && likeRow.answer) {
-                            console.log('✅✅✅ GJETËM ME LIKE!');
-                            return res.json({ success: true, answer: likeRow.answer });
-                        }
-                        
-                        // Metoda 3: Kërko manualisht
-                        console.log('\n🧪 Metoda 3 (Manual search):');
-                        for (const row of allRows) {
-                            const dbQuestion = row.question.toLowerCase().trim();
-                            
-                            if (dbQuestion.includes(searchText) || searchText.includes(dbQuestion)) {
-                                console.log(`✅ Gjetëm match manual: "${dbQuestion}" me "${searchText}"`);
-                                console.log(`   Përgjigja: ${row.answer}`);
-                                return res.json({ success: true, answer: row.answer });
-                            }
-                        }
-                        
-                        console.log('❌❌❌ TË GJITHA METODAT DËSHTUAN!');
-                        res.json({ success: true, answer: null, debug: 'no_match' });
-                    }
-                );
+    // 1. Provo EXACT MATCH së pari
+    db.get(
+        `SELECT answer FROM knowledge_base 
+         WHERE user_id = ? 
+         AND LOWER(TRIM(question)) = ?`,
+        [userId, searchText],
+        (err, row) => {
+            if (err) {
+                console.error('❌ Exact match error:', err);
+                return res.json({ success: true, answer: null });
             }
-        );
-    });
+            
+            if (row && row.answer) {
+                console.log('✅✅✅ EXACT MATCH SUCCESS!');
+                console.log('- Answer:', row.answer);
+                return res.json({ success: true, answer: row.answer });
+            }
+            
+            console.log('❌ Exact match failed');
+            
+            // 2. Provo me LIKE
+            db.get(
+                `SELECT answer FROM knowledge_base 
+                 WHERE user_id = ? 
+                 AND LOWER(question) LIKE ?`,
+                [userId, '%' + searchText + '%'],
+                (err, likeRow) => {
+                    if (err) {
+                        console.error('❌ LIKE error:', err);
+                        return res.json({ success: true, answer: null });
+                    }
+                    
+                    if (likeRow && likeRow.answer) {
+                        console.log('✅✅✅ LIKE MATCH SUCCESS!');
+                        console.log('- Answer:', likeRow.answer);
+                        return res.json({ success: true, answer: likeRow.answer });
+                    }
+                    
+                    console.log('❌ LIKE match failed');
+                    
+                    // 3. SHFAQ TË GJITHA TË DHËNAT PËR DEBUG
+                    db.all(
+                        'SELECT * FROM knowledge_base WHERE user_id = ?',
+                        [userId],
+                        (err, allRows) => {
+                            if (err) {
+                                console.error('❌ Get all error:', err);
+                                return res.json({ success: true, answer: null });
+                            }
+                            
+                            console.log(`📊 DEBUG - ${allRows.length} rows total:`);
+                            
+                            allRows.forEach((item, index) => {
+                                const dbQuestion = item.question.toLowerCase().trim();
+                                console.log(`${index + 1}. DB: "${dbQuestion}"`);
+                                console.log(`   Search: "${searchText}"`);
+                                console.log(`   Match: ${dbQuestion === searchText ? '✅ EXACT' : '❌ NO'}`);
+                                console.log(`   Contains: ${dbQuestion.includes(searchText) ? '✅ DB contains SEARCH' : searchText.includes(dbQuestion) ? '✅ SEARCH contains DB' : '❌ NO'}`);
+                                console.log('   ---');
+                            });
+                            
+                            res.json({ 
+                                success: true, 
+                                answer: null,
+                                debug: {
+                                    total_rows: allRows.length,
+                                    searched_for: searchText,
+                                    available_questions: allRows.map(r => r.question)
+                                }
+                            });
+                        }
+                    );
+                }
+            );
+        }
+    );
 });
 
 // ===================================== ✅ KODI EKZISTUES - EKSPORTO NJOHURITË =====================================
