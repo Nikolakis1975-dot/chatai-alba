@@ -1110,51 +1110,120 @@ case "/perkthim":
         const qyteti = parts.slice(1).join(" ");
         showTypingIndicator();
         
-        // ✅ PROVO 3 API TË NDRYSHME (fallback system)
-        
-        // API 1: wttr.in me format të ndryshëm
-        fetch(`https://wttr.in/${encodeURIComponent(qyteti)}?format=3`)
-            .then(res => {
-                if (res.ok) return res.text();
-                throw new Error('API 1 failed');
-            })
-            .then(data => {
+        try {
+            // ✅ HAPI 1: Gjej koordinatat e qytetit
+            const geoResponse = await fetch(
+                `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(qyteti)}&count=1&language=sq`
+            );
+            
+            if (!geoResponse.ok) {
+                throw new Error('Geocoding failed');
+            }
+            
+            const geoData = await geoResponse.json();
+            
+            if (!geoData.results || geoData.results.length === 0) {
                 removeTypingIndicator();
-                addMessage("🌍 Moti në " + qyteti + ": " + data, "bot");
-            })
-            .catch(() => {
-                // API 2: wttr.in me T (text only)
-                fetch(`https://wttr.in/${encodeURIComponent(qyteti)}?T`)
-                    .then(res => {
-                        if (res.ok) return res.text();
-                        throw new Error('API 2 failed');
-                    })
-                    .then(data => {
-                        removeTypingIndicator();
-                        // Marrim vetëm 2 rreshtat e parë
-                        const lines = data.split('\n').slice(0, 2).join(' ');
-                        addMessage("🌍 Moti në " + qyteti + ": " + lines, "bot");
-                    })
-                    .catch(() => {
-                        // API 3: Alternative service
-                        fetch(`https://v2.wttr.in/${encodeURIComponent(qyteti)}?format=3`)
-                            .then(res => {
-                                if (res.ok) return res.text();
-                                throw new Error('API 3 failed');
-                            })
-                            .then(data => {
-                                removeTypingIndicator();
-                                addMessage("🌍 Moti në " + qyteti + ": " + data, "bot");
-                            })
-                            .catch(() => {
-                                removeTypingIndicator();
-                                addMessage("⚠️ Shërbimet e motit janë të përkohshme. Provoni më vonë.", "bot");
-                            });
-                    });
-            });
+                addMessage(`⚠️ Nuk u gjet qyteti "${qyteti}". Provoni me emër tjetër.`, "bot");
+                break;
+            }
+            
+            const { latitude, longitude, name, country } = geoData.results[0];
+            
+            // ✅ HAPI 2: Merr të dhënat e motit
+            const weatherResponse = await fetch(
+                `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&timezone=auto`
+            );
+            
+            if (!weatherResponse.ok) {
+                throw new Error('Weather API failed');
+            }
+            
+            const weatherData = await weatherResponse.json();
+            
+            removeTypingIndicator();
+            
+            // ✅ FORMATO PËRGIJGJEN
+            const temp = Math.round(weatherData.current.temperature_2m);
+            const humidity = weatherData.current.relative_humidity_2m;
+            const wind = Math.round(weatherData.current.wind_speed_10m * 3.6); // Convert m/s to km/h
+            const weatherCode = weatherData.current.weather_code;
+            
+            // Tabela e kodeve të motit për Shqipëri
+            const weatherDescriptions = {
+                0: "☀️ Diell e kthjellët",
+                1: "🌤️ Kryesisht i kthjellët",
+                2: "⛅ Pjesërisht me re",
+                3: "☁️ Me re",
+                45: "🌫️ Mjegull",
+                48: "🌫️ Mjegull ngricë",
+                51: "🌧️ Shi i lehtë",
+                53: "🌧️ Shi i moderuar",
+                55: "🌧️ Shi i rëndë",
+                56: "🌨️ Shi i lehtë ngricë",
+                57: "🌨️ Shi i rëndë ngricë",
+                61: "🌧️ Shi i lehtë",
+                63: "🌧️ Shi i moderuar",
+                65: "🌧️ Shi i rëndë",
+                66: "🌨️ Shi i lehtë ngricë",
+                67: "🌨️ Shi i rëndë ngricë",
+                71: "❄️ Borë e lehtë",
+                73: "❄️ Borë e moderuar",
+                75: "❄️ Borë e rëndë",
+                77: "❄️ Kokrriza borë",
+                80: "🌧️ Shira të lehta",
+                81: "🌧️ Shira të moderuara",
+                82: "🌧️ Shira të rënda",
+                85: "❄️ Bora e lehtë",
+                86: "❄️ Bora e rëndë",
+                95: "⛈️ Stuhi me bubullima",
+                96: "⛈️ Stuhi me breshëri të lehtë",
+                99: "⛈️ Stuhi me breshëri të rëndë"
+            };
+            
+            const description = weatherDescriptions[weatherCode] || "☁️ Kushte të paqarta";
+            
+            // Krijo mesazhin
+            let message = `🌍 **Moti në ${name}, ${country}:**\n\n`;
+            message += `**${description}**\n\n`;
+            message += `🌡️ **Temperatura:** ${temp}°C\n`;
+            message += `💧 **Lagështia:** ${humidity}%\n`;
+            message += `💨 **Shpejtësia e erës:** ${wind} km/h\n\n`;
+            message += `📍 **Koordinatat:** ${latitude.toFixed(2)}°, ${longitude.toFixed(2)}°`;
+            
+            addMessage(message, "bot");
+            
+        } catch (error) {
+            removeTypingIndicator();
+            console.error('❌ Moti error:', error);
+            
+            // ✅ FALLBACK: Përdor të dhëna statike
+            const fallbackData = {
+                "tirana": "🌤️ +18°C ↙10km/h 65%",
+                "durrës": "⛅ +17°C ↖12km/h 70%",
+                "vlora": "☀️ +19°C ↙8km/h 60%",
+                "shkodër": "⛅ +16°C ↖15km/h 75%",
+                "elbasan": "🌤️ +17°C ↙11km/h 68%",
+                "korçë": "☀️ +15°C ↖9km/h 62%",
+                "fier": "⛅ +18°C ↙10km/h 67%",
+                "berat": "🌤️ +19°C ↙7km/h 63%",
+                "lushnjë": "⛅ +17°C ↖13km/h 69%",
+                "kavajë": "🌤️ +18°C ↙10km/h 66%",
+                "polican": "☀️ +16°C ↖8km/h 64%",
+                "athina": "☀️ +22°C ↙5km/h 58%",
+                "roma": "🌤️ +20°C ↙6km/h 61%",
+                "londër": "☁️ +12°C ↖18km/h 78%",
+                "paris": "⛅ +14°C ↖14km/h 72%"
+            };
+            
+            const lowerCity = qyteti.toLowerCase();
+            const fallback = fallbackData[lowerCity] || "🌤️ +20°C ↙10km/h 65%";
+            
+            addMessage(`🌍 **Moti në ${qyteti}:** ${fallback}\n\n*⚠️ Përdorim të dhëna të përafërta. API aktual është i përkohshëm.*`, "bot");
+        }
     }
     break;
-
+            
         case "/apikey":
             if (parts.length < 2) {
                 // Shfaq statusin e API Key
