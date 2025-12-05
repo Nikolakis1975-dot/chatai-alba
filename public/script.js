@@ -1104,23 +1104,56 @@ case "/perkthim":
             break;
 
         case "/moti":
-            if (parts.length < 2) {
-                addMessage("⚠️ Përdorimi: /moti [qyteti]", "bot");
-            } else {
-                const qyteti = parts.slice(1).join(" ");
-                showTypingIndicator();
-                fetch(`https://wttr.in/${encodeURIComponent(qyteti)}?format=%c+%t+%w+%h`)
-                    .then(res => res.text())
+    if (parts.length < 2) {
+        addMessage("⚠️ Përdorimi: /moti [qyteti]", "bot");
+    } else {
+        const qyteti = parts.slice(1).join(" ");
+        showTypingIndicator();
+        
+        // ✅ PROVO 3 API TË NDRYSHME (fallback system)
+        
+        // API 1: wttr.in me format të ndryshëm
+        fetch(`https://wttr.in/${encodeURIComponent(qyteti)}?format=3`)
+            .then(res => {
+                if (res.ok) return res.text();
+                throw new Error('API 1 failed');
+            })
+            .then(data => {
+                removeTypingIndicator();
+                addMessage("🌍 Moti në " + qyteti + ": " + data, "bot");
+            })
+            .catch(() => {
+                // API 2: wttr.in me T (text only)
+                fetch(`https://wttr.in/${encodeURIComponent(qyteti)}?T`)
+                    .then(res => {
+                        if (res.ok) return res.text();
+                        throw new Error('API 2 failed');
+                    })
                     .then(data => {
                         removeTypingIndicator();
-                        addMessage("🌍 Moti në " + qyteti + ": " + data, "bot");
+                        // Marrim vetëm 2 rreshtat e parë
+                        const lines = data.split('\n').slice(0, 2).join(' ');
+                        addMessage("🌍 Moti në " + qyteti + ": " + lines, "bot");
                     })
                     .catch(() => {
-                        removeTypingIndicator();
-                        addMessage("⚠️ Gabim gjatë marrjes së motit.", "bot");
+                        // API 3: Alternative service
+                        fetch(`https://v2.wttr.in/${encodeURIComponent(qyteti)}?format=3`)
+                            .then(res => {
+                                if (res.ok) return res.text();
+                                throw new Error('API 3 failed');
+                            })
+                            .then(data => {
+                                removeTypingIndicator();
+                                addMessage("🌍 Moti në " + qyteti + ": " + data, "bot");
+                            })
+                            .catch(() => {
+                                removeTypingIndicator();
+                                addMessage("⚠️ Shërbimet e motit janë të përkohshme. Provoni më vonë.", "bot");
+                            });
                     });
-            }
-            break;
+            });
+    }
+    break;
 
         case "/apikey":
             if (parts.length < 2) {
