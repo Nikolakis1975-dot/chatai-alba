@@ -1,5 +1,5 @@
 // ======================================================
-// 🎯 BRIDGE LOADER I PLOTË - RRUFE TESLA 10.5
+// 🎯 BRIDGE LOADER I PLOTË - RRUFEJA 347
 // ======================================================
 
 console.log('🔍 Duke inicializuar Bridge System për browser...');
@@ -958,67 +958,39 @@ async function processCommand(text) {
     break;
 
         case "/meso":
-    const split = text.replace("/meso", "").split("|");
-    if (split.length === 2) {
-        const q = split[0].trim().toLowerCase();
-        const a = split[1].trim();
-        
-        // ✅ DEBUG: Shfaq user ID-në që përdoret
-        console.log('🔧 [/meso DEBUG] Duke ruajtur njohuri:');
-        console.log('- Pyetja:', q);
-        console.log('- Përgjigja:', a);
-        console.log('- currentUser:', currentUser);
-        console.log('- currentUser.id:', currentUser?.id);
-        console.log('- currentUser.username:', currentUser?.username);
-        
-        try {
-            const response = await fetch('/api/chat/knowledge', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'include',
-                body: JSON.stringify({
-                    userId: currentUser.id,
-                    question: q,
-                    answer: a
-                })
-            });
+            const split = text.replace("/meso", "").split("|");
+            if (split.length === 2) {
+                const q = split[0].trim().toLowerCase();
+                const a = split[1].trim();
+                
+                try {
+                    const response = await fetch('/api/chat/knowledge', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify({
+                            userId: currentUser.id,
+                            question: q,
+                            answer: a
+                        })
+                    });
 
-            const data = await response.json();
-            
-            // ✅ DEBUG: Shfaq përgjigjen nga serveri
-            console.log('📡 [/meso Response]:', data);
-            
-            if (response.ok) {
-                knowledgeBase[q] = a;
-                addMessage("✅ Mësova diçka të re!", "bot");
-                
-                // ✅ Testo menjëherë nëse është ruajtur
-                console.log('🧪 [/meso TEST] Duke testuar nëse u ruajt...');
-                setTimeout(() => {
-                    fetch(`/api/chat/knowledge/${currentUser.id}/${encodeURIComponent(q)}`)
-                        .then(r => r.json())
-                        .then(testData => {
-                            console.log('📊 Test result:', testData);
-                            if (testData.answer) {
-                                console.log('✅✅✅ CONFIRMED: Data saved and retrievable!');
-                            } else {
-                                console.log('❌❌❌ PROBLEM: Data saved but not retrievable!');
-                            }
-                        });
-                }, 1000);
-                
+                    const data = await response.json();
+                    if (response.ok) {
+                        knowledgeBase[q] = a;
+                        addMessage("✅ Mësova diçka të re!", "bot");
+                    } else {
+                        addMessage("⚠️ Gabim gjatë ruajtjes së njohurive: " + data.error, "bot");
+                    }
+                } catch (error) {
+                    addMessage("⚠️ Gabim gjatë ruajtjes së njohurive.", "bot");
+                }
             } else {
-                addMessage("⚠️ Gabim gjatë ruajtjes së njohurive: " + data.error, "bot");
+                addMessage("⚠️ Përdorimi: /meso pyetje | përgjigje", "bot");
             }
-        } catch (error) {
-            addMessage("⚠️ Gabim gjatë ruajtjes së njohurive.", "bot");
-        }
-    } else {
-        addMessage("⚠️ Përdorimi: /meso pyetje | përgjigje", "bot");
-    }
-    break;
+            break;
 
         case "/wiki":
             const query = parts.slice(1).join(" ");
@@ -2114,3 +2086,4 @@ async function showSystemStats() {
         addMessage("📊 **STATISTIKAT E SISTEMIT:**\n\n✅ Sistemi është online\n🔧 Funksionaliteti aktiv\n🛡️ Siguria e garantuar\n🚀 Performancë e qëndrueshme", "bot");
     }
 }
+
