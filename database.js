@@ -1,7 +1,3 @@
-// =================================================
-// ✅ DATABASE RRUFE TESLA 10.5
-// =================================================
-
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
@@ -13,27 +9,10 @@ if (!fs.existsSync(dataDir)) {
     console.log('✅ U krijua drejtoria data/');
 }
 
-// ==================== ✅ SIMPLE FIX FOR DIGITALOCEAN ====================
-
-// Përcakto rrugën e databazës
-let dbPath;
-
-if (process.env.NODE_ENV === 'production') {
-    // ✅ NË DIGITALOCEAN: Përdor /tmp/ (e vetmja opsion)
-    dbPath = '/tmp/chat.db';
-    console.log('🚀 DIGITALOCEAN: Database në /tmp/chat.db');
-    
-} else {
-    // Në development
-    const devDataDir = path.join(__dirname, 'data');
-    if (!fs.existsSync(devDataDir)) {
-        fs.mkdirSync(devDataDir, { recursive: true });
-        console.log('✅ U krijua drejtoria data/');
-    }
-    
-    dbPath = path.join(devDataDir, 'chat.db');
-    console.log('🔧 DEVELOPMENT: Database në:', dbPath);
-}
+// Përdor /tmp/ për Render.com, data/ për development
+const dbPath = process.env.NODE_ENV === 'production' 
+    ? '/tmp/chat.db'
+    : path.join(__dirname, 'data', 'chat.db');
 
 console.log(`🗄️  Rruga e databazës: ${dbPath}`);
 
