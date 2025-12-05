@@ -1065,50 +1065,16 @@ async function processCommand(text) {
             } else {
                 const qyteti = parts.slice(1).join(" ");
                 showTypingIndicator();
-                fetch(`/api/chat/weather/${encodeURIComponent(qyteti)}`)
-    .then(res => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-    })
-    .then(data => {
-        removeTypingIndicator();
-        
-        if (data.success) {
-            let message = `🌍 **Moti në ${data.city}:**\n\n`;
-            message += `**${data.description}**\n\n`;
-            message += `🌡️ **Temperatura:** ${data.temperature}°C\n`;
-            message += `💧 **Lagështia:** ${data.humidity}%\n`;
-            message += `💨 **Era:** ${data.windSpeed} km/h\n`;
-            
-            if (data.fallback) {
-                message += `\n⚠️ *${data.message}*`;
-            }
-            
-            addMessage(message, "bot");
-        } else {
-            addMessage(`⚠️ ${data.error || 'Gabim në marrjen e motit'}`, "bot");
-        }
-    })
-    .catch(error => {
-        removeTypingIndicator();
-        console.error('Weather error:', error);
-        
-        // Fallback me të dhëna statike
-        const fallbackData = {
-            "tirana": "🌤️ +18°C ↙10km/h 65%",
-            "durrës": "⛅ +17°C ↖12km/h 70%",
-            "vlora": "☀️ +19°C ↙8km/h 60%",
-            "shkodër": "⛅ +16°C ↖15km/h 75%",
-            "athina": "☀️ +22°C ↙5km/h 58%",
-            "roma": "🌤️ +20°C ↙6km/h 61%",
-            "polican": "☀️ +16°C ↖8km/h 64%"
-        };
-        
-        const lowerCity = qyteti.toLowerCase();
-        const fallback = fallbackData[lowerCity] || "🌤️ +20°C ↙10km/h 65%";
-        
-        addMessage(`🌍 **Moti në ${qyteti}:** ${fallback}\n\n*⚠️ API wttr.in është i përkohshëm.*`, "bot");
-             });
+                fetch(`https://wttr.in/${encodeURIComponent(qyteti)}?format=%c+%t+%w+%h`)
+                    .then(res => res.text())
+                    .then(data => {
+                        removeTypingIndicator();
+                        addMessage("🌍 Moti në " + qyteti + ": " + data, "bot");
+                    })
+                    .catch(() => {
+                        removeTypingIndicator();
+                        addMessage("⚠️ Gabim gjatë marrjes së motit.", "bot");
+                    });
             }
             break;
 
