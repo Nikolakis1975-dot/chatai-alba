@@ -229,4 +229,23 @@ router.get('/user/:userId', (req, res) => {
     );
 });
 
+// ======================================== ✅ Rrugë për status ==========================================
+
+router.get('/status', (req, res) => {
+    res.json({ 
+        authenticated: !!req.session.user,
+        user: req.session.user || null,
+        timestamp: new Date().toISOString()
+    });
+});
+
+// ✅ Rrugë për auto-krijim (nëse është e nevojshme)
+router.post('/auto-create', (req, res) => {
+    // Logjikë për auto-krijim të përdoruesit
+    res.json({ 
+        success: true, 
+        message: 'Auto-create nuk është implementuar ende' 
+    });
+});
+
 module.exports = router;
