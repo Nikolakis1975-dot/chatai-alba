@@ -1,44 +1,5 @@
-// ==================== 🎯 SIMPLE TEST - WILL IT EXECUTE? ====================
-
-console.log('🎯 [SIMPLE-TEST] Script.js is loading...');
-
-// Test 1: Ky do të ekzekutohet menjëherë
-alert('🎯 Script.js is loading! Click OK to continue.');
-
-// Test 2: Krijo një buton shumë të thjeshtë
-setTimeout(() => {
-    console.log('🔧 [SIMPLE] Creating test button...');
-    
-    const testBtn = document.createElement('button');
-    testBtn.textContent = '🎯 TEST BUTTON';
-    testBtn.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 15px;
-        background: red;
-        color: white;
-        font-size: 20px;
-        border: none;
-        border-radius: 10px;
-        cursor: pointer;
-        z-index: 9999;
-    `;
-    
-    testBtn.onclick = () => {
-        alert('🎯 TEST BUTTON CLICKED!');
-        console.log('✅ Test button clicked!');
-    };
-    
-    document.body.appendChild(testBtn);
-    console.log('✅ Test button added to body');
-    
-}, 1000);
-
-console.log('🎯 [SIMPLE-TEST] Code executed!');
-
 // ======================================================
-// 🎯 BRIDGE LOADER I PLOTË - RRUFEJA 347
+// 🎯 BRIDGE LOADER I PLOTË - RRUFE TESLA 10.5
 // ======================================================
 
 console.log('🔍 Duke inicializuar Bridge System për browser...');
