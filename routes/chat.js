@@ -381,56 +381,107 @@ router.get('/check-database', (req, res) => {
     });
 });
 
-// ==================================== ✅ KODI EKZISTUES - KËRKO NJOHURI ========================================
+// ================================================= ✅ FIX I PLOTË PËR KËRKIM NJOHURISH ======================================
 
 router.get('/knowledge/:userId/:question', (req, res) => {
     const { userId, question } = req.params;
-    const searchText = decodeURIComponent(question);
+    const searchText = decodeURIComponent(question).toLowerCase().trim();
     
-    console.log('🎯 [KNOWLEDGE-SIMPLE] Duke kërkuar:');
-    console.log('- User:', userId);
-    console.log('- Pyetja e kërkuar:', searchText);
-    console.log('- Gjatësia:', searchText.length);
+    console.log('🔍 [KNOWLEDGE-FIX] Duke kërkuar për user', userId, ':', searchText);
     
-    // 1. Merr të gjitha të dhënat për këtë user
-    db.all('SELECT question, answer FROM knowledge_base WHERE user_id = ?', [userId], (err, allRows) => {
+    // ✅ STRATEGJI 3-NË-1:
+    // 1. Match i saktë (exact match)
+    // 2. Pyetja e kërkuar përmban pyetjen e ruajtur
+    // 3. Pyetja e ruajtur përmban pyetjen e kërkuar
+    
+    const query = `
+        SELECT answer 
+        FROM knowledge_base 
+        WHERE user_id = ? 
+        AND (
+            LOWER(question) = ? 
+            OR ? LIKE '%' || LOWER(question) || '%'
+            OR LOWER(question) LIKE '%' || ? || '%'
+        )
+        ORDER BY 
+            CASE 
+                WHEN LOWER(question) = ? THEN 1
+                WHEN ? LIKE '%' || LOWER(question) || '%' THEN 2
+                WHEN LOWER(question) LIKE '%' || ? || '%' THEN 3
+                ELSE 4
+            END,
+            LENGTH(question) ASC
+        LIMIT 1
+    `;
+    
+    const params = [userId, searchText, searchText, searchText, searchText, searchText];
+    
+    console.log('📊 SQL Query:', query);
+    console.log('📊 Parameters:', params);
+    
+    db.get(query, params, (err, row) => {
         if (err) {
-            console.error('❌ Gabim në database:', err);
+            console.error('❌ Database error:', err);
+            console.error('❌ Error details:', err.message);
             return res.json({ success: true, answer: null });
         }
         
-        console.log(`📊 User ${userId} ka ${allRows.length} njohuri:`);
+        console.log('📊 Database result:', row ? 'FOUND' : 'NOT FOUND');
         
-        // 2. Kërko manualisht
-        const searchLower = searchText.toLowerCase().trim();
-        console.log('- Duke kërkuar për:', `"${searchLower}"`);
-        
-        let found = false;
-        let foundAnswer = null;
-        
-        for (const row of allRows) {
-            const dbQuestion = row.question.toLowerCase().trim();
-            console.log(`🔍 Krahasoj me: "${dbQuestion}"`);
-            
-            if (dbQuestion === searchLower) {
-                console.log('✅✅✅ GJETËM MATCH TË SAKTË!');
-                found = true;
-                foundAnswer = row.answer;
-                break;
-            }
-        }
-        
-        if (found) {
-            console.log('🎉 Përgjigja e gjetur:', foundAnswer);
-            res.json({ success: true, answer: foundAnswer });
-        } else {
-            console.log('❌ Nuk u gjet match');
-            console.log('📋 Të gjitha pyetjet në database:');
-            allRows.forEach((row, index) => {
-                console.log(`${index + 1}. "${row.question}"`);
+        if (row && row.answer) {
+            console.log('✅✅✅ [SUCCESS] Gjetëm përgjigje!');
+            console.log('📝 Answer:', row.answer.substring(0, 100));
+            return res.json({ 
+                success: true, 
+                found: true,
+                answer: row.answer 
             });
-            res.json({ success: true, answer: null });
         }
+        
+        console.log('❌ [FAILED] Nuk u gjet përgjigje për:', searchText);
+        
+        // ✅ FALLBACK: Kërko të gjitha të dhënat dhe kontrollo manualisht
+        db.all('SELECT question, answer FROM knowledge_base WHERE user_id = ?', [userId], (err2, allRows) => {
+            if (err2) {
+                console.error('❌ Fallback error:', err2);
+                return res.json({ success: true, answer: null });
+            }
+            
+            console.log(`📚 Fallback: User ${userId} ka ${allRows.length} njohuri`);
+            
+            // Kërko manualisht
+            for (const item of allRows) {
+                const dbQuestion = item.question.toLowerCase().trim();
+                
+                if (dbQuestion === searchText) {
+                    console.log('✅✅✅ [FALLBACK SUCCESS] Gjetëm me match të saktë!');
+                    return res.json({ 
+                        success: true, 
+                        found: true,
+                        answer: item.answer,
+                        method: 'fallback_exact' 
+                    });
+                }
+                
+                if (searchText.includes(dbQuestion) || dbQuestion.includes(searchText)) {
+                    console.log('✅✅✅ [FALLBACK SUCCESS] Gjetëm me përmbajtje!');
+                    return res.json({ 
+                        success: true, 
+                        found: true,
+                        answer: item.answer,
+                        method: 'fallback_contains' 
+                    });
+                }
+            }
+            
+            console.log('❌❌❌ [ALL METHODS FAILED] Asnjë metodë nuk funksionoi');
+            res.json({ 
+                success: true, 
+                found: false,
+                answer: null,
+                debug: 'no_knowledge_found' 
+            });
+        });
     });
 });
 
