@@ -1608,3 +1608,357 @@ async function debugStoredKnowledge() {
 setTimeout(() => {
     debugStoredKnowledge();
 }, 3000);
+
+// ========================================== ✅ FUNKSIONET PËR CHAT ELEMENT ========================================
+
+console.log('🔧 Duke shtuar funksionet e chat element...');
+
+// ✅ FUNKSIONI PËR TË GJETUR ELEMENTIN E CHAT-IT
+function getChatElement() {
+    // Provo ID-në "chat" (është <main> element)
+    let chat = document.getElementById('chat');
+    
+    // DEBUG: Kontrollo
+    if (chat) {
+        console.log('✅ Chat elementi u gjet via ID "chat":', {
+            tagName: chat.tagName,
+            id: chat.id,
+            className: chat.className,
+            childrenCount: chat.children.length
+        });
+    } else {
+        console.log('❌ Elementi me ID "chat" nuk u gjet!');
+        
+        // Provo selektorë të tjerë
+        chat = document.querySelector('main') || 
+               document.querySelector('section') ||
+               document.querySelector('.chat-container') ||
+               document.querySelector('[class*="message"]');
+        
+        if (chat) {
+            console.log('✅ Chat u gjet via selektor:', chat.tagName);
+        }
+    }
+    
+    return chat;
+}
+
+// ✅ FUNKSIONI PËR SHTIMIN E MESAZHEVE
+function addMessage(text, sender) {
+    const chat = getChatElement();
+    
+    if (!chat) {
+        console.error('❌ NUK MUND TË SHTOHET MESAZH: Chat elementi nuk u gjet!');
+        // Krijo element emergjent nëse nuk ekziston
+        const newChat = document.createElement('div');
+        newChat.id = 'chat-fallback';
+        newChat.className = 'chat-messages';
+        document.body.appendChild(newChat);
+        return addMessage(text, sender); // Provo përsëri
+    }
+    
+    // Krijo elementin e mesazhit
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${sender}`;
+    
+    // Formato mesazhin
+    const formattedText = text
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n/g, '<br>');
+    
+    messageDiv.innerHTML = `<div class="message-text">${formattedText}</div>`;
+    
+    // Shto në chat
+    chat.appendChild(messageDiv);
+    
+    // Auto-scroll
+    chat.scrollTop = chat.scrollHeight;
+    
+    // Log
+    console.log(`💬 ${sender.toUpperCase()}: ${text.substring(0, 50)}${text.length > 50 ? '...' : ''}`);
+    
+    return messageDiv;
+}
+
+// ✅ FUNKSIONI PËR PASTRIMIN E CHAT-IT
+function clearChat() {
+    const chat = getChatElement();
+    
+    if (!chat) {
+        console.error('❌ NUK MUND TË PASTROHET CHAT: Elementi nuk u gjet!');
+        return;
+    }
+    
+    if (confirm('A jeni i sigurt që dëshironi të fshini të gjithë chat-in?')) {
+        chat.innerHTML = '';
+        console.log('✅ Chat-u u pastrua me sukses!');
+        
+        // Shto mesazhin e konfirmimit
+        addMessage('🗑️ **Chat-u u pastrua!** Mund të filloni një bisedë të re.', 'system');
+    }
+}
+
+// ✅ BUTONI PËR CLEAR CHAT
+function addClearChatButton() {
+    // Kontrollo nëse butoni ekziston tashmë
+    if (document.getElementById('clear-chat-btn')) return;
+    
+    const header = document.querySelector('header');
+    if (!header) {
+        console.log('❌ Header nuk u gjet për të shtuar butonin');
+        return;
+    }
+    
+    // Krijo butonin
+    const clearBtn = document.createElement('button');
+    clearBtn.id = 'clear-chat-btn';
+    clearBtn.innerHTML = '🗑️ Fshi Chat';
+    clearBtn.title = 'Fshi të gjithë mesazhet nga chat-i';
+    clearBtn.style.cssText = `
+        background: #f44336;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 20px;
+        cursor: pointer;
+        margin-left: 10px;
+        font-size: 12px;
+    `;
+    
+    clearBtn.onclick = clearChat;
+    
+    // Shto pas butonit të fundit ekzistues
+    const lastButton = header.querySelector('button:last-child');
+    if (lastButton) {
+        lastButton.parentNode.insertBefore(clearBtn, lastButton.nextSibling);
+    } else {
+        header.appendChild(clearBtn);
+    }
+    
+    console.log('✅ Butoni "Fshi Chat" u shtua në header!');
+}
+
+// ✅ VERIFIKO FUNKSIONET
+setTimeout(() => {
+    console.log('🔍 Duke kontrolluar sistemin e chat-it...');
+    
+    // Testo nëse elementet ekzistojnë
+    console.log('- getChatElement:', typeof getChatElement);
+    console.log('- addMessage:', typeof addMessage);
+    console.log('- clearChat:', typeof clearChat);
+    
+    // Testo gjetjen e chat-it
+    const chat = getChatElement();
+    console.log('- Chat element found:', !!chat);
+    
+    // Shto butonin e clear chat
+    addClearChatButton();
+    
+}, 2000);
+
+console.log('✅ Funksionet e chat element u shtuan!');
+
+// ======================================== ✅ EFEKTET "TË GJALLA" PËR MESAZHE =======================================
+
+console.log('🎬 Duke aktivizuar efektet e gjalla për mesazhe...');
+
+// ✅ TYPING INDICATOR (efekti "duke shkruar")
+function showTypingIndicator() {
+    const chat = getChatElement();
+    if (!chat) return;
+    
+    // Kontrollo nëse ekziston tashmë
+    if (document.getElementById('typing-indicator')) return;
+    
+    const typingDiv = document.createElement('div');
+    typingDiv.id = 'typing-indicator';
+    typingDiv.className = 'message bot typing';
+    typingDiv.innerHTML = `
+        <div class="message-text">
+            <span class="typing-dots">
+                <span>.</span><span>.</span><span>.</span>
+            </span>
+        </div>
+    `;
+    
+    chat.appendChild(typingDiv);
+    chat.scrollTop = chat.scrollHeight;
+    
+    console.log('⌛ Typing indicator u shfaq');
+}
+
+function removeTypingIndicator() {
+    const typing = document.getElementById('typing-indicator');
+    if (typing) {
+        typing.remove();
+        console.log('✅ Typing indicator u hoq');
+    }
+}
+
+// ✅ VERSIONI I GJALLË I addMessage ME DELAY DHE ANIMACION
+function addMessageLive(text, sender, options = {}) {
+    return new Promise(async (resolve) => {
+        const chat = getChatElement();
+        if (!chat) return resolve(null);
+        
+        const { 
+            typingDelay = 800,      // Koha e "shkrimit"
+            charDelay = 30,         // Koha ndërmjet karaktereve
+            showTyping = true,      // Shfaq efekti "duke shkruar"
+            removeAfterTyping = true // Hiq typing indicator pas përfundimit
+        } = options;
+        
+        // Krijo elementin e mesazhit (bosh fillimisht)
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${sender}`;
+        
+        const textDiv = document.createElement('div');
+        textDiv.className = 'message-text';
+        messageDiv.appendChild(textDiv);
+        
+        chat.appendChild(messageDiv);
+        
+        // Auto-scroll
+        chat.scrollTop = chat.scrollHeight;
+        
+        // ✅ NËSE ËSHTË BOT, SHFAQ TYPING EFFECT
+        if (sender === 'bot' && showTyping) {
+            showTypingIndicator();
+            await new Promise(r => setTimeout(r, typingDelay));
+            if (removeAfterTyping) removeTypingIndicator();
+        }
+        
+        // ✅ ANIMIMI I TEKSTIT KARAKTER-PËR-KARAKTER
+        let displayText = text
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\n/g, '<br>');
+        
+        // Nëse don animacion karakter-per-karakter
+        if (sender === 'bot' && charDelay > 0) {
+            textDiv.innerHTML = '';
+            let currentIndex = 0;
+            
+            const typeNextChar = () => {
+                if (currentIndex < displayText.length) {
+                    const char = displayText[currentIndex];
+                    
+                    // Kontrollo për HTML tags
+                    if (char === '<') {
+                        // Gjej tag-in e plotë
+                        const tagEnd = displayText.indexOf('>', currentIndex);
+                        if (tagEnd !== -1) {
+                            const tag = displayText.substring(currentIndex, tagEnd + 1);
+                            textDiv.innerHTML += tag;
+                            currentIndex = tagEnd + 1;
+                        } else {
+                            textDiv.innerHTML += char;
+                            currentIndex++;
+                        }
+                    } else {
+                        textDiv.innerHTML += char;
+                        currentIndex++;
+                    }
+                    
+                    chat.scrollTop = chat.scrollHeight;
+                    setTimeout(typeNextChar, charDelay);
+                } else {
+                    console.log(`💬 ${sender.toUpperCase()}: ${text.substring(0, 50)}${text.length > 50 ? '...' : ''}`);
+                    resolve(messageDiv);
+                }
+            };
+            
+            typeNextChar();
+        } else {
+            // Pa animacion (user messages dhe opsione të tjera)
+            textDiv.innerHTML = displayText;
+            console.log(`💬 ${sender.toUpperCase()}: ${text.substring(0, 50)}${text.length > 50 ? '...' : ''}`);
+            resolve(messageDiv);
+        }
+    });
+}
+
+// ✅ STILI PËR TYPING INDICATOR
+function addTypingStyles() {
+    if (document.getElementById('typing-styles')) return;
+    
+    const style = document.createElement('style');
+    style.id = 'typing-styles';
+    style.textContent = `
+        .typing {
+            opacity: 0.7;
+            font-style: italic;
+        }
+        
+        .typing-dots {
+            display: inline-block;
+        }
+        
+        .typing-dots span {
+            opacity: 0;
+            animation: typingDot 1.5s infinite;
+            font-size: 24px;
+            margin: 0 2px;
+        }
+        
+        .typing-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typingDot {
+            0%, 60%, 100% { opacity: 0; }
+            30% { opacity: 1; }
+        }
+        
+        .message.bot {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    `;
+    
+    document.head.appendChild(style);
+    console.log('🎨 Stilet për typing animation u shtuan!');
+}
+
+// ✅ MBIVENDOS addMessage EKZISTUES PËR TË PËRDORUR VERSIONIN E GJALLË
+function enhanceExistingAddMessage() {
+    if (typeof window.addMessage === 'function') {
+        const originalAddMessage = window.addMessage;
+        
+        window.addMessage = function(text, sender) {
+            // Nëse është bot, përdor versionin e gjallë
+            if (sender === 'bot') {
+                return addMessageLive(text, sender, {
+                    typingDelay: 500,
+                    charDelay: 20,
+                    showTyping: true
+                });
+            } else {
+                // Për user, përdor originalin
+                return originalAddMessage.call(this, text, sender);
+            }
+        };
+        
+        console.log('🔄 addMessage u përmirësua me efekte të gjalla!');
+    }
+}
+
+// ✅ INICIALIZO
+setTimeout(() => {
+    addTypingStyles();
+    enhanceExistingAddMessage();
+    
+    console.log('🔍 Statusi i efekteve të gjalla:');
+    console.log('- addMessageLive:', typeof addMessageLive);
+    console.log('- showTypingIndicator:', typeof showTypingIndicator);
+    console.log('- Typing styles added:', !!document.getElementById('typing-styles'));
+}, 1500);
+
+console.log('✅ Efektet e gjalla për mesazhe u aktivizuan!');
