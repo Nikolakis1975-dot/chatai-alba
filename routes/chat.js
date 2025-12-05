@@ -351,85 +351,51 @@ router.post('/knowledge', (req, res) => {
 
 router.get('/knowledge/:userId/:question', (req, res) => {
     const { userId, question } = req.params;
-    const searchText = decodeURIComponent(question).toLowerCase().trim();
+    const searchText = decodeURIComponent(question);
     
-    console.log('🎯 [KNOWLEDGE-FINAL] Duke kërkuar:');
-    console.log('- User:', userId);
-    console.log('- Kërkuar:', searchText);
-    console.log('- Length:', searchText.length);
+    console.log('🎯 [KNOWLEDGE] Searching for user', userId, ':', searchText);
     
-    // 1. Provo EXACT MATCH së pari
+    // 1. Provo exact match (mënyra më e thjeshtë)
     db.get(
-        `SELECT answer FROM knowledge_base 
-         WHERE user_id = ? 
-         AND LOWER(TRIM(question)) = ?`,
+        `SELECT answer FROM knowledge_base WHERE user_id = ? AND question = ?`,
         [userId, searchText],
         (err, row) => {
             if (err) {
-                console.error('❌ Exact match error:', err);
+                console.error('❌ Database error:', err);
                 return res.json({ success: true, answer: null });
             }
             
             if (row && row.answer) {
-                console.log('✅✅✅ EXACT MATCH SUCCESS!');
-                console.log('- Answer:', row.answer);
+                console.log('✅✅✅ FOUND WITH EXACT MATCH!');
                 return res.json({ success: true, answer: row.answer });
             }
             
-            console.log('❌ Exact match failed');
-            
-            // 2. Provo me LIKE
-            db.get(
-                `SELECT answer FROM knowledge_base 
-                 WHERE user_id = ? 
-                 AND LOWER(question) LIKE ?`,
-                [userId, '%' + searchText + '%'],
-                (err, likeRow) => {
+            // 2. Nëse nuk gjen, kontrollo çfarë ka në database
+            db.all(
+                'SELECT question, answer FROM knowledge_base WHERE user_id = ?',
+                [userId],
+                (err, allRows) => {
                     if (err) {
-                        console.error('❌ LIKE error:', err);
+                        console.error('❌ Error getting all:', err);
                         return res.json({ success: true, answer: null });
                     }
                     
-                    if (likeRow && likeRow.answer) {
-                        console.log('✅✅✅ LIKE MATCH SUCCESS!');
-                        console.log('- Answer:', likeRow.answer);
-                        return res.json({ success: true, answer: likeRow.answer });
+                    console.log(`📊 User ${userId} has ${allRows.length} records`);
+                    
+                    // 3. Provo manual match
+                    const searchLower = searchText.toLowerCase().trim();
+                    
+                    for (const item of allRows) {
+                        const dbQuestion = item.question.toLowerCase().trim();
+                        
+                        if (dbQuestion === searchLower) {
+                            console.log('✅✅✅ FOUND WITH CASE-INSENSITIVE MATCH!');
+                            return res.json({ success: true, answer: item.answer });
+                        }
                     }
                     
-                    console.log('❌ LIKE match failed');
-                    
-                    // 3. SHFAQ TË GJITHA TË DHËNAT PËR DEBUG
-                    db.all(
-                        'SELECT * FROM knowledge_base WHERE user_id = ?',
-                        [userId],
-                        (err, allRows) => {
-                            if (err) {
-                                console.error('❌ Get all error:', err);
-                                return res.json({ success: true, answer: null });
-                            }
-                            
-                            console.log(`📊 DEBUG - ${allRows.length} rows total:`);
-                            
-                            allRows.forEach((item, index) => {
-                                const dbQuestion = item.question.toLowerCase().trim();
-                                console.log(`${index + 1}. DB: "${dbQuestion}"`);
-                                console.log(`   Search: "${searchText}"`);
-                                console.log(`   Match: ${dbQuestion === searchText ? '✅ EXACT' : '❌ NO'}`);
-                                console.log(`   Contains: ${dbQuestion.includes(searchText) ? '✅ DB contains SEARCH' : searchText.includes(dbQuestion) ? '✅ SEARCH contains DB' : '❌ NO'}`);
-                                console.log('   ---');
-                            });
-                            
-                            res.json({ 
-                                success: true, 
-                                answer: null,
-                                debug: {
-                                    total_rows: allRows.length,
-                                    searched_for: searchText,
-                                    available_questions: allRows.map(r => r.question)
-                                }
-                            });
-                        }
-                    );
+                    console.log('❌ No match found');
+                    res.json({ success: true, answer: null });
                 }
             );
         }
