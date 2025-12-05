@@ -9,44 +9,20 @@ const fs = require('fs');
 console.log('🚀 RRUFE-TESLA: Database System Initializing...');
 console.log('🌍 Environment:', process.env.NODE_ENV || 'development');
 
-// ==================== ✅ FIX KRYESOR: DATABASE PATH PËR PRODUKSION ====================
+// ==================== ✅ FIX PËR DIGITALOCEAN APPS ====================
 
-// Përcakto rrugën e databazës bazuar në mjedisin
+// Përcakto rrugën e databazës për DigitalOcean Apps
 let dbPath;
 
+// NË DIGITALOCEAN APPS, përdor /tmp/ me backup automatik
 if (process.env.NODE_ENV === 'production') {
-    // ✅ NË PRODUKSION: Përdor një vendndodhje të qëndrueshme në DigitalOcean
-    const prodDataDir = '/var/www/chat-server/data';
-    
-    // Krijo dosjen nëse nuk ekziston
-    if (!fs.existsSync(prodDataDir)) {
-        fs.mkdirSync(prodDataDir, { recursive: true });
-        console.log('✅ U krijua drejtoria e prodhimit:', prodDataDir);
-    }
-    
-    dbPath = path.join(prodDataDir, 'chat.db');
-    console.log('🚀 PRODUKSION: Database do të ruhet në vendndodhje të qëndrueshme:', dbPath);
-    
-    // Kopjo të dhënat ekzistuese nga /tmp/ (nëse ekzistojnë)
-    const tmpDbPath = '/tmp/chat.db';
-    if (fs.existsSync(tmpDbPath) && !fs.existsSync(dbPath)) {
-        try {
-            fs.copyFileSync(tmpDbPath, dbPath);
-            console.log('📂 U kopjuan të dhënat ekzistuese nga /tmp/ në vendndodhjen e re');
-            
-            // Verifiko kopjimin
-            const tmpSize = fs.statSync(tmpDbPath).size;
-            const newSize = fs.statSync(dbPath).size;
-            console.log(`📊 Madhësitë: /tmp/chat.db = ${tmpSize} bytes, ${dbPath} = ${newSize} bytes`);
-        } catch (copyError) {
-            console.error('❌ Gabim gjatë kopjimit të database:', copyError.message);
-        }
-    } else if (fs.existsSync(tmpDbPath)) {
-        console.log('ℹ️ Database ekziston tashmë në vendndodhjen e re, nuk u krye kopjim');
-    }
+    // ✅ PËR DIGITALOCEAN APPS: /tmp/ është i vetmi vend i shkruajtshëm
+    dbPath = '/tmp/chat.db';
+    console.log('🚀 DIGITALOCEAN APPS: Database në /tmp/chat.db');
+    console.log('⚠️  KUJDES: /tmp/ mund të fshihet pas rindezjeve');
     
 } else {
-    // ✅ NË DEVELOPMENT
+    // Në development lokal
     const devDataDir = path.join(__dirname, 'data');
     if (!fs.existsSync(devDataDir)) {
         fs.mkdirSync(devDataDir, { recursive: true });
@@ -59,22 +35,58 @@ if (process.env.NODE_ENV === 'production') {
 
 console.log(`🗄️  Rruga përfundimtare e databazës: ${dbPath}`);
 
+// ==================== ✅ SISTEM BACKUP AUTOMATIK ====================
+
+// Krijo një sistem backup automatik për DigitalOcean Apps
+function setupAutoBackup() {
+    console.log('💾 Duke konfiguruar sistemin e backup automatik...');
+    
+    // Backup çdo 1 orë (3600000 ms)
+    setInterval(() => {
+        const backupDir = '/tmp/chat-backups';
+        if (!fs.existsSync(backupDir)) {
+            try {
+                fs.mkdirSync(backupDir, { recursive: true });
+            } catch (err) {
+                console.error('❌ Nuk mund të krijohet backup directory:', err.message);
+                return;
+            }
+        }
+        
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const backupPath = path.join(backupDir, `chat-backup-${timestamp}.db`);
+        
+        // Krijo backup
+        db.backup(backupPath, (err) => {
+            if (err) {
+                console.error('❌ Backup failed:', err.message);
+            } else {
+                try {
+                    const size = fs.statSync(backupPath).size;
+                    console.log(`✅ Backup created: ${backupPath} (${size} bytes)`);
+                } catch (statErr) {
+                    console.log(`✅ Backup created: ${backupPath}`);
+                }
+            }
+        });
+    }, 3600000); // 1 orë
+    
+    console.log('✅ Sistemi i backup automatik u konfigurua (çdo 1 orë)');
+}
+
 // Krijo një instance të re të bazës së të dhënave
 const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
     if (err) {
         console.error('❌ Gabim gjatë lidhjes me databazën:', err.message);
         console.error('❌ Detajet e gabimit:', err);
         
-        // Provo backup në rast të dështimit
-        console.log('🔄 Duke provuar backup path...');
-        const backupPath = path.join(__dirname, 'chat-backup.db');
-        const backupDb = new sqlite3.Database(backupPath, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (backupErr) => {
-            if (backupErr) {
-                console.error('❌ Backup database failed too');
+        // Provo të krijohet në vend tjetër
+        console.log('🔄 Duke provuar alternative path...');
+        const altPath = path.join(__dirname, 'chat-temp.db');
+        const altDb = new sqlite3.Database(altPath, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (altErr) => {
+            if (altErr) {
+                console.error('❌ Alternative database failed too');
                 process.exit(1);
-            } else {
-                console.log('✅ U lidh me backup database');
-                // Replace db with backup (në kod real, duhet të export/import)
             }
         });
     } else {
@@ -87,6 +99,7 @@ const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CR
             } else {
                 console.log('✅ Database connection test passed');
                 initializeDatabase();
+                setupAutoBackup();
             }
         });
     }
@@ -104,7 +117,6 @@ function addUpdatedAtColumnToApiKeys() {
             return;
         }
         
-        // ✅ KORRIGJIMI KRYESOR - trajto si array
         const columnNames = Array.isArray(columns) 
             ? columns.map(col => col.name) 
             : [];
@@ -114,14 +126,12 @@ function addUpdatedAtColumnToApiKeys() {
         if (!columnNames.includes('updated_at')) {
             console.log('🔄 Duke shtuar kolonën updated_at në tabelën ekzistuese...');
             
-            // ✅ KORRIGJIM: Përdor DEFAULT NULL në vend të CURRENT_TIMESTAMP
             db.run('ALTER TABLE api_keys ADD COLUMN updated_at DATETIME DEFAULT NULL', (err) => {
                 if (err) {
                     console.error('❌ Gabim në shtimin e kolonës updated_at:', err);
                 } else {
                     console.log('✅ Kolona updated_at u shtua me sukses në tabelën ekzistuese');
                     
-                    // ✅ PËRDITËSO REKORDET EKZISTUESE ME VLERËN E created_at
                     db.run('UPDATE api_keys SET updated_at = created_at WHERE updated_at IS NULL', (err) => {
                         if (err) {
                             console.error('❌ Gabim në përditësimin e vlerave:', err);
@@ -169,52 +179,8 @@ function addResponseColumnToMessages() {
     });
 }
 
-// ✅ FUNKSION PËR BACKUP AUTOMATIK
-function setupAutoBackup() {
-    console.log('💾 Duke konfiguruar sistemin e backup automatik...');
-    
-    // Backup çdo 6 orë (21600000 ms)
-    setInterval(() => {
-        const backupDir = '/var/www/chat-server/backups';
-        if (!fs.existsSync(backupDir)) {
-            fs.mkdirSync(backupDir, { recursive: true });
-        }
-        
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        const backupPath = path.join(backupDir, `chat-backup-${timestamp}.db`);
-        
-        db.backup(backupPath, (err) => {
-            if (err) {
-                console.error('❌ Backup failed:', err.message);
-            } else {
-                const size = fs.statSync(backupPath).size;
-                console.log(`✅ Backup created: ${backupPath} (${size} bytes)`);
-                
-                // Fshi backup-et e vjetra (mban vetëm 5 të fundit)
-                fs.readdir(backupDir, (readErr, files) => {
-                    if (!readErr && files.length > 5) {
-                        const backupFiles = files
-                            .filter(f => f.startsWith('chat-backup-'))
-                            .sort()
-                            .map(f => path.join(backupDir, f));
-                        
-                        // Fshi të vjetrat
-                        for (let i = 0; i < backupFiles.length - 5; i++) {
-                            fs.unlinkSync(backupFiles[i]);
-                            console.log(`🗑️  Fshi backup të vjetër: ${backupFiles[i]}`);
-                        }
-                    }
-                });
-            }
-        });
-    }, 21600000); // 6 orë
-    
-    console.log('✅ Sistemi i backup automatik u konfigurua (çdo 6 orë)');
-}
-
 // ==================== ✅ INICIALIZIMI I DATABASE ====================
 
-// Funksioni për të inicializuar tabelat nëse nuk ekzistojnë
 function initializeDatabase() {
     console.log('🔄 Duke inicializuar databazën RRUFE-TESLA 10.5...');
     
@@ -233,7 +199,7 @@ function initializeDatabase() {
         }
     });
     
-    // ✅ TABELA E PËRDORUESVE - VERSION I THJESHTUAR
+    // ✅ TABELA E PËRDORUESVE
     db.run(`CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE NOT NULL,
@@ -269,7 +235,7 @@ function initializeDatabase() {
         }
     });
 
-    // ✅ TABELA E MESAZHEVE - ME KOLONËN RESPONSE
+    // ✅ TABELA E MESAZHEVE
     db.run(`CREATE TABLE IF NOT EXISTS messages (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
@@ -286,7 +252,7 @@ function initializeDatabase() {
         }
     });
 
-    // ✅✅✅ TABELA E NJOHURIVE - KRYESORE PËR PROBLEMIN E /meso
+    // ✅✅✅ TABELA E NJOHURIVE - KRYESORE
     db.run(`CREATE TABLE IF NOT EXISTS knowledge_base (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
@@ -300,15 +266,20 @@ function initializeDatabase() {
         if (err) {
             console.error('❌ Gabim në tabelën knowledge_base:', err);
         } else {
-            console.log('✅✅✅ Tabela knowledge_base u inicializua - KY ËSHTË THEMELI!');
+            console.log('✅✅✅ Tabela knowledge_base u inicializua');
             
-            // Krijo indeks për kërkim më të shpejtë
-            db.run('CREATE INDEX IF NOT EXISTS idx_knowledge_user_question ON knowledge_base(user_id, question)');
-            console.log('✅ Indeksi për kërkim të shpejtë u krijua');
+            // Krijo indeks për kërkim të shpejtë
+            db.run('CREATE INDEX IF NOT EXISTS idx_knowledge_user_question ON knowledge_base(user_id, question)', (indexErr) => {
+                if (indexErr) {
+                    console.error('❌ Gabim në krijimin e indeksit:', indexErr);
+                } else {
+                    console.log('✅ Indeksi për kërkim të shpejtë u krijua');
+                }
+            });
         }
     });
 
-    // 🆕 TABELA E RE: USER_KNOWLEDGE - PËR KNOWLEDGE DISTILLER
+    // 🆕 TABELA E RE: USER_KNOWLEDGE
     db.run(`CREATE TABLE IF NOT EXISTS user_knowledge (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id TEXT NOT NULL,
@@ -340,65 +311,14 @@ function initializeDatabase() {
         }
     });
 
-    // ✅ VERIFIKO TABELAT E KRIJUARA
-    db.all("SELECT name FROM sqlite_master WHERE type='table'", (err, tables) => {
-        if (err) {
-            console.error('❌ Gabim në marrjen e tabelave:', err);
-        } else {
-            console.log('📊 Tabelat e krijuara në database:');
-            tables.forEach(table => console.log(`   - ${table.name}`));
-        }
-    });
-
     console.log('✅ Inicializimi i databazës RRUFE-TESLA përfundoi!');
     
     // ✅ THIRRE FUNKSIONET PAS INICIALIZIMIT
     setTimeout(() => {
         addUpdatedAtColumnToApiKeys();
         addResponseColumnToMessages();
-        setupAutoBackup();
-        
-        // VERIFIKO KNOWLEDGE_BASE
-        db.get("SELECT COUNT(*) as count FROM knowledge_base", (err, row) => {
-            if (err) {
-                console.error('❌ Gabim në verifikim:', err);
-            } else {
-                console.log(`🔍 Verifikim: knowledge_base ka ${row.count} rreshta`);
-            }
-        });
-    }, 3000);
+    }, 2000);
 }
 
-// ==================== ✅ FUNKSIONE SHTESË PËR DEBUG ====================
-
-// Funksion për të kontrolluar statusin e database
-function checkDatabaseStatus() {
-    console.log('🔍 Duke kontrolluar statusin e database...');
-    
-    db.get("SELECT COUNT(*) as total_tables FROM sqlite_master WHERE type='table'", (err, tablesRow) => {
-        if (err) {
-            console.error('❌ Gabim në kontroll të tabelave:', err);
-            return;
-        }
-        
-        console.log(`📊 Total tabela: ${tablesRow.total_tables}`);
-        
-        // Kontrollo secilën tabelë
-        const importantTables = ['knowledge_base', 'users', 'messages', 'api_keys'];
-        
-        importantTables.forEach(tableName => {
-            db.get(`SELECT COUNT(*) as count FROM ${tableName}`, (err, row) => {
-                if (err) {
-                    console.log(`   ${tableName}: ❌ Gabim - ${err.message}`);
-                } else {
-                    console.log(`   ${tableName}: ${row.count} rreshta`);
-                }
-            });
-        });
-    });
-}
-
-// Eksporto db object dhe funksione shtesë
+// Eksporto db object
 module.exports = db;
-module.exports.checkDatabaseStatus = checkDatabaseStatus;
-module.exports.getDbPath = () => dbPath;
