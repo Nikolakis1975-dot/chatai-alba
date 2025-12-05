@@ -2087,3 +2087,79 @@ async function showSystemStats() {
     }
 }
 
+// ================================================== ✅ INTEGRIMI I checkKnowledge ==========================================
+
+console.log('🔧 Duke integruar sistemin e njohurive...');
+
+// Krijo funksionin checkKnowledge
+window.checkKnowledge = async function(message) {
+    try {
+        console.log('🔍 [CHECK-KNOWLEDGE-NEW] Duke kërkuar për:', message);
+        
+        const userId = 1; // Ndryshoje me ID-në tënde
+        const userMessage = message.toLowerCase().trim();
+        
+        const response = await fetch(
+            `/api/chat/knowledge/${userId}/${encodeURIComponent(userMessage)}`,
+            { credentials: 'include' }
+        );
+        
+        if (response.ok) {
+            const data = await response.json();
+            
+            if (data.answer && data.answer !== 'null') {
+                console.log('✅✅✅ [CHECK-KNOWLEDGE-NEW] Gjetëm përgjigje!');
+                
+                // Shto mesazhin në chat
+                const chat = document.getElementById('chat');
+                if (chat) {
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = 'message bot';
+                    messageDiv.innerHTML = `<div class="message-text">💾 <strong>Përgjigje e ruajtur:</strong> ${data.answer}</div>`;
+                    chat.appendChild(messageDiv);
+                    chat.scrollTop = chat.scrollHeight;
+                }
+                
+                return true;
+            }
+        }
+        
+        return false;
+        
+    } catch (error) {
+        console.error('❌ [CHECK-KNOWLEDGE-NEW] Gabim:', error);
+        return false;
+    }
+};
+
+// Mbivendos funksionin sendMessage ekzistues
+const originalSendMessage = window.sendMessage;
+
+if (typeof originalSendMessage === 'function') {
+    window.sendMessage = async function() {
+        const userInput = document.getElementById('user-input');
+        const message = userInput.value.trim();
+        
+        if (!message) {
+            if (originalSendMessage) return originalSendMessage.call(this);
+            return;
+        }
+        
+        // Shto mesazhin e user-it
+        if (typeof addMessage === 'function') {
+            addMessage(message, 'user');
+        }
+        
+        userInput.value = '';
+        
+        // ✅ SË PARI: Kontrollo nëse ka njohuri
+        const hasKnowledge = await window.checkKnowledge(message);
+        
+        // ✅ NËSE NUK KA NJOHURI: Dërgo te AI
+        if (!hasKnowledge && originalSendMessage) {
+            await originalSendMessage.call(this);
+        }
+    };
+    
+    console.log('✅ Sistemi i njohurive u integrua!');
+}
