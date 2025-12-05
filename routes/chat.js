@@ -402,6 +402,43 @@ router.get('/knowledge/:userId/:question', (req, res) => {
     );
 });
 
+// ================================================= 🔍 KNOWLEDGE DEBUG - SIMPLE ======================================
+
+router.get('/knowledge-debug-simple/:userId', (req, res) => {
+    const { userId } = req.params;
+    
+    console.log('🔍 [DEBUG-SIMPLE] Duke shfaqur të gjitha të dhënat për user:', userId);
+    
+    db.all('SELECT id, question, answer FROM knowledge_base WHERE user_id = ?', [userId], (err, rows) => {
+        if (err) {
+            console.error('❌ Database error:', err);
+            return res.json({ error: err.message });
+        }
+        
+        console.log(`📊 Gjithsej ${rows.length} rreshta:`);
+        
+        // Log çdo rresht
+        rows.forEach((row, index) => {
+            console.log(`${index + 1}. ID: ${row.id}`);
+            console.log(`   Pyetja: "${row.question}"`);
+            console.log(`   Përgjigja: "${row.answer}"`);
+            
+            // Kontrollo karakteret
+            const question = row.question;
+            console.log(`   Gjatësia: ${question.length} karaktere`);
+            console.log(`   Karakteri 1: '${question.charAt(0)}' (kodi: ${question.charCodeAt(0)})`);
+            console.log(`   Karakteri i fundit: '${question.charAt(question.length-1)}' (kodi: ${question.charCodeAt(question.length-1)})`);
+            console.log('   ---');
+        });
+        
+        res.json({
+            count: rows.length,
+            records: rows,
+            userId: userId
+        });
+    });
+});
+
 // ===================================== ✅ KODI EKZISTUES - EKSPORTO NJOHURITË =====================================
 
 router.get('/export/:userId', (req, res) => {
