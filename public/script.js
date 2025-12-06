@@ -1235,19 +1235,27 @@ async function processCommand(text) {
                 removeTypingIndicator();
                 
                 if (weatherText.includes("Unknown location") || weatherText.trim().length < 3) {
-                    const fallbackWeather = getFallbackWeather(city);
-                    addMessage(`🌍 **Moti në ${city}:** ${fallbackWeather}`, "bot");
-                } else {
-                    addMessage(`🌍 **Moti në ${city}:** ${weatherText.trim()}`, "bot");
-                }
-                
-            } catch (error) {
-                console.error('❌ Gabim në /moti:', error.message);
-                removeTypingIndicator();
-                const fallbackWeather = getFallbackWeather(city);
-                addMessage(`🌍 **Moti në ${city}:** ${fallbackWeather}`, "bot");
-            }
-            break;
+    const fallbackWeather = getFallbackWeather(city);
+    const formattedCity = formatCityName(city);
+    addMessage(`🌍 **Moti në ${formattedCity}:** ${fallbackWeather}`, "bot");
+} else {
+    const formattedWeather = formatWeatherText(weatherText.trim());
+    const weatherEmoji = getWeatherEmoji(weatherText);
+    const formattedCity = formatCityName(city);
+    
+    addMessage(`${weatherEmoji} **Moti në ${formattedCity}:** ${formattedWeather}`, "bot");
+}
+
+} catch (error) {
+    console.error('❌ Gabim në /moti:', error.message);
+    removeTypingIndicator();
+    const fallbackWeather = getFallbackWeather(city);
+    const formattedCity = formatCityName(city);
+    const weatherEmoji = getWeatherEmoji(fallbackWeather);
+    
+    addMessage(`${weatherEmoji} **Moti në ${formattedCity}:** ${fallbackWeather}`, "bot");
+}
+break;
 
         case "/apikey":
             if (parts.length < 2) {
