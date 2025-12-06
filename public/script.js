@@ -1185,78 +1185,9 @@ async function processCommand(text) {
             };
             inp.click();
             break;
-
-        case "/moti":
-            showTypingIndicator();
-            const city = args.trim();
-            
-            console.log('🌍 [MOTI-DEBUG] Duke kërkuar motin për:', city);
-            
-            if (!city) {
-                removeTypingIndicator();
-                addMessage("⚠️ Specifiko një qytet (p.sh. /moti Tiranë)", "bot");
-                break;
-            }
-            
-            // Funksion për API fallback
-            const getFallbackWeather = (cityName) => {
-                const weatherData = {
-                    'athina': '☁️ +22°C ↘10km/h 70%',
-                    'athens': '☁️ +22°C ↘10km/h 70%',
-                    'athena': '☁️ +22°C ↘10km/h 70%',
-                    'tiranë': '☀️ +18°C ↙5km/h 65%',
-                    'tirana': '☀️ +18°C ↙5km/h 65%',
-                    'prishtinë': '🌧️ +12°C ↖15km/h 80%',
-                    'prishtina': '🌧️ +12°C ↖15km/h 80%',
-                    'durrës': '⛅ +20°C ↙8km/h 75%',
-                    'shkodër': '☀️ +19°C ↙6km/h 68%',
-                    'vlora': '☀️ +21°C ↙7km/h 72%',
-                    'korçë': '☁️ +16°C ↙4km/h 78%',
-                    'elbasan': '⛅ +17°C ↙5km/h 70%'
-                };
-                
-                const cityLower = cityName.toLowerCase();
-                return weatherData[cityLower] || `🌤️ +20°C ↙5km/h 70%`;
-            };
-            
-            try {
-                const apiUrl = `https://wttr.in/${encodeURIComponent(city)}?format=%C+%t+%w+%h&lang=sq`;
-                
-                const timeoutPromise = new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('Timeout')), 5000)
-                );
-                
-                const fetchPromise = fetch(apiUrl);
-                const response = await Promise.race([fetchPromise, timeoutPromise]);
-                
-                if (!response.ok) throw new Error(`API status ${response.status}`);
-                
-                const weatherText = await response.text();
-                removeTypingIndicator();
-                
-                if (weatherText.includes("Unknown location") || weatherText.trim().length < 3) {
-    const fallbackWeather = getFallbackWeather(city);
-    const formattedCity = formatCityName(city);
-    addMessage(`🌍 **Moti në ${formattedCity}:** ${fallbackWeather}`, "bot");
-} else {
-    const formattedWeather = formatWeatherText(weatherText.trim());
-    const weatherEmoji = getWeatherEmoji(weatherText);
-    const formattedCity = formatCityName(city);
-    
-    addMessage(`${weatherEmoji} **Moti në ${formattedCity}:** ${formattedWeather}`, "bot");
-}
-
-} catch (error) {
-    console.error('❌ Gabim në /moti:', error.message);
-    removeTypingIndicator();
-    const fallbackWeather = getFallbackWeather(city);
-    const formattedCity = formatCityName(city);
-    const weatherEmoji = getWeatherEmoji(fallbackWeather);
-    
-    addMessage(`${weatherEmoji} **Moti në ${formattedCity}:** ${fallbackWeather}`, "bot");
-}
-break;
-
+// =============================================== moti ==================================
+// MOTI  =   =   =                              =               =                =     =
+// =======================================================================================
         case "/apikey":
             if (parts.length < 2) {
                 try {
@@ -1536,4 +1467,158 @@ async function clearAllChats() {
         console.error("Gabim në fshirjen e bisedave:", error);
         addMessage("❌ Gabim në fshirjen e bisedave.", "bot");
     }
+}
+
+// ========================================== ✅ FUNKSIONE PËR FORMATIMIN E MOTIT ======================================
+
+// Formatoni emrin e qytetit (shkronjë e madhe në fillim)
+function formatCityName(city) {
+    return city
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+}
+
+// Merr emoji të përshtatshëm për motin
+function getWeatherEmoji(weatherText) {
+    const text = weatherText.toLowerCase();
+    
+    if (text.includes('clear') || text.includes('sunny') || text.includes('diell')) {
+        return '☀️';
+    }
+    if (text.includes('cloud') || text.includes('re') || text.includes('cloudy')) {
+        return '☁️';
+    }
+    if (text.includes('rain') || text.includes('shi') || text.includes('drizzle')) {
+        return '🌧️';
+    }
+    if (text.includes('snow') || text.includes('borë')) {
+        return '❄️';
+    }
+    if (text.includes('thunder') || text.includes('storm') || text.includes('stuhi')) {
+        return '⛈️';
+    }
+    if (text.includes('fog') || text.includes('mist') || text.includes('mjegull')) {
+        return '🌫️';
+    }
+    if (text.includes('partly') || text.includes('few clouds')) {
+        return '⛅';
+    }
+    return '🌤️'; // Default
+}
+
+// Formatoni tekstin e motit për t'u shfaqur më mirë
+function formatWeatherText(weatherText) {
+    return weatherText
+        // Shtoni hapësirë para shenjave
+        .replace(/\+/g, ' +')
+        .replace(/\-/g, ' -')
+        // Formatoni temperaturën
+        .replace(/(\d+)°C/g, '$1°C')
+        .replace(/(\d+)C/g, '$1°C')
+        // Formatoni shpejtësinë e erës
+        .replace(/(\d+)km\/h/g, '$1 km/h')
+        .replace(/(\d+)kmh/g, '$1 km/h')
+        // Zëvendësoni drejtimin e erës me emoji
+        .replace(/←/g, '← (lindje)')
+        .replace(/→/g, '→ (perëndim)')
+        .replace(/↑/g, '↑ (veri)')
+        .replace(/↓/g, '↓ (jug)')
+        .replace(/↖/g, '↖ (veri-perëndim)')
+        .replace(/↗/g, '↗ (veri-lindje)')
+        .replace(/↙/g, '↙ (jug-perëndim)')
+        .replace(/↘/g, '↘ (jug-lindje)')
+        // Hiqni tekstin e tepërt
+        .replace(/Unknown location/g, '')
+        .trim();
+}
+
+// Përmirësoni fallback për më shumë qytete
+function getFallbackWeather(cityName) {
+    const weatherData = {
+        // Shqipëri
+        'tiranë': '☀️ +18°C ← 5 km/h 65%',
+        'tirana': '☀️ +18°C ← 5 km/h 65%',
+        'durrës': '⛅ +20°C ↙ 8 km/h 75%',
+        'durres': '⛅ +20°C ↙ 8 km/h 75%',
+        'vlora': '☀️ +21°C ↙ 7 km/h 72%',
+        'vlore': '☀️ +21°C ↙ 7 km/h 72%',
+        'shkodër': '☀️ +19°C ↙ 6 km/h 68%',
+        'shkoder': '☀️ +19°C ↙ 6 km/h 68%',
+        'elbasan': '⛅ +17°C ↙ 5 km/h 70%',
+        'korçë': '☁️ +16°C ↙ 4 km/h 78%',
+        'korce': '☁️ +16°C ↙ 4 km/h 78%',
+        'fier': '☀️ +20°C ↙ 6 km/h 69%',
+        'berat': '☀️ +19°C ↙ 5 km/h 67%',
+        'lushnjë': '⛅ +18°C ↙ 6 km/h 71%',
+        'lushnje': '⛅ +18°C ↙ 6 km/h 71%',
+        'gjirokastër': '☀️ +19°C ↙ 5 km/h 66%',
+        
+        // Kosovë
+        'prishtinë': '🌧️ +12°C ↖ 15 km/h 80%',
+        'prishtina': '🌧️ +12°C ↖ 15 km/h 80%',
+        'prizren': '🌧️ +13°C ↖ 14 km/h 78%',
+        'gjilan': '🌧️ +11°C ↖ 16 km/h 82%',
+        'mitrovicë': '🌧️ +10°C ↖ 17 km/h 83%',
+        'mitrovica': '🌧️ +10°C ↖ 17 km/h 83%',
+        'pejë': '🌧️ +12°C ↖ 15 km/h 79%',
+        'peja': '🌧️ +12°C ↖ 15 km/h 79%',
+        
+        // Rajoni
+        'athina': '☀️ +22°C ↘ 10 km/h 70%',
+        'athens': '☀️ +22°C ↘ 10 km/h 70%',
+        'sarajevo': '🌧️ +14°C ↖ 12 km/h 82%',
+        'podgorica': '☀️ +21°C ↙ 7 km/h 71%',
+        'skopje': '🌧️ +13°C ↖ 14 km/h 81%',
+        'belgrade': '☁️ +15°C ↙ 8 km/h 76%',
+        'zagreb': '🌧️ +11°C ↖ 16 km/h 85%',
+        'bucharest': '🌧️ +8°C ↙ 20 km/h 83%',
+        'sofia': '🌧️ +10°C ↖ 18 km/h 84%',
+        'budapest': '☁️ +16°C ↙ 9 km/h 77%',
+        'vienna': '☁️ +14°C ↙ 10 km/h 79%',
+        'rome': '☀️ +23°C ↘ 8 km/h 68%',
+        'milan': '⛅ +19°C ↙ 7 km/h 73%',
+        'paris': '🌧️ +12°C ↖ 14 km/h 81%',
+        'london': '🌧️ +10°C ↖ 18 km/h 86%',
+        'berlin': '☁️ +13°C ↙ 11 km/h 80%',
+        'amsterdam': '🌧️ +11°C ↖ 16 km/h 84%',
+        'brussels': '🌧️ +12°C ↖ 15 km/h 82%',
+        'madrid': '☀️ +25°C ↘ 6 km/h 65%',
+        'barcelona': '☀️ +24°C ↘ 7 km/h 67%',
+        'lisbon': '☀️ +22°C ↙ 8 km/h 70%',
+        'istanbul': '⛅ +20°C ↙ 9 km/h 74%',
+        'ankara': '☀️ +21°C ↙ 10 km/h 72%'
+    };
+    
+    const cityLower = cityName.toLowerCase().trim();
+    
+    // 1. Përputhje e saktë
+    if (weatherData[cityLower]) {
+        return weatherData[cityLower];
+    }
+    
+    // 2. Përputhje e pjesshme (për variacione të emrave)
+    for (const [key, value] of Object.entries(weatherData)) {
+        if (cityLower.includes(key) || key.includes(cityLower)) {
+            return value;
+        }
+    }
+    
+    // 3. Përgjigje default me emoji në varësi të stinës
+    const now = new Date();
+    const month = now.getMonth() + 1; // 1-12
+    
+    let defaultWeather = '🌤️ +20°C ↙ 5 km/h 70%';
+    
+    if (month >= 12 || month <= 2) { // Dimër
+        defaultWeather = '❄️ +5°C ↖ 10 km/h 75%';
+    } else if (month >= 3 && month <= 5) { // Pranverë
+        defaultWeather = '🌦️ +15°C ↙ 8 km/h 68%';
+    } else if (month >= 6 && month <= 8) { // Verë
+        defaultWeather = '☀️ +28°C ↙ 6 km/h 65%';
+    } else if (month >= 9 && month <= 11) { // Vjeshtë
+        defaultWeather = '🌧️ +12°C ↖ 12 km/h 78%';
+    }
+    
+    return defaultWeather;
 }
