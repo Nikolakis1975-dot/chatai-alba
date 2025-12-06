@@ -1186,11 +1186,9 @@ async function processCommand(text) {
             inp.click();
             break;
 
-                case "/moti":
+                        case "/moti":
             showTypingIndicator();
             const city = args.trim();
-            
-            console.log('🌍 [MOTI-DEBUG] Duke kërkuar motin për:', city);
             
             if (!city) {
                 removeTypingIndicator();
@@ -1198,54 +1196,49 @@ async function processCommand(text) {
                 break;
             }
             
-            // Funksion për API fallback
-            const getFallbackWeather = (cityName) => {
-                const weatherData = {
-                    'athina': '☁️ +22°C ↘10km/h 70%',
-                    'athens': '☁️ +22°C ↘10km/h 70%',
-                    'athena': '☁️ +22°C ↘10km/h 70%',
-                    'tiranë': '☀️ +18°C ↙5km/h 65%',
-                    'tirana': '☀️ +18°C ↙5km/h 65%',
-                    'prishtinë': '🌧️ +12°C ↖15km/h 80%',
-                    'prishtina': '🌧️ +12°C ↖15km/h 80%',
-                    'durrës': '⛅ +20°C ↙8km/h 75%',
-                    'shkodër': '☀️ +19°C ↙6km/h 68%',
-                    'vlora': '☀️ +21°C ↙7km/h 72%',
-                    'korçë': '☁️ +16°C ↙4km/h 78%',
-                    'elbasan': '⛅ +17°C ↙5km/h 70%'
-                };
-                
-                const cityLower = cityName.toLowerCase();
-                return weatherData[cityLower] || `🌤️ +20°C ↙5km/h 70%`;
-            };
-            
             try {
-                const apiUrl = `https://wttr.in/${encodeURIComponent(city)}?format=%C+%t+%w+%h&lang=sq`;
+                // API e përmirësuar për më shumë të dhëna
+                const apiUrl = `https://wttr.in/${encodeURIComponent(city)}?format=j1&lang=sq`;
                 
-                const timeoutPromise = new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('Timeout')), 5000)
-                );
+                const response = await fetch(apiUrl);
+                const data = await response.json();
                 
-                const fetchPromise = fetch(apiUrl);
-                const response = await Promise.race([fetchPromise, timeoutPromise]);
-                
-                if (!response.ok) throw new Error(`API status ${response.status}`);
-                
-                const weatherText = await response.text();
                 removeTypingIndicator();
                 
-                if (weatherText.includes("Unknown location") || weatherText.trim().length < 3) {
-                    const fallbackWeather = getFallbackWeather(city);
-                    addMessage(`🌍 **Moti në ${city}:** ${fallbackWeather}`, "bot");
-                } else {
-                    addMessage(`🌍 **Moti në ${city}:** ${weatherText.trim()}`, "bot");
+                if (!data.current_condition || data.current_condition.length === 0) {
+                    throw new Error('Nuk u gjet moti për këtë qytet');
                 }
+                
+                const current = data.current_condition[0];
+                const area = data.nearest_area[0];
+                
+                // Përgatit të dhënat
+                const weatherData = {
+                    city: area.areaName[0].value || city,
+                    country: area.country[0].value || '',
+                    tempC: current.temp_C,
+                    tempF: current.temp_F,
+                    desc: current.weatherDesc[0].value,
+                    icon: getWeatherIcon(current.weatherCode),
+                    windSpeed: current.windspeedKmph,
+                    windDir: current.winddir16Point,
+                    humidity: current.humidity,
+                    pressure: current.pressure,
+                    feelsLike: current.FeelsLikeC,
+                    visibility: current.visibility
+                };
+                
+                // Krijo kartën e bukur
+                const weatherCard = createWeatherCard(weatherData);
+                addMessage(weatherCard, "bot", true); // true për të mos animuar HTML
                 
             } catch (error) {
                 console.error('❌ Gabim në /moti:', error.message);
                 removeTypingIndicator();
-                const fallbackWeather = getFallbackWeather(city);
-                addMessage(`🌍 **Moti në ${city}:** ${fallbackWeather}`, "bot");
+                
+                // Shfaq kartën fallback me stil
+                const fallbackCard = createFallbackWeatherCard(city);
+                addMessage(fallbackCard, "bot", true);
             }
             break;
             
