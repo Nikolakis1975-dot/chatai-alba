@@ -1528,7 +1528,66 @@ async function sendToAI(message) {
     }
 }
 
-// ✅ KONTROLLO FUNKSIONET
+// ========================================= ✅ FALLBACK FUNKSIONI ME NJOHURI =======================================
+
+async function fallback(message) {
+    console.log(`🔄 Fallback triggered for: "${message}"`);
+    
+    try {
+        // ✅ PRIORITETI I PARË: Kontrollo njohuritë e ruajtura
+        console.log('💾 [FALLBACK] Duke kontrolluar njohuritë...');
+        
+        // Kontrollo nëse checkKnowledge ekziston
+        if (typeof checkKnowledge === 'function') {
+            console.log('✅ checkKnowledge ekziston, duke kontrolluar...');
+            const hasKnowledge = await checkKnowledge(message);
+            
+            if (hasKnowledge) {
+                console.log('✅✅✅ FALLBACK: Gjetëm përgjigje të ruajtur!');
+                return true; // Ndalo - përgjigja tashmë u shfaq
+            }
+            
+            console.log('ℹ️ FALLBACK: Nuk ka përgjigje të ruajtur');
+        } else {
+            console.log('⚠️ FALLBACK: checkKnowledge nuk ekziston në main.js');
+            
+            // ✅ PROVO TA KONTROLLOJ VETË
+            if (window.currentUser && window.currentUser.id) {
+                console.log('🔍 FALLBACK: Duke kërkuar direkt nga API...');
+                const response = await fetch(
+                    `/api/chat/knowledge/${window.currentUser.id}/${encodeURIComponent(message.toLowerCase())}`,
+                    { credentials: 'include' }
+                );
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.answer && data.answer !== 'null') {
+                        console.log('✅✅✅ FALLBACK (DIRECT): Gjetëm përgjigje!');
+                        addMessage(`💾 **Përgjigje e ruajtur:** ${data.answer}`, 'bot');
+                        return true;
+                    }
+                }
+            }
+        }
+        
+        // ✅ Vetëm nëse NUK ka njohuri, shfaq fallback standard
+        console.log('🔄 FALLBACK: Shfaq mesazhin standard');
+        addMessage(`🔧 **RRUFE-TESLA**: ${message} 💡 *Sistemi po përmirësohet!*`, 'bot');
+        
+        return true;
+        
+    } catch (error) {
+        console.error('❌ Gabim në fallback:', error);
+        addMessage(`🔧 **RRUFE-TESLA**: ${message} 💡 *Sistemi po përmirësohet!*`, 'bot');
+        return true;
+    }
+}
+
+// ✅ EKSPORTO GLOBAL
+window.fallback = fallback;
+console.log('✅ Fallback funksioni me njohuri u shtua!');
+
+// =================================== ✅ KONTROLLO FUNKSIONET ===============================================
 setTimeout(() => {
     console.log('🔍 [FINAL-FIX] Statusi:');
     console.log('- processCommand:', typeof processCommand);
