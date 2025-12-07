@@ -286,23 +286,92 @@ router.post('/knowledge', (req, res) => {
     );
 });
 
-// ✅ KODI EKZISTUES - KËRKO NJOHURI
+// ==================================== ✅ KODI I RI - KËRKO NJOHURI (FIXED) ========================================
+
 router.get('/knowledge/:userId/:question', (req, res) => {
     const { userId, question } = req.params;
-
+    const searchText = decodeURIComponent(question).toLowerCase().trim();
+    
+    console.log('🔍 [KNOWLEDGE-FIXED] Kërko:', searchText, 'për user:', userId);
+    
+    // STRATEGJI 2-NË-1:
+    // 1. Provo së pari me match të saktë
+    // 2. Provo pastaj me LIKE të thjeshtë
+    
+    // METODA 1: MATCH I SAKTË
     db.get(
-        'SELECT answer FROM knowledge_base WHERE user_id = ? AND question = ?',
-        [userId, question],
+        `SELECT answer FROM knowledge_base WHERE user_id = ? AND LOWER(question) = ?`,
+        [userId, searchText],
         (err, row) => {
             if (err) {
-                return res.status(500).json({ error: 'Gabim gjatë kërkimit të njohurive' });
+                console.error("❌ Gabim në match të saktë:", err);
+                // Vazhdo me metodën tjetër
             }
-
-            if (row) {
-                res.json({ answer: row.answer });
-            } else {
-                res.json({ answer: null });
+            
+            if (row && row.answer) {
+                console.log('✅✅✅ [EXACT MATCH] Gjetëm përgjigje!');
+                console.log('   Pyetja e ruajtur:', searchText);
+                console.log('   Përgjigja:', row.answer.substring(0, 50));
+                return res.json({ 
+                    success: true, 
+                    found: true,
+                    answer: row.answer 
+                });
             }
+            
+            console.log('❌ Nuk u gjet me match të saktë, provo me LIKE...');
+            
+            // METODA 2: LIKE E THJESHTË
+            db.get(
+                `SELECT answer FROM knowledge_base WHERE user_id = ? AND LOWER(question) LIKE ?`,
+                [userId, `%${searchText}%`],
+                (err, row2) => {
+                    if (err) {
+                        console.error("❌ Gabim në LIKE:", err);
+                        return res.json({ 
+                            success: true, 
+                            found: false,
+                            answer: null 
+                        });
+                    }
+                    
+                    if (row2 && row2.answer) {
+                        console.log('✅✅✅ [LIKE MATCH] Gjetëm përgjigje!');
+                        console.log('   Pyetja e ruajtur përmban:', searchText);
+                        console.log('   Përgjigja:', row2.answer.substring(0, 50));
+                        return res.json({ 
+                            success: true, 
+                            found: true,
+                            answer: row2.answer 
+                        });
+                    }
+                    
+                    console.log('❌❌❌ Nuk u gjet as me LIKE');
+                    
+                    // DEBUG: Shfaq çfarë ka në database për këtë user
+                    db.all(
+                        'SELECT question FROM knowledge_base WHERE user_id = ?',
+                        [userId],
+                        (err, allRows) => {
+                            if (err) {
+                                console.error('❌ Debug error:', err);
+                            } else {
+                                console.log('📊 DEBUG - Të gjitha pyetjet për këtë user:');
+                                allRows.forEach((item, index) => {
+                                    console.log(`   ${index + 1}. "${item.question}"`);
+                                });
+                            }
+                            
+                            res.json({ 
+                                success: true, 
+                                found: false,
+                                answer: null,
+                                debug: `Searched: "${searchText}", Total records: ${allRows?.length || 0}`
+                            });
+                        }
+                    );
+                }
+            );
         }
     );
 });
@@ -513,6 +582,41 @@ router.post('/openai', async (req, res) => {
             error: errorMessage
         });
     }
+});
+
+// =========================================== ✅ DEBUG ROUTE - SHFAQ TË GJITHA NJOHURITË =================================
+
+router.get('/debug-knowledge-all/:userId', (req, res) => {
+    const { userId } = req.params;
+    
+    console.log('🔍 [DEBUG-ALL] Duke shfaqur të gjitha njohuritë për user:', userId);
+    
+    db.all(
+        'SELECT id, question, answer, created_at FROM knowledge_base WHERE user_id = ? ORDER BY created_at DESC',
+        [userId],
+        (err, rows) => {
+            if (err) {
+                console.error('❌ Database error:', err);
+                return res.json({ error: err.message });
+            }
+            
+            console.log(`📊 Gjithsej ${rows.length} rreshta në knowledge_base për user ${userId}`);
+            
+            // Shfaq në console të serverit
+            rows.forEach((row, index) => {
+                console.log(`${index + 1}. ID: ${row.id}`);
+                console.log(`   Question: "${row.question}"`);
+                console.log(`   Answer: "${row.answer.substring(0, 50)}..."`);
+                console.log(`   Created: ${row.created_at}`);
+                console.log('   ---');
+            });
+            
+            res.json({
+                total_records: rows.length,
+                records: rows
+            });
+        }
+    );
 });
 
 module.exports = router;
