@@ -982,14 +982,38 @@ window.switchAIEngine = function(engine) {
     // ✅ INICIALIZIMI
     setTimeout(initializeAIEngineSystem, 1000);
 
-     // ==================== 🆕 OPENAI PANEL FUNCTIONS ====================
+    // =============================✅  OpenAI PANEL ====================================================
 
-    // ✅ Shfaq panelin OpenAI
-    function showOpenAIPanel() {
-        console.log('🔮 Duke hapur panelin OpenAI...');
-        document.getElementById('openai-modal').style.display = 'block';
-        updateOpenAIStatus();
-    }
+   function showOpenAIPanel() {
+    console.log('🔮 Duke hapur panelin OpenAI...');
+    document.getElementById('openai-modal').style.display = 'block';
+    
+    // ✅ PËRDOR VERSIONIN E RI TË UPDATE
+    updateOpenAIPanelEnhanced();
+    
+    // ✅ SHTO BUTONA SHTESË
+    setTimeout(() => {
+        const panel = document.querySelector('.openai-panel');
+        if (panel) {
+            // Butoni për status të detajuar
+            const detailedBtn = document.createElement('button');
+            detailedBtn.textContent = '🔍 Status i Detajuar';
+            detailedBtn.onclick = checkOpenAIDetailedStatus;
+            detailedBtn.style.margin = '5px';
+            detailedBtn.style.background = '#2196F3';
+            
+            // Butoni për force init
+            const forceBtn = document.createElement('button');
+            forceBtn.textContent = '🔄 Force Init';
+            forceBtn.onclick = forceOpenAIInit;
+            forceBtn.style.margin = '5px';
+            forceBtn.style.background = '#FF9800';
+            
+            panel.appendChild(detailedBtn);
+            panel.appendChild(forceBtn);
+        }
+    }, 100);
+}
 
     // ✅ Ruaj OpenAI Key në server
     async function saveOpenAIKey() {
@@ -1583,3 +1607,161 @@ async function debugStoredKnowledge() {
 setTimeout(() => {
     debugStoredKnowledge();
 }, 3000);
+
+// ==================== ✅ TESTI I DREJTPËRDREJTË I OPENAI ====================
+
+// ✅ TESTO API KEY NGA DATABASE
+async function testOpenAIKey() {
+    console.log('🧪 Duke testuar OpenAI API Key...');
+    
+    try {
+        const response = await fetch('/api/openai-enhanced/test-key', {
+            credentials: 'include'
+        });
+        
+        const data = await response.json();
+        console.log('📊 Test result:', data);
+        
+        if (data.success && data.isFunctional) {
+            addMessage(`✅ **OpenAI TEST SUKSESS:** API Key funksionon! (Burimi: ${data.keySource})`, 'system');
+            return true;
+        } else if (data.hasKey && !data.isFunctional) {
+            addMessage(`❌ **OpenAI TEST DËSHTIM:** API Key ekziston por nuk funksionon: ${data.error}`, 'system');
+            return false;
+        } else {
+            addMessage(`⚠️ **OpenAI TEST:** Nuk ka API Key të ruajtur`, 'system');
+            return false;
+        }
+        
+    } catch (error) {
+        console.error('❌ Gabim në test:', error);
+        addMessage(`❌ **Gabim në test:** ${error.message}`, 'system');
+        return false;
+    }
+}
+
+// ✅ KONTROLLO STATUSIN E DETAJUAR
+async function checkOpenAIDetailedStatus() {
+    console.log('🔍 Duke kontrolluar statusin e detajuar të OpenAI...');
+    
+    try {
+        const response = await fetch('/api/openai-enhanced/status-detailed', {
+            credentials: 'include'
+        });
+        
+        const data = await response.json();
+        console.log('📊 Detailed status:', data.status);
+        
+        let message = `🔍 **Statusi i OpenAI:**\n`;
+        message += `- Database: ${data.status.database ? '✅' : '❌'}\n`;
+        message += `- Environment: ${data.status.environment ? '✅' : '❌'}\n`;
+        message += `- Funksional: ${data.status.functional ? '✅' : '❌'}\n`;
+        
+        if (data.status.message) {
+            message += `\n${data.status.message}`;
+        }
+        
+        if (data.status.error) {
+            message += `\nGabim: ${data.status.error}`;
+        }
+        
+        addMessage(message, 'system');
+        return data.status;
+        
+    } catch (error) {
+        console.error('❌ Gabim në kontroll:', error);
+        addMessage(`❌ Gabim në kontrollin e statusit: ${error.message}`, 'system');
+        return null;
+    }
+}
+
+// ✅ FORCE INIT
+async function forceOpenAIInit() {
+    console.log('🔄 Duke forcuar inicializimin e OpenAI...');
+    
+    try {
+        const response = await fetch('/api/openai-enhanced/force-init', {
+            method: 'POST',
+            credentials: 'include'
+        });
+        
+        const data = await response.json();
+        console.log('📊 Force init result:', data);
+        
+        if (data.success) {
+            addMessage(`✅ **OpenAI u inicializua me forcë:** ${data.message}`, 'system');
+            return true;
+        } else {
+            addMessage(`❌ **Inicializimi dështoi:** ${data.message}`, 'system');
+            return false;
+        }
+        
+    } catch (error) {
+        console.error('❌ Gabim në force init:', error);
+        addMessage(`❌ Gabim: ${error.message}`, 'system');
+        return false;
+    }
+}
+
+// ✅ UPDATE PANEL ME INFORMACION TË RI
+async function updateOpenAIPanelEnhanced() {
+    const statusDiv = document.getElementById('openai-key-status');
+    const testBtn = document.getElementById('openai-test-btn');
+    
+    if (!statusDiv) return;
+    
+    // Krijo butonin e testit nëse nuk ekziston
+    if (!testBtn) {
+        const panel = document.querySelector('.openai-panel');
+        if (panel) {
+            const newTestBtn = document.createElement('button');
+            newTestBtn.id = 'openai-test-btn';
+            newTestBtn.textContent = '🧪 Testo API Key';
+            newTestBtn.onclick = testOpenAIKey;
+            newTestBtn.style.margin = '5px';
+            newTestBtn.style.background = '#ff9800';
+            panel.appendChild(newTestBtn);
+        }
+    }
+    
+    try {
+        statusDiv.textContent = '🔄 Duke testuar funksionalitetin...';
+        
+        const response = await fetch('/api/openai-enhanced/test-key');
+        const data = await response.json();
+        
+        if (data.success && data.isFunctional) {
+            statusDiv.innerHTML = `
+                <div style="color: #4CAF50;">
+                    ✅ <strong>OPENAI FUNKSIONON!</strong><br>
+                    <small>Burimi: ${data.keySource}</small><br>
+                    <small>Key: ${data.keyLength} karaktere</small><br>
+                    <small>Test: "${data.testResponse}"</small>
+                </div>
+            `;
+        } else if (data.hasKey && !data.isFunctional) {
+            statusDiv.innerHTML = `
+                <div style="color: #ff9800;">
+                    ⚠️ <strong>OPENAI NUK FUNKSIONON</strong><br>
+                    <small>Key ekziston por: ${data.error}</small><br>
+                    <small><button onclick="forceOpenAIInit()" style="background:#ff9800;color:black;padding:3px;border:none;cursor:pointer;">🔄 Provo përsëri</button></small>
+                </div>
+            `;
+        } else {
+            statusDiv.innerHTML = `
+                <div style="color: #f44336;">
+                    ❌ <strong>NUK KA API KEY</strong><br>
+                    <small>Vendosni API Key valid nga OpenAI Platform</small>
+                </div>
+            `;
+        }
+        
+    } catch (error) {
+        statusDiv.innerHTML = `
+            <div style="color: #f44336;">
+                ❌ <strong>GABIM NË KONTROLL</strong><br>
+                <small>${error.message}</small>
+            </div>
+        `;
+    }
+}
