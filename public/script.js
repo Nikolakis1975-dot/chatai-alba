@@ -1041,40 +1041,57 @@ async function processCommand(text) {
 🔧 **Motor aktiv:** ${activeEngine}`, "bot");
             break;
 
-        case "/meso":
-            const split = text.replace("/meso", "").split("|");
-            if (split.length === 2) {
-                const q = split[0].trim().toLowerCase();
-                const a = split[1].trim();
-                
-                try {
-                    const response = await fetch('/api/chat/knowledge', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        credentials: 'include',
-                        body: JSON.stringify({
-                            userId: currentUser.id,
-                            question: q,
-                            answer: a
-                        })
-                    });
-
-                    const data = await response.json();
-                    if (response.ok) {
-                        knowledgeBase[q] = a;
-                        addMessage("✅ Mësova diçka të re!", "bot");
-                    } else {
-                        addMessage("⚠️ Gabim gjatë ruajtjes së njohurive: " + data.error, "bot");
-                    }
-                } catch (error) {
-                    addMessage("⚠️ Gabim gjatë ruajtjes së njohurive.", "bot");
-                }
-            } else {
-                addMessage("⚠️ Përdorimi: /meso pyetje | përgjigje", "bot");
-            }
+       case "/meso":
+    const split = text.replace("/meso", "").split("|");
+    if (split.length === 2) {
+        const q = split[0].trim();
+        const a = split[1].trim();
+        
+        if (!q || !a) {
+            addMessage('❌ Format i gabuar. Përdor: /meso pyetja|përgjigja', 'bot');
             break;
+        }
+        
+        console.log('💾 /meso komanda - Duke ruajtur:', { pyetja: q, përgjigja: a });
+        
+        // ✅ PËRDOR SISTEMIN RADIKAL (të njëjtin si në radical.html)
+        try {
+            addMessage('💾 Duke ruajtur në Sistemin Radikal...', 'bot');
+            
+            const response = await fetch('/api/radical/radical-learn', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                credentials: 'include',
+                body: JSON.stringify({
+                    userId: currentUser.id,
+                    question: q,
+                    answer: a
+                })
+            });
+            
+            console.log('📡 Statusi i përgjigjes:', response.status);
+            
+            const data = await response.json();
+            console.log('📊 Përgjigja nga serveri:', data);
+            
+            if (data.success) {
+                addMessage(`✅ **Mësova diçka të re!** (Sistemi Radikal)` + 
+                          `<br><small>📝 Pyetja: "${q}"</small>` +
+                          `<br><small>💡 Përgjigja: "${a}"</small>` +
+                          `<br><small>🆔 ID: ${data.id || 'N/A'}</small>`, 'bot');
+            } else {
+                addMessage(`❌ Gabim në ruajtje: ${data.error || 'Gabim i panjohur'}`, 'bot');
+            }
+            
+        } catch (error) {
+            console.error('❌ Gabim në /meso:', error);
+            addMessage('❌ Gabim në server gjatë ruajtjes.', 'bot');
+        }
+        
+    } else {
+        addMessage('❌ Format i gabuar. Përdor: /meso pyetja|përgjigja', 'bot');
+    }
+    break;
 
         case "/wiki":
             const query = args;
