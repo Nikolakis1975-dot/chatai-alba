@@ -1,3 +1,8 @@
+// ==================== ✅ DEBUG INITIALIZATION ====================
+console.log('🔍 SCRIPT.JS - Initializing...');
+console.log('📍 currentUser at load:', currentUser);
+console.log('📍 window.currentUser at load:', window.currentUser);
+
 // ======================================================
 // 🎯 BRIDGE LOADER I PLOTË - RRUFEJA 347
 // ======================================================
@@ -1578,11 +1583,15 @@ async function clearAllChats() {
     }
 }
 
-// ====================================== ✅ FUNKSIONI I NJOHURIVE  =====================================
+// ================================================= ✅ FUNKSIONI I NJOHURIVE ============================================
 
+// ✅ KJO EKSPORTOHET NË WINDOW PËR T'U PËRDORUR NË MAIN.JS
 window.checkKnowledge = async function(message) {
     try {
         console.log('💾 [SCRIPT.JS] checkKnowledge - Duke kërkuar për:', message);
+        
+        // ✅ MERR currentUser DYSHIT (nga window ose nga variable lokale)
+        const currentUser = window.currentUser || currentUser;
         
         if (!currentUser || !currentUser.id) {
             console.log('❌ Nuk ka currentUser për të kërkuar njohuri');
@@ -1629,6 +1638,15 @@ window.checkKnowledge = async function(message) {
     return false;
 };
 
-// ✅ EKSPORTO EDHE currentUser PËR MAIN.JS
-window.currentUser = currentUser;
+// ✅ EKSPORTO currentUser SI FUNKSION GETTER (JO SI VARIABEL DIREKT)
+Object.defineProperty(window, 'currentUser', {
+    get: function() {
+        return currentUser; // Kthen variablën lokale
+    },
+    set: function(value) {
+        currentUser = value; // Përditëson variablën lokale
+    },
+    configurable: true
+});
+
 console.log('✅ checkKnowledge u eksportua për main.js');
