@@ -141,6 +141,8 @@ const knowledgeRoutes = require('./routes/knowledge');
 const openaiEnhancedRoutes = require('./routes/openai-enhanced');
 const openaiDirectRoutes = require('./routes/openai-direct');
 const openaiRoutes = require('./routes/openai');
+const radicalKnowledgeRoutes = require('./routes/radical-knowledge');
+const radicalTestRoutes = require('./routes/radical-test');
 
 // ======================================================
 // 🆕 SHTESË E RE: RRUFE-TESLA 10.5 INTEGRIMI
@@ -211,6 +213,10 @@ app.use('/api/knowledge', knowledgeRoutes);
 app.use('/api/openai-enhanced', openaiEnhancedRoutes);
 app.use('/api/openai-direct', openaiDirectRoutes);
 app.use('/api/openai', openaiRoutes);
+app.use('/api/radical', radicalKnowledgeRoutes);
+app.use('/api/radical-test', radicalTestRoutes);
+
+console.log('✅ Sistemet radikale u regjistruan në /api/radical dhe /api/radical-test');
 
 // ======================================================
 // 🆕 OPENAI ROUTES - IMPLEMENTIM I DIREKT NË APP.JS
