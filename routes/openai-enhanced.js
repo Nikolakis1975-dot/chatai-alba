@@ -261,4 +261,196 @@ router.get('/test', (req, res) => {
     });
 });
 
+// ==================== ✅ TESTIM I API KEY NGA DATABASE ====================
+
+// ✅ 1. TESTO NËSE API KEY FUNKSIONON
+router.get('/test-key', async (req, res) => {
+    console.log('🧪 [OPENAI-TEST] Duke testuar API Key nga database...');
+    
+    try {
+        // Kontrollo nëse ka API key në database
+        db.get(
+            'SELECT api_key, created_at FROM api_keys WHERE service_name LIKE ? LIMIT 1',
+            ['%openai%'],
+            async (err, row) => {
+                if (err) {
+                    console.error('❌ Database error:', err);
+                    return res.json({
+                        success: false,
+                        message: '❌ Gabim në database',
+                        error: err.message
+                    });
+                }
+                
+                if (!row || !row.api_key) {
+                    console.log('❌ Nuk u gjet OpenAI API Key në database');
+                    return res.json({
+                        success: false,
+                        hasKey: false,
+                        message: '❌ Nuk ka OpenAI API Key të ruajtur në database'
+                    });
+                }
+                
+                console.log('✅ Gjetëm OpenAI API Key në database');
+                console.log('🔑 Key (first 10 chars):', row.api_key.substring(0, 10) + '...');
+                console.log('📅 Created:', row.created_at);
+                
+                // ✅ PROVO TË KONFIGUROSH OPENAI ME KEY-N E DATABASE
+                try {
+                    const { OpenAI } = require('openai');
+                    const openai = new OpenAI({ apiKey: row.api_key });
+                    
+                    // Provo një query shumë të vogël për të testuar
+                    const testResponse = await openai.chat.completions.create({
+                        model: 'gpt-3.5-turbo',
+                        messages: [{ role: 'user', content: 'Test - respond only "OK"' }],
+                        max_tokens: 5
+                    });
+                    
+                    console.log('✅✅✅ OpenAI API TEST SUCCESS!');
+                    console.log('📊 Response:', testResponse.choices[0].message.content);
+                    
+                    res.json({
+                        success: true,
+                        hasKey: true,
+                        isFunctional: true,
+                        keySource: 'database',
+                        keyLength: row.api_key.length,
+                        keyStored: row.created_at,
+                        testResponse: testResponse.choices[0].message.content,
+                        message: '✅ OpenAI API Key funksionon perfektisht!'
+                    });
+                    
+                } catch (openaiError) {
+                    console.error('❌ OpenAI API Error:', openaiError.message);
+                    
+                    res.json({
+                        success: false,
+                        hasKey: true,
+                        isFunctional: false,
+                        keySource: 'database',
+                        error: openaiError.message,
+                        message: `❌ OpenAI API Key nuk funksionon: ${openaiError.message}`
+                    });
+                }
+            }
+        );
+        
+    } catch (error) {
+        console.error('❌ Gabim në testin e API Key:', error);
+        res.json({
+            success: false,
+            error: error.message,
+            message: '❌ Gabim në server'
+        });
+    }
+});
+
+// ✅ 2. STATUS I DETAJUAR
+router.get('/status-detailed', (req, res) => {
+    console.log('🔍 [OPENAI-STATUS] Duke kontrolluar statusin e detajuar...');
+    
+    // Kontrollo të gjitha burimet e mundshme
+    const status = {
+        database: false,
+        environment: false,
+        functional: false,
+        error: null
+    };
+    
+    // 1. Kontrollo database
+    db.get(
+        'SELECT api_key FROM api_keys WHERE service_name LIKE ?',
+        ['%openai%'],
+        async (err, row) => {
+            status.database = !!(row && row.api_key);
+            
+            // 2. Kontrollo environment
+            status.environment = !!process.env.OPENAI_API_KEY;
+            
+            // 3. Provo të testosh funksionalitetin
+            if (status.database || status.environment) {
+                try {
+                    const { OpenAI } = require('openai');
+                    const apiKey = row?.api_key || process.env.OPENAI_API_KEY;
+                    const openai = new OpenAI({ apiKey: apiKey });
+                    
+                    // Test i shpejtë
+                    await openai.chat.completions.create({
+                        model: 'gpt-3.5-turbo',
+                        messages: [{ role: 'user', content: 'Test' }],
+                        max_tokens: 1
+                    });
+                    
+                    status.functional = true;
+                    status.message = '✅ OpenAI është plotësisht funksional!';
+                    
+                } catch (testError) {
+                    status.functional = false;
+                    status.error = testError.message;
+                    status.message = `⚠️ OpenAI i konfiguruar por nuk funksionon: ${testError.message}`;
+                }
+            } else {
+                status.message = '❌ OpenAI nuk është i konfiguruar në asnjë burim';
+            }
+            
+            console.log('📊 Statusi i detajuar:', status);
+            
+            res.json({
+                success: true,
+                status: status,
+                timestamp: new Date().toISOString()
+            });
+        }
+    );
+});
+
+// ✅ 3. FORCE INIT ME KEY NGA DATABASE
+router.post('/force-init', (req, res) => {
+    console.log('🔄 [OPENAI-FORCE] Duke forcuar inicializimin...');
+    
+    db.get(
+        'SELECT api_key FROM api_keys WHERE service_name LIKE ?',
+        ['%openai%'],
+        (err, row) => {
+            if (err) {
+                return res.json({
+                    success: false,
+                    message: '❌ Gabim në database',
+                    error: err.message
+                });
+            }
+            
+            if (!row || !row.api_key) {
+                return res.json({
+                    success: false,
+                    message: '❌ Nuk ka API Key në database për të inicializuar'
+                });
+            }
+            
+            // Forco inicializimin në memory
+            try {
+                const { OpenAI } = require('openai');
+                global.openaiClient = new OpenAI({ apiKey: row.api_key });
+                
+                console.log('✅✅✅ OpenAI u inicializua me forcë nga database!');
+                
+                res.json({
+                    success: true,
+                    message: '✅ OpenAI u inicializua me sukses nga database!',
+                    keyLength: row.api_key.length,
+                    initialized: true
+                });
+                
+            } catch (initError) {
+                res.json({
+                    success: false,
+                    message: `❌ Gabim në inicializim: ${initError.message}`,
+                    error: initError.message
+                });
+            }
+        }
+    );
+});
+
 module.exports = router;
