@@ -1158,6 +1158,7 @@ function initializeMessageInterceptor() {
 }
 
 // ✅ 4. FUNKSIONI I RI PËR DËRGIM SIMULUAR
+// ✅ 4. FUNKSIONI I RI PËR DËRGIM SIMULUAR
 async function simulateMessageSend() {
     const userInput = document.getElementById('user-input');
     const message = userInput.value.trim();
@@ -1180,21 +1181,38 @@ async function simulateMessageSend() {
         chat.appendChild(loadingDiv);
         chat.scrollTop = chat.scrollHeight;
         
-        // ✅ DËRGO ME MOTORIN E ZGJEDHUR
+        // ✅ DËRGO ME MOTORIN E ZGJEDHUR - VERSIONI I RI
         const activeEngine = window.aiEngineStatus?.openai ? 'openai' : 'gemini';
         console.log('🔧 [SIMULIM] Duke dërguar me motor:', activeEngine);
         
-        const response = await fetch('/api/chat/message', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            credentials: 'include',
-            body: JSON.stringify({ 
-                message: message,
-                engine: activeEngine  // 🎯 PARAMETRI I RI
-            })
-        });
+        let response;
+        let result;
         
-        const result = await response.json();
+        if (activeEngine === 'openai') {
+            // Përdor route-in e OpenAI
+            response = await fetch('/api/openai-enhanced/chat', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                credentials: 'include',
+                body: JSON.stringify({ 
+                    message: message,
+                    userId: window.currentUser?.id || 1
+                })
+            });
+        } else {
+            // Përdor route-in e Gemini
+            response = await fetch('/api/chat/message', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                credentials: 'include',
+                body: JSON.stringify({ 
+                    message: message,
+                    engine: 'gemini'
+                })
+            });
+        }
+        
+        result = await response.json();
         
         // ✅ HIQ LOADING DHE SHFAQ REZULTATIN
         document.getElementById('simulate-loading')?.remove();
@@ -1526,17 +1544,55 @@ async function checkMath(message) {
 }
 
 // ✅ FUNKSIONI PËR DËRGIMIN TE SERVERI
+// ✅ FUNKSIONI PËR DËRGIMIN TE SERVERI
 async function sendToAI(message) {
     try {
         const activeEngine = window.aiEngineStatus?.openai ? 'openai' : 'gemini';
         
+        console.log('🎯 Motor aktiv:', activeEngine);
+        
+        // ✅ PËRDOR ROUTE TË NDRYSHME PËR OPENAI VS GEMINI
+        if (activeEngine === 'openai') {
+            // Përdor route-in e OpenAI
+            const response = await fetch('/api/openai-enhanced/chat', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                credentials: 'include',
+                body: JSON.stringify({
+                    message: message,
+                    userId: window.currentUser?.id || 1
+                })
+            });
+            
+            const data = await response.json();
+            if (data.success) {
+                addMessage(data.response, 'bot');
+            } else {
+                console.error('❌ OpenAI error:', data.error);
+                // Fallback në Gemini
+                addMessage('❌ OpenAI nuk funksionon. Duke përdorur Gemini...', 'bot');
+                await sendToAIWithGemini(message);
+            }
+        } else {
+            // Përdor route-in e Gemini
+            await sendToAIWithGemini(message);
+        }
+    } catch (error) {
+        console.error('❌ [FINAL-FIX] Gabim në dërgim:', error);
+        addMessage('❌ Gabim në lidhje.', 'bot');
+    }
+}
+
+// ✅ FUNKSION VEÇMAS PËR GEMINI
+async function sendToAIWithGemini(message) {
+    try {
         const response = await fetch('/api/chat/message', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             credentials: 'include',
             body: JSON.stringify({
                 message: message,
-                engine: activeEngine
+                engine: 'gemini'  // Specifiko që është Gemini
             })
         });
         
@@ -1547,8 +1603,8 @@ async function sendToAI(message) {
             addMessage('❌ Gabim në server.', 'bot');
         }
     } catch (error) {
-        console.error('❌ [FINAL-FIX] Gabim në dërgim:', error);
-        addMessage('❌ Gabim në lidhje.', 'bot');
+        console.error('❌ Gabim Gemini:', error);
+        addMessage('❌ Gabim në lidhje me serverin.', 'bot');
     }
 }
 
