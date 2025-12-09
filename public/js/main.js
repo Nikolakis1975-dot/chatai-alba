@@ -1463,8 +1463,14 @@ window.sendMessage = async function() {
     }
 
     // ✅ 2. KONTROLLO NJOHURITË E RUAJTURA
-    const hasKnowledge = await checkKnowledge(message);
+    const hasKnowledge = await window.checkKnowledge(message);
     if (hasKnowledge) return;
+
+  // DHE NËSE PËRDOR currentUser:
+if (window.getCurrentUser && window.getCurrentUser()) {
+    const user = window.getCurrentUser();
+    // Përdor user
+}
 
     // ✅ 3. KONTROLLO LLOGARITJE MATEMATIKE
     const hasMath = await checkMath(message);
