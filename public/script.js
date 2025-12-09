@@ -1335,67 +1335,19 @@ async function processCommand(text) {
             break;
 
         default:
-    // ✅ SË PARI KONTROLLO NJOHURITË E RUAJTURA (SISTEMI RADIKAL)
-    try {
-        console.log('🔍 Duke kërkuar njohuri në sistemin radikal...');
-        
-        const response = await fetch(`/api/radical/radical-search/${currentUser.id}/${encodeURIComponent(text.toLowerCase())}`);
-        const data = await response.json();
-        
-        console.log('📊 Përgjigja e njohurive:', data);
-        
-        if (data.success && data.found && data.answer) {
-            console.log('✅✅✅ GJETËM PËRGJIGJE TË RUAJTUR!');
-            addMessage(`💾 **Përgjigje e ruajtur:** ${data.answer}`, "bot");
-            return;
-        }
-    } catch (error) {
-        console.error("ℹ️ Kërkimi i njohurive dështoi:", error.message);
-    }
-    
-    // ✅ KONTROLLO PËR LLOGARITJE MATEMATIKE
-    const calc = tryCalculate(text);
-    if (calc !== null) { 
-        addMessage("🧮 Rezultati: " + calc, "bot"); 
-        return; 
-    }
-
-    // ✅ NËSE NUK KA NJOHURI, DËRGO TE AI
-    try {
-        const response = await fetch('/api/api-keys/status/gemini', {
-            credentials: 'include'
-        });
-        const data = await response.json();
-        
-        if (!data.hasApiKey) {
-            addMessage("❌ Nuk është konfiguruar API Key për Gemini. Përdor komandën /apikey [key_jote] për të vendosur një API Key.", "bot");
-            return;
-        }
-        
-        // Nëse ka API Key, bëj thirrjen për Gemini përmes serverit
-        showTypingIndicator();
-        
-        const geminiResponse = await fetch('/api/gemini/ask', {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: 'include',
-            body: JSON.stringify({ 
-                message: text
-            })
-        });
-        const geminiData = await geminiResponse.json();
-        removeTypingIndicator();
-        
-        if (geminiData.success && geminiData.response) {
-            addMessage(geminiData.response, "bot");
-        } else {
-            addMessage("❌ Nuk mora përgjigje nga Gemini. Kontrollo API Key.", "bot");
-        }
-    } catch {
-        removeTypingIndicator();
-        addMessage("⚠️ Gabim gjatë lidhjes me serverin.", "bot");
-    }
-    break;
+            const key = text.toLowerCase();
+            
+            try {
+                const response = await fetch(`/api/chat/knowledge/${currentUser.id}/${encodeURIComponent(key)}`);
+                const data = await response.json();
+                
+                if (data.answer) {
+                    addMessage(data.answer, "bot");
+                    return;
+                }
+            } catch (error) {
+                console.error("Gabim gjatë kërkimit të njohurive:", error);
+            }
 
             const calc = tryCalculate(text);
             if (calc !== null) { 
