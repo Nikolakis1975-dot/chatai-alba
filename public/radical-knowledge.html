@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧪 RRUFE-TESLA - Test Radikal i Njohurive</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background: linear-gradient(135deg, #1a2980, #26d0ce);
+            font-family: 'Arial', sans-serif;
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(0,0,0,0.7);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #00ff88;
+            text-shadow: 0 0 10px #00ff88;
+        }
+        .test-section {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 5px solid #00ff88;
+        }
+        h2 {
+            color: #00ff88;
+            margin-bottom: 15px;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 2px solid #00ff88;
+            border-radius: 8px;
+            background: rgba(0,0,0,0.5);
+            color: white;
+            font-size: 16px;
+        }
+        button {
+            background: linear-gradient(135deg, #00ff88, #00cc66);
+            color: black;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 5px;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,255,136,0.4);
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 8px;
+            min-height: 50px;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        .success { color: #00ff88; border-left: 4px solid #00ff88; }
+        .error { color: #ff4444; border-left: 4px solid #ff4444; }
+        .info { color: #4488ff; border-left: 4px solid #4488ff; }
+        .debug {
+            background: #1a1a1a;
+            color: #888;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin-top: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 RRUFE-TESLA - TEST RADIKAL I NJOHURIVE</h1>
+        
+        <div class="test-section">
+            <h2>🔧 TEST AUTOMATIK</h2>
+            <button onclick="runAutoTest()">🚀 EKZEKUTO TESTIN E PLOTË</button>
+            <div id="auto-test-result" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>💾 TESTO RUAJTJEN (/meso)</h2>
+            <input type="text" id="learn-question" placeholder="Pyetja">
+            <input type="text" id="learn-answer" placeholder="Përgjigja">
+            <button onclick="testLearn()">💾 RUAJ NJOHURI</button>
+            <div id="learn-result" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🔍 TESTO KËRKIMIN</h2>
+            <input type="text" id="search-question" placeholder="Shkruaj pyetjen">
+            <button onclick="testSearch()">🔍 KËRKO NJOHURI</button>
+            <div id="search-result" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📊 DEBUG - TË GJITHA TË DHËNAT</h2>
+            <button onclick="showAllData()">📋 SHFAQ TË GJITHA NJOHURITË</button>
+            <div id="debug-output" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🔄 TESTO CHAT</h2>
+            <input type="text" id="chat-message" placeholder="Shkruaj mesazh për RRUFE-TESLA">
+            <button onclick="testChat()">💬 DËRGO NË RRUFE-TESLA</button>
+            <div id="chat-result" class="result"></div>
+        </div>
+        
+        <div class="debug" id="console-output"></div>
+    </div>
+    
+    <script>
+        // Log all to debug div
+        const originalLog = console.log;
+        const originalError = console.error;
+        const debugDiv = document.getElementById('console-output');
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            debugDiv.innerHTML += '<div class="info">[LOG] ' + args.join(' ') + '</div>';
+            debugDiv.scrollTop = debugDiv.scrollHeight;
+        };
+        
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            debugDiv.innerHTML += '<div class="error">[ERROR] ' + args.join(' ') + '</div>';
+            debugDiv.scrollTop = debugDiv.scrollHeight;
+        };
+        
+        console.log('🧪 Testi Radikal i RRUFE-TESLA u ngarkua!');
+    </script>
+    
+    <script src="/js/radical-knowledge.js"></script>
+</body>
+</html>
