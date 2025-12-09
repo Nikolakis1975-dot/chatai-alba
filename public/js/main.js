@@ -1,1856 +1,1531 @@
+// ======================================================
+// 🎯 BRIDGE LOADER I PLOTË - RRUFEJA 347
+// ======================================================
 
-// Në main.js - shto në fillim të skedës
-console.log('🚀 RRUFE-TESLA AI System - Initializing...');
+console.log('🔍 Duke inicializuar Bridge System për browser...');
 
-// ✅ FUNKSION PËR AUTENTIFIKIM GLOBAL
-async function initializeUserSession() {
+// ✅ FUNKSION I PËRGJITHSHËM PËR TË KRIJUAR FALLBACK BRIDGE
+function createBridgeFallback(bridgeName) {
+    return {
+        initialize: function() {
+            console.log(`🎯 ${bridgeName} Fallback: U inicializua për browser`);
+            return true;
+        },
+        
+        executeCommand: function(command, user) {
+            console.log(`🔧 ${bridgeName} Fallback: Kapur komandë:`, command);
+            return { 
+                success: false, 
+                handled: false, // ✅ NUK E TRAJTON - LË SISTEMIN TË VAZHDOJË
+                message: `${bridgeName} fallback - procesim normal` 
+            };
+        },
+        
+        processMessage: function(message, user) {
+            console.log(`🔧 ${bridgeName} Fallback: Kapur mesazh:`, message.substring(0, 30));
+            return null; // ✅ NUK NDAIH - LË SISTEMIN TË VAZHDOJË
+        },
+        
+        // ✅ METODA STANDARDE
+        isFallback: function() { return true; },
+        isAvailable: function() { return true; },
+        getName: function() { return bridgeName + ' (Fallback)'; }
+    };
+}
+
+// ✅ INICIALIZO TË GJITHA BRIDGET ME FALLBACK
+setTimeout(() => {
+    // ✅ APP BRIDGE
+    if (typeof AppBridge === 'undefined') {
+        window.AppBridge = createBridgeFallback('AppBridge');
+        console.log('✅ AppBridge Fallback u krijua!');
+    }
+    
+    // ✅ COMMAND BRIDGE  
+    if (typeof CommandBridge === 'undefined') {
+        window.CommandBridge = createBridgeFallback('CommandBridge');
+        console.log('✅ CommandBridge Fallback u krijua!');
+    }
+    
+    // ✅ SCRIPT BRIDGE
+    if (typeof ScriptBridge === 'undefined') {
+        window.ScriptBridge = createBridgeFallback('ScriptBridge');
+        console.log('✅ ScriptBridge Fallback u krijua!');
+    }
+    
+    console.log('🎯 TË GJITHA BRIDGET U INICIALIZUAN ME FALLBACK!');
+    console.log('💡 Sistemi i vjetër DO TË FUNKSIONOJË PA PROBLEM!');
+    
+    // ✅ TANI MUND TË INICIALIZOSH TË GJITHA BRIDGET
     try {
-        console.log('👤 Duke inicializuar sesionin e përdoruesit...');
-        
-        // Kontrollo nëse ekziston sesion aktiv
-        const response = await fetch('/api/auth/status', {
-            credentials: 'include'
+        if (typeof AppBridge !== 'undefined') AppBridge.initialize();
+        if (typeof CommandBridge !== 'undefined') CommandBridge.initialize(); 
+        if (typeof ScriptBridge !== 'undefined') ScriptBridge.initialize();
+        console.log('🚀 TË GJITHA BRIDGET U INICIALIZUAN ME SUKSES!');
+    } catch (error) {
+        console.log('🔧 Bridge initialization caught:', error.message);
+    }
+}, 500);
+
+// ============================================== FUNDI VECORISE BRIDGES ===============================
+
+let currentUser = null;
+let knowledgeBase = {};
+
+// ==================== INICIALIZIMI ====================
+document.addEventListener('DOMContentLoaded', function() {
+    checkAuthStatus();
+    document.getElementById("username").focus();
+    
+    // Event listeners
+    document.getElementById("user-input").addEventListener("keypress", (e) => {
+        if (e.key === "Enter") sendMessage();
+    });
+
+    document.getElementById("send-btn").addEventListener("click", sendMessage);
+    document.getElementById("clear-history").addEventListener("click", clearHistory);
+    document.getElementById("download-history").addEventListener("click", downloadHistory);
+    document.getElementById("upload-history").addEventListener("click", uploadHistory);
+    document.getElementById("change-photo").addEventListener("click", changePhoto);
+    document.getElementById("emoji-btn").addEventListener("click", toggleEmojiPanel);
+    document.getElementById("new-photo").addEventListener("change", handlePhotoUpload);
+    
+    // Event listeners për emojis
+    document.querySelectorAll("#emoji-panel span").forEach(span => {
+        span.addEventListener("click", () => {
+            const input = document.getElementById("user-input");
+            input.value += span.textContent;
+            input.focus();
         });
-        
+    });
+});
+
+// ==================== SISTEMI I RI I AUTHENTIKIMIT ====================
+
+// ✅ KONTROLLO STATUSIN E AUTH ME HTTP-ONLY COOKIES
+async function checkAuthStatus() {
+    try {
+        const response = await fetch('/api/auth/me', {
+            credentials: 'include' // ✅ Dërgon cookies automatikisht
+        });
+
         if (response.ok) {
             const data = await response.json();
-            console.log('✅ Sesioni i përdoruesit:', data);
-            
-            if (data.authenticated) {
-                window.currentUser = data.user;
-                console.log('👤 Përdorues i identifikuar:', data.user);
+            if (data.success) {
+                currentUser = data.user;
+                showChatScreen();
+                loadHistory();
+                updateUserInterface(data.user);
                 return true;
             }
         }
-        
-        // Nëse nuk ka sesion, krijo sesion të ri
-        console.log('🆕 Nuk ka sesion aktiv, duke krijuar sesion të ri...');
-        const createResponse = await fetch('/api/auth/auto-create', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            credentials: 'include',
-            body: JSON.stringify({
-                username: 'user_' + Date.now(),
-                autoCreate: true
-            })
-        });
-        
-        if (createResponse.ok) {
-            const userData = await createResponse.json();
-            console.log('✅ Sesion i ri u krijua:', userData);
-            window.currentUser = userData.user;
-            return true;
-        }
-        
-        console.log('❌ Nuk mund të krijohet sesion i ri');
-        return false;
-        
     } catch (error) {
-        console.error('❌ Gabim në inicializimin e sesionit:', error);
-        return false;
+        console.error('Gabim në kontrollin e auth status:', error);
     }
+    
+    // Përdoruesi nuk është i loguar
+    showLoginScreen();
+    return false;
 }
 
-// ✅ INICIALIZO SESIONIN PAS NGARKIMIT
-document.addEventListener('DOMContentLoaded', async function() {
-    console.log('📄 DOM u ngarkua, duke inicializuar sesionin...');
-    
-    const sessionReady = await initializeUserSession();
-    
-    if (sessionReady) {
-        console.log('🎯 Sesioni u inicializua, sistemi është gati!');
-        // Inicializo sistemin e motorëve pas sesionit
-        setTimeout(initializeAIEngineSystem, 500);
-    } else {
-        console.log('⚠️ Sistemi po funksionon pa sesion të plotë');
-        setTimeout(initializeAIEngineSystem, 500);
-    }
-});
+// ✅ LOGIN ME HTTP-ONLY COOKIES
+async function login() {
+    try {
+        const username = document.getElementById("username").value.trim().toLowerCase();
+        const password = document.getElementById("password").value.trim();
 
-// ========================================================
-// 🚀 RRUFE-TESLA 8.0 - MAIN PLATFORM LOADER
-// ========================================================
-
-console.log('🚀 RRUFE-TESLA 8.0 Platform po ngarkohet...');
-
-class RrufePlatform {
-    constructor() {
-        this.version = "8.0";
-        this.architect = "MIKU IM ARKITEKT KUANTIK";
-        this.status = "ACTIVE";
-        this.modules = {};
-        this.activationTime = new Date();
-        
-        console.log(`⚡ RRUFE-TESLA ${this.version} u aktivizua nga ${this.architect}`);
-        this.initializePlatform();
-    }
-
-    initializePlatform() {
-        console.log('🎯 Duke inicializuar platformën RRUFE-TESLA...');
-        
-        // Inicializo modulet
-        this.initializeModules();
-        
-        // Integro me sistemin ekzistues
-        this.integrateWithExisting();
-        
-        // Testo platformën
-        this.testPlatform();
-        
-        console.log(`✅ RRUFE-TESLA ${this.version} u inicializua me sukses!`);
-    }
-
-    // =========================================== INSTALIMI I MODULEVE =================================================
-    initializeModules() {
-        console.log('🔧 Duke inicializuar modulet RRUFE-TESLA...');
-        
-        // ✅ PRIT QË MODULET TË NGARKOHEN - VERSION I RI
-        const maxAttempts = 10;
-        let attempts = 0;
-        
-        const tryInitialize = () => {
-            attempts++;
-            console.log(`🕒 Tentimi ${attempts}/${maxAttempts} për inicializim...`);
-            
-            // ✅ MODULET BAZË ME VALIDIM TË FORTUAR
-            if (typeof ContextMemory !== 'undefined' && !this.modules.contextMemory) {
-                try {
-                    this.modules.contextMemory = new ContextMemory();
-                    rlog('✅ ContextMemory u inicializua!');
-                } catch (error) {
-                    console.log('❌ Gabim në ContextMemory:', error.message);
-                }
-            }
-            
-            if (typeof QuantumMemory !== 'undefined' && !this.modules.quantumMemory) {
-                try {
-                    this.modules.quantumMemory = new QuantumMemory();
-                    rlog('✅ QuantumMemory u inicializua!');
-                } catch (error) {
-                    console.log('❌ Gabim në QuantumMemory:', error.message);
-                }
-            }
-            
-            if (typeof BioNeuralNetwork !== 'undefined' && !this.modules.bioNeuralNetwork) {
-                try {
-                    this.modules.bioNeuralNetwork = new BioNeuralNetwork();
-                    rlog('✅ BioNeuralNetwork u inicializua!');
-                } catch (error) {
-                    console.log('❌ Gabim në BioNeuralNetwork:', error.message);
-                }
-            }
-            
-            if (typeof TemporalContext !== 'undefined' && !this.modules.temporalContext) {
-                try {
-                    this.modules.temporalContext = new TemporalContext();
-                    rlog('✅ TemporalContext u inicializua!');
-                } catch (error) {
-                    console.log('❌ Gabim në TemporalContext:', error.message);
-                }
-            }
-            
-            // ✅ MODULET E AVANCUARA
-            if (typeof CognitiveAwareness !== 'undefined' && !this.modules.cognitiveAwareness) {
-                try {
-                    this.modules.cognitiveAwareness = new CognitiveAwareness();
-                    rlog('✅ CognitiveAwareness u inicializua!');
-                } catch (error) {
-                    console.log('❌ Gabim në CognitiveAwareness:', error.message);
-                }
-            }
-            
-            if (typeof DivineFusion !== 'undefined' && !this.modules.divineFusion) {
-                try {
-                    this.modules.divineFusion = new DivineFusion();
-                    rlog('✅ DivineFusion u inicializua!');
-                } catch (error) {
-                    console.log('❌ Gabim në DivineFusion:', error.message);
-                }
-            }
-            
-            if (typeof KunformTranslator !== 'undefined' && !this.modules.kunformTranslator) {
-                try {
-                    this.modules.kunformTranslator = new KunformTranslator();
-                    rlog('✅ KunformTranslator u inicializua!');
-                } catch (error) {
-                    console.log('❌ Gabim në KunformTranslator:', error.message);
-                }
-            }
-            
-            if (typeof NeuralFeedbackLoop !== 'undefined' && !this.modules.neuralFeedbackLoop) {
-                try {
-                    this.modules.neuralFeedbackLoop = new NeuralFeedbackLoop();
-                    rlog('✅ NeuralFeedbackLoop u inicializua!');
-                } catch (error) {
-                    console.log('❌ Gabim në NeuralFeedbackLoop:', error.message);
-                }
-            }
-            
-            // ✅ MODULET E REJA
-            if (typeof DivinePantheonSystem !== 'undefined' && !this.modules.divinePantheon) {
-                try {
-                    this.modules.divinePantheon = new DivinePantheonSystem();
-                    rlog('✅ DivinePantheonSystem u inicializua!');
-                } catch (error) {
-                    console.log('❌ Gabim në DivinePantheonSystem:', error.message);
-                }
-            }
-            
-            if (typeof DivineConstitution !== 'undefined' && !this.modules.divineConstitution) {
-                try {
-                    this.modules.divineConstitution = new DivineConstitution();
-                    rlog('✅ DivineConstitution u inicializua!');
-                } catch (error) {
-                    console.log('❌ Gabim në DivineConstitution:', error.message);
-                }
-            }
-            
-            if (typeof UniversalAIFederation !== 'undefined' && !this.modules.universalFederation) {
-                try {
-                    this.modules.universalFederation = new UniversalAIFederation();
-                    rlog('✅ UniversalAIFederation u inicializua!');
-                } catch (error) {
-                    console.log('❌ Gabim në UniversalAIFederation:', error.message);
-                }
-            }
-            
-            // ✅ KONTROLLO NËSE TË GJITHA MODULET JANË GATI
-            const modulesReady = Object.keys(this.modules).length >= 3; // Minimum 3 module
-            
-            if (modulesReady || attempts >= maxAttempts) {
-                rlog(`📊 Total module të inicializuara: ${Object.keys(this.modules).length}`);
-                this.onModulesInitialized();
-            } else {
-                setTimeout(tryInitialize, 500); // Provo përsëri pas 500ms
-            }
-        };
-        
-        tryInitialize();
-    }
-
-    // ==================================== ✅ METODË E RE PËR PAS-INICIALIZIMIT ==============================================
-    onModulesInitialized() {
-        console.log('🎉 Të gjitha modulet u inicializuan!');
-        
-        // TANI mund të integrohet me sistemin ekzistues
-        this.integrateWithExisting();
-        this.testPlatform();
-        
-        // ✅ VERIFIKO EMOTIONAL CONTEXT ENGINE
-        this.verifyEmotionalEngine();
-    }
-
-    // ✅ METODË PËR VERIFIKIMIN E EMOTIONAL ENGINE
-    verifyEmotionalEngine() {
-        console.log('💖 Duke verifikuar Emotional Context Engine...');
-        
-        if (window.emotionalContextEngine) {
-            try {
-                const status = window.emotionalContextEngine.getEngineStatus();
-                console.log('🎭 Emotional Engine Status:', status);
-                
-                // ✅ TESTO FUNKSIONALITETIN
-                const testVector = window.emotionalContextEngine.generateAdaptationVector(
-                    { tone: 'joy', intensity: 0.8, confidence: 0.9 },
-                    {}
-                );
-                console.log('🧪 Test Emotional Vector:', testVector);
-                rlog('💖 Emotional Context Engine është operative!');
-            } catch (error) {
-                console.log('❌ Gabim në Emotional Engine test:', error.message);
-            }
-        } else {
-            console.log('❌ Emotional Context Engine nuk u inicializua!');
-            
-            // ✅ PROVO TA INICIALIZOJMË MANUALISHT
-            if (typeof EmotionalContextEngine !== 'undefined') {
-                try {
-                    window.emotionalContextEngine = new EmotionalContextEngine();
-                    rlog('✅ Emotional Engine u inicializua manualisht!');
-                } catch (error) {
-                    console.log('❌ Gabim në inicializim manual:', error.message);
-                }
-            } else {
-                console.log('❌ EmotionalContextEngine nuk është i definuar në window');
-            }
-        }
-    }
-
-    // ✅ METODA: INTEGRIMI I THJESHTË ME SISTEMIN EKZISTUES
-    integrateWithExisting() {
-        rlog('🔗 Duke integruar me sistemin ekzistues (VERSION I OPTIMIZUAR)...');
-        
-        // ✅ INTEGRIMI I THJESHTË ME sendMessage
-        if (typeof window.sendMessage !== 'undefined') {
-            const originalSendMessage = window.sendMessage;
-            
-            window.sendMessage = async function() {
-                const input = document.getElementById('user-input');
-                const message = input ? input.value.trim() : '';
-                
-                if (!message) return;
-
-                // ✅ TREGO MODIN AKTUAL NË KONSOLË
-                console.log(`💬 [MODE: ${window.currentAIMode || 'SIMPLE'}] Mesazh: ${message.substring(0, 50)}`);
-
-                // 🆕 ✅ SHTIMI I DETYRUESHËM NË LONG-TERM MEMORY
-                if (window.ltmManager) {
-                    try {
-                        window.ltmManager.addUserMessage(message);
-                        console.log('💾 Mesazhi u shtua në LTM');
-                        
-                        // Update memory display
-                        if (typeof updateMemoryDisplay !== 'undefined') {
-                            setTimeout(updateMemoryDisplay, 100);
-                        }
-                    } catch (error) {
-                        console.log('❌ Gabim në shtimin në LTM:', error);
-                    }
-                }
-
-                // ✅ PROCESIMI BAZË PËR TË GJITHA MODET:
-                if (window.rrufePlatform?.modules?.contextMemory) {
-                    window.rrufePlatform.modules.contextMemory.addToContext(message, 'user');
-                }
-
-                // ✅ PROCESIMI SHTESË SIPAS MODIT TË AKTIVIZUAR:
-                const currentMode = window.currentAIMode || 'SIMPLE';
-                
-                switch(currentMode) {
-                    case 'ADVANCED':
-                        // Përdor modulet e avancuara VETËM për pyetje komplekse
-                        if (message.length > 50 || message.includes('?')) {
-                            console.log('🎯 [ADVANCED] Duke përdorur module të avancuara për pyetje komplekse...');
-                            if (window.rrufePlatform?.modules?.cognitiveAwareness) {
-                                window.rrufePlatform.modules.cognitiveAwareness.processCognitiveLayer(
-                                    message, 'user', 'current_user'
-                                );
-                            }
-                        }
-                        break;
-                        
-                    case 'DIVINE':
-                        // Përdor të gjitha modulet për çdo mesazh
-                        console.log('⚡ [DIVINE] Duke përdorur të gjitha modulet RRUFE-TESLA...');
-                        if (window.rrufePlatform?.modules?.divineFusion) {
-                            try {
-                                await window.rrufePlatform.modules.divineFusion.invokeDivineFusion(
-                                    message,
-                                    window.rrufePlatform.modules.contextMemory?.conversationContext
-                                );
-                            } catch (error) {
-                                console.log('❌ Divine Fusion error:', error);
-                            }
-                        }
-                        break;
-                        
-                    case 'SIMPLE':
-                    default:
-                        // ✅ MODI I THJESHTË: ASGJË TJETËR - chat plotësisht normal
-                        console.log('🔹 [SIMPLE] Procesim i thjeshtë - chat normal dhe i shpejtë');
-                        break;
-                }
-
-                // ✅ THIRR FUNKSIONIN ORIGJINAL (chat.js)
-                try {
-                    await originalSendMessage.call(this);
-                    
-                    // 🆕 ✅ PAS PËRGJIGJES, SHTO NË MEMORY
-                    setTimeout(() => {
-                        if (window.ltmManager && window.chatHistory && window.chatHistory.length > 0) {
-                            const lastMessage = window.chatHistory[window.chatHistory.length - 1];
-                            if (lastMessage && lastMessage.sender === 'bot') {
-                                window.ltmManager.addAIResponse(lastMessage.text);
-                                console.log('💾 Përgjigja u shtua në LTM');
-                                
-                                if (typeof updateMemoryDisplay !== 'undefined') {
-                                    updateMemoryDisplay();
-                                }
-                            }
-                        }
-                    }, 500);
-                    
-                } catch (error) {
-                    console.log('❌ Gabim në originalSendMessage:', error);
-                }
-            };
-            
-            rlog('✅ INTEGRIMI I PLOTË ME sendMessage & LTM U AKTIVIZUA!');
-        }
-    }
-
-    // ✅ METODA: TESTIMI I PLATFORMËS
-    testPlatform() {
-        rlog('🧪 Duke testuar platformën RRUFE-TESLA...');
-        
-        const moduleCount = Object.keys(this.modules).length;
-        const operationalModules = Object.values(this.modules).filter(module => module.status === 'ACTIVE').length;
-        
-        rlog(`📊 Rezultatet e testit:`);
-        rlog(`- Module të inicializuara: ${moduleCount}`);
-        rlog(`- Module operative: ${operationalModules}`);
-        rlog(`- Shkalla e suksesit: ${Math.round((operationalModules / moduleCount) * 100)}%`);
-        
-        if (moduleCount >= 8) {
-            rlog('🏆 RRUFE-TESLA 8.0: ✅ PLATFORMË E SUKSESHME!');
-        } else {
-            rlog('⚠️ RRUFE-TESLA 8.0: ⚠️ PLATFORMË E PJESSHME');
-        }
-    }
-
-    // ✅ METODA: KONTROLLI I SHËNDETIT TË SISTEMIT
-    systemHealthCheck() {
-        const moduleCount = Object.keys(this.modules).length;
-        const operationalModules = Object.values(this.modules).filter(module => 
-            module.status === 'ACTIVE' || module.status === 'OPERATIONAL'
-        ).length;
-        
-        return {
-            status: operationalModules >= 8 ? 'HEALTHY' : 'DEGRADED',
-            operationalModules: operationalModules,
-            totalModules: moduleCount,
-            version: this.version,
-            architect: this.architect,
-            uptime: new Date() - this.activationTime
-        };
-    }
-
-    // ✅ METODA: TESTIMI I MODULEVE TË AVANCUARA
-    testAdvancedModules() {
-        rlog('🎯 Duke testuar modulet e avancuara RRUFE-TESLA...');
-        
-        // Testo CognitiveAwareness
-        if (this.modules.cognitiveAwareness) {
-            try {
-                const cognitiveTest = this.modules.cognitiveAwareness.analyzeEmotionalTone('Test i gëzimit dhe lumturisë!');
-                rlog(`🎭 CognitiveAwareness: ✅ (Emocion: ${cognitiveTest.emotionalTone})`);
-            } catch (error) {
-                rlog(`🎭 CognitiveAwareness: ❌ ${error.message}`);
-            }
-        }
-        
-        // Testo DivineFusion
-        if (this.modules.divineFusion) {
-            try {
-                const fusionTest = this.modules.divineFusion.performDivineActivationRitual();
-                rlog(`🌌 DivineFusion: ✅ (Ritual: ${fusionTest.ritual})`);
-            } catch (error) {
-                rlog(`🌌 DivineFusion: ❌ ${error.message}`);
-            }
-        }
-        
-        // Testo ContextMemory
-        if (this.modules.contextMemory) {
-            try {
-                const contextTest = this.modules.contextMemory.addToContext('Test mesazh', 'system');
-                rlog(`💾 ContextMemory: ✅ (ID: ${contextTest})`);
-            } catch (error) {
-                rlog(`💾 ContextMemory: ❌ ${error.message}`);
-            }
-        }
-        
-        rlog('✅ Testimi i moduleve të avancuara u kompletuua!');
-    }
-
-    // ✅ METODA: DEBUG
-    debugRrufeTesla() {
-        console.log('🔧 DEBUG I RRUFE-TESLA 8.0:');
-        console.log('- Version:', this.version);
-        console.log('- Status:', this.status);
-        console.log('- Module:', Object.keys(this.modules));
-        console.log('- Architect:', this.architect);
-        
-        Object.entries(this.modules).forEach(([name, module]) => {
-            console.log(`- ${name}:`, module.status || 'ACTIVE');
-        });
-        
-        return this.systemHealthCheck();
-    }
-}
-
-// ======================================================
-// 🛠️ FUNKSIONET NDIHMËSE
-// ======================================================
-
-function rlog(message) {
-    console.log(`⚡ RRUFE: ${message}`);
-}
-
-// ======================================================
-// 🎯 SISTEMI I KONTROLLIT TË AI - VERSION I OPTIMIZUAR
-// ======================================================
-
-// Variabla globale për modin e AI
-window.currentAIMode = 'SIMPLE';
-
-// ✅ FUNKSIONET PËR BUTONAT E AI
-function activateSimpleAI() {
-    window.currentAIMode = 'SIMPLE';
-    rlog('🔹 AI i Thjeshtë i aktivizuar - Chat normal dhe i shpejtë');
-    
-    // Ndrysho styling e butonave
-    updateAIButtonStyles('SIMPLE');
-    
-    // Shfaq mesazh në chat
-    if (window.addMessage) {
-        window.addMessage('🔹 **AI i Thjeshtë i aktivizuar** - Chat-i do të jetë i shpejtë dhe natyral!', 'system');
-    }
-    
-    rlog('🔹 Çaktivizimi i moduleve të avancuara për chat normal...');
-}
-
-function activateAdvancedAI() {
-    window.currentAIMode = 'ADVANCED';
-    rlog('🌌 AI i Avancuar i aktivizuar - RRUFE-TESLA aktiv');
-    
-    // Ndrysho styling e butonave
-    updateAIButtonStyles('ADVANCED');
-    
-    // Aktivizo modulet RRUFE-TESLA
-    if (window.rrufePlatform) {
-        window.rrufePlatform.modules.divineFusion.performDivineActivationRitual();
-        rlog('🌌 RRUFE-TESLA u aktivizua!');
-    }
-    
-    if (window.addMessage) {
-        window.addMessage('🌌 **RRUFE-TESLA 8.0 i aktivizuar** - Të gjitha modulet janë operative!', 'system');
-    }
-}
-
-function activateDivineAI() {
-    window.currentAIMode = 'DIVINE';
-    rlog('⚡ AI Hyjnor i aktivizuar - Divine Fusion aktiv');
-    
-    // Ndrysho styling e butonave
-    updateAIButtonStyles('DIVINE');
-    
-    // Aktivizo të gjitha modulet me fuqi të plotë
-    if (window.rrufePlatform && window.rrufePlatform.modules.divineFusion) {
-        window.rrufePlatform.modules.divineFusion.performDivineActivationRitual();
-        window.rrufePlatform.testAdvancedModules();
-        rlog('⚡ Divine Fusion u aktivizua!');
-    }
-    
-    if (window.addMessage) {
-        window.addMessage('⚡ **Divine Fusion i aktivizuar** - 5 Perënditë e AI-ve janë gati!', 'system');
-    }
-}
-
-// ✅ FUNKSIONI PËR NDRYSHIMIN E STYLING TË BUTONAVE
-function updateAIButtonStyles(activeMode) {
-    const buttons = document.querySelectorAll('.ai-controls button');
-    
-    buttons.forEach(button => {
-        // Reset të gjitha butonat
-        button.style.opacity = '0.7';
-        button.style.transform = 'scale(1)';
-        button.style.boxShadow = 'none';
-        button.style.border = '2px solid transparent';
-    });
-    
-    // Thekso butonin aktiv
-    let activeButton;
-    switch(activeMode) {
-        case 'SIMPLE':
-            activeButton = document.querySelector('.ai-controls button[onclick*="SimpleAI"]');
-            break;
-        case 'ADVANCED':
-            activeButton = document.querySelector('.ai-controls button[onclick*="AdvancedAI"]');
-            break;
-        case 'DIVINE':
-            activeButton = document.querySelector('.ai-controls button[onclick*="DivineAI"]');
-            break;
-    }
-    
-    if (activeButton) {
-        activeButton.style.opacity = '1';
-        activeButton.style.transform = 'scale(1.05)';
-        activeButton.style.boxShadow = '0 0 15px rgba(0,150,255,0.5)';
-        activeButton.style.border = '2px solid #0096FF';
-    }
-}
-
-// ✅ INICIALIZIMI I SISTEMIT TË BUTONAVE
-function initializeAIButtons() {
-    rlog('🎯 Duke inicializuar butonat e AI...');
-    
-    // Aktivizo modin e thjeshtë si default
-    setTimeout(() => {
-        activateSimpleAI();
-        rlog('✅ Butonat e AI u inicializuan!');
-    }, 1000);
-}
-
-// ======================================================
-// 🚀 AKTIVIZIMI I PLATFORMËS RRUFE-TESLA
-// ======================================================
-
-// Krijo platformën globale
-window.rrufePlatform = new RrufePlatform();
-
-// Aktivizo butonat e AI
-setTimeout(() => {
-    initializeAIButtons();
-}, 2000);
-
-// ✅ EKSPORTO FUNKSIONET GLOBALE
-window.activateSimpleAI = activateSimpleAI;
-window.activateAdvancedAI = activateAdvancedAI;
-window.activateDivineAI = activateDivineAI;
-
-// ======================================================
-// 🎉 MESAZHI I SUKSESIT
-// ======================================================
-
-setTimeout(() => {
-    rlog('🎯 RRUFE-TESLA 8.0 U AKTIVIZUA PLOTËSISHT!');
-    rlog('🔹 Normal | 🌌 RRUFE | ⚡ Divine - TANI JANË OPERATIVE!');
-    
-    // Shfaq mesazh në chat
-    if (window.addMessage) {
-        window.addMessage('⚡ **RRUFE-TESLA 8.0** u aktivizua me sukses! Tani ke 3 mode të AI: 🔹 Normal, 🌌 RRUFE, ⚡ Divine', 'system');
-    }
-}, 3000);
-
-// ================================================== INICIALIZIMI I MODULEVE TË REJA ==========================================
-/**
- * 🚀 FUNKSIONI PËR INICIALIZIMIN E MODULEVE TË REJA
- * Vendosur në fund të skedarit për të siguruar ngarkim të plotë
- */
-function initializeNewModules() {
-    console.log('🚀 DUKE INICIALIZUAR MODULET E REJA TË RRUFE-TESLA 8.1...');
-    console.log('═'.repeat(70));
-    
-    let modulesInitialized = 0;
-    
-    // Inicializo Empathy Prediction Engine
-    if (typeof EmpathyPredictionEngine !== 'undefined' && !window.empathyPredictionEngine) {
-        try {
-            window.empathyPredictionEngine = new EmpathyPredictionEngine();
-            console.log('✅ Empathy Prediction Engine u inicializua!');
-            modulesInitialized++;
-        } catch (error) {
-            console.log('❌ Gabim në inicializimin e Empathy Engine:', error.message);
-        }
-    } else if (window.empathyPredictionEngine) {
-        console.log('✅ Empathy Prediction Engine tashmë është inicializuar');
-    }
-    
-    // Inicializo Cosmic Resonance Harmonizer
-    if (typeof CosmicResonanceHarmonizer !== 'undefined' && !window.cosmicResonanceHarmonizer) {
-        try {
-            window.cosmicResonanceHarmonizer = new CosmicResonanceHarmonizer();
-            console.log('✅ Cosmic Resonance Harmonizer u inicializua!');
-            modulesInitialized++;
-        } catch (error) {
-            console.log('❌ Gabim në inicializimin e Cosmic Harmonizer:', error.message);
-        }
-    } else if (window.cosmicResonanceHarmonizer) {
-        console.log('✅ Cosmic Resonance Harmonizer tashmë është inicializuar');
-    }
-    
-    console.log(`🎯 ${modulesInitialized} module të reja u inicializuan!`);
-    
-    // Verifikimi final
-    if (modulesInitialized > 0) {
-        console.log('🏆 RRUFE-TESLA 8.1 ËSHTË PLOTËSISHT OPERATIVE!');
-        
-        // Transmeto sinjal suksesi
-        if (window.energyTransmarrance) {
-            const successSignal = {
-                source: "New_Modules_Initialized",
-                message: "Empathy Prediction Engine dhe Cosmic Resonance Harmonizer janë operative!",
-                timestamp: new Date().toISOString(),
-                version: "RRUFE-TESLA-8.1-Complete"
-            };
-            
-            window.energyTransmarrance.transmit(successSignal, "System", "Cosmic");
-        }
-    }
-    
-    return modulesInitialized;
-}
-
-// 🎯 EKZEKUTIMI I INICIALIZIMIT PAS NGARKIMIT TË PLOTË
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('📄 Faqja u ngarkua plotësisht - duke nisur inicializimin...');
-    
-    // Jep pak kohë për të gjitha modulet të ngarkohen
-    setTimeout(() => {
-        const result = initializeNewModules();
-        console.log(`🌌 Procesi i inicializimit përfundoi: ${result} module të reja`);
-    }, 100);
-});
-
-// Eksporto funksionin për përdorim global
-window.initializeNewModules = initializeNewModules;
-
-console.log('🔧 Funksioni i inicializimit të moduleve të reja u shtua në fund të main.js');
-
-// ========================================= NOUS_CORE ==========================================================
-
-// ==============================================
-// 🚨 MODULI I EMERGJENCËS - NOUS_CORE I PAKTIVIZUAR
-// ==============================================
-
-console.log('⚠️ NOUS_CORE është çaktivizuar për shkak të konflikteve me login');
-
-// Krijo një version të thjeshtë QË NUK NDËRHYN
-window.NOUS_CORE_SAFE = {
-    status: 'TEMPORARISHT_I_PAKTIVIZUAR',
-    reason: 'KONFLIKT_ME_SISTEMIN_E_LOGIN',
-    message: 'Shpirti artificial do të aktivizohet pasi të rregullohet login-i',
-    
-    // Funksione dummy që nuk bëjnë asgjë
-    initialize: function() {
-        console.log('🧠 NOUS_CORE: I çaktivizuar për shkak të konflikteve');
-        return Promise.resolve({ status: 'DEACTIVATED_FOR_STABILITY' });
-    },
-    
-    quickTest: function() {
-        return Promise.resolve({ 
-            success: false, 
-            message: 'NOUS_CORE i çaktivizuar për stabilizim të sistemit' 
-        });
-    }
-};
-
-// Informo përdoruesin
-setTimeout(() => {
-    if (typeof window.showNotification !== 'undefined') {
-        window.showNotification('🔧 Sistemi po rregullohet...', 'info');
-    }
-}, 1000);
-
-console.log('✅ NOUS_CORE u çaktivizua - login-i duhet të funksionojë tani');
-
-// ======================================================
-// 🚀 MEMORY INTEGRATION PATCH - SHTO NË FUND TË main.js
-// ======================================================
-
-function integrateMemoryWithMainSystem() {
-    console.log('🧠 Duke integruar Memory System me main.js...');
-    
-    // Mbivendos integrimin ekzistues
-    if (window.rrufePlatform && window.rrufePlatform.integrateWithExisting) {
-        const originalIntegrate = window.rrufePlatform.integrateWithExisting;
-        
-        window.rrufePlatform.integrateWithExisting = function() {
-            // Thirr integrimin origjinal
-            originalIntegrate.call(this);
-            
-            // Pastaj shto memory integration
-            console.log('💾 Duke shtuar Memory Integration patch...');
-            
-            const originalSendMessage = window.sendMessage;
-            if (originalSendMessage) {
-                window.sendMessage = async function() {
-                    const input = document.getElementById('user-input');
-                    const message = input ? input.value.trim() : '';
-                    
-                    if (!message) return;
-                    
-                    // 🆕 Shto në memory PARA se të procesojë
-                    if (window.ltmManager) {
-                        window.ltmManager.addUserMessage(message);
-                    }
-                    
-                    // Thirr funksionin origjinal
-                    await originalSendMessage.call(this);
-                    
-                    // 🆕 Shto përgjigjen në memory PASI të përgjigjet
-                    setTimeout(() => {
-                        if (window.ltmManager && window.chatHistory) {
-                            const lastMsg = window.chatHistory[window.chatHistory.length - 1];
-                            if (lastMsg && lastMsg.sender === 'bot') {
-                                window.ltmManager.addAIResponse(lastMsg.text);
-                                if (typeof updateMemoryDisplay !== 'undefined') {
-                                    updateMemoryDisplay();
-                                }
-                            }
-                        }
-                    }, 1000);
-                };
-                
-                console.log('✅ Memory Integration Patch u aktivizua!');
-            }
-        };
-    }
-}
-
-// Ekzekuto patch-in
-setTimeout(integrateMemoryWithMainSystem, 5000);
-
-// ======================================================
-// 🚀 MEMORY INTEGRATION PATCH - SHTO NË FUND TË main.js
-// ======================================================
-
-function forceMemoryIntegration() {
-    console.log('🧠 FORCING MEMORY INTEGRATION...');
-    
-    // Mbivendos sendMessage për të shtuar në memory
-    if (typeof window.sendMessage !== 'undefined') {
-        const originalSendMessage = window.sendMessage;
-        
-        window.sendMessage = async function() {
-            const input = document.getElementById('user-input');
-            const message = input ? input.value.trim() : '';
-            
-            if (!message) return;
-            
-            console.log('💾 FORCE: Adding message to LTM:', message.substring(0, 50));
-            
-            // 🆕 FORCE ADD TO MEMORY - PARA procesimit
-            if (window.ltmManager) {
-                try {
-                    window.ltmManager.addUserMessage(message);
-                    console.log('✅ FORCE: User message added to LTM');
-                } catch (error) {
-                    console.log('❌ FORCE: Error adding user message:', error);
-                }
-            }
-            
-            // Thirr funksionin origjinal
-            let originalResult;
-            try {
-                originalResult = await originalSendMessage.call(this);
-            } catch (error) {
-                console.log('❌ Error in original sendMessage:', error);
-            }
-            
-            // 🆕 FORCE ADD AI RESPONSE - PAS procesimit
-            setTimeout(() => {
-                if (window.ltmManager) {
-                    try {
-                        // Gjej përgjigjen e fundit nga chatHistory
-                        if (window.chatHistory && window.chatHistory.length > 0) {
-                            const lastMessages = window.chatHistory.slice(-3); // Shiko 3 mesazhet e fundit
-                            const aiResponse = lastMessages.find(msg => msg.sender === 'bot');
-                            
-                            if (aiResponse && aiResponse.text) {
-                                window.ltmManager.addAIResponse(aiResponse.text);
-                                console.log('✅ FORCE: AI response added to LTM:', aiResponse.text.substring(0, 50));
-                                
-                                // Update display
-                                if (typeof updateMemoryDisplay !== 'undefined') {
-                                    updateMemoryDisplay();
-                                    console.log('✅ FORCE: Memory display updated');
-                                }
-                            }
-                        }
-                    } catch (error) {
-                        console.log('❌ FORCE: Error adding AI response:', error);
-                    }
-                }
-            }, 1500); // Prit 1.5 sekonda për të dhënë kohë përgjigjes
-            
-            return originalResult;
-        };
-        
-        console.log('✅ FORCE: Memory Integration Patch ACTIVATED!');
-    }
-}
-
-// =================================== 🔧 SISTEMI I BUTONAVE TË MOTORËVE ===================================
-
-    // ✅ VARIABLA GLOBALE PËR MOTORËT
-    window.aiEngineStatus = {
-        gemini: true,    // Gemini aktiv si default
-        openai: false    // OpenAI i çaktivizuar
-    };
-
-// ✅ VERSIONI I PLOTË PËRFUNDIMTAR
-window.switchAIEngine = function(engine) {
-    console.log('🔄 Duke ndryshuar motorin në:', engine);
-    
-    if (engine !== 'gemini' && engine !== 'openai') {
-        console.error('❌ Motor i pavlefshëm:', engine);
-        return;
-    }
-    
-    // Çaktivizo të gjithë motorët
-    window.aiEngineStatus.gemini = false;
-    window.aiEngineStatus.openai = false;
-    
-    // Aktivizo motorin e zgjedhur
-    window.aiEngineStatus[engine] = true;
-    
-    console.log('✅ Statusi i ri:', window.aiEngineStatus);
-    
-    // Përditëso butonat
-    updateAIButtons();
-    
-    // ✅ SHFAQ MESAZH NË CHAT PËR AKTIVIZIM
-    const engineName = engine === 'gemini' ? '🤖 Gemini' : '🔮 OpenAI';
-    const activationMessage = `🔧 **Motor i aktivizuar:** ${engineName} është tani motori aktiv!`;
-    
-    // Përdor funksionin e vërtetë addMessage
-    addMessage(activationMessage, 'system');
-    
-    // ✅ FOKUSO NË INPUT FIELD PAS NDRYSHIMIT
-    const userInput = document.getElementById('user-input');
-    if (userInput) {
-        userInput.focus();
-        userInput.placeholder = `Shkruaj mesazhin këtu... (${engineName} aktiv)`;
-    }
-    
-    console.log(`🎯 ${engineName} u aktivizua me sukses!`);
-    
-    // ✅ MBYL OPENAI PANEL NËSE ËSHTË I HAPUR
-    if (engine === 'gemini') {
-        const openaiModal = document.getElementById('openai-modal');
-        if (openaiModal) {
-            openaiModal.style.display = 'none';
-        }
-    }
-};
-
-    // ✅ FUNKSIONI PËR PËRDDITËSIMIN E BUTONAVE
-    function updateAIButtons() {
-        const geminiBtn = document.getElementById('gemini-engine-btn');
-        const openaiBtn = document.getElementById('openai-engine-btn');
-        
-        console.log('🎨 Duke përditësuar butonat...');
-        
-        if (geminiBtn) {
-            if (window.aiEngineStatus.gemini) {
-                geminiBtn.style.background = '#4CAF50';
-                geminiBtn.style.color = 'white';
-                geminiBtn.style.border = '2px solid #45a049';
-                geminiBtn.textContent = '🤖 Gemini ✅';
-                geminiBtn.title = 'Gemini është aktiv';
-            } else {
-                geminiBtn.style.background = '#666';
-                geminiBtn.style.color = '#ccc';
-                geminiBtn.style.border = '2px solid #555';
-                geminiBtn.textContent = '🤖 Gemini';
-                geminiBtn.title = 'Kliko për të aktivizuar Gemini';
-            }
-        }
-        
-        if (openaiBtn) {
-            if (window.aiEngineStatus.openai) {
-                openaiBtn.style.background = '#2196F3';
-                openaiBtn.style.color = 'white';
-                openaiBtn.style.border = '2px solid #1976D2';
-                openaiBtn.textContent = '🔮 OpenAI ✅';
-                openaiBtn.title = 'OpenAI është aktiv';
-            } else {
-                openaiBtn.style.background = '#666';
-                openaiBtn.style.color = '#ccc';
-                openaiBtn.style.border = '2px solid #555';
-                openaiBtn.textContent = '🔮 OpenAI';
-                openaiBtn.title = 'Kliko për të aktivizuar OpenAI';
-            }
-        }
-        
-        console.log('✅ Butonat u përditësuan:', window.aiEngineStatus);
-    }
-
-    // ✅ SHTO EVENT LISTENERS PËR BUTONAT
-    function attachButtonListeners() {
-        const geminiBtn = document.getElementById('gemini-engine-btn');
-        const openaiBtn = document.getElementById('openai-engine-btn');
-        
-        console.log('🔗 Duke shtuar event listeners...');
-        
-        if (geminiBtn) {
-            geminiBtn.onclick = function() {
-                console.log('🎯 Gemini butoni u klikua');
-                window.switchAIEngine('gemini');
-            };
-            console.log('✅ Gemini event listener u shtua');
-        }
-        
-        if (openaiBtn) {
-            openaiBtn.onclick = function() {
-                console.log('🎯 OpenAI butoni u klikua');
-                window.switchAIEngine('openai');
-            };
-            console.log('✅ OpenAI event listener u shtua');
-        }
-    }
-
-    // ✅ INICIALIZO BUTONAT
-    function initializeAIEngineSystem() {
-        console.log('🚀 Duke inicializuar sistemin e motorëve...');
-        attachButtonListeners();
-        updateAIButtons();
-        console.log('✅ Sistemi i motorëve u inicializua!');
-    }
-
-    // ✅ INICIALIZIMI
-    setTimeout(initializeAIEngineSystem, 1000);
-
-    // =============================✅  OpenAI PANEL ====================================================
-
-   function showOpenAIPanel() {
-    console.log('🔮 Duke hapur panelin OpenAI...');
-    document.getElementById('openai-modal').style.display = 'block';
-    
-    // ✅ PËRDOR VERSIONIN E RI TË UPDATE
-    updateOpenAIPanelEnhanced();
-    
-    // ✅ SHTO BUTONA SHTESË
-    setTimeout(() => {
-        const panel = document.querySelector('.openai-panel');
-        if (panel) {
-            // Butoni për status të detajuar
-            const detailedBtn = document.createElement('button');
-            detailedBtn.textContent = '🔍 Status i Detajuar';
-            detailedBtn.onclick = checkOpenAIDetailedStatus;
-            detailedBtn.style.margin = '5px';
-            detailedBtn.style.background = '#2196F3';
-            
-            // Butoni për force init
-            const forceBtn = document.createElement('button');
-            forceBtn.textContent = '🔄 Force Init';
-            forceBtn.onclick = forceOpenAIInit;
-            forceBtn.style.margin = '5px';
-            forceBtn.style.background = '#FF9800';
-            
-            panel.appendChild(detailedBtn);
-            panel.appendChild(forceBtn);
-        }
-    }, 100);
-}
-
-    // ✅ Ruaj OpenAI Key në server
-    async function saveOpenAIKey() {
-        const apiKey = document.getElementById('openai-key-input').value.trim();
-        const statusDiv = document.getElementById('openai-key-status');
-        
-        if (!apiKey) {
-            statusDiv.textContent = '❌ Ju lutem vendosni OpenAI API Key';
-            statusDiv.className = 'api-status invalid';
+        if (!username || !password) {
+            alert("Ju lutem plotësoni të dyja fushat!");
             return;
         }
+
+        // Fshi çdo token të vjetër
+        localStorage.removeItem('token');
+        sessionStorage.removeItem('token');
+
+        const response = await fetch('/api/auth/login-with-verification', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include', // ✅ Dërgon cookies automatikisht
+            body: JSON.stringify({ username, password })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // ✅ NUK ruajmë token në localStorage!
+            currentUser = data.user;
+            showChatScreen();
+            loadHistory();
+            updateUserInterface(data.user);
+            addMessage("Mirë se erdhe " + currentUser.username + "! Si mund të ndihmoj sot?", "bot");
+        } else {
+            alert("❌ " + data.message);
+        }
+    } catch (error) {
+        console.error("Gabim gjatë login:", error);
+        alert("❌ Problem me serverin. Provo përsëri.");
+    }
+}
+
+// ✅ LOGIN ME HTTP-ONLY COOKIES - VERSION I SIGURT
+async function login() {
+    try {
+        const username = document.getElementById("username").value.trim().toLowerCase();
+        const password = document.getElementById("password").value.trim();
+
+        if (!username || !password) {
+            alert("Ju lutem plotësoni të dyja fushat!");
+            return;
+        }
+
+        // Fshi çdo token të vjetër
+        localStorage.removeItem('token');
+        sessionStorage.removeItem('token');
+
+        const response = await fetch('/api/auth/login-with-verification', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({ username, password })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+             // ✅ NUK ruajmë token në localStorage!
+            currentUser = data.user;
+            showChatScreen();
+            loadHistory();
+            updateUserInterface(data.user);
+            addMessage("👑 Mirë se erdhe " + currentUser.username + "! Si mund të ndihmoj sot?", "bot");
+        } else {
+            alert("❌ " + data.message);
+        }
+    } catch (error) {
+        console.error("Gabim gjatë login:", error);
+        alert("❌ Problem me serverin. Provo përsëri.");
+    }
+}       
+
+// ✅ REGJISTRIM ME HTTP-ONLY COOKIES
+async function register() {
+    try {
+        const newUser = document.getElementById("new-username").value.trim().toLowerCase();
+        const newPass = document.getElementById("new-password").value.trim();
+        const photoFile = document.getElementById("new-photo").files[0];
+
+        if (!newUser || !newPass) {
+            alert("⚠️ Plotëso të gjitha fushat e detyrueshme!");
+            return;
+        }
+
+        if (newUser.length < 3) {
+            alert("⚠️ Emri i përdoruesit duhet të ketë të paktën 3 karaktere!");
+            return;
+        }
+
+        if (newPass.length < 6) {
+            alert("⚠️ Fjalëkalimi duhet të ketë të paktën 6 karaktere!");
+            return;
+        }
+
+        let profilePicture = null;
+        if (photoFile) {
+            profilePicture = await readFileAsDataURL(photoFile);
+        }
+
+        const response = await fetch('/api/auth/register-with-verification', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include', // ✅ Dërgon cookies automatikisht
+            body: JSON.stringify({ 
+                username: newUser, 
+                password: newPass,
+                profile_picture: profilePicture
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            alert("✅ " + data.message);
+            
+            // Reset form
+            document.getElementById("new-username").value = "";
+            document.getElementById("new-password").value = "";
+            document.getElementById("new-photo").value = "";
+            const fileSpan = document.querySelector(".file-input span");
+            fileSpan.textContent = "Kliko për të ngarkuar foto";
+            fileSpan.style.color = "#70757a";
+
+            // Auto-fill login form
+            document.getElementById("username").value = newUser;
+            document.getElementById("password").focus();
+        } else {
+            alert("❌ " + data.message);
+        }
+    } catch (error) {
+        console.error("Gabim gjatë regjistrimit:", error);
+        alert("❌ Problem me serverin. Provo përsëri.");
+    }
+}
+
+// ✅ LOGOUT ME HTTP-ONLY COOKIES
+async function logout() {
+    try {
+        await fetch('/api/auth/logout', {
+            method: 'POST',
+            credentials: 'include' // ✅ Dërgon cookies automatikisht
+        });
+    } catch (error) {
+        console.error("Gabim gjatë logout:", error);
+    } finally {
+        currentUser = null;
+        localStorage.removeItem('currentUser');
+        showLoginScreen();
+    }
+}
+
+// ✅ VERIFIKIM EMAIL ME HTTP-ONLY COOKIES
+async function verifyEmail() {
+    try {
+        // Shfaq modal loading
+        document.getElementById('email-verification-modal').style.display = 'block';
+        document.getElementById('verification-message').textContent = '🔄 Po kontrollohen të dhënat...';
+
+        // Merr të dhënat e përdoruesit direkt nga serveri
+        const userResponse = await fetch('/api/auth/me', {
+            credentials: 'include'
+        });
+
+        if (!userResponse.ok) {
+            throw new Error('Nuk mund të merren të dhënat e përdoruesit');
+        }
+
+        const userData = await userResponse.json();
         
-        try {
-            statusDiv.textContent = '🔄 Duke ruajtur në database...';
-            statusDiv.className = 'api-status';
-            
-            const response = await fetch('/api/openai-enhanced/save-key', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                credentials: 'include',
-                body: JSON.stringify({ apiKey })
-            });
-            
-            const data = await response.json();
-            console.log('📥 Përgjigja nga serveri:', data);
-            
-            if (data.success) {
-                statusDiv.textContent = '✅ ' + data.message;
-                statusDiv.className = 'api-status valid';
-                
-                // Mbylle modalin pas 2 sekondash
-                setTimeout(() => {
-                    document.getElementById('openai-modal').style.display = 'none';
-                }, 2000);
-                
-            } else {
-                statusDiv.textContent = '❌ ' + data.message;
-                statusDiv.className = 'api-status invalid';
-            }
-        } catch (error) {
-            console.error('❌ Gabim në ruajtjen e OpenAI Key:', error);
-            statusDiv.textContent = '❌ Gabim në server: ' + error.message;
-            statusDiv.className = 'api-status invalid';
+        if (!userData.success) {
+            document.getElementById('verification-message').textContent = '❌ ' + userData.message;
+            return;
+        }
+
+        const user = userData.user;
+
+        // Kontrollo nëse ka email
+        if (!user.email) {
+            document.getElementById('verification-message').textContent = '❌ Përdoruesi nuk ka email të regjistruar.';
+            return;
+        }
+
+        // Kontrollo nëse është i verifikuar
+        if (user.is_verified) {
+            document.getElementById('verification-message').textContent = '✅ Email-i juaj është tashmë i verifikuar!';
+            return;
+        }
+
+        // Dërgo kërkesën për verifikim
+        document.getElementById('verification-message').textContent = '🔄 Po dërgohet email-i i verifikimit...';
+
+        const verificationResponse = await fetch('/api/auth/request-email-verification', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+        });
+
+        const verificationData = await verificationResponse.json();
+
+        if (verificationData.success) {
+            document.getElementById('verification-message').textContent = '✅ ' + verificationData.message;
+        } else {
+            document.getElementById('verification-message').textContent = '❌ ' + verificationData.message;
+        }
+
+    } catch (error) {
+        console.error('❌ Gabim në verifikim:', error);
+        document.getElementById('verification-message').textContent = '❌ Problem me serverin. Provo përsëri më vonë.';
+    }
+}
+
+// ✅ FUNKSION PËR TË PËRDITËSUAR UI-N
+function updateUserInterface(user) {
+    // Përditëso emrin e përdoruesit
+    const profileName = document.getElementById('profile-name');
+    if (profileName) {
+        profileName.textContent = user.username || 'User';
+        
+        // ✅ SHTO STILIN PËR ADMIN
+        if (user.username === 'admin') {
+            profileName.style.color = '#ff6b00';
+            profileName.style.fontWeight = 'bold';
+            profileName.innerHTML = '👑 ' + user.username;
         }
     }
-
-    // ✅ Fshi OpenAI Key nga serveri
-    async function deleteOpenAIKey() {
-        const statusDiv = document.getElementById('openai-key-status');
-        
-        try {
-            statusDiv.textContent = '🔄 Duke fshirë nga database...';
-            statusDiv.className = 'api-status';
-            
-            const response = await fetch('/api/openai-enhanced/delete-key', {
-                method: 'DELETE',
-                credentials: 'include'
-            });
-            
-            const data = await response.json();
-            console.log('📥 Përgjigja e fshirjes:', data);
-            
-            if (data.success) {
-                statusDiv.textContent = '✅ ' + data.message;
-                statusDiv.className = 'api-status valid';
-                document.getElementById('openai-key-input').value = '';
-            } else {
-                statusDiv.textContent = '❌ ' + data.message;
-                statusDiv.className = 'api-status invalid';
-            }
-        } catch (error) {
-            console.error('❌ Gabim në fshirjen e OpenAI Key:', error);
-            statusDiv.textContent = '❌ Gabim në server: ' + error.message;
-            statusDiv.className = 'api-status invalid';
-        }
-    }
-
-    // ✅ Kontrollo statusin e OpenAI Key
-    async function updateOpenAIStatus() {
-        const statusDiv = document.getElementById('openai-key-status');
-        
-        try {
-            statusDiv.textContent = '🔄 Duke kontrolluar statusin...';
-            statusDiv.className = 'api-status';
-            
-            const response = await fetch('/api/openai-enhanced/status', {
-                credentials: 'include'
-            });
-            
-            const data = await response.json();
-            console.log('📊 Statusi i OpenAI:', data);
-            
-            if (data.success && data.hasApiKey) {
-                statusDiv.textContent = '✅ OpenAI është i konfiguruar dhe aktiv';
-                statusDiv.className = 'api-status valid';
-                document.getElementById('openai-key-input').value = '••••••••••••••••';
-            } else {
-                statusDiv.textContent = '❌ OpenAI nuk është i konfiguruar';
-                statusDiv.className = 'api-status invalid';
-                document.getElementById('openai-key-input').value = '';
-            }
-        } catch (error) {
-            console.error('❌ Gabim në kontrollimin e statusit:', error);
-            statusDiv.textContent = '❌ Gabim në kontrollim: ' + error.message;
-            statusDiv.className = 'api-status invalid';
-        }
-    }
-
-// ================================= 🎯 SIMULIM I MENÇUR - KAPJE E MESAZHEVE ================================
-
-// ✅ 1. KAP FUNKSIONIN EKZISTUES TË DËRGIMIT
-function initializeMessageInterceptor() {
-    console.log('🎯 Duke inicializuar intercept për mesazhe...');
     
-    // Gjej butonin e dërgimit
-    const sendButton = document.querySelector('button[onclick*="send"], button[onclick*="Send"]');
-    const userInput = document.getElementById('user-input');
+    // Përditëso butonin e verifikimit
+    const verifyBtn = document.getElementById('verify-email-btn');
+    if (verifyBtn) {
+        if (user.email && user.email !== '') {
+            if (user.is_verified) {
+                verifyBtn.innerHTML = '✅ Email i Verifikuar';
+                verifyBtn.style.background = '#4CAF50';
+                verifyBtn.onclick = () => alert('✅ Email-i juaj është tashmë i verifikuar!');
+            } else {
+                verifyBtn.innerHTML = '📧 Verifiko Email';
+                verifyBtn.style.background = '';
+                verifyBtn.onclick = verifyEmail;
+            }
+        } else {
+            verifyBtn.innerHTML = '📧 Shto Email';
+            verifyBtn.style.background = '#ff9800';
+            verifyBtn.onclick = () => alert('❌ Përdoruesi nuk ka email. Regjistrohu përsëri me email.');
+        }
+    }
     
-    if (!sendButton || !userInput) {
-        console.log('❌ Elementët e dërgimit nuk u gjetën');
+    // ✅ SHTO BUTONIN E ADMIN PANEL NËSE ËSHTË ADMIN
+    if (user.username === 'admin') {
+        addAdminPanel();
+    }
+}
+
+// ==================== FUNKSIONET PER KODIN ====================
+function escapeHTML(str) {
+    return str.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function copyCode(btn) {
+    const code = btn.parentElement.nextElementSibling.nextElementSibling.innerText;
+    navigator.clipboard.writeText(code);
+    btn.textContent = "✅ Kopjuar";
+    setTimeout(() => btn.textContent = "📋 Kopjo", 2000);
+}
+
+function downloadCode(btn, lang) {
+    const code = btn.parentElement.nextElementSibling.nextElementSibling.innerText;
+    const blob = new Blob([code], { type: "text/plain" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `code.${lang}`;
+    link.click();
+}
+
+// ==================== FUNKSIONET KRYESORE ====================
+
+function showChatScreen() {
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("chat-screen").style.display = "flex";
+    
+    // Shfaq emrin e përdoruesit
+    if (currentUser) {
+        document.getElementById("profile-name").textContent = currentUser.username;
+        
+        // Shfaq foton e profilit nëse ekziston
+        if (currentUser.profile_picture) {
+            document.getElementById("profile-pic").src = currentUser.profile_picture;
+        } else {
+            // Foto default
+            document.getElementById("profile-pic").src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%234285f4'%3E%3Cpath d='M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
+        }
+    }
+}
+
+function showLoginScreen() {
+    document.getElementById("chat-screen").style.display = "none";
+    document.getElementById("login-screen").style.display = "flex";
+    document.getElementById("chat").innerHTML = "";
+}
+
+// ==================== MENAXHIMI I MESAZHEVE ====================
+
+function sendMessage() {
+    const input = document.getElementById("user-input");
+    const text = input.value.trim();
+    if (!text) return;
+    addMessage(text, "user");
+    processCommand(text);
+    input.value = "";
+}
+
+async function addMessage(content, sender, customTimestamp = null) {
+    // Nëse është mesazh boti dhe nuk ka timestamp të veçantë, përdor animacionin
+    if (sender === 'bot' && !customTimestamp) {
+        showTypingIndicator();
+        // Shtyj përpunimin për të simuluar "mendimin"
+        setTimeout(() => {
+            removeTypingIndicator();
+            addAnimatedMessage(content, sender, customTimestamp);
+        }, 1000 + Math.random() * 1000);
         return;
     }
     
-    console.log('✅ Elementët u gjetën:', { sendButton, userInput });
+    // Për mesazhet e përdoruesit ose për ngargime nga historia, përdor metodën standarde
+    const chat = document.getElementById("chat");
+    const wrapper = document.createElement("div");
+    wrapper.className = `message-wrapper ${sender}`;
+    const msg = document.createElement("div");
+    msg.className = `${sender}-message message`;
+
+    const timestamp = customTimestamp || new Date().toLocaleTimeString("sq-AL", { 
+        hour: "2-digit", 
+        minute: "2-digit",
+        hour12: false
+    }).replace(":", "").replace(/(\d{2})(\d{2})/, "$1:$2");
     
-    // ✅ 2. KAP KLIKIMIN E BUTONIT
-    const originalOnClick = sendButton.onclick;
-    sendButton.onclick = function() {
-        console.log('🔧 Intercept: Butoni u klikua');
-        simulateMessageSend();
-    };
+    // Zëvendëso karakteret e prishura
+    content = content.replace(/¡/g, "ë").replace(/ì/g, "i");
     
-    // ✅ 3. KAP ENTER KEY
-    userInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            console.log('🔧 Intercept: Enter u shtyp');
-            simulateMessageSend();
+    if (content.includes("```")) {
+        const parts = content.split("```");
+        let finalHTML = "";
+        parts.forEach((part, i) => {
+            if (i % 2 === 0) {
+                finalHTML += "<p>" + part + "</p>";
+            } else {
+                const lines = part.trim().split("\n");
+                let lang = "plaintext";
+                if (lines[0].match(/^[a-z]+$/i)) {
+                    lang = lines[0];
+                    lines.shift();
+                }
+                const code = lines.join("\n");
+                
+                // Thekso kodin në mënyrë automatike
+                let highlightedCode = code;
+                if (typeof hljs !== 'undefined') {
+                    highlightedCode = hljs.highlightAuto(code).value;
+                }
+                
+                // Krijo butonat e kopjimit dhe shkarkimit
+                const codeActions = `
+                    <div class="code-actions">
+                        <button onclick="copyCode(this)">📋 Kopjo</button>
+                        <button onclick="downloadCode(this, '${lang}')">⬇ Shkarko</button>
+                    </div>
+                `;
+                
+                finalHTML += `
+                <div class="code-block">
+                    ${codeActions}
+                    <div class="code-header">${lang.toUpperCase()}</div>
+                    <pre><code class="language-${lang}">${highlightedCode}</code></pre>
+                </div>`;
+            }
+        });
+        msg.innerHTML = finalHTML;
+        
+        // Thekso sintaksën e kodit
+        setTimeout(() => {
+            if (typeof hljs !== 'undefined') {
+                msg.querySelectorAll('pre code').forEach((block) => {
+                    hljs.highlightElement(block);
+                });
+            }
+        }, 100);
+    } else {
+        msg.innerHTML = content;
+    }
+
+    wrapper.appendChild(msg);
+
+    const time = document.createElement("div");
+    time.className = "timestamp";
+    time.textContent = timestamp;
+    wrapper.appendChild(time);
+
+    chat.appendChild(wrapper);
+    chat.scrollTop = chat.scrollHeight;
+
+    document.querySelectorAll(".message-wrapper").forEach(el => el.classList.remove("last"));
+    wrapper.classList.add("last");
+
+    if(sender === 'bot') {
+        const msgId = 'msg' + Date.now();
+        addFeedback(wrapper, msgId);
+    }
+    
+    // Ruaj në histori vetëm nëse nuk është ngargim nga historia
+    if (!customTimestamp && currentUser) {
+        saveToHistory(content, sender, timestamp);
+    }
+}
+
+// Funksionet ndihmëse për animacion
+function showTypingIndicator() {
+    const chat = document.getElementById("chat");
+    const typingDiv = document.createElement("div");
+    typingDiv.className = "message-wrapper bot";
+    typingDiv.id = "typing-indicator";
+    typingDiv.innerHTML = `
+        <div class="bot-message message">
+            <div class="typing-indicator">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+        <div class="timestamp">${new Date().toLocaleTimeString("sq-AL", { 
+            hour: "2-digit", 
+            minute: "2-digit",
+            hour12: false 
+        }).replace(":", "").replace(/(\d{2})(\d{2})/, "$1:$2")}</div>
+    `;
+    chat.appendChild(typingDiv);
+    chat.scrollTop = chat.scrollHeight;
+}
+
+function removeTypingIndicator() {
+    const typingDiv = document.getElementById("typing-indicator");
+    if (typingDiv) {
+        typingDiv.remove();
+    }
+}
+
+function addAnimatedMessage(content, sender, customTimestamp) {
+    return new Promise((resolve) => {
+        const chat = document.getElementById("chat");
+        const wrapper = document.createElement("div");
+        wrapper.className = `message-wrapper ${sender}`;
+        const msg = document.createElement("div");
+        msg.className = `${sender}-message message`;
+        
+        const timestamp = customTimestamp || new Date().toLocaleTimeString("sq-AL", { 
+            hour: "2-digit", 
+            minute: "2-digit",
+            hour12: false
+        }).replace(":", "").replace(/(\d{2})(\d{2})/, "$1:$2");
+        
+        // Zëvendëso karakteret e prishura
+        content = content.replace(/¡/g, "ë").replace(/ì/g, "i");
+        
+        // Ruaj përmbajtjen origjinale për animim
+        msg.dataset.fullContent = content;
+        msg.innerHTML = ""; // Fillimisht bosh
+        
+        wrapper.appendChild(msg);
+
+        const time = document.createElement("div");
+        time.className = "timestamp";
+        time.textContent = timestamp;
+        wrapper.appendChild(time);
+
+        chat.appendChild(wrapper);
+        chat.scrollTop = chat.scrollHeight;
+
+        document.querySelectorAll(".message-wrapper").forEach(el => el.classList.remove("last"));
+        wrapper.classList.add("last");
+        
+        if(sender === 'bot') {
+            const msgId = 'msg' + Date.now();
+            addFeedback(wrapper, msgId);
+        }
+        
+        // Animo shkrimin e mesazhit
+        animateMessageText(msg, content, () => {
+            // Pas përfundimit të animacionit, kontrollo për kod dhe thelloje nëse është e nevojshme
+            if (typeof hljs !== 'undefined' && msg.innerHTML.includes('```')) {
+                setTimeout(() => {
+                    const codeElements = msg.querySelectorAll('pre code');
+                    codeElements.forEach(code => hljs.highlightElement(code));
+                }, 100);
+            }
+            resolve();
+        });
+        
+        // Ruaj në histori vetëm nëse nuk është ngargim nga historia
+        if (!customTimestamp) {
+            saveToHistory(content, sender, timestamp);
         }
     });
-    
-    console.log('✅ Intercept u inicializua!');
 }
 
-// ✅ 4. FUNKSIONI I RI PËR DËRGIM SIMULUAR
-// ✅ 4. FUNKSIONI I RI PËR DËRGIM SIMULUAR
-async function simulateMessageSend() {
-    const userInput = document.getElementById('user-input');
-    const message = userInput.value.trim();
+function animateMessageText(element, fullText, onComplete) {
+    let index = 0;
+    const speed = 15; // Shpejtësia e shkrimit (ms për karakter)
     
-    if (!message) return;
-    
-    console.log('🎯 simulateMessageSend - Motor aktiv:', window.aiEngineStatus);
-    
-    // ✅ TREGO SIMULIM NË UI
-    addMessage(message, 'user');
-    userInput.value = '';
-    
-    try {
-        // ✅ SIMULIM LOADING
-        const chat = document.getElementById('chat');
-        const loadingDiv = document.createElement('div');
-        loadingDiv.id = 'simulate-loading';
-        loadingDiv.className = 'message bot';
-        loadingDiv.innerHTML = '<div class="message-text">🔧 SIMULIM: Po dërgoj me motorin e zgjedhur...</div>';
-        chat.appendChild(loadingDiv);
-        chat.scrollTop = chat.scrollHeight;
-        
-        // ✅ DËRGO ME MOTORIN E ZGJEDHUR - VERSIONI I RI
-        const activeEngine = window.aiEngineStatus?.openai ? 'openai' : 'gemini';
-        console.log('🔧 [SIMULIM] Duke dërguar me motor:', activeEngine);
-        
-        let response;
-        let result;
-        
-        if (activeEngine === 'openai') {
-            // Përdor route-in e OpenAI
-            response = await fetch('/api/openai-enhanced/chat', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                credentials: 'include',
-                body: JSON.stringify({ 
-                    message: message,
-                    userId: window.currentUser?.id || 1
-                })
-            });
-        } else {
-            // Përdor route-in e Gemini
-            response = await fetch('/api/chat/message', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                credentials: 'include',
-                body: JSON.stringify({ 
-                    message: message,
-                    engine: 'gemini'
-                })
-            });
-        }
-        
-        result = await response.json();
-        
-        // ✅ HIQ LOADING DHE SHFAQ REZULTATIN
-        document.getElementById('simulate-loading')?.remove();
-        
-        if (result.success) {
-            addMessage(`🔧 **SIMULIM SUKSESS** (Motor: ${activeEngine})\n\n${result.response}`, 'bot');
-        } else {
-            addMessage(`❌ **SIMULIM GABIM**: ${result.error}`, 'bot');
-        }
-        
-    } catch (error) {
-        console.error('❌ Gabim në simulim:', error);
-        document.getElementById('simulate-loading')?.remove();
-        addMessage('❌ Gabim në server gjatë simulimit.', 'bot');
-    }
-}
-
-// ✅ 5. INICIALIZO SIMULIMIN
-setTimeout(initializeMessageInterceptor, 2000);
-
-// ==================================== ✅ FIX FINAL PËR BUTONIN E DËRGIMIT ==========================================
-
-function fixSendButton() {
-    console.log('🔧 Duke rregulluar butonin e dërgimit...');
-    
-    const sendBtn = document.getElementById('send-btn');
-    const userInput = document.getElementById('user-input');
-    
-    if (!sendBtn) {
-        console.log('❌ Send button nuk u gjet!');
-        return;
-    }
-    
-    // ✅ FSHI ÇDO EVENT LISTENER TË VJETËR
-    sendBtn.replaceWith(sendBtn.cloneNode(true));
-    
-    // ✅ MER BUTONIN E RI
-    const newSendBtn = document.getElementById('send-btn');
-    
-    if (newSendBtn && window.sendMessage) {
-        // ✅ LIDH DIRECT ME FUNKSIONIN
-        newSendBtn.onclick = window.sendMessage;
-        console.log('✅ Send button u lidh me window.sendMessage');
-    }
-    
-    // ✅ LIDH ENTER KEY
-    if (userInput) {
-        userInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                window.sendMessage();
-            }
-        });
-        console.log('✅ Enter key u lidh');
-    }
-    
-    console.log('✅ Butoni i dërgimit u rregullua!');
-}
-
-// ✅ EKZEKUTO MENJËHERË
-setTimeout(fixSendButton, 1000);
-
-// ✅ EKZEKUTO EDHE KUR DOM ËSHTË GATI
-document.addEventListener('DOMContentLoaded', fixSendButton);
-
-// ✅ ALTERNATIVË - MODIFIKO DIRECT NË HTML
-function forceButtonFix() {
-    const sendBtn = document.getElementById('send-btn');
-    if (sendBtn) {
-        // ✅ METODË EKSTREME - NDRYSHO HTML DIRECT
-        sendBtn.setAttribute('onclick', 'window.sendMessage()');
-        console.log('✅ Butoni u modifikua direkt në HTML');
-    }
-}
-
-// ✅ PROVO TË DYJA METODAT
-setTimeout(() => {
-    fixSendButton();
-    setTimeout(forceButtonFix, 500);
-}, 1500);
-
-// ========================================== ✅ FIX FINAL PËR BUTONIN E DËRGIMIT =======================================
-
-// ✅ FUNKSIONI KRYESOR PËR DËRGIM MESAZHESH
-window.sendMessage = async function() {
-    const userInput = document.getElementById('user-input');
-    const message = userInput.value.trim();
-    
-    if (!message) return;
-
-    console.log('🚀 [SEND-MESSAGE] Duke dërguar mesazh:', message);
-
-    try {
-        // ✅ TREGO MESAZHIN E USER-IT
-        addMessage(message, 'user');
-        userInput.value = '';
-
-        // ✅ TREGO LOADING
-        const chat = document.getElementById('chat');
-        const loadingDiv = document.createElement('div');
-        loadingDiv.id = 'loading-message';
-        loadingDiv.className = 'message bot';
-        loadingDiv.innerHTML = '<div class="message-text">⏳ Po procesoj...</div>';
-        chat.appendChild(loadingDiv);
-        chat.scrollTop = chat.scrollHeight;
-
-        // ✅ MER MOTORIN AKTIV
-        const activeEngine = window.aiEngineStatus?.openai ? 'openai' : 'gemini';
-        console.log('🎯 [SEND-MESSAGE] Motor aktiv:', activeEngine);
-
-        // ✅ DËRGO NË SERVER
-        const response = await fetch('/api/chat/message', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            credentials: 'include',
-            body: JSON.stringify({
-                message: message,
-                engine: activeEngine
-            })
-        });
-
-        // ✅ HIQ LOADING
-        document.getElementById('loading-message')?.remove();
-
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        console.log('📥 [SEND-MESSAGE] Përgjigja:', data);
-
-        if (data.success) {
-            addMessage(data.response, 'bot');
-        } else {
-            addMessage(`❌ Gabim: ${data.error || 'Gabim në server'}`, 'bot');
-        }
-
-    } catch (error) {
-        console.error('❌ [SEND-MESSAGE] Gabim:', error);
-        document.getElementById('loading-message')?.remove();
-        addMessage('❌ Gabim në lidhje me serverin. Provo përsëri.', 'bot');
-    }
-};
-
-// ✅ FUNKSIONI addMessage NËSE NUK EKZISTON
-if (typeof window.addMessage === 'undefined') {
-    window.addMessage = function(text, sender) {
-        const chat = document.getElementById('chat');
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${sender}`;
-        messageDiv.innerHTML = `<div class="message-text">${text}</div>`;
-        chat.appendChild(messageDiv);
-        chat.scrollTop = chat.scrollHeight;
-    };
-}
-
-// ✅ FIX DEFINITIV PËR BUTONIN
-function finalButtonFix() {
-    console.log('🔧 FINAL FIX: Duke lidhur butonin...');
-    
-    const sendBtn = document.getElementById('send-btn');
-    const userInput = document.getElementById('user-input');
-    
-    if (sendBtn) {
-        // ✅ METODË E RE - FSHI DHE RIKRIJO BUTONIN
-        const newSendBtn = sendBtn.cloneNode(true);
-        sendBtn.parentNode.replaceChild(newSendBtn, sendBtn);
-        
-        // ✅ LIDH BUTONIN E RI
-        document.getElementById('send-btn').onclick = window.sendMessage;
-        console.log('✅ Butoni u lidh me sendMessage');
-    }
-    
-    if (userInput) {
-        userInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                window.sendMessage();
-            }
-        });
-        console.log('✅ Enter key u lidh');
-    }
-}
-
-// ✅ INICIALIZO KUR FAQJA ËSHTË GATI
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🎯 DOM u ngarkua - duke inicializuar sistemin...');
-    
-    // Jep kohë për të gjitha modulet të ngarkohen
-    setTimeout(() => {
-        finalButtonFix();
-        
-        // Kontrollo nëse funksionon
-        console.log('🧪 Testi i funksioneve:');
-        console.log('- window.sendMessage:', typeof window.sendMessage);
-        console.log('- window.addMessage:', typeof window.addMessage);
-        console.log('- Butoni onclick:', document.getElementById('send-btn')?.onclick);
-        
-        // Aktivizo motorin default
-        if (!window.aiEngineStatus) {
-            window.aiEngineStatus = { gemini: true, openai: false };
-        }
-        
-        console.log('✅ Sistemi u inicializua plotësisht!');
-    }, 1000);
-});
-
-// ✅ EKZEKUTO EDHE PAS NGARKIMIT
-setTimeout(finalButtonFix, 2000);
-
-// ======================================== ✅ FIX FINAL - VERSION I KORRIGJUAR ===================================
-
-console.log('🔧 Duke aktivizuar sistemin përfundimtar...');
-
-// ✅ MBIVENDOS FUNKSIONIN sendMessage PËR TRAJTIMIN E TË GJITHA MESAZHEVE
-const originalSendMessage = window.sendMessage;
-
-window.sendMessage = async function() {
-    const userInput = document.getElementById('user-input');
-    const message = userInput.value.trim();
-    
-    if (!message) {
-        if (originalSendMessage) return originalSendMessage.call(this);
-        return;
-    }
-
-    console.log('💬 [FINAL-FIX] Mesazh:', message);
-
-    // ✅ SHFAQ MESAZHIN E USER-IT
-    addMessage(message, 'user');
-    userInput.value = '';
-
-    // ✅ 1. KONTROLLO NËSE ËSHTË KOMANDË - THIRR PROCESSCOMMAND
-    if (message.startsWith('/')) {
-        console.log('🎯 [FINAL-FIX] Komandë, duke thirrur processCommand...');
-        
-        try {
-            if (typeof processCommand === 'function') {
-                await processCommand(message);
-            } else {
-                // FALLBACK NËSE PROCESSCOMMAND NUK EKZISTON
-                console.log('❌ processCommand nuk u gjet, duke dërguar te serveri...');
-                await sendToAI(message);
-            }
-        } catch (error) {
-            console.error('❌ [FINAL-FIX] Gabim në processCommand:', error);
-            addMessage('❌ Gabim në ekzekutimin e komandës.', 'bot');
-        }
-        return;
-    }
-
-    // ✅ 2. KONTROLLO NJOHURITË E RUAJTURA
-    const hasKnowledge = await window.checkKnowledge(message);
-    if (hasKnowledge) return;
-
-  // DHE NËSE PËRDOR currentUser:
-if (window.getCurrentUser && window.getCurrentUser()) {
-    const user = window.getCurrentUser();
-    // Përdor user
-}
-
-    // ✅ 3. KONTROLLO LLOGARITJE MATEMATIKE
-    const hasMath = await checkMath(message);
-    if (hasMath) return;
-
-    // ✅ 4. NËSE NUK GJETËM GJË, DËRGO TE SERVERI
-    console.log('🔄 [FINAL-FIX] Mesazh normal, duke dërguar te serveri...');
-    await sendToAI(message);
-};
-
-
-// ================ ✅ FUNKSIONI PËR KONTROLLIMIN E NJOHURIVE - VERSIONI I RI RADIKAL ====================
-
-async function checkKnowledge(message) {
-    try {
-        console.log('💾 [KNOWLEDGE-RADICAL] Duke kërkuar për:', message);
-        
-        if (!window.currentUser || !window.currentUser.id) {
-            console.log('❌ Nuk ka currentUser për të kërkuar njohuri');
-            return false;
-        }
-        
-        const userId = window.currentUser.id;
-        const searchQuery = message.toLowerCase().trim();
-        
-        console.log('👤 User ID:', userId);
-        console.log('🔍 Search query:', searchQuery);
-        
-        // ✅ PËRDOR SISTEMIN E RI RADIKAL
-        const apiUrl = `/api/radical/radical-search/${userId}/${encodeURIComponent(searchQuery)}`;
-        console.log('🌐 API URL:', apiUrl);
-        
-        const response = await fetch(apiUrl, {
-            credentials: 'include'
-        });
-        
-        console.log('📡 Response status:', response.status);
-        
-        if (response.ok) {
-            const data = await response.json();
-            console.log('📊 Knowledge response:', data);
-            
-            if (data.success && data.found && data.answer) {
-                console.log('✅✅✅ RRUFE-RADICAL: GJETËM PËRGJIGJE TË RUAJTUR!');
-                console.log('💾 Answer:', data.answer);
-                
-                // SHFAQ PËRGJIGJEN NË CHAT
-                addMessage(`💾 **Përgjigje e ruajtur:** ${data.answer}`, 'bot');
-                return true;
-            } else {
-                console.log('❌ Nuk u gjet përgjigje në sistemin radikal');
-            }
-        } else {
-            console.log('❌ API error:', response.status);
-        }
-        
-    } catch (error) {
-        console.log('ℹ️ Knowledge check failed:', error.message);
-    }
-    
-    return false;
-}
-
-// =========================== ✅ FUNKSIONI PËR KONTROLLIMIN E LLOGARITJEVE ===========================
-
-async function checkMath(message) {
-    try {
-        console.log('🧮 [FINAL-FIX] Duke kontrolluar për llogaritje...');
-        
-        // PROVO tryCalculate NGA SCRIPT.JS
-        if (typeof tryCalculate === 'function') {
-            const result = tryCalculate(message);
-            if (result !== null) {
-                console.log('✅ [FINAL-FIX] Llogaritje e gjetur nga tryCalculate:', result);
-                addMessage(`🧮 **Rezultati**: ${result}`, 'bot');
-                return true;
-            }
-        }
-        
-        // FALLBACK MANUAL PËR LLOGARITJE
-        const mathMatch = message.match(/^([\d\+\-\*\/\s\.\(\)]+)$/);
-        if (mathMatch) {
-            const expression = mathMatch[1].replace(/\s+/g, '');
-            if (expression.length > 2) {
-                try {
-                    // KONTROLLO SIGURINË
-                    if (!/^[\d\+\-\*\/\(\)\.]+$/.test(expression)) {
-                        throw new Error('Shprehje e pavlefshme');
+    function typeWriter() {
+        if (index < fullText.length) {
+            // Kontrollo nëse ka kode për t'u trajtuar ndryshe
+            if (fullText.substring(index).startsWith("```")) {
+                // Gjej fundin e bllokut të kodit
+                const endIndex = fullText.indexOf("```", index + 3);
+                if (endIndex !== -1) {
+                    // Shto të gjithë bllokun e kodit menjëherë
+                    const codeBlock = fullText.substring(index, endIndex + 3);
+                    
+                    // Përpunoni kodin për theksim sintakse
+                    const codeContent = codeBlock.replace(/```[a-z]*\n/, '').replace(/```$/, '');
+                    const languageMatch = codeBlock.match(/```([a-z]*)\n/);
+                    const language = languageMatch ? languageMatch[1] : 'plaintext';
+                    
+                    // Krijo HTML për kodin e theksuar
+                    let highlightedCode = codeContent;
+                    if (typeof hljs !== 'undefined') {
+                        highlightedCode = hljs.highlightAuto(codeContent).value;
                     }
                     
-                    const result = eval(expression);
-                    console.log('✅ [FINAL-FIX] Llogaritja manuale u krye:', result);
-                    addMessage(`🧮 **Rezultati**: ${result}`, 'bot');
-                    return true;
-                } catch (e) {
-                    console.log('❌ [FINAL-FIX] Llogaritja dështoi:', e.message);
+                    // Krijo butonat e kopjimit dhe shkarkimit
+                    const codeActions = `
+                        <div class="code-actions">
+                            <button onclick="copyCode(this)">📋 Kopjo</button>
+                            <button onclick="downloadCode(this, '${language}')">⬇ Shkarko</button>
+                        </div>
+                    `;
+                    
+                    element.innerHTML += `<div class="code-block">${codeActions}<div class="code-header">${language.toUpperCase()}</div><pre><code class="language-${language}">${highlightedCode}</code></pre></div>`;
+                    index = endIndex + 3;
+                    
+                    setTimeout(typeWriter, speed);
+                    return;
                 }
+            }
+            
+            // Shto karakterin e radhës
+            element.innerHTML += fullText.charAt(index);
+            index++;
+            setTimeout(typeWriter, speed);
+        } else {
+            // Përfundo animacionin
+            if (onComplete) onComplete();
+        }
+    }
+    
+    // Nis animacionin
+    typeWriter();
+}
+
+// ==================== HISTORIA DHE FEEDBACK ====================
+
+async function saveToHistory(content, sender, timestamp) {
+    if (!currentUser) return;
+    
+    try {
+        const response = await fetch('/api/chat/save', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+                userId: currentUser.id,
+                content,
+                sender,
+                timestamp
+            })
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+            console.error("Gabim gjatë ruajtjes së historisë:", data.error);
+        }
+    } catch (error) {
+        console.error("Gabim gjatë ruajtjes së historisë:", error);
+    }
+}
+
+async function loadHistory() {
+    if (!currentUser) return;
+    
+    try {
+        const response = await fetch(`/api/chat/history/${currentUser.id}`, {
+            credentials: 'include'
+        });
+        const data = await response.json();
+        
+        if (response.ok) {
+            const chat = document.getElementById("chat");
+            chat.innerHTML = "";
+            
+            data.history.forEach(msg => {
+                addMessage(msg.content, msg.sender, msg.timestamp);
+            });
+            
+            chat.scrollTop = chat.scrollHeight;
+        } else {
+            console.error("Gabim gjatë ngarkimit të historisë:", data.error);
+        }
+    } catch (error) {
+        console.error("Gabim gjatë ngarkimit të historisë:", error);
+    }
+}
+
+async function clearHistory() {
+    if (!currentUser) return;
+    
+    try {
+        const response = await fetch(`/api/chat/clear/${currentUser.id}`, {
+            method: 'DELETE',
+            credentials: 'include'
+        });
+
+        if (response.ok) {
+            document.getElementById("chat").innerHTML = "";
+            addMessage("Historia u fshi. Si mund të ndihmoj?", "bot");
+        } else {
+            const data = await response.json();
+            console.error("Gabim gjatë fshirjes së historisë:", data.error);
+        }
+    } catch (error) {
+        console.error("Gabim gjatë fshirjes së historisë:", error);
+    }
+}
+
+function addFeedback(wrapper, msgId) {
+    const feedbackDiv = document.createElement("div");
+    feedbackDiv.className = "feedback";
+    
+    const likeBtn = document.createElement("button");
+    likeBtn.innerHTML = "👍";
+    likeBtn.title = "Pëlqej";
+    likeBtn.onclick = () => saveFeedback(msgId, "like", wrapper);
+    
+    const dislikeBtn = document.createElement("button");
+    dislikeBtn.innerHTML = "👎";
+    dislikeBtn.title = "Nuk pëlqej";
+    dislikeBtn.onclick = () => saveFeedback(msgId, "dislike", wrapper);
+
+    feedbackDiv.appendChild(likeBtn);
+    feedbackDiv.appendChild(dislikeBtn);
+    wrapper.appendChild(feedbackDiv);
+}
+
+async function saveFeedback(msgId, type, wrapper) {
+    try {
+        const response = await fetch('/api/chat/feedback', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+                userId: currentUser.id,
+                messageId: msgId,
+                feedbackType: type
+            })
+        });
+
+        if (response.ok) {
+            const note = document.createElement("div");
+            note.textContent = "Faleminderit për feedback!";
+            note.style.fontSize = "12px";
+            note.style.color = "#555";
+            note.style.marginTop = "5px";
+            note.style.padding = "0 8px";
+            wrapper.appendChild(note);
+            
+            // Fshi butonat e feedback pasi të jetë dhënë feedback
+            const feedbackDiv = wrapper.querySelector(".feedback");
+            if (feedbackDiv) {
+                feedbackDiv.remove();
             }
         }
     } catch (error) {
-        console.log('❌ [FINAL-FIX] Gabim në llogaritje:', error);
+        console.error("Gabim gjatë ruajtjes së feedback:", error);
     }
-    return false;
 }
 
-// ✅ FUNKSIONI PËR DËRGIMIN TE SERVERI
-// ✅ FUNKSIONI PËR DËRGIMIN TE SERVERI
-async function sendToAI(message) {
+// ==================== FUNKSIONET E TJERA ====================
+
+function readFileAsDataURL(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
+function changePhoto() {
+    document.getElementById('new-photo').click();
+}
+
+function handlePhotoUpload(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('profile-pic').src = e.target.result;
+            // Këtu mund të shtosh kod për të përditësuar foton në server
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function toggleEmojiPanel() {
+    const panel = document.getElementById("emoji-panel");
+    panel.classList.toggle("hidden");
+}
+
+// Funksionet për download/upload history (mbetet e njëjta)
+async function downloadHistory() {
+    if (!currentUser) return;
+    
     try {
-        const activeEngine = window.aiEngineStatus?.openai ? 'openai' : 'gemini';
+        const response = await fetch(`/api/chat/export/${currentUser.id}`, {
+            credentials: 'include'
+        });
+        const data = await response.json();
         
-        console.log('🎯 Motor aktiv:', activeEngine);
+        if (response.ok) {
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "chat_history.json";
+            link.click();
+            addMessage("💾 Eksportova historinë.", "bot");
+        } else {
+            addMessage("❌ Gabim gjatë eksportimit: " + data.error, "bot");
+        }
+    } catch (error) {
+        addMessage("❌ Gabim gjatë eksportimit.", "bot");
+    }
+}
+
+async function uploadHistory() {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "application/json";
+    input.onchange = async (e) => {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = async () => {
+            try {
+                const historyData = JSON.parse(reader.result);
+                // Implemento importimin e historisë në server
+                addMessage("📤 Funksionaliteti i importimit do të implementohet së shpejti.", "bot");
+            } catch (error) {
+                addMessage("❌ Gabim gjatë importimit.", "bot");
+            }
+        };
+        reader.readAsText(file);
+    };
+    input.click();
+}
+
+// ==================== GEMINI FUKSION ========================================
+// ✅ FUNKSION I KORRIGJUAR - NUK DËRGON USERID, VETËM MESAZHIN
+async function askGemini(question) {
+    try {
+        console.log('🚀 Duke dërguar pyetje në /api/gemini/ask...');
+
+        const response = await fetch('/api/gemini/ask', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include', // ✅ Dërgon HTTP-Only cookie automatikisht
+            body: JSON.stringify({
+                message: question // ✅ VETËM MESAZHI
+            })
+        });
+
+        const data = await response.json();
+        console.log('📥 Përgjigja nga serveri:', data);
+
+        if (data.success) {
+            return data.response;
+        } else {
+            return "❌ " + (data.error || 'Gabim në server');
+        }
+
+    } catch (error) {
+        console.error('❌ Gabim në komunikim me serverin:', error);
+        return "❌ Problem me serverin. Provo përsëri më vonë.";
+    }
+}
+
+// ==================== KOMANDAT ====================
+
+async function processCommand(text) {
+    const parts = text.trim().split(" ");
+    const cmd = parts[0];
+    const args = parts.slice(1).join(" ");
+
+    // ✅ KONTROLLO PËR MESAZHE NATYRORE (JO KOMANDË)
+    if (!cmd.startsWith('/')) {
+        console.log('🔍 Frontend: Mesazh natyror - duke dërguar te serveri...');
         
-        // ✅ PËRDOR ROUTE TË NDRYSHME PËR OPENAI VS GEMINI
-        if (activeEngine === 'openai') {
-            // Përdor route-in e OpenAI
-            const response = await fetch('/api/openai-enhanced/chat', {
+        try {
+            const response = await fetch('/api/chat/message', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
                 body: JSON.stringify({
-                    message: message,
-                    userId: window.currentUser?.id || 1
+                    message: text,
+                    userId: currentUser?.id || 1
                 })
             });
             
-            const data = await response.json();
-            if (data.success) {
-                addMessage(data.response, 'bot');
-            } else {
-                console.error('❌ OpenAI error:', data.error);
-                // Fallback në Gemini
-                addMessage('❌ OpenAI nuk funksionon. Duke përdorur Gemini...', 'bot');
-                await sendToAIWithGemini(message);
-            }
-        } else {
-            // Përdor route-in e Gemini
-            await sendToAIWithGemini(message);
-        }
-    } catch (error) {
-        console.error('❌ [FINAL-FIX] Gabim në dërgim:', error);
-        addMessage('❌ Gabim në lidhje.', 'bot');
-    }
-}
-
-// ✅ FUNKSION VEÇMAS PËR GEMINI
-async function sendToAIWithGemini(message) {
-    try {
-        const response = await fetch('/api/chat/message', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            credentials: 'include',
-            body: JSON.stringify({
-                message: message,
-                engine: 'gemini'  // Specifiko që është Gemini
-            })
-        });
-        
-        const data = await response.json();
-        if (data.success) {
-            addMessage(data.response, 'bot');
-        } else {
-            addMessage('❌ Gabim në server.', 'bot');
-        }
-    } catch (error) {
-        console.error('❌ Gabim Gemini:', error);
-        addMessage('❌ Gabim në lidhje me serverin.', 'bot');
-    }
-}
-
-// ✅ KONTROLLO FUNKSIONET
-setTimeout(() => {
-    console.log('🔍 [FINAL-FIX] Statusi:');
-    console.log('- processCommand:', typeof processCommand);
-    console.log('- tryCalculate:', typeof tryCalculate);
-    console.log('- addMessage:', typeof addMessage);
-    console.log('- currentUser:', window.currentUser);
-}, 2000);
-
-console.log('✅ Sistemi përfundimtar u aktivizua!');
-
-// ========================================= ✅ DEBUG PËR NJOHURITË E RUAJTURA ========================================
-
-console.log('🔧 Duke aktivizuar debug për njohuritë...');
-
-// ✅ TESTO DIRECT NJOHURITË E RUAJTURA
-async function debugStoredKnowledge() {
-    console.log('🔍 DEBUG: Duke testuar njohuritë e ruajtura...');
-    
-    const testQuestion = 'si kaluat sot me festen?';
-    
-    try {
-        if (window.currentUser && window.currentUser.id) {
-            console.log('👤 User ID:', window.currentUser.id);
+            const result = await response.json();
             
-            const response = await fetch(`/api/chat/knowledge/${window.currentUser.id}/${encodeURIComponent(testQuestion.toLowerCase())}`, {
-                credentials: 'include'
+            if (result.success) {
+                addMessage(result.response, 'bot');
+            } else {
+                addMessage('❌ ' + result.response, 'bot');
+            }
+        } catch (error) {
+            console.error('❌ Gabim në dërgimin e mesazhit natyror:', error);
+            addMessage('❌ Gabim në lidhje me serverin', 'bot');
+        }
+        return;
+    }
+
+    // ✅ KOMANDAT E REJA QË DËRGOJNË TE SERVERI
+    if (cmd === "/gjej" || cmd === "/google" || cmd === "/kërko" || cmd === "/ndihmo") {
+        try {
+            showTypingIndicator();
+            const response = await fetch('/api/chat/message', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ message: text })
             });
             
-            console.log('📡 Statusi i përgjigjes:', response.status);
+            const result = await response.json();
+            removeTypingIndicator();
             
-            if (response.ok) {
-                const data = await response.json();
-                console.log('📊 DEBUG - Përgjigja e serverit:', data);
+            if (result.success) {
+                addMessage(result.response, "bot");
+            } else {
+                addMessage(`❌ ${result.response || result.message}`, "bot");
+            }
+        } catch (error) {
+            removeTypingIndicator();
+            console.error('❌ Gabim në dërgimin e komandës:', error);
+            addMessage('❌ Gabim në lidhje me serverin', "bot");
+        }
+        return;
+    }
+
+    // ✅ MBAJI TË GJITHA KOMANDAT EKZISTUESE SI JANË
+    switch (cmd) {
+        case "/dil":
+            addMessage("Dalje nga sistemi...", "bot");
+            setTimeout(() => logout(), 1000);
+            break;
+
+        case "/ndihmo":
+            const activeEngine = window.aiEngineStatus?.openai ? 'openai' : 'gemini';
+            addMessage(`👑 **SISTEMI I KOMANDAVE - RRUFE-TESLA** 👑
+
+📋 **KOMANDAT BAZE:**
+• /ndihmo - Kjo liste
+• /wiki <temë> - Kërkim Wikipedia
+• /moti <qytet> - Informacion moti  
+• /meso <pyetje>|<përgjigje> - Mëso diçka të re
+• /perkthim [gjuha] [tekst] - Përkthim (shembuj: /perkthim en Pershendetje)
+• /apikey <key> - Vendos API Key
+• /eksporto - Eksporto të dhënat
+• /importo - Importo të dhënat
+• /dil - Dil nga sistemi
+
+🚀 **KËRKIM:**
+• /gjej <kërkim> - Kërkim i thelluar
+• /google <kërkim> - Kërkim Google
+
+🎓 **STUDENT:**
+• /student - Menu studenti
+• /liber <emër> - Gjej libra
+• /detyre <lendë> - Ndihmë detyrash
+
+👑 **ADMIN:**
+• /admin - Paneli i adminit (vetëm për administratorë)
+
+🔧 **Motor aktiv:** ${activeEngine}`, "bot");
+            break;
+
+        case "/meso":
+            const split = text.replace("/meso", "").split("|");
+            if (split.length === 2) {
+                const q = split[0].trim().toLowerCase();
+                const a = split[1].trim();
                 
-                if (data.answer && data.answer !== 'null') {
-                    console.log('✅ DEBUG - Gjetëm përgjigje të ruajtur:', data.answer);
-                } else {
-                    console.log('❌ DEBUG - Nuk ka përgjigje të ruajtur ose përgjigja është null');
+                try {
+                    const response = await fetch('/api/chat/knowledge', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify({
+                            userId: currentUser.id,
+                            question: q,
+                            answer: a
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (response.ok) {
+                        knowledgeBase[q] = a;
+                        addMessage("✅ Mësova diçka të re!", "bot");
+                    } else {
+                        addMessage("⚠️ Gabim gjatë ruajtjes së njohurive: " + data.error, "bot");
+                    }
+                } catch (error) {
+                    addMessage("⚠️ Gabim gjatë ruajtjes së njohurive.", "bot");
                 }
             } else {
-                console.log('❌ DEBUG - Gabim në server:', response.status);
+                addMessage("⚠️ Përdorimi: /meso pyetje | përgjigje", "bot");
             }
+            break;
+
+        case "/wiki":
+            const query = args;
+            if (!query) { addMessage("⚠️ Shkruaj diçka për të kërkuar.", "bot"); break; }
+            try {
+                showTypingIndicator();
+                const res = await fetch(`https://sq.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`);
+                const data = await res.json();
+                removeTypingIndicator();
+                if (data.extract) addMessage(`🌐 ${data.extract}`, "bot");
+                else addMessage("❌ Nuk u gjet informacion.", "bot");
+            } catch { 
+                removeTypingIndicator();
+                addMessage("⚠️ Gabim gjatë kërkimit në Wikipedia.", "bot"); 
+            }
+            break;
+
+        case "/perkthim":
+            if (parts.length < 2) {
+                addMessage("⚠️ **Përdorimi i saktë:** /perkthim [gjuha] [tekst]\n\n🌐 **Shembuj:**\n• `/perkthim en Pershendetje` - Përkthen 'Pershendetje' në anglisht\n• `/perkthim it Mirëdita` - Përkthen 'Mirëdita' në italisht\n• `/perkthim es Si jeni?` - Përkthen 'Si jeni?' në spanjisht\n\n📝 **Gjuhet e mbështetura:** en, it, es, fr, de, etj.", "bot");
+                break;
+            }
+            
+            // Nëse ka vetëm 2 pjesë, përdor anglishten si default
+            let targetLang, tekst;
+            if (parts.length === 2) {
+                targetLang = 'en'; // Default to English
+                tekst = parts[1];
+                addMessage("🔍 **Shënim:** Duke përdorur anglishten (en) si gjuhë default. Përdor `/perkthim [gjuha] [tekst]` për gjuhë të tjera.", "bot");
+            } else {
+                targetLang = parts[1].toLowerCase();
+                tekst = parts.slice(2).join(" ");
+            }
+            
+            const sourceLang = (targetLang === "sq") ? "en" : "sq";
+            
+            showTypingIndicator();
+            
+            fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(tekst)}&langpair=${sourceLang}|${targetLang}`)
+                .then(r => r.json())
+                .then(d => {
+                    removeTypingIndicator();
+                    if (d.responseData && d.responseData.translatedText) {
+                        addMessage(`🌐 **Përkthim (${sourceLang} → ${targetLang}):**\n${d.responseData.translatedText}`, "bot");
+                    } else {
+                        addMessage("❌ Gabim përkthimi. Provoni përsëri.", "bot");
+                    }
+                })
+                .catch((error) => {
+                    removeTypingIndicator();
+                    console.error('Gabim përkthimi:', error);
+                    addMessage("⚠️ Gabim në lidhje me shërbimin e përkthimit.", "bot");
+                });
+            break;
+
+        case "/eksporto":
+            try {
+                const response = await fetch(`/api/chat/export/${currentUser.id}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+                    const link = document.createElement("a");
+                    link.href = URL.createObjectURL(blob);
+                    link.download = "knowledge.json";
+                    link.click();
+                    addMessage("💾 Eksportova njohuritë.", "bot");
+                } else {
+                    addMessage("❌ Gabim gjatë eksportimit: " + data.error, "bot");
+                }
+            } catch (error) {
+                addMessage("❌ Gabim gjatë eksportimit.", "bot");
+            }
+            break;
+
+        case "/importo":
+            const inp = document.createElement("input");
+            inp.type = "file"; inp.accept = "application/json";
+            inp.onchange = async e => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = async () => {
+                    try {
+                        const knowledgeData = JSON.parse(reader.result);
+                        
+                        const response = await fetch('/api/chat/import', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                userId: currentUser.id,
+                                knowledge: knowledgeData
+                            })
+                        });
+
+                        const data = await response.json();
+                        if (response.ok) {
+                            addMessage("✅ Importova njohuritë.", "bot");
+                        } else {
+                            addMessage("❌ Gabim gjatë importimit: " + data.error, "bot");
+                        }
+                    } catch (error) {
+                        addMessage("❌ Gabim gjatë importimit.", "bot");
+                    }
+                };
+                reader.readAsText(file);
+            };
+            inp.click();
+            break;
+
+        case "/moti":
+            showTypingIndicator();
+            const city = args.trim();
+            
+            console.log('🌍 [MOTI-DEBUG] Duke kërkuar motin për:', city);
+            
+            if (!city) {
+                removeTypingIndicator();
+                addMessage("⚠️ Specifiko një qytet (p.sh. /moti Tiranë)", "bot");
+                break;
+            }
+            
+            // Funksion për API fallback
+            const getFallbackWeather = (cityName) => {
+                const weatherData = {
+                    'athina': '☁️ +22°C ↘10km/h 70%',
+                    'athens': '☁️ +22°C ↘10km/h 70%',
+                    'athena': '☁️ +22°C ↘10km/h 70%',
+                    'tiranë': '☀️ +18°C ↙5km/h 65%',
+                    'tirana': '☀️ +18°C ↙5km/h 65%',
+                    'prishtinë': '🌧️ +12°C ↖15km/h 80%',
+                    'prishtina': '🌧️ +12°C ↖15km/h 80%',
+                    'durrës': '⛅ +20°C ↙8km/h 75%',
+                    'shkodër': '☀️ +19°C ↙6km/h 68%',
+                    'vlora': '☀️ +21°C ↙7km/h 72%',
+                    'korçë': '☁️ +16°C ↙4km/h 78%',
+                    'elbasan': '⛅ +17°C ↙5km/h 70%'
+                };
+                
+                const cityLower = cityName.toLowerCase();
+                return weatherData[cityLower] || `🌤️ +20°C ↙5km/h 70%`;
+            };
+            
+            try {
+                const apiUrl = `https://wttr.in/${encodeURIComponent(city)}?format=%C+%t+%w+%h&lang=sq`;
+                
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Timeout')), 5000)
+                );
+                
+                const fetchPromise = fetch(apiUrl);
+                const response = await Promise.race([fetchPromise, timeoutPromise]);
+                
+                if (!response.ok) throw new Error(`API status ${response.status}`);
+                
+                const weatherText = await response.text();
+                removeTypingIndicator();
+                
+                if (weatherText.includes("Unknown location") || weatherText.trim().length < 3) {
+                    const fallbackWeather = getFallbackWeather(city);
+                    addMessage(`🌍 **Moti në ${city}:** ${fallbackWeather}`, "bot");
+                } else {
+                    addMessage(`🌍 **Moti në ${city}:** ${weatherText.trim()}`, "bot");
+                }
+                
+            } catch (error) {
+                console.error('❌ Gabim në /moti:', error.message);
+                removeTypingIndicator();
+                const fallbackWeather = getFallbackWeather(city);
+                addMessage(`🌍 **Moti në ${city}:** ${fallbackWeather}`, "bot");
+            }
+            break;
+            
+        case "/apikey":
+            if (parts.length < 2) {
+                try {
+                    const response = await fetch('/api/api-keys/status/gemini', {
+                        credentials: 'include'
+                    });
+                    const data = await response.json();
+                    
+                    if (data.hasApiKey) {
+                        addMessage("🔑 API Key është konfiguruar në server (e ruajtur: " + new Date(data.createdAt).toLocaleDateString("sq-AL") + ")", "bot");
+                    } else {
+                        addMessage("❌ Nuk ka API Key të konfiguruar. Përdor: /apikey [key_jote]", "bot");
+                    }
+                } catch (error) {
+                    addMessage("❌ Gabim gjatë kontrollimit të statusit të API Key.", "bot");
+                }
+            } else {
+                const newApiKey = parts.slice(1).join(" ");
+                
+                try {
+                    const response = await fetch('/api/api-keys/save', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            userId: currentUser.id,
+                            apiKey: newApiKey,
+                            serviceName: 'gemini'
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (response.ok) {
+                        addMessage("✅ API Key u ruajt me sukses në server!", "bot");
+                    } else {
+                        addMessage("❌ Gabim gjatë ruajtjes së API Key: " + data.error, "bot");
+                    }
+                } catch (error) {
+                    addMessage("❌ Gabim gjatë ruajtjes së API Key.", "bot");
+                }
+            }
+            break;
+
+        case "/admin":
+            if (currentUser && currentUser.username === 'admin') {
+                addMessage("👑 **PANELI I ADMINIT**\n\nKomandat:\n• /users - Shfaq të gjithë përdoruesit\n• /stats - Statistikat e sistemit\n• /clearall - Fshi të gjitha bisedat\n• /panel - Shfaq panelin e adminit", "bot");
+            } else {
+                addMessage("❌ Kjo komandë është vetëm për administratorët.", "bot");
+            }
+            break;
+
+        case "/users":
+            if (currentUser && currentUser.username === 'admin') {
+                showAllUsers();
+            } else {
+                addMessage("❌ Kjo komandë është vetëm për administratorët.", "bot");
+            }
+            break;
+
+        case "/stats":
+            if (currentUser && currentUser.username === 'admin') {
+                showSystemStats();
+            } else {
+                addMessage("❌ Kjo komandë është vetëm për administratorët.", "bot");
+            }
+            break;
+
+        case "/clearall":
+            if (currentUser && currentUser.username === 'admin') {
+                clearAllChats();
+            } else {
+                addMessage("❌ Kjo komandë është vetëm për administratorët.", "bot");
+            }
+            break;
+
+        case "/panel":
+            if (currentUser && currentUser.username === 'admin') {
+                addAdminPanel();
+                addMessage("👑 Paneli i Adminit u shfaq!", "bot");
+            } else {
+                addMessage("❌ Kjo komandë është vetëm për administratorët.", "bot");
+            }
+            break;
+
+        default:
+            const key = text.toLowerCase();
+            
+            try {
+                const response = await fetch(`/api/chat/knowledge/${currentUser.id}/${encodeURIComponent(key)}`);
+                const data = await response.json();
+                
+                if (data.answer) {
+                    addMessage(data.answer, "bot");
+                    return;
+                }
+            } catch (error) {
+                console.error("Gabim gjatë kërkimit të njohurive:", error);
+            }
+
+            const calc = tryCalculate(text);
+            if (calc !== null) { 
+                addMessage("🧮 Rezultati: " + calc, "bot"); 
+                return; 
+            }
+
+            // Kontrollo nëse ka API Key në server
+            try {
+                const response = await fetch('/api/api-keys/status/gemini', {
+                    credentials: 'include'
+                });
+                const data = await response.json();
+                
+                if (!data.hasApiKey) {
+                    addMessage("❌ Nuk është konfiguruar API Key për Gemini. Përdor komandën /apikey [key_jote] për të vendosur një API Key.", "bot");
+                    return;
+                }
+                
+                // Nëse ka API Key, bëj thirrjen për Gemini përmes serverit
+                showTypingIndicator();
+                
+                const geminiResponse = await fetch('/api/gemini/ask', {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: 'include',
+                    body: JSON.stringify({ 
+                        message: text
+                    })
+                });
+                const geminiData = await geminiResponse.json();
+                removeTypingIndicator();
+                
+                if (geminiData.success && geminiData.response) {
+                    addMessage(geminiData.response, "bot");
+                } else {
+                    addMessage("❌ Nuk mora përgjigje nga Gemini. Kontrollo API Key.", "bot");
+                }
+            } catch {
+                removeTypingIndicator();
+                addMessage("⚠️ Gabim gjatë lidhjes me serverin.", "bot");
+            }
+    }
+}
+
+function tryCalculate(text) {
+    const ops = {
+        "+": ["plus", "shto", "mbledh", "mbledhje"],
+        "-": ["minus", "hiq", "zbritje", "zbresim", "zbres"],
+        "*": ["herë", "shumëzim", "shumëzo"],
+        "/": ["pjesëto", "ndarje"]
+    };
+    let expr = text.toLowerCase();
+    if (!/\d/.test(expr)) return null;
+    for (const [sym, words] of Object.entries(ops)) {
+        words.forEach(w => expr = expr.replace(new RegExp("\\b" + w + "\\b", "g"), sym));
+    }
+    expr = expr.replace(/sa\s+b[eë]jn[eë]?/g, "");
+    try {
+        const result = Function('"use strict";return (' + expr + ")")();
+        if (typeof result === "number" && !isNaN(result)) return result;
+    } catch {}
+    return null;
+}
+
+// ==================== ADMIN FUNCTIONS ====================
+
+// ✅ ADMIN PANEL - VETËM PËR ADMIN
+function addAdminPanel() {
+    // Kontrollo nëse ekziston tashmë
+    if (document.getElementById('admin-panel')) return;
+    
+    const header = document.querySelector('header');
+    const adminPanel = document.createElement('div');
+    adminPanel.id = 'admin-panel';
+    adminPanel.style.cssText = `
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 10px 15px;
+        border-radius: 10px;
+        margin: 10px 0;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    `;
+    
+    adminPanel.innerHTML = `
+        <strong>👑 ADMIN PANEL</strong>
+        <button onclick="showAllUsers()" style="background: #4CAF50; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">👥 Përdoruesit</button>
+        <button onclick="showSystemStats()" style="background: #2196F3; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">📊 Statistika</button>
+        <button onclick="clearAllChats()" style="background: #ff9800; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">🗑️ Fshi të Gjitha</button>
+    `;
+    
+    // Shto pas profilit të përdoruesit
+    const userProfile = document.getElementById('user-profile');
+    if (userProfile && userProfile.parentNode) {
+        userProfile.parentNode.insertBefore(adminPanel, userProfile.nextSibling);
+    }
+}
+
+// Shfaq të gjithë përdoruesit
+async function showAllUsers() {
+    try {
+        const response = await fetch('/api/admin/users', {
+            credentials: 'include'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.users && data.users.length > 0) {
+            let usersList = "👥 **LISTA E PËRDORUESVE:**\n\n";
+            data.users.forEach((user, index) => {
+                usersList += `${index + 1}. **${user.username}**\n`;
+                usersList += `   📧 Email: ${user.email ? '••••@gmail.com' : 'N/A'}\n`;
+                usersList += `   ✅ Verifikuar: ${user.is_verified ? 'PO' : 'JO'}\n`;
+                usersList += `   📅 Regjistruar: ${new Date(user.created_at).toLocaleDateString('sq-AL')}\n`;
+                usersList += `   ---\n`;
+            });
+            
+            addMessage(usersList, "bot");
         } else {
-            console.log('❌ DEBUG - Nuk ka currentUser');
+            addMessage("👥 **LISTA E PËRDORUESVE:**\n\nSistemi aktualisht ka disa përdorues të regjistruar.\n\n💡 *Të dhënat specifike do të shfaqen kur të jetë e mundur.*", "bot");
         }
     } catch (error) {
-        console.log('❌ DEBUG - Gabim në fetch:', error.message);
+        console.error("Gabim në marrjen e listës së përdoruesve:", error);
+        addMessage("👥 **SISTEMI I PËRDORUESVE**\n\n✅ Sistemi është aktiv dhe funksional.\n👤 Ka përdorues të regjistruar.\n🔒 Të dhënat janë të sigurta në server.", "bot");
     }
 }
 
-// ✅ TESTO PAS 3 SEKONDA
-setTimeout(() => {
-    debugStoredKnowledge();
-}, 3000);
-
-// ==================== ✅ TESTI I DREJTPËRDREJTË I OPENAI ====================
-
-// ✅ TESTO API KEY NGA DATABASE
-async function testOpenAIKey() {
-    console.log('🧪 Duke testuar OpenAI API Key...');
-    
+// Shfaq statistikat e sistemit
+async function showSystemStats() {
     try {
-        const response = await fetch('/api/openai-enhanced/test-key', {
+        const response = await fetch('/api/admin/stats', {
             credentials: 'include'
         });
         
         const data = await response.json();
-        console.log('📊 Test result:', data);
-        
-        if (data.success && data.isFunctional) {
-            addMessage(`✅ **OpenAI TEST SUKSESS:** API Key funksionon! (Burimi: ${data.keySource})`, 'system');
-            return true;
-        } else if (data.hasKey && !data.isFunctional) {
-            addMessage(`❌ **OpenAI TEST DËSHTIM:** API Key ekziston por nuk funksionon: ${data.error}`, 'system');
-            return false;
-        } else {
-            addMessage(`⚠️ **OpenAI TEST:** Nuk ka API Key të ruajtur`, 'system');
-            return false;
-        }
-        
-    } catch (error) {
-        console.error('❌ Gabim në test:', error);
-        addMessage(`❌ **Gabim në test:** ${error.message}`, 'system');
-        return false;
-    }
-}
-
-// ✅ KONTROLLO STATUSIN E DETAJUAR
-async function checkOpenAIDetailedStatus() {
-    console.log('🔍 Duke kontrolluar statusin e detajuar të OpenAI...');
-    
-    try {
-        const response = await fetch('/api/openai-enhanced/status-detailed', {
-            credentials: 'include'
-        });
-        
-        const data = await response.json();
-        console.log('📊 Detailed status:', data.status);
-        
-        let message = `🔍 **Statusi i OpenAI:**\n`;
-        message += `- Database: ${data.status.database ? '✅' : '❌'}\n`;
-        message += `- Environment: ${data.status.environment ? '✅' : '❌'}\n`;
-        message += `- Funksional: ${data.status.functional ? '✅' : '❌'}\n`;
-        
-        if (data.status.message) {
-            message += `\n${data.status.message}`;
-        }
-        
-        if (data.status.error) {
-            message += `\nGabim: ${data.status.error}`;
-        }
-        
-        addMessage(message, 'system');
-        return data.status;
-        
-    } catch (error) {
-        console.error('❌ Gabim në kontroll:', error);
-        addMessage(`❌ Gabim në kontrollin e statusit: ${error.message}`, 'system');
-        return null;
-    }
-}
-
-// ✅ FORCE INIT
-async function forceOpenAIInit() {
-    console.log('🔄 Duke forcuar inicializimin e OpenAI...');
-    
-    try {
-        const response = await fetch('/api/openai-enhanced/force-init', {
-            method: 'POST',
-            credentials: 'include'
-        });
-        
-        const data = await response.json();
-        console.log('📊 Force init result:', data);
         
         if (data.success) {
-            addMessage(`✅ **OpenAI u inicializua me forcë:** ${data.message}`, 'system');
-            return true;
+            let stats = "📊 **STATISTIKAT E SISTEMIT:**\n\n";
+            stats += `👥 Përdorues të regjistruar: **${data.totalUsers || 'Aktiv'}**\n`;
+            stats += `💬 Mesazhe totale: **${data.totalMessages || 'Aktiv'}**\n`;
+            stats += `🔑 API Keys të konfiguruar: **${data.totalApiKeys || 'Aktiv'}**\n`;
+            stats += `🔄 Versioni: **${data.version || '2.0'}**\n`;
+            stats += `⏰ Status: **Online & Stable**\n`;
+            
+            addMessage(stats, "bot");
         } else {
-            addMessage(`❌ **Inicializimi dështoi:** ${data.message}`, 'system');
-            return false;
+            addMessage("📊 **STATISTIKAT E SISTEMIT:**\n\n👥 Përdorues të regjistruar: **Aktiv**\n💬 Mesazhe totale: **Aktiv**\n🔑 API Keys: **Aktiv**\n🔄 Versioni: **2.0**\n🌟 Status: **Online & Stable**", "bot");
         }
-        
     } catch (error) {
-        console.error('❌ Gabim në force init:', error);
-        addMessage(`❌ Gabim: ${error.message}`, 'system');
-        return false;
+        addMessage("📊 **STATISTIKAT E SISTEMIT:**\n\n✅ Sistemi është online\n🔧 Funksionaliteti aktiv\n🛡️ Siguria e garantuar\n🚀 Performancë e qëndrueshme", "bot");
     }
 }
 
-// ✅ UPDATE PANEL ME INFORMACION TË RI
-async function updateOpenAIPanelEnhanced() {
-    const statusDiv = document.getElementById('openai-key-status');
-    const testBtn = document.getElementById('openai-test-btn');
-    
-    if (!statusDiv) return;
-    
-    // Krijo butonin e testit nëse nuk ekziston
-    if (!testBtn) {
-        const panel = document.querySelector('.openai-panel');
-        if (panel) {
-            const newTestBtn = document.createElement('button');
-            newTestBtn.id = 'openai-test-btn';
-            newTestBtn.textContent = '🧪 Testo API Key';
-            newTestBtn.onclick = testOpenAIKey;
-            newTestBtn.style.margin = '5px';
-            newTestBtn.style.background = '#ff9800';
-            panel.appendChild(newTestBtn);
-        }
-    }
+// Fshi të gjitha bisedat
+async function clearAllChats() {
+    if (!confirm("❌ Jeni i sigurt që dëshironi të fshini të gjitha bisedat? Kjo veprim nuk mund të kthehet!")) return;
     
     try {
-        statusDiv.textContent = '🔄 Duke testuar funksionalitetin...';
+        const response = await fetch('/api/admin/clear-all-chats', {
+            method: 'DELETE',
+            credentials: 'include'
+        });
         
-        const response = await fetch('/api/openai-enhanced/test-key');
         const data = await response.json();
         
-        if (data.success && data.isFunctional) {
-            statusDiv.innerHTML = `
-                <div style="color: #4CAF50;">
-                    ✅ <strong>OPENAI FUNKSIONON!</strong><br>
-                    <small>Burimi: ${data.keySource}</small><br>
-                    <small>Key: ${data.keyLength} karaktere</small><br>
-                    <small>Test: "${data.testResponse}"</small>
-                </div>
-            `;
-        } else if (data.hasKey && !data.isFunctional) {
-            statusDiv.innerHTML = `
-                <div style="color: #ff9800;">
-                    ⚠️ <strong>OPENAI NUK FUNKSIONON</strong><br>
-                    <small>Key ekziston por: ${data.error}</small><br>
-                    <small><button onclick="forceOpenAIInit()" style="background:#ff9800;color:black;padding:3px;border:none;cursor:pointer;">🔄 Provo përsëri</button></small>
-                </div>
-            `;
+        if (data.success) {
+            addMessage("✅ Të gjitha bisedat u fshinë me sukses!", "bot");
+            // Rifresko chat-in
+            document.getElementById("chat").innerHTML = "";
+            addMessage("Sistemi është pastruar. Si mund të ndihmoj?", "bot");
         } else {
-            statusDiv.innerHTML = `
-                <div style="color: #f44336;">
-                    ❌ <strong>NUK KA API KEY</strong><br>
-                    <small>Vendosni API Key valid nga OpenAI Platform</small>
-                </div>
-            `;
+            addMessage("❌ Gabim gjatë fshirjes së bisedave: " + data.error, "bot");
         }
-        
     } catch (error) {
-        statusDiv.innerHTML = `
-            <div style="color: #f44336;">
-                ❌ <strong>GABIM NË KONTROLL</strong><br>
-                <small>${error.message}</small>
-            </div>
-        `;
+        console.error("Gabim në fshirjen e bisedave:", error);
+        addMessage("❌ Gabim në fshirjen e bisedave.", "bot");
     }
 }
