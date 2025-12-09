@@ -1335,19 +1335,67 @@ async function processCommand(text) {
             break;
 
         default:
-            const key = text.toLowerCase();
-            
-            try {
-                const response = await fetch(`/api/chat/knowledge/${currentUser.id}/${encodeURIComponent(key)}`);
-                const data = await response.json();
-                
-                if (data.answer) {
-                    addMessage(data.answer, "bot");
-                    return;
-                }
-            } catch (error) {
-                console.error("Gabim gjatë kërkimit të njohurive:", error);
-            }
+    // ✅ SË PARI KONTROLLO NJOHURITË E RUAJTURA (SISTEMI RADIKAL)
+    try {
+        console.log('🔍 Duke kërkuar njohuri në sistemin radikal...');
+        
+        const response = await fetch(`/api/radical/radical-search/${currentUser.id}/${encodeURIComponent(text.toLowerCase())}`);
+        const data = await response.json();
+        
+        console.log('📊 Përgjigja e njohurive:', data);
+        
+        if (data.success && data.found && data.answer) {
+            console.log('✅✅✅ GJETËM PËRGJIGJE TË RUAJTUR!');
+            addMessage(`💾 **Përgjigje e ruajtur:** ${data.answer}`, "bot");
+            return;
+        }
+    } catch (error) {
+        console.error("ℹ️ Kërkimi i njohurive dështoi:", error.message);
+    }
+    
+    // ✅ KONTROLLO PËR LLOGARITJE MATEMATIKE
+    const calc = tryCalculate(text);
+    if (calc !== null) { 
+        addMessage("🧮 Rezultati: " + calc, "bot"); 
+        return; 
+    }
+
+    // ✅ NËSE NUK KA NJOHURI, DËRGO TE AI
+    try {
+        const response = await fetch('/api/api-keys/status/gemini', {
+            credentials: 'include'
+        });
+        const data = await response.json();
+        
+        if (!data.hasApiKey) {
+            addMessage("❌ Nuk është konfiguruar API Key për Gemini. Përdor komandën /apikey [key_jote] për të vendosur një API Key.", "bot");
+            return;
+        }
+        
+        // Nëse ka API Key, bëj thirrjen për Gemini përmes serverit
+        showTypingIndicator();
+        
+        const geminiResponse = await fetch('/api/gemini/ask', {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: 'include',
+            body: JSON.stringify({ 
+                message: text
+            })
+        });
+        const geminiData = await geminiResponse.json();
+        removeTypingIndicator();
+        
+        if (geminiData.success && geminiData.response) {
+            addMessage(geminiData.response, "bot");
+        } else {
+            addMessage("❌ Nuk mora përgjigje nga Gemini. Kontrollo API Key.", "bot");
+        }
+    } catch {
+        removeTypingIndicator();
+        addMessage("⚠️ Gabim gjatë lidhjes me serverin.", "bot");
+    }
+    break;
 
             const calc = tryCalculate(text);
             if (calc !== null) { 
@@ -1529,3 +1577,58 @@ async function clearAllChats() {
         addMessage("❌ Gabim në fshirjen e bisedave.", "bot");
     }
 }
+
+// ====================================== ✅ FUNKSIONI I NJOHURIVE  =====================================
+
+window.checkKnowledge = async function(message) {
+    try {
+        console.log('💾 [SCRIPT.JS] checkKnowledge - Duke kërkuar për:', message);
+        
+        if (!currentUser || !currentUser.id) {
+            console.log('❌ Nuk ka currentUser për të kërkuar njohuri');
+            return false;
+        }
+        
+        const userId = currentUser.id;
+        const searchQuery = message.toLowerCase().trim();
+        
+        console.log('👤 User ID:', userId);
+        console.log('🔍 Search query:', searchQuery);
+        
+        // ✅ PËRDOR SISTEMIN RADIKAL
+        const apiUrl = `/api/radical/radical-search/${userId}/${encodeURIComponent(searchQuery)}`;
+        console.log('🌐 API URL:', apiUrl);
+        
+        const response = await fetch(apiUrl, {
+            credentials: 'include'
+        });
+        
+        console.log('📡 Response status:', response.status);
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log('📊 Knowledge response:', data);
+            
+            if (data.success && data.found && data.answer) {
+                console.log('✅✅✅ checkKnowledge: GJETËM PËRGJIGJE TË RUAJTUR!');
+                
+                // SHFAQ PËRGJIGJEN NË CHAT
+                addMessage(`💾 **Përgjigje e ruajtur:** ${data.answer}`, 'bot');
+                return true;
+            } else {
+                console.log('❌ Nuk u gjet përgjigje në sistemin radikal');
+            }
+        } else {
+            console.log('❌ API error:', response.status);
+        }
+        
+    } catch (error) {
+        console.log('ℹ️ checkKnowledge failed:', error.message);
+    }
+    
+    return false;
+};
+
+// ✅ EKSPORTO EDHE currentUser PËR MAIN.JS
+window.currentUser = currentUser;
+console.log('✅ checkKnowledge u eksportua për main.js');
