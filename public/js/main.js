@@ -1475,34 +1475,61 @@ window.sendMessage = async function() {
     await sendToAI(message);
 };
 
-// ✅ FUNKSIONI PËR KONTROLLIMIN E NJOHURIVE
+
+// ================ ✅ FUNKSIONI PËR KONTROLLIMIN E NJOHURIVE - VERSIONI I RI RADIKAL ====================
+
 async function checkKnowledge(message) {
     try {
-        console.log('💾 [FINAL-FIX] Duke kërkuar njohuri për:', message);
+        console.log('💾 [KNOWLEDGE-RADICAL] Duke kërkuar për:', message);
         
-        if (window.currentUser && window.currentUser.id) {
-            const response = await fetch(`/api/chat/knowledge/${window.currentUser.id}/${encodeURIComponent(message.toLowerCase())}`, {
-                credentials: 'include'
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                console.log('📊 [FINAL-FIX] Përgjigja e njohurive:', data);
-                
-                if (data.answer && data.answer !== 'null') {
-                    console.log('✅ [FINAL-FIX] Gjetëm përgjigje të ruajtur!');
-                    addMessage(`💾 **Përgjigje e ruajtur:** ${data.answer}`, 'bot');
-                    return true;
-                }
-            }
+        if (!window.currentUser || !window.currentUser.id) {
+            console.log('❌ Nuk ka currentUser për të kërkuar njohuri');
+            return false;
         }
+        
+        const userId = window.currentUser.id;
+        const searchQuery = message.toLowerCase().trim();
+        
+        console.log('👤 User ID:', userId);
+        console.log('🔍 Search query:', searchQuery);
+        
+        // ✅ PËRDOR SISTEMIN E RI RADIKAL
+        const apiUrl = `/api/radical/radical-search/${userId}/${encodeURIComponent(searchQuery)}`;
+        console.log('🌐 API URL:', apiUrl);
+        
+        const response = await fetch(apiUrl, {
+            credentials: 'include'
+        });
+        
+        console.log('📡 Response status:', response.status);
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log('📊 Knowledge response:', data);
+            
+            if (data.success && data.found && data.answer) {
+                console.log('✅✅✅ RRUFE-RADICAL: GJETËM PËRGJIGJE TË RUAJTUR!');
+                console.log('💾 Answer:', data.answer);
+                
+                // SHFAQ PËRGJIGJEN NË CHAT
+                addMessage(`💾 **Përgjigje e ruajtur:** ${data.answer}`, 'bot');
+                return true;
+            } else {
+                console.log('❌ Nuk u gjet përgjigje në sistemin radikal');
+            }
+        } else {
+            console.log('❌ API error:', response.status);
+        }
+        
     } catch (error) {
-        console.log('ℹ️ [FINAL-FIX] Nuk ka përgjigje të ruajtur:', error.message);
+        console.log('ℹ️ Knowledge check failed:', error.message);
     }
+    
     return false;
 }
 
-// ✅ FUNKSIONI PËR KONTROLLIMIN E LLOGARITJEVE
+// =========================== ✅ FUNKSIONI PËR KONTROLLIMIN E LLOGARITJEVE ===========================
+
 async function checkMath(message) {
     try {
         console.log('🧮 [FINAL-FIX] Duke kontrolluar për llogaritje...');
