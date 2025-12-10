@@ -25,24 +25,31 @@ async function checkApiKey(userId) {
     });
 }
 
-// =================================== ✅ RUTA RADIKALE - BYPASS COMMAND SERVICE ===============================
+// =================================== ✅ RUTA KRYESORE E CHAT - VERSIONI I RI ===============================
 
-// Në routes/chat.js - modifiko funksionin /message
 router.post('/message', async (req, res) => {
     try {
-        const { message, engine } = req.body;
+        const { message, engine = 'gemini' } = req.body;
         const userId = req.user?.userId || 1;
 
-        console.log('💬 [CHAT-UI] Mesazh:', message);
-        console.log('🔧 [CHAT-UI] Motor:', engine);
+        console.log('💬 [CHAT] Mesazh i marrë:', message);
+        console.log('🔧 [CHAT] Motor i zgjedhur:', engine);
+        console.log('👤 [CHAT] User ID:', userId);
 
-        // ==================== ✅ KAP KOMANDAT - VERSION I FORTUAR ====================
+        if (!message || !message.trim()) {
+            return res.json({
+                success: false,
+                error: '❌ Ju lutem shkruani një mesazh'
+            });
+        }
+
+        // ==================== ✅ HAPI 1: KONTROLLO KOMANDAT ====================
         if (message.startsWith('/')) {
-            console.log('🎯 [CHAT-UI] Komandë e zbuluar:', message);
+            console.log('🎯 [CHAT] Komandë e zbuluar:', message);
             
             // ✅ KTHE PJEGJIGJE DIRECT PËR /ndihmo
             if (message === '/ndihmo') {
-                console.log('✅ [CHAT-UI] Duke kthyer /ndihmo direkt...');
+                console.log('✅ [CHAT] Duke kthyer /ndihmo direkt...');
                 return res.json({
                     success: true,
                     response: `👑 **SISTEMI I KOMANDAVE - RRUFE-TESLA** 👑
@@ -74,25 +81,7 @@ router.post('/message', async (req, res) => {
                 });
             }
 
-            // ✅ PROVO COMMAND SERVICE PËR KOMANDA TË TJERA
-            try {
-                const CommandService = require('../services/commandService');
-                console.log('🔧 [CHAT-UI] Duke thirrur CommandService...');
-                
-                const commandResult = await CommandService.processCommand('command', { id: userId }, message, engine);
-                
-                if (commandResult && commandResult.success) {
-                    console.log('✅ [CHAT-UI] CommandService u përgjigj!');
-                    return res.json(commandResult);
-                } else {
-                    console.log('❌ [CHAT-UI] CommandService dështoi ose nuk dha përgjigje');
-                }
-            } catch (commandError) {
-                console.error('❌ [CHAT-UI] Gabim në CommandService:', commandError.message);
-            }
-
-            // ✅ NËSE COMMAND SERVICE DËSHTOI, KTHE FALLBACK
-            console.log('🔄 [CHAT-UI] Duke kthyer fallback për komandën...');
+            // ✅ PËR KOMANDA TË TJERA, LËRE SCRIPT.JS TË TRAJTOJË
             return res.json({
                 success: true,
                 response: `🔧 **Komanda:** ${message}\n\n💡 *Sistemi i komandave po përmirësohet. Ju lutem përdorni /ndihmo për listën e plotë.*`,
@@ -100,114 +89,253 @@ router.post('/message', async (req, res) => {
             });
         }
 
-        // =============================✅ OPENAI DIRECT ===================================
-        if (engine === 'openai') {
-            console.log('🔮 [CHAT-UI] Duke thirrur OpenAI...');
-            try {
-                const openai = require('../routes/openai');
-                const result = await fetch(`http://localhost:3000/api/openai/chat`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ 
-                        message: message, 
-                        userId: userId 
-                    })
-                }).then(r => r.json());
-                
-                return res.json(result);
-            } catch (error) {
-                console.error('❌ [CHAT-UI] Gabim OpenAI:', error);
+        // ==================== ✅ HAPI 2: KONTROLLO NJOHURITË E RUAJTURA ====================
+        console.log('🔍 [CHAT] Duke kontrolluar njohuritë e ruajtura...');
+        
+        // ✅ 2A: KONTROLLO NË RADICAL_KNOWLEDGE (SISTEMI I RI)
+        try {
+            const radicalResult = await new Promise((resolve) => {
+                db.get(
+                    `SELECT answer FROM radical_knowledge 
+                     WHERE user_id = ? AND LOWER(question) LIKE ? 
+                     ORDER BY created_at DESC LIMIT 1`,
+                    [userId, `%${message.toLowerCase()}%`],
+                    (err, row) => {
+                        if (err) {
+                            console.error('❌ [CHAT] Gabim në kërkim radical:', err);
+                            resolve(null);
+                        } else {
+                            resolve(row);
+                        }
+                    }
+                );
+            });
+            
+            if (radicalResult && radicalResult.answer) {
+                console.log('✅✅✅ [CHAT] GJETËM PËRGJIGJE NË RADICAL KNOWLEDGE!');
+                return res.json({
+                    success: true,
+                    response: `💾 **Përgjigje e ruajtur:** ${radicalResult.answer}`,
+                    source: 'radical_knowledge'
+                });
             }
+        } catch (radicalError) {
+            console.log('ℹ️ [CHAT] Nuk ka përgjigje në radical knowledge:', radicalError.message);
+        }
+        
+        // ✅ 2B: KONTROLLO NË KNOWLEDGE (SISTEMI I VJETËR)
+        try {
+            const knowledgeResult = await new Promise((resolve) => {
+                db.get(
+                    `SELECT answer FROM knowledge 
+                     WHERE user_id = ? AND LOWER(question) LIKE ? 
+                     ORDER BY created_at DESC LIMIT 1`,
+                    [userId, `%${message.toLowerCase()}%`],
+                    (err, row) => {
+                        if (err) {
+                            console.error('❌ [CHAT] Gabim në kërkim knowledge:', err);
+                            resolve(null);
+                        } else {
+                            resolve(row);
+                        }
+                    }
+                );
+            });
+            
+            if (knowledgeResult && knowledgeResult.answer) {
+                console.log('✅✅✅ [CHAT] GJETËM PËRGJIGJE NË KNOWLEDGE!');
+                return res.json({
+                    success: true,
+                    response: `💾 **Përgjigje e ruajtur:** ${knowledgeResult.answer}`,
+                    source: 'knowledge'
+                });
+            }
+        } catch (knowledgeError) {
+            console.log('ℹ️ [CHAT] Nuk ka përgjigje në knowledge:', knowledgeError.message);
+        }
+        
+        console.log('ℹ️ [CHAT] Nuk u gjet përgjigje e ruajtur');
+
+        // ==================== ✅ HAPI 3: KONTROLLO LLOGARITJE MATEMATIKE ====================
+        console.log('🧮 [CHAT] Duke kontrolluar për llogaritje...');
+        
+        const calculate = (expr) => {
+            try {
+                // Kontrollo sigurinë
+                if (!/^[\d\+\-\*\/\(\)\.\s]+$/.test(expr)) return null;
+                
+                // Zëvendëso fjalët me operatorë
+                const cleaned = expr
+                    .replace(/\bplus\b/gi, '+')
+                    .replace(/\bminus\b/gi, '-')
+                    .replace(/\bher[eë]\b/gi, '*')
+                    .replace(/\bpjes[eë]to\b/gi, '/')
+                    .replace(/\bsa b[eë]jn[eë]\b/gi, '')
+                    .replace(/\s+/g, '');
+                
+                const result = Function('"use strict";return (' + cleaned + ')')();
+                if (typeof result === 'number' && !isNaN(result)) return result;
+            } catch {}
+            return null;
+        };
+        
+        const mathResult = calculate(message);
+        if (mathResult !== null) {
+            console.log('✅✅✅ [CHAT] GJETËM LLOGARITJE!');
+            return res.json({
+                success: true,
+                response: `🧮 **Rezultati:** ${mathResult}`,
+                source: 'math'
+            });
         }
 
-        // =============================✅ GEMINI DIRECT ===================================
-        if (engine === 'gemini') {
-            console.log('🤖 [CHAT-UI] Duke thirrur Gemini...');
+        // ==================== ✅ HAPI 4: DËRGO TE AI MOTOR ====================
+        console.log(`🚀 [CHAT] Duke dërguar te ${engine.toUpperCase()} AI...`);
+
+        // ✅ 4A: OPENAI
+        if (engine === 'openai') {
             try {
-                const GeminiRealService = require('../services/geminiRealService');
-                const result = await GeminiRealService.processMessage(message, userId);
+                console.log('🔮 [CHAT] Duke thirrur OpenAI...');
                 
-                if (result && result.success) {
-                    return res.json({
-                        success: true,
-                        response: `🤖 **Gemini RRUFE-TESLA**: ${result.response}`,
-                        source: 'gemini_real_service'
-                    });
+                // Kontrollo nëse ka API key për OpenAI
+                const openaiKeyRow = await new Promise((resolve) => {
+                    db.get(
+                        'SELECT api_key FROM api_keys WHERE user_id = ? AND service_name = ?',
+                        [userId, 'openai'],
+                        (err, row) => {
+                            if (err) {
+                                console.error('❌ [CHAT] Gabim në marrjen e OpenAI key:', err);
+                                resolve(null);
+                            } else {
+                                resolve(row);
+                            }
+                        }
+                    );
+                });
+                
+                if (openaiKeyRow?.api_key) {
+                    try {
+                        const { OpenAI } = require('openai');
+                        const openai = new OpenAI({ apiKey: openaiKeyRow.api_key });
+                        
+                        const completion = await openai.chat.completions.create({
+                            model: 'gpt-3.5-turbo',
+                            messages: [
+                                { 
+                                    role: "system", 
+                                    content: "Ti je RRUFE-TESLA AI. Përgjigju në shqip dhe jep përgjigje të dobishme, kreative dhe intuitive." 
+                                },
+                                { 
+                                    role: "user", 
+                                    content: message 
+                                }
+                            ],
+                            max_tokens: 500
+                        });
+                        
+                        return res.json({
+                            success: true,
+                            response: `🔮 **OpenAI:** ${completion.choices[0].message.content}`,
+                            source: 'openai'
+                        });
+                    } catch (openaiError) {
+                        console.error('❌ [CHAT] Gabim OpenAI API:', openaiError.message);
+                        console.log('🔄 [CHAT] OpenAI dështoi, duke u kthyer në Gemini...');
+                    }
+                } else {
+                    console.log('⚠️ [CHAT] Nuk ka OpenAI API Key, duke përdorur Gemini');
                 }
             } catch (error) {
-                console.error('❌ [CHAT-UI] Gabim Gemini:', error);
+                console.error('❌ [CHAT] Gabim në procesimin e OpenAI:', error);
             }
         }
 
-        // =============================✅ KONTROLLO NJOHURITË E RUAJTURA =============================
-try {
-    console.log('🔍 Kontrolloj nëse ka përgjigje të ruajtur për:', message);
-    
-    // Kontrollo në database për përgjigje të ruajtura
-    const knowledgeResult = await new Promise((resolve, reject) => {
-        db.get(
-            `SELECT answer FROM knowledge 
-             WHERE user_id = ? AND question LIKE ? 
-             ORDER BY created_at DESC LIMIT 1`,
-            [userId, `%${message.toLowerCase()}%`],
-            (err, row) => {
-                if (err) reject(err);
-                else resolve(row);
+        // ✅ 4B: GEMINI (DEFAULT OSE FALLBACK)
+        console.log('🤖 [CHAT] Duke thirrur Gemini...');
+        
+        try {
+            // Kontrollo nëse ka API key për Gemini
+            const geminiKeyRow = await new Promise((resolve) => {
+                db.get(
+                    'SELECT api_key FROM api_keys WHERE user_id = ? AND service_name = ?',
+                    [userId, 'gemini'],
+                    (err, row) => {
+                        if (err) {
+                            console.error('❌ [CHAT] Gabim në marrjen e Gemini key:', err);
+                            resolve(null);
+                        } else {
+                            resolve(row);
+                        }
+                    }
+                );
+            });
+            
+            if (geminiKeyRow?.api_key) {
+                try {
+                    const { GoogleGenerativeAI } = require('@google/generative-ai');
+                    const genAI = new GoogleGenerativeAI(geminiKeyRow.api_key);
+                    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+                    
+                    const result = await model.generateContent(message);
+                    const response = await result.response;
+                    const text = response.text();
+                    
+                    return res.json({
+                        success: true,
+                        response: `🤖 **Gemini:** ${text}`,
+                        source: 'gemini'
+                    });
+                } catch (geminiError) {
+                    console.error('❌ [CHAT] Gabim Gemini API:', geminiError.message);
+                }
+            } else {
+                console.log('⚠️ [CHAT] Nuk ka Gemini API Key');
             }
-        );
-    });
-    
-    if (knowledgeResult && knowledgeResult.answer) {
-        console.log('✅✅✅ GJETËM PËRGJIGJE TË RUAJTUR NË DATABASE!');
+        } catch (error) {
+            console.error('❌ [CHAT] Gabim në procesimin e Gemini:', error);
+        }
+
+        // ==================== ✅ HAPI 5: FALLBACK FINAL ====================
+        console.log('⚠️ [CHAT] Të dy motorët dështuan ose nuk kanë API Key');
+        
+        // Kontrollo nëse është pyetje e thjeshtë
+        const simpleQuestions = {
+            'si je': 'Jam mirë, faleminderit! Po ti?',
+            'si jeni': 'Jam mirë, faleminderit! Po ju?',
+            'si kalove': 'Jam mirë, duke punuar!',
+            'si kaluat': 'Jam mirë, duke punuar!',
+            'si quhesh': 'Unë jam RRUFE-TESLA AI',
+            'cfarë je': 'Unë jam një asistencë AI inteligjente',
+            'pershendetje': 'Pershendetje! Si mund t' + 'ju ndihmoj?',
+            'hello': 'Hello! How can I help you?',
+            'hi': 'Hi! How are you today?'
+        };
+        
+        const lowerMessage = message.toLowerCase();
+        for (const [key, answer] of Object.entries(simpleQuestions)) {
+            if (lowerMessage.includes(key)) {
+                return res.json({
+                    success: true,
+                    response: `💬 **RRUFE-TESLA:** ${answer}`,
+                    source: 'fallback'
+                });
+            }
+        }
+
+        // Fallback final
         return res.json({
             success: true,
-            response: `💾 **Përgjigje e ruajtur:** ${knowledgeResult.answer}`,
-            fromKnowledge: true
+            response: `🤔 **RRUFE-TESLA:** Nuk e kam përgjigjen për "${message}". Mund të provosh:\n\n1. 🤖 Ndrysho motorin në OpenAI\n2. 💾 Mëso diçka të re: /meso pyetja|përgjigja\n3. 🔍 Kërko në internet: /gjej "${message}"`,
+            source: 'final_fallback'
+        });
+
+    } catch (error) {
+        console.error('❌ [CHAT] Gabim në route:', error);
+        res.json({ 
+            success: false, 
+            error: '❌ Gabim në server. Ju lutem provoni përsëri.' 
         });
     }
-} catch (knowledgeError) {
-    console.log('ℹ️ Nuk ka përgjigje të ruajtur ose gabim në kërkim:', knowledgeError.message);
-}
-
-// =============================✅ KONTROLLO SISTEMIN RADIKAL =============================
-try {
-    console.log('🔍 Kontrolloj në Sistemin Radikal për:', message);
-    
-    // Kontrollo në sistemin radikal
-    const radicalResult = await new Promise((resolve, reject) => {
-        db.get(
-            `SELECT answer FROM radical_knowledge 
-             WHERE user_id = ? AND question LIKE ? 
-             ORDER BY created_at DESC LIMIT 1`,
-            [userId, `%${message.toLowerCase()}%`],
-            (err, row) => {
-                if (err) reject(err);
-                else resolve(row);
-            }
-        );
-    });
-    
-    if (radicalResult && radicalResult.answer) {
-        console.log('✅✅✅ GJETËM PËRGJIGJE NË SISTEMIN RADIKAL!');
-        return res.json({
-            success: true,
-            response: `💾 **Përgjigje e ruajtur (Radikal):** ${radicalResult.answer}`,
-            fromRadical: true
-        });
-    }
-} catch (radicalError) {
-    console.log('ℹ️ Nuk ka përgjigje në Sistemin Radikal:', radicalError.message);
-}
-
-// =============================✅ FALLBACK FINAL ===================================
-// VETËM NËSE NUK KA PËRGJIGJE TË RUAJTUR
-console.log('⚠️ Nuk u gjet përgjigje e ruajtur, duke dërguar te AI...');
-
-// NËSE JE NË DEVELOPMENT, MOS E PËRDOR FALLBACK-UN
-// Në vend të kësaj, dërgo te AI direkt
-return res.json({
-    success: false,
-    response: '🔍 Nuk u gjet përgjigje e ruajtur. Duke kërkuar te AI...'
 });
 
 // ========================== ✅ KODI EKZISTUES - RUTA PËR PANELIN E NDIHMËS ME BUTONA =============================
@@ -316,6 +444,7 @@ router.post('/save', (req, res) => {
         [userId, content, sender, timestamp || new Date().toISOString()],
         function(err) {
             if (err) {
+                console.error('❌ Gabim në ruajtjen e mesazhit:', err);
                 return res.status(500).json({ error: 'Gabim gjatë ruajtjes së mesazhit' });
             }
 
@@ -337,6 +466,7 @@ router.post('/knowledge', (req, res) => {
         [userId, question, answer],
         function(err) {
             if (err) {
+                console.error('❌ Gabim në ruajtjen e njohurive:', err);
                 return res.status(500).json({ error: 'Gabim gjatë ruajtjes së njohurive' });
             }
 
@@ -354,6 +484,7 @@ router.get('/knowledge/:userId/:question', (req, res) => {
         [userId, question],
         (err, row) => {
             if (err) {
+                console.error('❌ Gabim në kërkimin e njohurive:', err);
                 return res.status(500).json({ error: 'Gabim gjatë kërkimit të njohurive' });
             }
 
@@ -375,6 +506,7 @@ router.get('/export/:userId', (req, res) => {
         [userId],
         (err, rows) => {
             if (err) {
+                console.error('❌ Gabim në eksportimin e njohurive:', err);
                 return res.status(500).json({ error: 'Gabim gjatë eksportimit të njohurive' });
             }
 
@@ -394,6 +526,7 @@ router.post('/import', (req, res) => {
     // Fshi njohuritë ekzistuese për këtë përdorues
     db.run('DELETE FROM knowledge_base WHERE user_id = ?', [userId], (err) => {
         if (err) {
+            console.error('❌ Gabim në importimin e njohurive:', err);
             return res.status(500).json({ error: 'Gabim gjatë importimit të njohurive' });
         }
 
@@ -408,6 +541,7 @@ router.post('/import', (req, res) => {
 
         stmt.finalize((err) => {
             if (err) {
+                console.error('❌ Gabim në importimin e njohurive:', err);
                 return res.status(500).json({ error: 'Gabim gjatë importimit të njohurive' });
             }
 
@@ -425,6 +559,7 @@ router.delete('/clear/:userId', (req, res) => {
         [userId],
         function(err) {
             if (err) {
+                console.error('❌ Gabim në fshirjen e historisë:', err);
                 return res.status(500).json({ error: 'Gabim gjatë fshirjes së historisë' });
             }
             res.json({ message: 'Historia u fshi me sukses' });
@@ -441,6 +576,7 @@ router.get('/export-history/:userId', (req, res) => {
         [userId],
         (err, rows) => {
             if (err) {
+                console.error('❌ Gabim në eksportimin e historisë:', err);
                 return res.status(500).json({ error: 'Gabim gjatë eksportimit të historisë' });
             }
             res.json({ history: rows });
@@ -457,6 +593,7 @@ router.post('/feedback', (req, res) => {
         [userId, messageId, feedbackType],
         function(err) {
             if (err) {
+                console.error('❌ Gabim në ruajtjen e feedback:', err);
                 return res.status(500).json({ error: 'Gabim gjatë ruajtjes së feedback' });
             }
             res.json({ message: 'Feedback u ruajt me sukses' });
