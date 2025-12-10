@@ -1,3 +1,79 @@
+// ======================================== ✅ FUNKSION I AVANCUAR PËR KËRKIM NJOHURISH ============================================
+
+async function searchKnowledge(userId, message) {
+    console.log('🔍 [KNOWLEDGE-SEARCH] Duke kërkuar për user:', userId, 'message:', message);
+    
+    const searchVariations = [
+        message.toLowerCase(),
+        message.toLowerCase().replace(/\?/g, ''),
+        message.toLowerCase().replace(/\s+/g, ' ').trim(),
+        message.toLowerCase().replace(/\bcfare\b/gi, 'çfarë'),
+        message.toLowerCase().replace(/\beshte\b/gi, 'është')
+    ];
+    
+    // Hiq dublikatat
+    const uniqueVariations = [...new Set(searchVariations.filter(v => v.length > 0))];
+    
+    console.log('🔍 [KNOWLEDGE-SEARCH] Variantet e kërkimit:', uniqueVariations);
+    
+    // ✅ KËRKO NË RADICAL_KNOWLEDGE
+    for (const variation of uniqueVariations) {
+        try {
+            const result = await new Promise((resolve) => {
+                db.get(
+                    `SELECT question, answer FROM radical_knowledge 
+                     WHERE user_id = ? AND LOWER(question) LIKE ? 
+                     ORDER BY created_at DESC LIMIT 1`,
+                    [userId, `%${variation}%`],
+                    (err, row) => resolve(row)
+                );
+            });
+            
+            if (result && result.answer) {
+                console.log('✅✅✅ [KNOWLEDGE-SEARCH] GJETËM NË RADICAL!');
+                console.log('📝 Pyetja e gjetur:', result.question);
+                console.log('💡 Përgjigja:', result.answer);
+                return {
+                    source: 'radical_knowledge',
+                    question: result.question,
+                    answer: result.answer
+                };
+            }
+        } catch (error) {
+            console.log('ℹ️ [KNOWLEDGE-SEARCH] Error në radical search:', error.message);
+        }
+    }
+    
+    // ✅ KËRKO NË KNOWLEDGE
+    for (const variation of uniqueVariations) {
+        try {
+            const result = await new Promise((resolve) => {
+                db.get(
+                    `SELECT question, answer FROM knowledge 
+                     WHERE user_id = ? AND LOWER(question) LIKE ? 
+                     ORDER BY created_at DESC LIMIT 1`,
+                    [userId, `%${variation}%`],
+                    (err, row) => resolve(row)
+                );
+            });
+            
+            if (result && result.answer) {
+                console.log('✅✅✅ [KNOWLEDGE-SEARCH] GJETËM NË KNOWLEDGE!');
+                return {
+                    source: 'knowledge',
+                    question: result.question,
+                    answer: result.answer
+                };
+            }
+        } catch (error) {
+            console.log('ℹ️ [KNOWLEDGE-SEARCH] Error në knowledge search:', error.message);
+        }
+    }
+    
+    console.log('❌ [KNOWLEDGE-SEARCH] Nuk u gjet në asnjë database');
+    return null;
+}
+
 const crypto = require('crypto');
 const express = require('express');
 const db = require('../database');
@@ -90,40 +166,88 @@ router.post('/message', async (req, res) => {
         }
 
         // ==================== ✅ HAPI 2: KONTROLLO NJOHURITË E RUAJTURA ====================
-        console.log('🔍 [CHAT] Duke kontrolluar njohuritë e ruajtura...');
-        
-        // ✅ 2A: KONTROLLO NË RADICAL_KNOWLEDGE (SISTEMI I RI)
-        try {
-            const radicalResult = await new Promise((resolve) => {
-                db.get(
-                    `SELECT answer FROM radical_knowledge 
-                     WHERE user_id = ? AND LOWER(question) LIKE ? 
-                     ORDER BY created_at DESC LIMIT 1`,
-                    [userId, `%${message.toLowerCase()}%`],
-                    (err, row) => {
-                        if (err) {
-                            console.error('❌ [CHAT] Gabim në kërkim radical:', err);
-                            resolve(null);
-                        } else {
-                            resolve(row);
-                        }
-                    }
-                );
-            });
-            
-            if (radicalResult && radicalResult.answer) {
-                console.log('✅✅✅ [CHAT] GJETËM PËRGJIGJE NË RADICAL KNOWLEDGE!');
-                return res.json({
-                    success: true,
-                    response: `💾 **Përgjigje e ruajtur:** ${radicalResult.answer}`,
-                    source: 'radical_knowledge'
-                });
+console.log('🔍 [CHAT] Duke kontrolluar njohuritë e ruajtura për:', message);
+
+// ✅ 2A: KONTROLLO NË RADICAL_KNOWLEDGE (SISTEMI I RI)
+try {
+    // Kërko me LIKE të thjeshtë (case-insensitive)
+    const radicalResult = await new Promise((resolve) => {
+        db.get(
+            `SELECT answer FROM radical_knowledge 
+             WHERE user_id = ? 
+             AND (LOWER(question) LIKE LOWER(?) OR LOWER(question) LIKE LOWER(?))
+             ORDER BY created_at DESC LIMIT 1`,
+            [userId, `%${message}%`, `%${message.replace(/\?/g, '')}%`],
+            (err, row) => {
+                if (err) {
+                    console.error('❌ [CHAT] Gabim në kërkim radical:', err);
+                    resolve(null);
+                } else {
+                    if (row) console.log('✅ [CHAT] Gjetëm radical result');
+                    resolve(row);
+                }
             }
-        } catch (radicalError) {
-            console.log('ℹ️ [CHAT] Nuk ka përgjigje në radical knowledge:', radicalError.message);
-        }
+        );
+    });
+    
+    if (radicalResult && radicalResult.answer) {
+        console.log('✅✅✅ [CHAT] GJETËM PËRGJIGJE NË RADICAL KNOWLEDGE!');
+        console.log('📝 Pyetja e ruajtur:', radicalResult.question);
+        console.log('💡 Përgjigja:', radicalResult.answer);
         
-        // ✅ 2B: KONTROLLO NË KNOWLEDGE (SISTEMI I VJETËR)
+        return res.json({
+            success: true,
+            response: `💾 **Përgjigje e ruajtur:** ${radicalResult.answer}`,
+            source: 'radical_knowledge'
+        });
+    } else {
+        console.log('ℹ️ [CHAT] Nuk u gjet në radical knowledge');
+    }
+} catch (radicalError) {
+    console.log('ℹ️ [CHAT] Error në radical search:', radicalError.message);
+}
+
+// ✅ 2B: KONTROLLO NË KNOWLEDGE (SISTEMI I VJETËR)
+try {
+    // Kërko me LIKE të thjeshtë (case-insensitive)
+    const knowledgeResult = await new Promise((resolve) => {
+        db.get(
+            `SELECT answer FROM knowledge 
+             WHERE user_id = ? 
+             AND (LOWER(question) LIKE LOWER(?) OR LOWER(question) LIKE LOWER(?))
+             ORDER BY created_at DESC LIMIT 1`,
+            [userId, `%${message}%`, `%${message.replace(/\?/g, '')}%`],
+            (err, row) => {
+                if (err) {
+                    console.error('❌ [CHAT] Gabim në kërkim knowledge:', err);
+                    resolve(null);
+                } else {
+                    if (row) console.log('✅ [CHAT] Gjetëm knowledge result');
+                    resolve(row);
+                }
+            }
+        );
+    });
+    
+    if (knowledgeResult && knowledgeResult.answer) {
+        console.log('✅✅✅ [CHAT] GJETËM PËRGJIGJE NË KNOWLEDGE!');
+        
+        return res.json({
+            success: true,
+            response: `💾 **Përgjigje e ruajtur:** ${knowledgeResult.answer}`,
+            source: 'knowledge'
+        });
+    } else {
+        console.log('ℹ️ [CHAT] Nuk u gjet në knowledge');
+    }
+} catch (knowledgeError) {
+    console.log('ℹ️ [CHAT] Error në knowledge search:', knowledgeError.message);
+}
+
+console.log('ℹ️ [CHAT] Nuk u gjet përgjigje e ruajtur në asnjë database');
+        
+// ==================================== ✅ 2B: KONTROLLO NË KNOWLEDGE (SISTEMI I VJETËR) ===================================
+        
         try {
             const knowledgeResult = await new Promise((resolve) => {
                 db.get(
