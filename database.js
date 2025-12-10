@@ -2,18 +2,15 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
 
-// ==================== ✅ DETECTION I DATABASE PATH ====================
-console.log('🔍 Detecting database path...');
+// ==================== ✅ DIGITALOCEAN DATABASE DETECTION ====================
+console.log('🔍 [DATABASE] Starting DigitalOcean database detection...');
 
-// ✅ LISTA E TË GJITHA PATH-EVE TË MUNDSHME
-const possiblePaths = [
-    // 1. Environment Variables
-    process.env.DATABASE_PATH,
-    process.env.DB_PATH,
-    process.env.SQLITE_PATH,
-    
-    // 2. DigitalOcean default paths
+// ✅ PATH-ET SPECIFIKE PËR DIGITALOCEAN
+const digitalOceanPaths = [
+    // 1. Primary DigitalOcean path
     '/var/www/chat-server/db/chat.db',
+    
+    // 2. Backup paths
     '/var/www/chat-server/tmp/chat.db',
     '/var/www/chat-server/data/chat.db',
     
@@ -22,188 +19,121 @@ const possiblePaths = [
     path.join(__dirname, 'tmp', 'chat.db'),
     path.join(__dirname, 'data', 'chat.db'),
     
-    // 4. Current directory paths
-    './db/chat.db',
-    './tmp/chat.db',
-    './data/chat.db',
+    // 4. Environment variables (nëse janë vendosur)
+    process.env.DATABASE_PATH,
+    process.env.DB_PATH,
     
-    // 5. Absolute paths for production
+    // 5. Fallback paths
     '/tmp/chat.db',
-    '/home/chat.db',
-    '/opt/chat.db'
+    './chat.db'
 ];
 
-// ✅ FUNKSION PËR TË KONTROLLUAR PATH
-function findDatabasePath() {
-    console.log('🔍 Checking possible database paths...');
+// ✅ FUNKSION PËR TË GJETUR DATABASE
+function findDatabaseForDigitalOcean() {
+    console.log('🔍 [DATABASE] Checking DigitalOcean paths...');
     
-    for (const possiblePath of possiblePaths) {
+    // Provo së pari path-et specifike të DigitalOcean
+    for (const possiblePath of digitalOceanPaths) {
         if (!possiblePath) continue;
         
         try {
-            // Normalizo path-in
             const normalizedPath = path.normalize(possiblePath);
+            console.log(`   🔎 Checking: ${normalizedPath}`);
             
-            // Kontrollo nëse ekziston
+            // Kontrollo nëse file ekziston
             if (fs.existsSync(normalizedPath)) {
-                console.log(`✅ Found existing database at: ${normalizedPath}`);
+                const stats = fs.statSync(normalizedPath);
+                console.log(`   ✅ FOUND! Size: ${stats.size} bytes`);
                 return normalizedPath;
             }
             
             // Kontrollo nëse directory ekziston (mund të krijojmë file)
             const dir = path.dirname(normalizedPath);
             if (fs.existsSync(dir)) {
-                console.log(`📁 Directory exists, can create db at: ${normalizedPath}`);
+                console.log(`   📁 Directory exists, can create at: ${normalizedPath}`);
                 return normalizedPath;
             }
             
         } catch (error) {
-            console.log(`ℹ️ Path check failed for ${possiblePath}: ${error.message}`);
+            console.log(`   ⚠️ Error checking ${possiblePath}: ${error.message}`);
         }
     }
     
-    // ✅ NËSE NUK GJETËM, PËRDOR DEFAULT PËR DIGITALOCEAN
+    // ✅ NËSE NUK GJETËM, KRIJO NË DIGITALOCEAN DEFAULT PATH
     const defaultPath = '/var/www/chat-server/db/chat.db';
-    console.log(`⚠️ No existing database found, using default: ${defaultPath}`);
+    console.log(`⚠️ [DATABASE] No existing database found, using default: ${defaultPath}`);
     
     // Krijo directory nëse nuk ekziston
     const defaultDir = path.dirname(defaultPath);
     if (!fs.existsSync(defaultDir)) {
         try {
             fs.mkdirSync(defaultDir, { recursive: true });
-            console.log(`✅ Created directory: ${defaultDir}`);
+            console.log(`✅ [DATABASE] Created directory: ${defaultDir}`);
         } catch (mkdirError) {
-            console.error(`❌ Failed to create directory ${defaultDir}:`, mkdirError);
+            console.error(`❌ [DATABASE] Failed to create directory:`, mkdirError);
         }
     }
     
     return defaultPath;
 }
 
-// ✅ GJEDH DATABASE PATH
-const dbPath = findDatabasePath();
-console.log(`🚀 Final database path: ${dbPath}`);
+// ✅ GJEDH PATH-IN FINAL
+const dbPath = findDatabaseForDigitalOcean();
+console.log(`🚀 [DATABASE] Final database path: ${dbPath}`);
 
 // ==================== ✅ CREATE DATABASE CONNECTION ====================
-console.log('🔗 Creating database connection...');
+console.log('🔗 [DATABASE] Creating connection...');
 
-// Krijo një instance të re të bazës së të dhënave
 const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
     if (err) {
-        console.error('❌ DATABASE CONNECTION ERROR:', err.message);
-        console.error('🔍 Error details:', err);
+        console.error('❌ [DATABASE] CONNECTION ERROR:', err.message);
+        console.error('   Path attempted:', dbPath);
         
-        // Provo të krijosh databasen në rast gabimi
-        console.log('🔄 Trying alternative connection method...');
-        createDatabaseWithRetry();
+        // Provo alternative
+        console.log('🔄 [DATABASE] Trying alternative connection...');
+        createAlternativeDatabase();
     } else {
-        console.log(`✅ Connected to SQLite database at: ${dbPath}`);
-        initializeDatabase();
+        console.log(`✅ [DATABASE] Connected to SQLite at: ${dbPath}`);
+        
+        // Test connection immediately
+        db.get('SELECT 1 as test', (testErr) => {
+            if (testErr) {
+                console.error('❌ [DATABASE] Test query failed:', testErr.message);
+            } else {
+                console.log('✅ [DATABASE] Connection test passed');
+            }
+        });
+        
+        // Inicializo tabelat
+        initializeDatabaseForDigitalOcean();
     }
 });
 
-// ✅ FUNKSION BACKUP PËR KRIJIMIN E DATABASE
-function createDatabaseWithRetry() {
-    const backupPath = '/var/www/chat-server/backup_chat.db';
-    console.log(`🔄 Trying backup path: ${backupPath}`);
+// ✅ FUNKSION ALTERNATIV PËR KRIJIMIN E DATABASE
+function createAlternativeDatabase() {
+    const altPath = '/var/www/chat-server/backup_chat.db';
+    console.log(`🔄 [DATABASE] Creating alternative at: ${altPath}`);
     
-    const backupDb = new sqlite3.Database(backupPath, (err) => {
+    const altDb = new sqlite3.Database(altPath, (err) => {
         if (err) {
-            console.error('❌ Backup database also failed:', err.message);
-            console.error('🔧 CRITICAL: Cannot connect to any database!');
-            console.log('📋 Please check:');
-            console.log('   1. Disk space on server');
-            console.log('   2. File permissions');
-            console.log('   3. Database file integrity');
+            console.error('❌ [DATABASE] Alternative also failed:', err.message);
+            console.error('🔧 [DATABASE] CRITICAL: Database cannot be created!');
         } else {
-            console.log(`✅ Connected to backup database at: ${backupPath}`);
-            // Zëvendëso db objektin
-            module.exports = backupDb;
-            initializeDatabase(backupDb);
+            console.log(`✅ [DATABASE] Created alternative at: ${altPath}`);
+            // Përdor alternative database
+            module.exports = altDb;
+            initializeDatabaseForDigitalOcean(altDb);
         }
     });
 }
 
-// ✅ FUNKSION I KORRIGJUAR PËR TË SHTUAR KOLONËN UPDATED_AT
-function addUpdatedAtColumnToApiKeys() {
-    console.log('🔍 Checking if api_keys table has updated_at column...');
-    
-    db.all("PRAGMA table_info(api_keys)", (err, columns) => {
-        if (err) {
-            console.error('❌ Error checking columns:', err);
-            return;
-        }
-        
-        // ✅ KORRIGJIMI KRYESOR - trajto si array
-        const columnNames = Array.isArray(columns) 
-            ? columns.map(col => col.name) 
-            : [];
-        
-        console.log('📊 Existing columns in api_keys:', columnNames);
-        
-        if (!columnNames.includes('updated_at')) {
-            console.log('🔄 Adding updated_at column to existing table...');
-            
-            // ✅ KORRIGJIM: Përdor DEFAULT NULL në vend të CURRENT_TIMESTAMP
-            db.run('ALTER TABLE api_keys ADD COLUMN updated_at DATETIME DEFAULT NULL', (err) => {
-                if (err) {
-                    console.error('❌ Error adding updated_at column:', err);
-                } else {
-                    console.log('✅ updated_at column added successfully');
-                    
-                    // ✅ PËRDITËSO REKORDET EKZISTUESE ME VLERËN E created_at
-                    db.run('UPDATE api_keys SET updated_at = created_at WHERE updated_at IS NULL', (err) => {
-                        if (err) {
-                            console.error('❌ Error updating values:', err);
-                        } else {
-                            console.log('✅ updated_at values updated successfully');
-                        }
-                    });
-                }
-            });
-        } else {
-            console.log('✅ updated_at column already exists in api_keys');
-        }
-    });
-}
+// ==================== ✅ FUNKSIONET PËR TABELA ====================
 
-// ✅ FUNKSION PËR TË SHTUAR KOLONËN RESPONSE NË MESSAGES
-function addResponseColumnToMessages() {
-    console.log('🔍 Checking if messages table has response column...');
+// ✅ KRIJO TABELËN RADICAL_KNOWLEDGE (MË E RËNDËSISHMJA!)
+function createRadicalKnowledgeTable(database = db) {
+    console.log('🔍 [DATABASE] Creating radical_knowledge table...');
     
-    db.all("PRAGMA table_info(messages)", (err, columns) => {
-        if (err) {
-            console.error('❌ Error checking columns:', err);
-            return;
-        }
-        
-        const columnNames = Array.isArray(columns) 
-            ? columns.map(col => col.name) 
-            : [];
-        
-        console.log('📊 Existing columns in messages:', columnNames);
-        
-        if (!columnNames.includes('response')) {
-            console.log('🔄 Adding response column to messages table...');
-            
-            db.run('ALTER TABLE messages ADD COLUMN response TEXT', (err) => {
-                if (err) {
-                    console.error('❌ Error adding response column:', err);
-                } else {
-                    console.log('✅ response column added successfully');
-                }
-            });
-        } else {
-            console.log('✅ response column already exists in messages');
-        }
-    });
-}
-
-// ✅ FUNKSION PËR TË KRIJUAR TABELËN RADICAL_KNOWLEDGE
-function createRadicalKnowledgeTable() {
-    console.log('🔍 Checking radical_knowledge table...');
-    
-    db.run(`CREATE TABLE IF NOT EXISTS radical_knowledge (
+    database.run(`CREATE TABLE IF NOT EXISTS radical_knowledge (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
         question TEXT NOT NULL,
@@ -211,42 +141,64 @@ function createRadicalKnowledgeTable() {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`, (err) => {
         if (err) {
-            console.error('❌ Error creating radical_knowledge table:', err);
+            console.error('❌ [DATABASE] Failed to create radical_knowledge:', err.message);
         } else {
-            console.log('✅ radical_knowledge table is ready');
+            console.log('✅ [DATABASE] radical_knowledge table ready');
             
             // Kontrollo nëse ka të dhëna
-            db.get('SELECT COUNT(*) as count FROM radical_knowledge', (err, row) => {
-                if (err) {
-                    console.error('❌ Error counting radical_knowledge:', err);
-                } else {
-                    console.log(`📊 radical_knowledge has ${row.count} entries`);
+            database.get('SELECT COUNT(*) as count FROM radical_knowledge', (countErr, row) => {
+                if (!countErr && row) {
+                    console.log(`📊 [DATABASE] radical_knowledge has ${row.count} entries`);
                 }
             });
         }
     });
 }
 
-// ==================== ✅ FUNKSIONI I PLOTË PËR INICIALIZIM ====================
-function initializeDatabase(database = db) {
-    console.log('🔄 Initializing database tables...');
-    
-    // 🆕 TABELA E RE: SOUL PROFILES - RRUFE-TESLA 10.5
-    database.run(`CREATE TABLE IF NOT EXISTS soul_profiles (
+// ✅ KRIJO TABELËN KNOWLEDGE (SISTEMI I VJETËR)
+function createKnowledgeTable(database = db) {
+    database.run(`CREATE TABLE IF NOT EXISTS knowledge (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        userId TEXT UNIQUE NOT NULL,
-        signatureTime DATETIME DEFAULT CURRENT_TIMESTAMP,
-        enlightenmentPoints INTEGER DEFAULT 100,
-        lastResonanceUpdate DATETIME DEFAULT CURRENT_TIMESTAMP
+        user_id INTEGER NOT NULL,
+        question TEXT NOT NULL,
+        answer TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`, (err) => {
         if (err) {
-            console.error('❌ Error creating soul_profiles:', err);
+            console.error('❌ [DATABASE] Failed to create knowledge table:', err.message);
         } else {
-            console.log('✅ soul_profiles table initialized - RRUFE-TESLA 10.5');
+            console.log('✅ [DATABASE] knowledge table ready');
         }
     });
+}
+
+// ✅ KRIJO TABELËN KNOWLEDGE_BASE (SISTEMI TJETËR)
+function createKnowledgeBaseTable(database = db) {
+    database.run(`CREATE TABLE IF NOT EXISTS knowledge_base (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        question TEXT NOT NULL,
+        answer TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`, (err) => {
+        if (err) {
+            console.error('❌ [DATABASE] Failed to create knowledge_base:', err.message);
+        } else {
+            console.log('✅ [DATABASE] knowledge_base table ready');
+        }
+    });
+}
+
+// ==================== ✅ INICIALIZIMI I PLOTË ====================
+function initializeDatabaseForDigitalOcean(database = db) {
+    console.log('🔄 [DATABASE] Initializing DigitalOcean database...');
     
-    // ✅ TABELA E PËRDORUESVE - VERSION I THJESHTUAR
+    // ✅ KRIJO SË PARI TABELAT MË TË RËNDËSISHME
+    createRadicalKnowledgeTable(database);
+    createKnowledgeTable(database);
+    createKnowledgeBaseTable(database);
+    
+    // ✅ TABELA E PËRDORUESVE
     database.run(`CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE NOT NULL,
@@ -259,9 +211,9 @@ function initializeDatabase(database = db) {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`, (err) => {
         if (err) {
-            console.error('❌ Error creating users table:', err);
+            console.error('❌ [DATABASE] Failed to create users table:', err.message);
         } else {
-            console.log('✅ users table initialized');
+            console.log('✅ [DATABASE] users table ready');
         }
     });
 
@@ -276,13 +228,13 @@ function initializeDatabase(database = db) {
         FOREIGN KEY (user_id) REFERENCES users (id)
     )`, (err) => {
         if (err) {
-            console.error('❌ Error creating api_keys table:', err);
+            console.error('❌ [DATABASE] Failed to create api_keys:', err.message);
         } else {
-            console.log('✅ api_keys table initialized');
+            console.log('✅ [DATABASE] api_keys table ready');
         }
     });
 
-    // ✅ TABELA E MESAZHEVE - ME KOLONËN RESPONSE
+    // ✅ TABELA E MESAZHEVE
     database.run(`CREATE TABLE IF NOT EXISTS messages (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
@@ -293,56 +245,9 @@ function initializeDatabase(database = db) {
         FOREIGN KEY (user_id) REFERENCES users (id)
     )`, (err) => {
         if (err) {
-            console.error('❌ Error creating messages table:', err);
+            console.error('❌ [DATABASE] Failed to create messages:', err.message);
         } else {
-            console.log('✅ messages table initialized');
-        }
-    });
-
-    // ✅ TABELA E NJOHURIVE (VJETËR)
-    database.run(`CREATE TABLE IF NOT EXISTS knowledge_base (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        question TEXT NOT NULL,
-        answer TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users (id)
-    )`, (err) => {
-        if (err) {
-            console.error('❌ Error creating knowledge_base table:', err);
-        } else {
-            console.log('✅ knowledge_base table initialized');
-        }
-    });
-
-    // 🆕 TABELA E RE: RADICAL_KNOWLEDGE (SISTEMI I RI)
-    database.run(`CREATE TABLE IF NOT EXISTS radical_knowledge (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        question TEXT NOT NULL,
-        answer TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )`, (err) => {
-        if (err) {
-            console.error('❌ Error creating radical_knowledge table:', err);
-        } else {
-            console.log('✅ radical_knowledge table initialized - New System');
-        }
-    });
-
-    // 🆕 TABELA E RE: USER_KNOWLEDGE - PËR KNOWLEDGE DISTILLER
-    database.run(`CREATE TABLE IF NOT EXISTS user_knowledge (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id TEXT NOT NULL,
-        knowledge_data TEXT NOT NULL,
-        version TEXT DEFAULT '1.0',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )`, (err) => {
-        if (err) {
-            console.error('❌ Error creating user_knowledge table:', err);
-        } else {
-            console.log('✅ user_knowledge table initialized - Knowledge Distiller');
+            console.log('✅ [DATABASE] messages table ready');
         }
     });
 
@@ -356,71 +261,71 @@ function initializeDatabase(database = db) {
         FOREIGN KEY (user_id) REFERENCES users (id)
     )`, (err) => {
         if (err) {
-            console.error('❌ Error creating feedback table:', err);
+            console.error('❌ [DATABASE] Failed to create feedback:', err.message);
         } else {
-            console.log('✅ feedback table initialized');
+            console.log('✅ [DATABASE] feedback table ready');
         }
     });
 
-    console.log('✅ Database initialization completed!');
+    console.log('✅ [DATABASE] Initialization completed!');
     
-    // ✅ THIRRE FUNKSIONET SHTESË PAS INICIALIZIMIT
+    // ✅ VERIFIKIMI FINAL
     setTimeout(() => {
-        addUpdatedAtColumnToApiKeys();
-        addResponseColumnToMessages();
-        createRadicalKnowledgeTable();
-        
-        // ✅ VERIFIKIMI FINAL I DATABASE
-        verifyDatabaseStructure();
+        verifyAllTables(database);
     }, 3000);
 }
 
-// ✅ FUNKSION PËR VERIFIKIMIN E STRUKTURËS SË DATABASE
-function verifyDatabaseStructure() {
-    console.log('🔍 Verifying database structure...');
+// ✅ FUNKSION PËR VERIFIKIMIN E TABELAVE
+function verifyAllTables(database = db) {
+    console.log('🔍 [DATABASE] Verifying all tables...');
     
-    const tablesToCheck = [
-        'users',
-        'api_keys', 
-        'messages',
-        'knowledge_base',
+    const essentialTables = [
         'radical_knowledge',
-        'user_knowledge',
-        'feedback',
-        'soul_profiles'
+        'knowledge', 
+        'knowledge_base',
+        'users',
+        'api_keys',
+        'messages'
     ];
     
-    tablesToCheck.forEach(tableName => {
-        db.get(`SELECT COUNT(*) as count FROM sqlite_master WHERE type='table' AND name='${tableName}'`, (err, row) => {
-            if (err) {
-                console.error(`❌ Error checking ${tableName}:`, err);
-            } else {
-                if (row.count > 0) {
-                    console.log(`✅ ${tableName}: EXISTS`);
-                    
-                    // Kontrollo rekordet
-                    db.get(`SELECT COUNT(*) as count FROM ${tableName}`, (countErr, countRow) => {
-                        if (!countErr) {
-                            console.log(`   📊 Records: ${countRow.count}`);
-                        }
-                    });
+    let verifiedCount = 0;
+    
+    essentialTables.forEach(tableName => {
+        database.get(
+            `SELECT name FROM sqlite_master WHERE type='table' AND name='${tableName}'`,
+            (err, row) => {
+                if (err) {
+                    console.error(`❌ [DATABASE] Error checking ${tableName}:`, err.message);
+                } else if (row) {
+                    console.log(`✅ [DATABASE] ${tableName}: EXISTS`);
+                    verifiedCount++;
                 } else {
-                    console.log(`❌ ${tableName}: MISSING!`);
+                    console.log(`❌ [DATABASE] ${tableName}: MISSING!`);
+                    
+                    // Krijo menjëherë nëse mungon
+                    if (tableName === 'radical_knowledge') {
+                        createRadicalKnowledgeTable(database);
+                    }
+                }
+                
+                // Nëse kemi kontrolluar të gjitha
+                if (verifiedCount === essentialTables.length) {
+                    console.log(`🎉 [DATABASE] ${verifiedCount}/${essentialTables.length} essential tables verified`);
                 }
             }
-        });
+        );
     });
 }
 
-// ✅ FUNKSION PËR TESTIMIN E DATABASE
-db.testConnection = function() {
+// ✅ FUNKSION TEST PËR DATABASE
+db.testDatabase = function() {
     return new Promise((resolve, reject) => {
-        this.get('SELECT 1 as test', (err, row) => {
+        this.get('SELECT 1 as test', (err) => {
             if (err) {
-                console.error('❌ Database test failed:', err);
+                console.error('❌ [DATABASE] Test failed:', err.message);
                 reject(err);
             } else {
-                console.log('✅ Database connection test passed');
+                console.log('✅ [DATABASE] Test passed');
                 resolve(true);
             }
         });
@@ -429,10 +334,22 @@ db.testConnection = function() {
 
 // ✅ EKZEKUTO TEST MENJËHERË
 setTimeout(() => {
-    db.testConnection().catch(() => {
-        console.log('⚠️ Database test failed, but continuing...');
+    db.testDatabase().catch(() => {
+        console.log('⚠️ [DATABASE] Test failed, but continuing...');
     });
-}, 5000);
+}, 2000);
+
+// ✅ SHTO NJË FUNKSION PËR TË KRIJUAR TABELAT NËSE NUK EKZISTOJNË
+db.ensureTables = function() {
+    return new Promise((resolve) => {
+        console.log('🔧 [DATABASE] Ensuring tables exist...');
+        initializeDatabaseForDigitalOcean(this);
+        setTimeout(() => resolve(true), 1000);
+    });
+};
 
 // Eksporto db object
 module.exports = db;
+
+// ✅ LOG FINAL
+console.log(`📁 [DATABASE] Module loaded for path: ${dbPath}`);
