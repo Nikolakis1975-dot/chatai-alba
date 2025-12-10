@@ -1044,8 +1044,12 @@ async function processCommand(text) {
        case "/meso":
     const split = text.replace("/meso", "").split("|");
     if (split.length === 2) {
-        const q = split[0].trim();
+        const q = split[0].trim();  // <-- MOS E BËJ .toLowerCase()!
         const a = split[1].trim();
+        
+        console.log('💾 /meso komanda - Duke ruajtur pyetjen ASHTU SIÇ ËSHTË:');
+        console.log('📝 Pyetja origjinale:', q);
+        console.log('💡 Përgjigja:', a);
         
         if (!q || !a) {
             addMessage('❌ Format i gabuar. Përdor: /meso pyetja|përgjigja', 'bot');
