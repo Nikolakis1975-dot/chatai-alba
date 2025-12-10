@@ -6,7 +6,7 @@ const router = express.Router();
 // ✅ IMPORT I KONSTANTAVE
 const constants = require('../config/constants');
 
-// ======================================== ✅ FUNKSIONET NDIHMËSE ME DATABASE ===============================
+// ======================================== ✅ FUNKSIONET NDIHMËSE ME DATABASE ============================================
 
 async function checkApiKey(userId) {
     return new Promise((resolve, reject) => {
