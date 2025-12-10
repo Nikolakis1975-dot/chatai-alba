@@ -139,16 +139,75 @@ router.post('/message', async (req, res) => {
             }
         }
 
-        // =============================✅ FALLBACK FINAL ===================================
+        // =============================✅ KONTROLLO NJOHURITË E RUAJTURA =============================
+try {
+    console.log('🔍 Kontrolloj nëse ka përgjigje të ruajtur për:', message);
+    
+    // Kontrollo në database për përgjigje të ruajtura
+    const knowledgeResult = await new Promise((resolve, reject) => {
+        db.get(
+            `SELECT answer FROM knowledge 
+             WHERE user_id = ? AND question LIKE ? 
+             ORDER BY created_at DESC LIMIT 1`,
+            [userId, `%${message.toLowerCase()}%`],
+            (err, row) => {
+                if (err) reject(err);
+                else resolve(row);
+            }
+        );
+    });
+    
+    if (knowledgeResult && knowledgeResult.answer) {
+        console.log('✅✅✅ GJETËM PËRGJIGJE TË RUAJTUR NË DATABASE!');
         return res.json({
             success: true,
-            response: `🔧 **RRUFE-TESLA**: ${message}\n\n💡 *Sistemi po përmirësohet!*`
+            response: `💾 **Përgjigje e ruajtur:** ${knowledgeResult.answer}`,
+            fromKnowledge: true
         });
-        
-    } catch (error) {
-        console.error('❌ Gabim:', error);
-        res.json({ success: false, response: 'Gabim në server' });
     }
+} catch (knowledgeError) {
+    console.log('ℹ️ Nuk ka përgjigje të ruajtur ose gabim në kërkim:', knowledgeError.message);
+}
+
+// =============================✅ KONTROLLO SISTEMIN RADIKAL =============================
+try {
+    console.log('🔍 Kontrolloj në Sistemin Radikal për:', message);
+    
+    // Kontrollo në sistemin radikal
+    const radicalResult = await new Promise((resolve, reject) => {
+        db.get(
+            `SELECT answer FROM radical_knowledge 
+             WHERE user_id = ? AND question LIKE ? 
+             ORDER BY created_at DESC LIMIT 1`,
+            [userId, `%${message.toLowerCase()}%`],
+            (err, row) => {
+                if (err) reject(err);
+                else resolve(row);
+            }
+        );
+    });
+    
+    if (radicalResult && radicalResult.answer) {
+        console.log('✅✅✅ GJETËM PËRGJIGJE NË SISTEMIN RADIKAL!');
+        return res.json({
+            success: true,
+            response: `💾 **Përgjigje e ruajtur (Radikal):** ${radicalResult.answer}`,
+            fromRadical: true
+        });
+    }
+} catch (radicalError) {
+    console.log('ℹ️ Nuk ka përgjigje në Sistemin Radikal:', radicalError.message);
+}
+
+// =============================✅ FALLBACK FINAL ===================================
+// VETËM NËSE NUK KA PËRGJIGJE TË RUAJTUR
+console.log('⚠️ Nuk u gjet përgjigje e ruajtur, duke dërguar te AI...');
+
+// NËSE JE NË DEVELOPMENT, MOS E PËRDOR FALLBACK-UN
+// Në vend të kësaj, dërgo te AI direkt
+return res.json({
+    success: false,
+    response: '🔍 Nuk u gjet përgjigje e ruajtur. Duke kërkuar te AI...'
 });
 
 // ========================== ✅ KODI EKZISTUES - RUTA PËR PANELIN E NDIHMËS ME BUTONA =============================
