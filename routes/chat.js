@@ -168,46 +168,84 @@ router.post('/message', async (req, res) => {
         // ==================== ✅ HAPI 2: KONTROLLO NJOHURITË E RUAJTURA ====================
 console.log('🔍 [CHAT] Duke kontrolluar njohuritë e ruajtura për:', message);
 
-// ✅ 2A: KONTROLLO NË RADICAL_KNOWLEDGE (SISTEMI I RI)
+const messageLower = message.toLowerCase().trim();
+
+// ✅ 2A: KONTROLLO NË RADICAL_KNOWLEDGE
 try {
-    // Kërko me LIKE të thjeshtë (case-insensitive)
-    const radicalResult = await new Promise((resolve) => {
-        db.get(
-            `SELECT answer FROM radical_knowledge 
-             WHERE user_id = ? 
-             AND (LOWER(question) LIKE LOWER(?) OR LOWER(question) LIKE LOWER(?))
-             ORDER BY created_at DESC LIMIT 1`,
-            [userId, `%${message}%`, `%${message.replace(/\?/g, '')}%`],
-            (err, row) => {
+    console.log('🔍 [CHAT] Duke kërkuar në radical_knowledge...');
+    
+    // Merr të gjitha të dhënat për këtë user
+    const allRadicalData = await new Promise((resolve) => {
+        db.all(
+            `SELECT question, answer FROM radical_knowledge WHERE user_id = ?`,
+            [userId],
+            (err, rows) => {
                 if (err) {
-                    console.error('❌ [CHAT] Gabim në kërkim radical:', err);
-                    resolve(null);
+                    console.error('❌ [CHAT] Gabim radical:', err);
+                    resolve([]);
                 } else {
-                    if (row) console.log('✅ [CHAT] Gjetëm radical result');
-                    resolve(row);
+                    resolve(rows || []);
                 }
             }
         );
     });
     
-    if (radicalResult && radicalResult.answer) {
-        console.log('✅✅✅ [CHAT] GJETËM PËRGJIGJE NË RADICAL KNOWLEDGE!');
-        console.log('📝 Pyetja e ruajtur:', radicalResult.question);
-        console.log('💡 Përgjigja:', radicalResult.answer);
+    console.log(`📊 [CHAT] Gjetëm ${allRadicalData.length} pyetje në radical_knowledge`);
+    
+    // Kërko manualisht për përputhje
+    for (const row of allRadicalData) {
+        const dbQuestion = row.question.toLowerCase().trim();
+        const dbAnswer = row.answer;
         
-        return res.json({
-            success: true,
-            response: `💾 **Përgjigje e ruajtur:** ${radicalResult.answer}`,
-            source: 'radical_knowledge'
-        });
-    } else {
-        console.log('ℹ️ [CHAT] Nuk u gjet në radical knowledge');
+        console.log(`🔍 [CHAT] Krahasoj "${messageLower}" me "${dbQuestion}"`);
+        
+        // Kontrollo për përputhje të drejtpërdrejtë
+        if (dbQuestion === messageLower) {
+            console.log('✅✅✅ [CHAT] PËRSHPATJE E PËRSOSUR!');
+            return res.json({
+                success: true,
+                response: `💾 **Përgjigje e ruajtur:** ${dbAnswer}`,
+                source: 'radical_exact_match'
+            });
+        }
+        
+        // Kontrollo nëse njëra përmban tjetrën
+        if (dbQuestion.includes(messageLower) || messageLower.includes(dbQuestion)) {
+            console.log('✅✅✅ [CHAT] PËRSHPATJE ME INCLUDE!');
+            return res.json({
+                success: true,
+                response: `💾 **Përgjigje e ruajtur:** ${dbAnswer}`,
+                source: 'radical_include_match'
+            });
+        }
+        
+        // Kontrollo për sinonime/përkuptime
+        const synonyms = {
+            'cfare ore eshte': ['sa eshte ora', 'sa eshte koha', 'cfare eshte ora'],
+            'si jeni': ['si je', 'si kaloni', 'si kalon'],
+            'si je': ['si jeni', 'si kalon', 'si kaloni']
+        };
+        
+        // Kontrollo nëse janë sinonime
+        for (const [key, synonymList] of Object.entries(synonyms)) {
+            if (messageLower.includes(key) && synonymList.some(syn => dbQuestion.includes(syn))) {
+                console.log('✅✅✅ [CHAT] PËRSHPATJE ME SINONIME!');
+                return res.json({
+                    success: true,
+                    response: `💾 **Përgjigje e ruajtur:** ${dbAnswer}`,
+                    source: 'radical_synonym_match'
+                });
+            }
+        }
     }
+    
+    console.log('ℹ️ [CHAT] Nuk u gjet në radical_knowledge');
+    
 } catch (radicalError) {
-    console.log('ℹ️ [CHAT] Error në radical search:', radicalError.message);
+    console.log('❌ [CHAT] Gabim radical:', radicalError.message);
 }
 
-// ✅ 2B: KONTROLLO NË KNOWLEDGE (SISTEMI I VJETËR)
+// =============================== ✅ 2B: KONTROLLO NË KNOWLEDGE (SISTEMI I VJETËR) ==================================
 try {
     // Kërko me LIKE të thjeshtë (case-insensitive)
     const knowledgeResult = await new Promise((resolve) => {
