@@ -1696,64 +1696,109 @@ async function updateOpenAIPanelEnhanced() {
     }
 }
 
-// ============================================== 🎯 FINAL ATOMIC FIX - KËRKIM NJOHURISH ========================================
+// =========================================== 🎯 PERFEKT RRUFE-TESLA KNOWLEDGE SYSTEM ========================================
 
-console.log('🎯 FINAL ATOMIC FIX - Loading...');
+console.log('🎯 PERFEKT KNOWLEDGE SYSTEM - Loading...');
 
-// ✅ 1. MODIFIKO FUNKSIONIN atomicSearchKnowledge
-// Gjejë këtë funksion në kodin atomik dhe zëvendësoje:
-
-async function atomicSearchKnowledge(message) {
-    // ✅ PASTOR THONJËZAT
-    const query = message.toLowerCase().replace(/["']/g, '').trim();
+(function() {
+    console.log('🔧 Setting up perfect system...');
     
-    console.log('🔍 Atomic search for:', query);
-    
-    // ✅ KËRKO NË MEMORI LOKALE
-    if (atomicStorage[query]) {
-        atomicShowMessage(`💾 **Përgjigje:** ${atomicStorage[query]}`, 'bot');
-        return true;
-    }
-    
-    // ✅ KËRKO NË DATABASE
-    try {
-        const response = await fetch(
-            `/api/radical/radical-search/1/${encodeURIComponent(query)}`
-        );
+    // ✅ 1. MBIVENDOS VETËM PROCESCOMMAND PËR /meso
+    function overrideOnlyMeso() {
+        console.log('🎯 Overriding ONLY /meso commands...');
         
-        const data = await response.json();
-        console.log('🔍 Database result:', data);
-        
-        if (data.success && data.found && data.answer) {
-            atomicShowMessage(`💾 **Përgjigje:** ${data.answer}`, 'bot');
-            return true;
+        if (typeof processCommand === 'function') {
+            const originalProcessCommand = processCommand;
+            
+            window.processCommand = async function(text) {
+                console.log('[PERFEKT] Command detected:', text.substring(0, 30));
+                
+                // ✅ VETËM PËR /meso, TRAJTOJE VETË
+                if (text.startsWith('/meso')) {
+                    console.log('✅ [PERFEKT] /meso captured - handling...');
+                    await handlePerfektMeso(text);
+                    return; // ✅ MOS E LË SISTEMIN E VJETËR
+                }
+                
+                // ✅ PËR TË GJITHA KOMANDAT E TJERA, PËRDOR ORIGJINALIN
+                return originalProcessCommand.call(this, text);
+            };
+            
+            console.log('✅ processCommand override successful');
         }
-    } catch (error) {
-        console.log('ℹ️ Atomic: No knowledge found');
     }
     
-    return false;
-}
-
-// ✅ 2. MODIFIKO FUNKSIONIN atomicProcessMessage
-// Shto këtë në fillim të atomicProcessMessage:
-
-async function atomicProcessMessage(message) {
-    // ✅ PASTOR MESAZHIN PARA PROCESIMIT
-    const cleanMessage = message.replace(/["']/g, '').trim();
-    
-    console.log('🔧 Processing clean message:', cleanMessage);
-    
-    // ✅ KONTROLLO /meso
-    if (cleanMessage.startsWith('/meso')) {
-        await atomicHandleMeso(cleanMessage);
-        return;
+    // ✅ 2. FUNKSIONI PËR /meso - SIMPLE & EFFECTIVE
+    async function handlePerfektMeso(message) {
+        console.log('💾 Handling /meso:', message);
+        
+        const parts = message.substring(6).split('|');
+        
+        if (parts.length !== 2) {
+            showPerfektMessage('❌ Format: /meso pyetja|përgjigja', 'bot');
+            return;
+        }
+        
+        const question = parts[0].trim();
+        const answer = parts[1].trim();
+        
+        if (!question || !answer) {
+            showPerfektMessage('❌ Plotëso pyetjen dhe përgjigjen', 'bot');
+            return;
+        }
+        
+        // ✅ SHFAQ KONFIRMIM
+        showPerfektMessage(`💾 **Duke ruajtur:** "${question}"`, 'bot');
+        
+        // ✅ RUAJ NË DATABASE
+        try {
+            const response = await fetch('/api/radical/radical-learn', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                credentials: 'include',
+                body: JSON.stringify({
+                    userId: 1,
+                    question: question,
+                    answer: answer
+                })
+            });
+            
+            const data = await response.json();
+            console.log('💾 Save result:', data);
+            
+            if (data.success) {
+                // ✅ TREGO KONFIRMIM FINAL
+                setTimeout(() => {
+                    showPerfektMessage(`✅ **U ruajt:** "${question}" → "${answer}"`, 'bot');
+                }, 500);
+            }
+        } catch (error) {
+            console.error('❌ Save error:', error);
+        }
     }
     
-    // ✅ KËRKO NJOHURI (ME MESAZH TË PASTËRT)
-    const hasKnowledge = await atomicSearchKnowledge(cleanMessage);
-    if (hasKnowledge) return;
+    // ✅ 3. SHFAQ MESAZH
+    function showPerfektMessage(text, sender) {
+        if (typeof window.addMessage === 'function') {
+            window.addMessage(text, sender);
+        }
+    }
     
-    // ✅ DËRGO TE SISTEMI EKZISTUES (ME MESAZHIN ORIGJINAL)
-    await atomicSendToExistingSystem(message);
-}
+    // ✅ 4. INICIALIZO
+    setTimeout(() => {
+        console.log('🚀 Initializing perfect system...');
+        
+        // ✅ MBIVENDOS VETËM /meso
+        overrideOnlyMeso();
+        
+        console.log('✅✅✅ PERFEKT SYSTEM READY!');
+        console.log('🎯 /meso tani punon, motorët mbeten aktivë!');
+        
+        // ✅ SHFAQ NJOFTIM
+        if (window.addMessage) {
+            window.addMessage('🎯 **Perfekt Knowledge System** u aktivizua! /meso punon, motorët mbeten intakt.', 'system');
+        }
+        
+    }, 2000);
+    
+})();
