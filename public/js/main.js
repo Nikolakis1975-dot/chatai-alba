@@ -1923,7 +1923,8 @@ async function rrufeSaveKnowledge(question, answer) {
     return false;
 }
 
-// ✅ 3. INTERCEPT PËR KOMANDËN /meso
+// ========================✅ 3. INTERCEPT PËR KOMANDËN /meso - VERSION I KORRIGJUAR ====================
+
 function rrufeInterceptMesoCommand() {
     console.log('🎯 Duke interceptuar komandën /meso...');
     
@@ -1958,31 +1959,37 @@ function rrufeInterceptMesoCommand() {
                         return;
                     }
                     
-                    // ✅ PËRDOR SISTEMIN TONË TË RI
-                    const saved = await rrufeSaveKnowledge(question, answer);
+                    // ✅ PA PRITUR PËRGJIGJE - VETËM NJË HERË
+                    input.value = ''; // Pastro menjëherë
                     
-                    if (saved) {
-                        if (window.addMessage) {
-                            window.addMessage(`✅ **RRUFE-TESLA mësoi diçka të re!**\n• Pyetja: "${question}"\n• Përgjigja: "${answer}"`, 'bot');
-                        }
-                    } else {
-                        if (window.addMessage) {
-                            window.addMessage('❌ Gabim në ruajtje. Provo përsëri.', 'bot');
-                        }
+                    // ✅ TREGO NJË MESAZH VETËM
+                    if (window.addMessage) {
+                        window.addMessage(`💾 **Duke ruajtur:** "${question}" → "${answer}"`, 'bot');
                     }
                     
-                    input.value = '';
-                    return; // Mos e dërgo më tej
+                    // ✅ PËRDOR SISTEMIN TONË TË RI (NË BACKGROUND)
+                    setTimeout(async () => {
+                        const saved = await rrufeSaveKnowledge(question, answer);
+                        
+                        if (saved) {
+                            console.log('✅ U ruajt me sukses në background');
+                        } else {
+                            console.log('❌ Ruajtja në background dështoi');
+                        }
+                    }, 100);
+                    
+                    return; // MOS E DËRGO MË TEJ
                 }
             }
             
-            // ✅ KONTROLLO PËR NJOHURI TË RUAJTURA PARA SE TË DËRGOJË TE AI
-            const hasKnowledge = await rrufeCheckKnowledge(message);
-            
-            if (hasKnowledge) {
-                // Nëse gjetëm përgjigje, mos e dërgo më tej
-                input.value = '';
-                return;
+            // ✅ KONTROLLO PËR NJOHURI TË RUAJTURA
+            if (!message.startsWith('/')) {
+                const hasKnowledge = await rrufeCheckKnowledge(message);
+                
+                if (hasKnowledge) {
+                    input.value = '';
+                    return;
+                }
             }
             
             // ✅ NËSE NUK GJETËM NJOHURI, VAZHDO ME PROCESIMIN NORMAL
@@ -1995,7 +2002,8 @@ function rrufeInterceptMesoCommand() {
     }
 }
 
-// ✅ 4. FUNKSIONE DEBUG
+// ============================================= ✅ 4. FUNKSIONE DEBUG ==============================
+
 function rrufeKnowledgeDebug() {
     console.log('🔧 RRUFE-KNOWLEDGE DEBUG:');
     console.log('- Status:', window.rrufeKnowledge.isEnabled ? '✅ AKTIV' : '❌ ÇAKTIV');
