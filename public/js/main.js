@@ -1,8 +1,35 @@
+// ====================================== 🚀 RRUFE-TESLA KNOWLEDGE SYSTEM - 100% STANDALONE ===================================
 
-// Në main.js - shto në fillim të skedës
+console.log('🧠 Duke inicializuar RRUFE-TESLA Knowledge System...');
+
+// ✅ VARIABEL GLOBAL PËR NJOHURITË ME ANTI-DUPLICATE
+window.rrufeKnowledge = {
+    isEnabled: true,
+    storage: {},
+    debug: true,
+    lastProcessedMessage: null, // ✅ SHTO KËTË
+    lastProcessedTime: 0
+};
+
+// ✅ FUNKSION PËR TË SHMANGUR DUPLIKATET
+function shouldProcessMessage(message) {
+    const now = Date.now();
+    const isDuplicate = message === window.rrufeKnowledge.lastProcessedMessage && 
+                       (now - window.rrufeKnowledge.lastProcessedTime) < 1000;
+    
+    if (!isDuplicate) {
+        window.rrufeKnowledge.lastProcessedMessage = message;
+        window.rrufeKnowledge.lastProcessedTime = now;
+    }
+    
+    return !isDuplicate;
+}
+
+// ================================= Në main.js - shto në fillim të skedës ===============================================
 console.log('🚀 RRUFE-TESLA AI System - Initializing...');
 
-// ✅ FUNKSION PËR AUTENTIFIKIM GLOBAL
+// ========================================== ✅ FUNKSION PËR AUTENTIFIKIM GLOBAL ====================================
+
 async function initializeUserSession() {
     try {
         console.log('👤 Duke inicializuar sesionin e përdoruesit...');
