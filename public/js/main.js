@@ -1696,288 +1696,277 @@ async function updateOpenAIPanelEnhanced() {
     }
 }
 
-// ==================== 🔥 ULTIMATE RRUFE-TESLA KNOWLEDGE FIX ====================
-// KY DO TË ZËVENDËSOJË PLOTËSISHT SISTEMIN E VJETËR
+// ============================================= ⚛️ ATOMIC RRUFE-TESLA KNOWLEDGE SYSTEM =======================================
 
-console.log('🔥 ULTIMATE KNOWLEDGE FIX - Loading...');
+console.log('⚛️ ATOMIC KNOWLEDGE SYSTEM - Loading...');
 
-// ✅ 1. MBIVENDOS ABSOLUTISHT PROCESIMIN E KOMANDAVE
-function ultimateOverride() {
-    console.log('⚡ Performing ultimate override...');
+// ✅ 1. KRIJO NJË SISTEM TË RI KOMPLET
+(function() {
+    console.log('🔬 Creating atomic system...');
     
-    // ✅ A. MBIVENDOS processCommand
-    if (typeof processCommand === 'function') {
-        console.log('🎯 Found processCommand - overriding completely...');
+    // ✅ VARIABLA LOKALE - ASNJË KONFLIKT
+    let atomicProcessing = false;
+    let atomicStorage = {};
+    
+    // ✅ 2. KONFIGURO ABSOLUTISHT INPUT E RI
+    function setupAtomicInput() {
+        console.log('🎯 Setting up atomic input...');
         
-        const originalProcessCommand = processCommand;
+        // ✅ GJENI INPUT & BUTON
+        const input = document.getElementById('user-input');
+        const button = document.getElementById('send-btn');
         
-        window.processCommand = async function(text) {
-            console.log('🔄 [ULTIMATE] Command:', text.substring(0, 40));
-            
-            // ✅ KAP TË GJITHA KOMANDAT /meso
-            if (text.startsWith('/meso')) {
-                console.log('✅ [ULTIMATE] /meso CAPTURED - BLOCKING OLD SYSTEM');
-                await handleUltimateMeso(text);
-                return; // ✅ BLOKO SISTEMIN E VJETËR PLOTËSISHT
+        if (!input || !button) {
+            setTimeout(setupAtomicInput, 500);
+            return;
+        }
+        
+        console.log('✅ Found input and button');
+        
+        // ✅ FSHI ABSOLUTISHT TË GJITHA EVENTET E VJETRA
+        const newInput = input.cloneNode(true);
+        const newButton = button.cloneNode(true);
+        
+        input.parentNode.replaceChild(newInput, input);
+        button.parentNode.replaceChild(newButton, button);
+        
+        // ✅ KONFIGURO EVENTET E REJA
+        newInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                atomicHandleSend();
             }
-            
-            // ✅ PËR TË GJITHA KOMANDAT E TJERA, PËRDOR VERSIONIN ORIGJINAL
-            return originalProcessCommand.call(this, text);
-        };
+        });
         
-        console.log('✅ processCommand COMPLETELY OVERRIDDEN');
+        newButton.addEventListener('click', atomicHandleSend);
+        
+        console.log('✅ Atomic input configured');
     }
     
-    // ✅ B. MBIVENDOS sendMessage
-    if (typeof window.sendMessage === 'function') {
-        console.log('🎯 Found sendMessage - overriding...');
+    // ✅ 3. FUNKSIONI KRYESOR ATOMIK
+    async function atomicHandleSend() {
+        if (atomicProcessing) {
+            console.log('⏸️ Atomic system busy');
+            return;
+        }
         
-        const originalSendMessage = window.sendMessage;
+        atomicProcessing = true;
         
-        window.sendMessage = async function() {
-            const input = document.getElementById('user-input');
-            const message = input ? input.value.trim() : '';
-            
-            if (!message) {
-                return originalSendMessage.call(this);
-            }
-            
-            console.log('📨 [ULTIMATE] Message:', message.substring(0, 40));
-            
-            // ✅ KËRKO NJOHURI PËR MESAZHET JO-KOMANDË
-            if (!message.startsWith('/')) {
-                const hasKnowledge = await searchUltimateKnowledge(message);
-                if (hasKnowledge) {
-                    input.value = '';
-                    return; // ✅ NDALO KËTU
-                }
-            }
-            
-            // ✅ PËRDOR SISTEMIN ORIGJINAL
-            return originalSendMessage.call(this);
-        };
+        const input = document.getElementById('user-input');
+        const message = input ? input.value.trim() : '';
         
-        console.log('✅ sendMessage OVERRIDDEN');
-    }
-    
-    // ✅ C. KONFIGURO INPUT & BUTON PËRSËRI
-    setupUltimateInput();
-    
-    console.log('✅✅✅ ULTIMATE OVERRIDE COMPLETE!');
-}
-
-// ✅ 2. SETUP INPUT & BUTON
-function setupUltimateInput() {
-    console.log('🔧 Setting up ultimate input...');
-    
-    const input = document.getElementById('user-input');
-    const button = document.getElementById('send-btn');
-    
-    if (!input || !button) {
-        setTimeout(setupUltimateInput, 500);
-        return;
-    }
-    
-    // ✅ KONFIGURO EVENTET
-    const handleUltimateSend = async () => {
-        const message = input.value.trim();
-        if (!message) return;
+        if (!message) {
+            atomicProcessing = false;
+            return;
+        }
         
-        console.log('💬 [ULTIMATE-INPUT] Sending:', message.substring(0, 30));
+        console.log('💬 Atomic processing:', message.substring(0, 30));
         
-        // ✅ PASTRO INPUT
+        // ✅ PASTRO INPUT MENJËHERË
         input.value = '';
         
         // ✅ SHFAQ MESAZHIN E USER-IT
-        if (window.addMessage) {
-            window.addMessage(message, 'user');
-        }
+        atomicShowMessage(message, 'user');
         
-        // ✅ TRAJTO /meso
+        // ✅ TRAJTO MESAZHIN
+        await atomicProcessMessage(message);
+        
+        atomicProcessing = false;
+    }
+    
+    // ✅ 4. PROCESO MESAZHIN
+    async function atomicProcessMessage(message) {
+        // ✅ KONTROLLO /meso
         if (message.startsWith('/meso')) {
-            await handleUltimateMeso(message);
+            await atomicHandleMeso(message);
             return;
         }
         
         // ✅ KËRKO NJOHURI
-        const hasKnowledge = await searchUltimateKnowledge(message);
+        const hasKnowledge = await atomicSearchKnowledge(message);
         if (hasKnowledge) return;
         
-        // ✅ DËRGO TE SISTEMI
-        if (typeof window.sendMessage === 'function') {
-            await window.sendMessage();
+        // ✅ DËRGO TE SISTEMI EKZISTUES
+        await atomicSendToExistingSystem(message);
+    }
+    
+    // ✅ 5. TRAJTO /meso - VERSION ATOMIK
+    async function atomicHandleMeso(message) {
+        console.log('💾 Atomic /meso:', message);
+        
+        const parts = message.substring(6).split('|');
+        
+        if (parts.length !== 2) {
+            atomicShowMessage('❌ Format: /meso pyetja|përgjigja', 'bot');
+            return;
         }
-    };
-    
-    // ✅ FSHI EVENTET E VJETRA DHE SHTO TË REJAT
-    input.removeEventListener('keypress', handleEnter);
-    button.removeEventListener('click', handleClick);
-    
-    function handleEnter(e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            handleUltimateSend();
+        
+        const question = parts[0].trim();
+        const answer = parts[1].trim();
+        
+        if (!question || !answer) {
+            atomicShowMessage('❌ Plotëso pyetjen dhe përgjigjen', 'bot');
+            return;
+        }
+        
+        // ✅ SHFAQ MESAZH
+        atomicShowMessage(`💾 **Ruajtur:** "${question}"`, 'bot');
+        
+        // ✅ RUAJ NË DATABASE
+        try {
+            const response = await fetch('/api/radical/radical-learn', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    userId: 1,
+                    question: question,
+                    answer: answer
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // ✅ RUAJ NË MEMORI LOKALE
+                atomicStorage[question.toLowerCase()] = answer;
+                
+                // ✅ TREGO KONFIRMIM
+                setTimeout(() => {
+                    atomicShowMessage(`✅ **U ruajt:** "${question}" → "${answer}"`, 'bot');
+                }, 300);
+            }
+        } catch (error) {
+            console.error('❌ Atomic save error:', error);
         }
     }
     
-    function handleClick() {
-        handleUltimateSend();
-    }
-    
-    input.addEventListener('keypress', handleEnter);
-    button.addEventListener('click', handleClick);
-    
-    console.log('✅ Ultimate input configured');
-}
-
-// ✅ 3. TRAJTO /meso - VERSION FINAL
-async function handleUltimateMeso(message) {
-    console.log('💾 [ULTIMATE] Handling /meso:', message);
-    
-    const parts = message.substring(6).split('|');
-    
-    if (parts.length !== 2) {
-        showUltimateMessage('❌ Format: /meso pyetja|përgjigja', 'bot');
-        return;
-    }
-    
-    const question = parts[0].trim();
-    const answer = parts[1].trim();
-    
-    if (!question || !answer) {
-        showUltimateMessage('❌ Plotëso pyetjen dhe përgjigjen', 'bot');
-        return;
-    }
-    
-    // ✅ SHFAQ KONFIRMIM
-    showUltimateMessage(`💾 **Ruajtur:** "${question}"`, 'bot');
-    
-    // ✅ RUAJ NË DATABASE
-    try {
-        const response = await fetch('/api/radical/radical-learn', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            credentials: 'include',
-            body: JSON.stringify({
-                userId: 1,
-                question: question,
-                answer: answer
-            })
-        });
+    // ✅ 6. KËRKO NJOHURI - ATOMIK
+    async function atomicSearchKnowledge(message) {
+        const query = message.toLowerCase();
         
-        const data = await response.json();
-        console.log('💾 Save result:', data);
-        
-        if (data.success) {
-            // ✅ TREGO KONFIRMIM FINAL
-            setTimeout(() => {
-                showUltimateMessage(`✅ **U ruajt:** "${question}"`, 'bot');
-            }, 300);
-        }
-    } catch (error) {
-        console.error('❌ Save error:', error);
-        showUltimateMessage('❌ Gabim në ruajtje', 'bot');
-    }
-}
-
-// ✅ 4. KËRKO NJOHURI - VERSION FINAL
-async function searchUltimateKnowledge(message) {
-    console.log('🔍 [ULTIMATE] Searching knowledge for:', message);
-    
-    try {
-        const response = await fetch(
-            `/api/radical/radical-search/1/${encodeURIComponent(message.toLowerCase())}`,
-            { credentials: 'include' }
-        );
-        
-        const data = await response.json();
-        console.log('🔍 Search result:', data);
-        
-        if (data.success && data.found && data.answer) {
-            console.log('✅✅✅ FOUND KNOWLEDGE!');
-            showUltimateMessage(`💾 **Përgjigje:** ${data.answer}`, 'bot');
+        // ✅ KËRKO NË MEMORI LOKALE
+        if (atomicStorage[query]) {
+            atomicShowMessage(`💾 **Përgjigje:** ${atomicStorage[query]}`, 'bot');
             return true;
         }
-    } catch (error) {
-        console.log('ℹ️ No knowledge found:', error.message);
+        
+        // ✅ KËRKO NË DATABASE
+        try {
+            const response = await fetch(
+                `/api/radical/radical-search/1/${encodeURIComponent(query)}`
+            );
+            
+            const data = await response.json();
+            
+            if (data.success && data.found && data.answer) {
+                atomicShowMessage(`💾 **Përgjigje:** ${data.answer}`, 'bot');
+                return true;
+            }
+        } catch (error) {
+            console.log('ℹ️ Atomic: No knowledge found');
+        }
+        
+        return false;
     }
     
-    return false;
-}
-
-// ✅ 5. SHFAQ MESAZH
-function showUltimateMessage(text, sender) {
-    if (typeof window.addMessage === 'function') {
-        window.addMessage(text, sender);
-    } else {
-        // ✅ FALLBACK
-        const chat = document.getElementById('chat');
-        if (chat) {
-            const div = document.createElement('div');
-            div.className = `message ${sender}`;
-            div.innerHTML = `<div class="message-text">${text}</div>`;
-            chat.appendChild(div);
-            chat.scrollTop = chat.scrollHeight;
+    // ✅ 7. DËRGO TE SISTEMI EKZISTUES
+    async function atomicSendToExistingSystem(message) {
+        console.log('🔄 Atomic: Sending to existing system:', message.substring(0, 30));
+        
+        try {
+            // ✅ PËRDOR GEMINI SI DEFAULT
+            const response = await fetch('/api/chat/message', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    message: message,
+                    engine: 'gemini'
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success && data.response) {
+                atomicShowMessage(data.response, 'bot');
+            } else {
+                atomicShowMessage('❌ Gabim në server', 'bot');
+            }
+        } catch (error) {
+            console.error('❌ Atomic send error:', error);
+            atomicShowMessage('❌ Gabim në lidhje', 'bot');
         }
     }
-}
-
-// ✅ 6. DISABLE SISTEMIN E VJETËR PËR /meso - METODË EKSTREME
-function disableOldMesoCompletely() {
-    console.log('🛑 Disabling old /meso system completely...');
     
-    // ✅ GJENI TË GJITHA KODET QË TRAJTOJNË /meso NË SCRIPT.JS
-    const scriptContent = document.querySelector('script[src*="script.js"]');
+    // ✅ 8. SHFAQ MESAZH
+    function atomicShowMessage(text, sender) {
+        // ✅ GJITHMONË PËRDOR WINDOW.ADDMESSAGE
+        if (typeof window.addMessage === 'function') {
+            window.addMessage(text, sender);
+        } else {
+            // ✅ FALLBACK ABSOLUT
+            const chat = document.getElementById('chat');
+            if (chat) {
+                const div = document.createElement('div');
+                div.className = `message ${sender}`;
+                div.innerHTML = `<div class="message-text">${text}</div>`;
+                chat.appendChild(div);
+                chat.scrollTop = chat.scrollHeight;
+            }
+        }
+    }
     
-    if (scriptContent) {
-        console.log('🎯 Found script.js - injecting patch...');
+    // ✅ 9. BLOKO SISTEMIN E VJETËR - METODË EKSTREME
+    function blockOldSystem() {
+        console.log('🛑 Blocking old system completely...');
         
-        // ✅ INJEKTO NJË PATCH PËR TË BLOKUAR /meso
-        const patchScript = document.createElement('script');
-        patchScript.innerHTML = `
-            // 🔥 PATCH PËR TË BLOKUAR /meso NË SISTEMIN E VJETËR
-            console.log('🔥 PATCH: Blocking old /meso system...');
+        // ✅ KRIJO NJË SCRIPT QË BLLOKON PROCESCOMMAND
+        const blockScript = document.createElement('script');
+        blockScript.textContent = `
+            // ⚠️ ATOMIC BLOCK - MOS NDRYSHO
+            console.log('🛑 ATOMIC BLOCK: Disabling old /meso system...');
             
+            // ✅ MBIVENDOS PROCESCOMMAND PLOTËSISHT
             if (typeof processCommand === 'function') {
-                const originalProcessCommand = processCommand;
+                const oldProcessCommand = processCommand;
                 
-                window.processCommand = async function(text) {
-                    console.log('[PATCH] Command detected:', text.substring(0, 30));
+                processCommand = async function(text) {
+                    console.log('[ATOMIC-BLOCK] Command:', text.substring(0, 20));
                     
-                    // 🛑 BLOKO /meso PLOTËSISHT
+                    // 🛑 BLOKO ABSOLUTISHT /meso
                     if (text.startsWith('/meso')) {
-                        console.log('[PATCH] /meso BLOCKED - passing to new system');
+                        console.log('[ATOMIC-BLOCK] /meso BLOCKED');
                         return; // MOS BËJ ASGJË
                     }
                     
-                    // ✅ PËR KOMANDAT E TJERA, PUNO NORMAL
-                    return originalProcessCommand.call(this, text);
+                    // ✅ PËR TË GJITHA KOMANDAT E TJERA, PUNO NORMAL
+                    return oldProcessCommand.call(this, text);
                 };
                 
-                console.log('✅ PATCH APPLIED: Old /meso system disabled');
+                console.log('✅ ATOMIC BLOCK: Old /meso system disabled');
             }
         `;
         
-        document.head.appendChild(patchScript);
+        document.head.appendChild(blockScript);
     }
-}
-
-// ✅ 7. INICIALIZO SISTEMIN
-setTimeout(() => {
-    console.log('🚀 Starting ultimate fix...');
     
-    // ✅ A. DISABLE SISTEMIN E VJETËR
-    disableOldMesoCompletely();
-    
-    // ✅ B. MBIVENDOS SISTEMIN E RI
+    // ✅ 10. INICIALIZO
     setTimeout(() => {
-        ultimateOverride();
+        console.log('🚀 Starting atomic system...');
         
-        console.log('✅✅✅ ULTIMATE FIX ACTIVATED!');
+        // ✅ BLOKO SISTEMIN E VJETËR
+        blockOldSystem();
         
-        // ✅ SHFAQ NJOFTIM
-        showUltimateMessage('🔥 **Ultimate /meso Fix** aktiv! Tani /meso punon 100% pa konflikte!', 'system');
+        // ✅ KONFIGURO SISTEMIN E RI
+        setTimeout(() => {
+            setupAtomicInput();
+            
+            console.log('✅✅✅ ATOMIC SYSTEM READY!');
+            
+            // ✅ SHFAQ NJOFTIM
+            atomicShowMessage('⚛️ **Atomic Knowledge System** u aktivizua! /meso tani punon 100%!', 'system');
+            
+        }, 1000);
         
-    }, 1000);
+    }, 2000);
     
-}, 3000);
+})();
