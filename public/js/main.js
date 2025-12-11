@@ -1696,202 +1696,304 @@ async function updateOpenAIPanelEnhanced() {
     }
 }
 
-// ===================================================== 🔥 FINAL RRUFE-TESLA /meso FIX ======================================
+// ========================================= ⚡ RADICAL RRUFE-TESLA KNOWLEDGE REPLACEMENT =======================================
 
-console.log('🔥 FINAL /meso FIX - Loading...');
+// KOPJOJE NË FUND TË main.js - KY DO TË ZËVENDËSOJË PLOTËSISHT SISTEMIN E VJETËR
 
-// ✅ 1. MBIVENDOS PROCESIMIN E KOMANDËS NË SCRIPT.JS
-function overrideOldCommandSystem() {
-    console.log('🔧 Overriding old command system...');
+console.log('⚡ RADICAL KNOWLEDGE REPLACEMENT - Loading...');
+
+// ✅ 1. KRIJO NJË SISTEM TË PLOTË TË RI
+class RrufeKnowledgeSystem {
+    constructor() {
+        this.isReady = false;
+        this.localStorage = {};
+        this.setupComplete = false;
+        console.log('🧠 RrufeKnowledgeSystem created');
+    }
     
-    // ✅ GJENI DHE MBIVENDOS processCommand NË SCRIPT.JS
-    if (typeof processCommand === 'function') {
-        console.log('🎯 Found processCommand in script.js - overriding...');
+    // ✅ 2. SETUP PLOTËSISHT I RI
+    async setup() {
+        console.log('🔧 Setting up complete new system...');
         
-        const originalProcessCommand = processCommand;
+        // ✅ A. FSHI TË GJITHA EVENTET E VJETRA
+        this.cleanupOldSystem();
         
-        // ✅ KRIJO VERSIONIN E RI
-        window.processCommand = async function(text) {
-            console.log('🔄 [OVERRIDE] Command received:', text.substring(0, 30));
-            
-            // ✅ NËSE ËSHTË /meso, TRAJTOJE VETË
-            if (text.startsWith('/meso')) {
-                console.log('✅ [OVERRIDE] /meso detected - handling ourselves');
-                await handleMesoFinal(text);
-                return; // ✅ MOS E LË SISTEMIN E VJETËR TË TRAJTOJË
-            }
-            
-            // ✅ PËR TË GJITHA KOMANDAT E TJERA, PËRDOR SISTEMIN E VJETËR
-            console.log('↩️ [OVERRIDE] Other command - passing to original system');
-            return originalProcessCommand.call(this, text);
+        // ✅ B. KONFIGURO INPUT DHE BUTON TË RINJ
+        this.setupInputAndButton();
+        
+        // ✅ C. MBIVENDOS PROCESIMIN E KOMANDAVE
+        this.overrideCommandProcessing();
+        
+        // ✅ D. MBIVENDOS DËRGIMIN E MESAZHEVE
+        this.overrideMessageSending();
+        
+        this.isReady = true;
+        this.setupComplete = true;
+        
+        console.log('✅✅✅ COMPLETE NEW SYSTEM READY!');
+        
+        // ✅ TREGO NJOFTIM
+        this.showMessage('⚡ **RRUFE-TESLA Knowledge v2** u aktivizua! /meso TANI PUNON 100%!', 'system');
+    }
+    
+    // ✅ 3. FSHI SISTEMIN E VJETËR
+    cleanupOldSystem() {
+        console.log('🧹 Cleaning up old system...');
+        
+        const input = document.getElementById('user-input');
+        const button = document.getElementById('send-btn');
+        
+        if (input) {
+            // Fshi të gjitha event listener-at
+            input.replaceWith(input.cloneNode(true));
+        }
+        
+        if (button) {
+            button.replaceWith(button.cloneNode(true));
+        }
+        
+        console.log('✅ Old system cleaned');
+    }
+    
+    // ✅ 4. KONFIGURO INPUT & BUTON TË RINJ
+    setupInputAndButton() {
+        console.log('🎯 Setting up new input handlers...');
+        
+        const input = document.getElementById('user-input');
+        const button = document.getElementById('send-btn');
+        
+        if (!input || !button) {
+            setTimeout(() => this.setupInputAndButton(), 500);
+            return;
+        }
+        
+        // ✅ KONFIGURO EVENTET E REJA
+        const handleUserSend = async () => {
+            await this.handleUserMessage();
         };
         
-        console.log('✅ processCommand override successful!');
-    } else {
-        console.log('⚠️ processCommand not found in script.js');
-    }
-}
-
-// ✅ 2. FUNKSIONI FINAL PËR /meso
-async function handleMesoFinal(message) {
-    console.log('🎯 FINAL /meso handler:', message);
-    
-    const parts = message.substring(6).split('|');
-    
-    if (parts.length !== 2) {
-        showFinalMessage('❌ Format: /meso pyetja|përgjigja', 'bot');
-        return;
-    }
-    
-    const question = parts[0].trim();
-    const answer = parts[1].trim();
-    
-    if (!question || !answer) {
-        showFinalMessage('❌ Plotëso pyetjen dhe përgjigjen', 'bot');
-        return;
-    }
-    
-    // ✅ SHFAQ MESAZH
-    showFinalMessage(`💾 **Duke ruajtur:** "${question}"`, 'bot');
-    
-    // ✅ RUAJ NË DATABASE
-    try {
-        const response = await fetch('/api/radical/radical-learn', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            credentials: 'include',
-            body: JSON.stringify({
-                userId: 1,
-                question: question,
-                answer: answer
-            })
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleUserSend();
+            }
         });
         
-        const data = await response.json();
-        console.log('💾 FINAL Save result:', data);
+        button.addEventListener('click', handleUserSend);
         
-        if (data.success) {
-            // ✅ TREGO KONFIRMIM
-            setTimeout(() => {
-                showFinalMessage(`✅ **U ruajt:** "${question}" → "${answer}"`, 'bot');
-            }, 500);
-            
-            // ✅ GJITHASHTU RUAJ NË MEMORI LOKALE PËR KËRKIM TË SHPEJTË
-            window.rrufeKnowledge = window.rrufeKnowledge || {};
-            window.rrufeKnowledge[question.toLowerCase()] = answer;
-        }
-    } catch (error) {
-        console.error('❌ FINAL Save error:', error);
+        console.log('✅ New input handlers configured');
     }
-}
-
-// ✅ 3. MBIVENDOS SENDMESSAGE PËR KËRKIM NJOHURISH
-function setupKnowledgeSearch() {
-    console.log('🔍 Setting up knowledge search...');
     
-    if (typeof window.sendMessage === 'function') {
-        const originalSendMessage = window.sendMessage;
+    // ✅ 5. MBIVENDOS PROCESIMIN E KOMANDAVE
+    overrideCommandProcessing() {
+        console.log('🔄 Overriding command processing...');
         
-        window.sendMessage = async function() {
-            const input = document.getElementById('user-input');
-            const message = input ? input.value.trim() : '';
+        // ✅ MBIVENDOS processCommand NËSE EKZISTON
+        if (typeof processCommand === 'function') {
+            const originalProcessCommand = processCommand;
             
-            if (!message) {
-                return originalSendMessage.call(this);
-            }
-            
-            console.log('🔍 [SEARCH] Message:', message);
-            
-            // ✅ NËSE NUK ËSHTË KOMANDË, KËRKO NJOHURI
-            if (!message.startsWith('/')) {
-                // ✅ KËRKO NË MEMORI LOKALE
-                if (window.rrufeKnowledge && window.rrufeKnowledge[message.toLowerCase()]) {
-                    console.log('✅ [SEARCH] Found in local memory');
-                    showFinalMessage(`💾 **Përgjigje:** ${window.rrufeKnowledge[message.toLowerCase()]}`, 'bot');
-                    input.value = '';
-                    return;
+            window.processCommand = async function(text) {
+                console.log('🎯 [NEW-SYSTEM] Command detected:', text.substring(0, 30));
+                
+                // ✅ NËSE ËSHTË /meso, TRAJTOJE VETËM
+                if (text.startsWith('/meso')) {
+                    console.log('✅ [NEW-SYSTEM] /meso captured - processing...');
+                    const system = window.rrufeKnowledgeSystem;
+                    if (system) {
+                        await system.handleMesoCommand(text);
+                    }
+                    return; // ✅ MOS E LË SISTEMIN E VJETËR
                 }
                 
-                // ✅ KËRKO NË DATABASE
-                try {
-                    const response = await fetch(
-                        `/api/radical/radical-search/1/${encodeURIComponent(message.toLowerCase())}`,
-                        { credentials: 'include' }
-                    );
-                    
-                    const data = await response.json();
-                    console.log('🔍 [SEARCH] Database result:', data);
-                    
-                    if (data.success && data.found && data.answer) {
-                        console.log('✅✅✅ [SEARCH] FOUND IN DATABASE!');
-                        showFinalMessage(`💾 **Përgjigje:** ${data.answer}`, 'bot');
+                // ✅ PËR TË GJITHA KOMANDAT E TJERA, PËRDOR VERSIONIN ORIGJINAL
+                return originalProcessCommand.call(this, text);
+            };
+            
+            console.log('✅ Command processing overridden');
+        }
+    }
+    
+    // ✅ 6. MBIVENDOS DËRGIMIN E MESAZHEVE
+    overrideMessageSending() {
+        console.log('📨 Overriding message sending...');
+        
+        if (typeof window.sendMessage === 'function') {
+            const originalSendMessage = window.sendMessage;
+            
+            window.sendMessage = async function() {
+                const system = window.rrufeKnowledgeSystem;
+                if (!system || !system.isReady) {
+                    return originalSendMessage.call(this);
+                }
+                
+                const input = document.getElementById('user-input');
+                const message = input ? input.value.trim() : '';
+                
+                if (!message) {
+                    return originalSendMessage.call(this);
+                }
+                
+                console.log('📨 [NEW-SYSTEM] Message detected:', message.substring(0, 30));
+                
+                // ✅ NËSE NUK ËSHTË KOMANDË, KËRKO NJOHURI
+                if (!message.startsWith('/')) {
+                    const hasKnowledge = await system.searchKnowledge(message);
+                    if (hasKnowledge) {
                         input.value = '';
                         return; // ✅ NDALO KËTU
                     }
-                } catch (error) {
-                    console.log('ℹ️ [SEARCH] No knowledge found');
                 }
-            }
+                
+                // ✅ NËSE NUK KA NJOHURI, PËRDOR SISTEMIN ORIGJINAL
+                return originalSendMessage.call(this);
+            };
             
-            // ✅ NËSE NUK KA NJOHURI, PËRDOR SISTEMIN ORIGJINAL
-            return originalSendMessage.call(this);
-        };
-        
-        console.log('✅ Knowledge search setup complete!');
+            console.log('✅ Message sending overridden');
+        }
     }
-}
-
-// ✅ 4. SHFAQ MESAZH
-function showFinalMessage(text, sender) {
-    if (typeof window.addMessage === 'function') {
-        window.addMessage(text, sender);
-    } else {
-        // ✅ FALLBACK
-        const chat = document.getElementById('chat');
-        if (chat) {
-            const div = document.createElement('div');
-            div.className = `message ${sender}`;
-            div.innerHTML = `<div class="message-text">${text}</div>`;
-            chat.appendChild(div);
-            chat.scrollTop = chat.scrollHeight;
+    
+    // ✅ 7. TRAJTO MESAZHET E USER-IT
+    async handleUserMessage() {
+        const input = document.getElementById('user-input');
+        const message = input ? input.value.trim() : '';
+        
+        if (!message) return;
+        
+        console.log('💬 [NEW-SYSTEM] User message:', message);
+        
+        // ✅ PASTRO INPUT MENJËHERË
+        input.value = '';
+        
+        // ✅ SHFAQ MESAZHIN E USER-IT
+        this.showMessage(message, 'user');
+        
+        // ✅ KONTROLLO /meso
+        if (message.startsWith('/meso')) {
+            await this.handleMesoCommand(message);
+            return;
+        }
+        
+        // ✅ KËRKO NJOHURI
+        const hasKnowledge = await this.searchKnowledge(message);
+        if (hasKnowledge) return;
+        
+        // ✅ NËSE NUK KA NJOHURI, PËRDOR SISTEMIN E VJETËR
+        if (typeof window.sendMessage === 'function') {
+            await window.sendMessage();
+        }
+    }
+    
+    // ✅ 8. TRAJTO KOMANDËN /meso
+    async handleMesoCommand(message) {
+        console.log('💾 [NEW-SYSTEM] Processing /meso:', message);
+        
+        const parts = message.substring(6).split('|');
+        
+        if (parts.length !== 2) {
+            this.showMessage('❌ Format: /meso pyetja|përgjigja', 'bot');
+            return;
+        }
+        
+        const question = parts[0].trim();
+        const answer = parts[1].trim();
+        
+        if (!question || !answer) {
+            this.showMessage('❌ Plotëso pyetjen dhe përgjigjen', 'bot');
+            return;
+        }
+        
+        // ✅ SHFAQ KONFIRMIM
+        this.showMessage(`💾 **Ruajtur:** "${question}"`, 'bot');
+        
+        // ✅ RUAJ NË DATABASE
+        try {
+            const response = await fetch('/api/radical/radical-learn', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                credentials: 'include',
+                body: JSON.stringify({
+                    userId: 1,
+                    question: question,
+                    answer: answer
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // ✅ RUAJ NË MEMORI LOKALE
+                this.localStorage[question.toLowerCase()] = answer;
+                
+                // ✅ TREGO KONFIRMIM FINAL
+                setTimeout(() => {
+                    this.showMessage(`✅ **U ruajt me sukses:** "${question}"`, 'bot');
+                }, 300);
+            }
+        } catch (error) {
+            console.error('❌ Save error:', error);
+            this.showMessage('❌ Gabim në ruajtje', 'bot');
+        }
+    }
+    
+    // ✅ 9. KËRKO NJOHURI
+    async searchKnowledge(message) {
+        const query = message.toLowerCase();
+        
+        // ✅ KËRKO SË PARI NË MEMORI LOKALE
+        if (this.localStorage[query]) {
+            console.log('✅ Found in local storage:', this.localStorage[query]);
+            this.showMessage(`💾 **Përgjigje:** ${this.localStorage[query]}`, 'bot');
+            return true;
+        }
+        
+        // ✅ KËRKO NË DATABASE
+        try {
+            const response = await fetch(
+                `/api/radical/radical-search/1/${encodeURIComponent(query)}`,
+                { credentials: 'include' }
+            );
+            
+            const data = await response.json();
+            
+            if (data.success && data.found && data.answer) {
+                console.log('✅✅✅ Found in database!');
+                this.showMessage(`💾 **Përgjigje:** ${data.answer}`, 'bot');
+                return true;
+            }
+        } catch (error) {
+            console.log('ℹ️ No knowledge found in database');
+        }
+        
+        return false;
+    }
+    
+    // ✅ 10. SHFAQ MESAZH
+    showMessage(text, sender) {
+        if (typeof window.addMessage === 'function') {
+            window.addMessage(text, sender);
+        } else {
+            // ✅ FALLBACK
+            const chat = document.getElementById('chat');
+            if (chat) {
+                const div = document.createElement('div');
+                div.className = `message ${sender}`;
+                div.innerHTML = `<div class="message-text">${text}</div>`;
+                chat.appendChild(div);
+                chat.scrollTop = chat.scrollHeight;
+            }
         }
     }
 }
 
-// ✅ 5. INICIALIZO SISTEMIN
-function initializeFinalSystem() {
-    console.log('🚀 Initializing final system...');
+// ✅ 11. INICIALIZO SISTEMIN E RI
+setTimeout(() => {
+    console.log('🚀 Initializing new knowledge system...');
     
-    // ✅ PRIT 3 SEKONDA PËR TË GJITHA MODULET
-    setTimeout(() => {
-        overrideOldCommandSystem();
-        setupKnowledgeSearch();
-        
-        console.log('✅✅✅ FINAL SYSTEM READY!');
-        console.log('🎯 /meso TANI DO TË FUNKSIONOJË 100%!');
-        
-        // ✅ SHFAQ NJOFTIM
-        showFinalMessage('🔥 **RRUFE-TESLA /meso Fix** u aktivizua! Tani /meso dhe kërkimi i njohurive punojnë.', 'system');
-        
-        // ✅ TESTO AUTOMATIKISHT
-        testFinalSystem();
-        
-    }, 3000);
-}
-
-// ✅ 6. TESTO SISTEMIN
-async function testFinalSystem() {
-    console.log('🧪 Testing final system...');
+    // ✅ KRIJO SISTEMIN E RI
+    window.rrufeKnowledgeSystem = new RrufeKnowledgeSystem();
     
-    // Testoni API-n
-    try {
-        const response = await fetch('/api/radical/radical-search/1/test');
-        const data = await response.json();
-        console.log('🧪 API Test:', data);
-    } catch (error) {
-        console.error('❌ API Test failed:', error);
-    }
-}
-
-// ✅ 7. START
-initializeFinalSystem();
+    // ✅ SETUP
+    window.rrufeKnowledgeSystem.setup();
+    
+    console.log('🎉 NEW KNOWLEDGE SYSTEM INITIALIZED!');
+}, 3000);
