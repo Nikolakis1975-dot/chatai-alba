@@ -1619,51 +1619,6 @@ setTimeout(() => {
 
 console.log('✅ Sistemi përfundimtar u aktivizua!');
 
-// ========================================= ✅ DEBUG PËR NJOHURITË E RUAJTURA ========================================
-
-console.log('🔧 Duke aktivizuar debug për njohuritë...');
-
-// ✅ TESTO DIRECT NJOHURITË E RUAJTURA
-async function debugStoredKnowledge() {
-    console.log('🔍 DEBUG: Duke testuar njohuritë e ruajtura...');
-    
-    const testQuestion = 'si kaluat sot me festen?';
-    
-    try {
-        if (window.currentUser && window.currentUser.id) {
-            console.log('👤 User ID:', window.currentUser.id);
-            
-            const response = await fetch(`/api/chat/knowledge/${window.currentUser.id}/${encodeURIComponent(testQuestion.toLowerCase())}`, {
-                credentials: 'include'
-            });
-            
-            console.log('📡 Statusi i përgjigjes:', response.status);
-            
-            if (response.ok) {
-                const data = await response.json();
-                console.log('📊 DEBUG - Përgjigja e serverit:', data);
-                
-                if (data.answer && data.answer !== 'null') {
-                    console.log('✅ DEBUG - Gjetëm përgjigje të ruajtur:', data.answer);
-                } else {
-                    console.log('❌ DEBUG - Nuk ka përgjigje të ruajtur ose përgjigja është null');
-                }
-            } else {
-                console.log('❌ DEBUG - Gabim në server:', response.status);
-            }
-        } else {
-            console.log('❌ DEBUG - Nuk ka currentUser');
-        }
-    } catch (error) {
-        console.log('❌ DEBUG - Gabim në fetch:', error.message);
-    }
-}
-
-// ✅ TESTO PAS 3 SEKONDA
-setTimeout(() => {
-    debugStoredKnowledge();
-}, 3000);
-
 // ==================== ✅ TESTI I DREJTPËRDREJTË I OPENAI ====================
 
 // ✅ TESTO API KEY NGA DATABASE
@@ -1822,172 +1777,56 @@ async function updateOpenAIPanelEnhanced() {
     }
 }
 
-// =============================== 🚀 RRUFE-TESLA KNOWLEDGE SYSTEM - 100% STANDALONE =================================
+// ======================================== 🎯 RRUFE-TESLA KNOWLEDGE - FINAL VERSION ========================================
 
-console.log('🧠 Duke inicializuar RRUFE-TESLA Knowledge System...');
-
-// ✅ VARIABEL GLOBAL PËR NJOHURITË
-window.rrufeKnowledge = {
-    isEnabled: true,
-    storage: {},
-    debug: true
-};
-
-// ✅ 1. FUNKSIONI KRYESOR PËR KONTROLLIM E NJOHURIVE
-async function rrufeCheckKnowledge(message) {
-    if (!window.rrufeKnowledge.isEnabled) return false;
-    
-    console.log('🎯 [RRUFE-KNOWLEDGE] Duke kërkuar për:', message.substring(0, 50));
-    
-    try {
-        // ✅ METODA 1: KËRKIM I DIREKT NË DATABASE
-        const searchUrl = `/api/radical/radical-search/1/${encodeURIComponent(message.toLowerCase())}`;
-        
-        const response = await fetch(searchUrl, {
-            method: 'GET',
-            credentials: 'include'
-        });
-        
-        console.log('📡 Statusi i përgjigjes:', response.status);
-        
-        if (response.ok) {
-            const data = await response.json();
-            console.log('📊 Përgjigja:', data);
-            
-            if (data.success && data.found && data.answer) {
-                console.log('✅✅✅ RRUFE-KNOWLEDGE: GJETËM PËRGJIGJE!');
-                
-                // Shfaq përgjigjen
-                if (window.addMessage) {
-                    window.addMessage(`💾 **Përgjigje e ruajtur:** ${data.answer}`, 'bot');
-                }
-                return true;
-            }
-        }
-        
-        // ✅ METODA 2: KËRKIM NË MEMORI LOKALE
-        const key = message.toLowerCase();
-        if (window.rrufeKnowledge.storage[key]) {
-            console.log('💡 Gjetëm në memorie lokale:', window.rrufeKnowledge.storage[key]);
-            
-            if (window.addMessage) {
-                window.addMessage(`💾 **Përgjigje e ruajtur:** ${window.rrufeKnowledge.storage[key]}`, 'bot');
-            }
-            return true;
-        }
-        
-    } catch (error) {
-        console.log('⚠️ Kërkimi i njohurive dështoi:', error.message);
-    }
-    
-    return false;
-}
-
-// ✅ 2. FUNKSION PËR RUAJTJE TË NJOHURIVE
-async function rrufeSaveKnowledge(question, answer) {
-    if (!window.rrufeKnowledge.isEnabled) return false;
-    
-    console.log('💾 [RRUFE-SAVE] Duke ruajtur:', question.substring(0, 30));
-    
-    try {
-        // ✅ RUAJ NË MEMORI LOKALE (INSTANT)
-        const key = question.toLowerCase();
-        window.rrufeKnowledge.storage[key] = answer;
-        
-        // ✅ RUAJ NË DATABASE (SISTEMI RADIKAL)
-        const saveResponse = await fetch('/api/radical/radical-learn', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                userId: 1,
-                question: question,
-                answer: answer
-            })
-        });
-        
-        const data = await saveResponse.json();
-        
-        if (data.success) {
-            console.log('✅✅✅ RRUFE-SAVE: U ruajt me sukses! ID:', data.id);
-            
-            if (window.addMessage) {
-                window.addMessage(`✅ **RRUFE-TESLA mësoi:** "${question}" → "${answer}"`, 'system');
-            }
-            return true;
-        }
-        
-    } catch (error) {
-        console.log('❌ Ruajtja dështoi:', error.message);
-    }
-    
-    return false;
-}
-
-// =============================================== 🎯 FINAL RRUFE-TESLA KNOWLEDGE FIX ====================================
-
-// KODI I RI - VETËM KY DUHET TË JETË NË main.js
-
-console.log('🔧 Duke aktivizuar RRUFE-TESLA Knowledge System v2...');
+console.log('🧠 Duke inicializuar RRUFE-TESLA Knowledge System v3...');
 
 (function() {
     let isProcessing = false;
     let lastMessage = '';
     
-    // ✅ 1. SETUP INPUT HANDLERS
-    function setupHandlers() {
+    // ✅ 1. SETUP
+    function setup() {
         const input = document.getElementById('user-input');
         const button = document.getElementById('send-btn');
         
         if (!input || !button) {
-            setTimeout(setupHandlers, 500);
+            setTimeout(setup, 500);
             return;
         }
         
-        // ✅ FSHI EVENTE TË VJETRA
-        input.removeEventListener('keypress', handleEnter);
-        button.removeEventListener('click', handleClick);
+        // ✅ KONFIGURO EVENTE
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                process();
+            }
+        });
         
-        // ✅ SHTO EVENTE TË REJA
-        input.addEventListener('keypress', handleEnter);
-        button.addEventListener('click', handleClick);
+        button.addEventListener('click', process);
         
-        console.log('✅ Handlers u konfiguruan');
+        console.log('✅ RRUFE-TESLA Knowledge - Handlers ready');
     }
     
-    // ✅ 2. HANDLE ENTER KEY
-    function handleEnter(e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            processInput();
-        }
-    }
-    
-    // ✅ 3. HANDLE BUTTON CLICK
-    function handleClick() {
-        processInput();
-    }
-    
-    // ✅ 4. PROCESO INPUT
-    async function processInput() {
+    // ✅ 2. PROCESO
+    async function process() {
         const input = document.getElementById('user-input');
         const message = input ? input.value.trim() : '';
         
-        // ✅ VALIDO
         if (!message || isProcessing || message === lastMessage) return;
         
-        // ✅ BLOKO DUPLIKATET
         isProcessing = true;
         lastMessage = message;
         input.value = '';
         
-        console.log('🎯 Processing:', message.substring(0, 30));
+        console.log('💬 Processing:', message.substring(0, 30));
         
         // ✅ SHFAQ MESAZHIN E USER-IT
         if (window.addMessage) {
             window.addMessage(message, 'user');
         }
         
-        // ✅ KONTROLLO NËSE ËSHTË /meso
+        // ✅ KONTROLLO /meso
         if (message.startsWith('/meso')) {
             await handleMeso(message);
         } 
@@ -1996,19 +1835,19 @@ console.log('🔧 Duke aktivizuar RRUFE-TESLA Knowledge System v2...');
             await handleKnowledge(message);
         }
         
-        // ✅ LEJO PROCESIMIN E RI
+        // ✅ RESET
         setTimeout(() => {
             isProcessing = false;
             lastMessage = '';
         }, 300);
     }
     
-    // ✅ 5. HANDLE /meso COMMAND
+    // ✅ 3. /meso KOMANDA
     async function handleMeso(message) {
         const parts = message.substring(6).split('|');
         
         if (parts.length !== 2) {
-            showMessage('❌ Format: /meso pyetja|përgjigja', 'bot');
+            showMsg('❌ Format: /meso pyetja|përgjigja', 'bot');
             return;
         }
         
@@ -2016,14 +1855,14 @@ console.log('🔧 Duke aktivizuar RRUFE-TESLA Knowledge System v2...');
         const answer = parts[1].trim();
         
         if (!question || !answer) {
-            showMessage('❌ Plotëso pyetjen dhe përgjigjen', 'bot');
+            showMsg('❌ Plotëso të dyja', 'bot');
             return;
         }
         
-        // ✅ SHFAQ KONFIRMIM
-        showMessage(`💾 **Ruajtur:** "${question}"`, 'bot');
+        // ✅ SHFAQ
+        showMsg(`💾 **U ruajt:** "${question}"`, 'bot');
         
-        // ✅ RUAJ NË BACKGROUND
+        // ✅ RUAJ
         try {
             await fetch('/api/radical/radical-learn', {
                 method: 'POST',
@@ -2035,13 +1874,13 @@ console.log('🔧 Duke aktivizuar RRUFE-TESLA Knowledge System v2...');
                 })
             });
         } catch (error) {
-            console.error('💾 Save error:', error);
+            console.error('💾 Error:', error);
         }
     }
     
-    // ✅ 6. KËRKO NJOHURI
+    // ✅ 4. KËRKO NJOHURI
     async function handleKnowledge(message) {
-        // ✅ KËRKO NJOHURI TË RUAJTURA
+        // ✅ KËRKO NË SISTEMIN RADIKAL
         try {
             const response = await fetch(
                 `/api/radical/radical-search/1/${encodeURIComponent(message.toLowerCase())}`
@@ -2050,19 +1889,19 @@ console.log('🔧 Duke aktivizuar RRUFE-TESLA Knowledge System v2...');
             const data = await response.json();
             
             if (data.success && data.found && data.answer) {
-                showMessage(`💾 **Përgjigje:** ${data.answer}`, 'bot');
-                return true; // ✅ NDALO KËTU
+                showMsg(`💾 **Përgjigje:** ${data.answer}`, 'bot');
+                return true;
             }
         } catch (error) {
-            console.log('ℹ️ No knowledge:', error.message);
+            console.log('ℹ️ No knowledge found');
         }
         
-        // ✅ NËSE NUK KA NJOHURI, DËRGO TE AI
+        // ✅ DËRGO TE AI
         await sendToAI(message);
         return false;
     }
     
-    // ✅ 7. DËRGO TE AI
+    // ✅ 5. DËRGO TE AI
     async function sendToAI(message) {
         try {
             const response = await fetch('/api/chat/message', {
@@ -2076,24 +1915,24 @@ console.log('🔧 Duke aktivizuar RRUFE-TESLA Knowledge System v2...');
             
             const data = await response.json();
             if (data.success && data.response) {
-                showMessage(data.response, 'bot');
+                showMsg(data.response, 'bot');
             }
         } catch (error) {
             console.error('❌ AI error:', error);
-            showMessage('❌ Gabim në server', 'bot');
+            showMsg('❌ Gabim në server', 'bot');
         }
     }
     
-    // ✅ 8. SHFAQ MESAZH
-    function showMessage(text, sender) {
+    // ✅ 6. SHFAQ MESAZH
+    function showMsg(text, sender) {
         if (typeof window.addMessage === 'function') {
             window.addMessage(text, sender);
         }
     }
     
-    // ✅ 9. START
+    // ✅ 7. START
     setTimeout(() => {
-        setupHandlers();
+        setup();
         console.log('✅✅✅ RRUFE-TESLA KNOWLEDGE SYSTEM READY!');
     }, 2000);
     
