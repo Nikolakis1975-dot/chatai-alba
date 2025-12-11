@@ -1822,267 +1822,90 @@ async function updateOpenAIPanelEnhanced() {
     }
 }
 
-// ====================================== ⚡ ULTIMATE KNOWLEDGE INTERCEPTOR =============================================
+// =================================================== ✅ FINAL CLEAN KNOWLEDGE SYSTEM ======================================
 
-// KOPJOJE KËTË NË FUND TË main.js - KY DO TË KAPË TË GJITHA MESAZHET
+console.log('✅ FINAL CLEAN KNOWLEDGE SYSTEM - Loading...');
 
-console.log('⚡ ULTIMATE KNOWLEDGE INTERCEPTOR - Loading...');
-
-(function() {
-    console.log('🔧 Setting up ultimate interceptor...');
+// ✅ 1. MBIVENDOS VETËM PËR /meso DHE KËRKIM
+setTimeout(() => {
+    console.log('🔧 Setting up final clean system...');
     
-    // ✅ 1. KAP TË GJITHA MESAZHET PARA SISTEMIT EKZISTUES
-    function interceptAllMessages() {
-        console.log('🎯 Intercepting all messages...');
+    if (typeof processCommand === 'function') {
+        const originalProcessCommand = processCommand;
         
-        const input = document.getElementById('user-input');
-        const button = document.getElementById('send-btn');
-        
-        if (!input || !button) {
-            setTimeout(interceptAllMessages, 500);
-            return;
-        }
-        
-        console.log('✅ Found input and button');
-        
-        // ✅ FSHI TË GJITHA EVENTET E VJETRA
-        input.replaceWith(input.cloneNode(true));
-        button.replaceWith(button.cloneNode(true));
-        
-        const newInput = document.getElementById('user-input');
-        const newButton = document.getElementById('send-btn');
-        
-        // ✅ FUNKSIONI KRYESOR
-        async function handleUltimateSend() {
-            const message = newInput.value.trim();
-            if (!message) return;
+        window.processCommand = async function(text) {
+            console.log('🔄 Processing:', text.substring(0, 30));
             
-            console.log('💬 [ULTIMATE] Message:', message.substring(0, 30));
-            
-            // ✅ PASTRO INPUT MENJËHERË
-            newInput.value = '';
-            
-            // ✅ SHFAQ MESAZHIN E USER-IT
-            if (window.addMessage) {
-                window.addMessage(message, 'user');
-            }
-            
-            // ✅ PROCESO MESAZHIN
-            await processUltimateMessage(message);
-        }
-        
-        // ✅ KONFIGURO EVENTET E REJA
-        newInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleUltimateSend();
-            }
-        });
-        
-        newButton.addEventListener('click', handleUltimateSend);
-        
-        console.log('✅ Ultimate interceptor configured');
-    }
-    
-    // ✅ 2. PROCESO MESAZHIN - VERSIONI I FUNDIT
-    async function processUltimateMessage(message) {
-        console.log('🔧 [ULTIMATE] Processing:', message);
-        
-        // ✅ KONTROLLO /meso
-        if (message.startsWith('/meso')) {
-            await handleUltimateMeso(message);
-            return;
-        }
-        
-        // ✅ KËRKO NJOHURI
-        const hasKnowledge = await searchUltimateKnowledge(message);
-        if (hasKnowledge) {
-            console.log('✅ [ULTIMATE] Knowledge found - stopping here');
-            return;
-        }
-        
-        // ✅ NËSE NUK KA NJOHURI, DËRGO TE SISTEMI EKZISTUES
-        console.log('🔄 [ULTIMATE] No knowledge, sending to existing system');
-        await sendToExistingSystem(message);
-    }
-    
-    // ✅ 3. /meso HANDLER
-    async function handleUltimateMeso(message) {
-        const parts = message.substring(6).split('|');
-        
-        if (parts.length !== 2) {
-            showUltimateMessage('❌ Format: /meso pyetja|përgjigja', 'bot');
-            return;
-        }
-        
-        const question = parts[0].trim();
-        const answer = parts[1].trim();
-        
-        if (!question || !answer) {
-            showUltimateMessage('❌ Plotëso pyetjen dhe përgjigjen', 'bot');
-            return;
-        }
-        
-        // ✅ SHFAQ
-        showUltimateMessage(`💾 **Ruajtur:** "${question}"`, 'bot');
-        
-        // ✅ RUAJ
-        try {
-            const response = await fetch('/api/radical/radical-learn', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    userId: 1,
-                    question: question,
-                    answer: answer
-                })
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                setTimeout(() => {
-                    showUltimateMessage(`✅ **U ruajt:** "${question}" → "${answer}"`, 'bot');
-                }, 300);
-            }
-        } catch (error) {
-            console.error('❌ Save error:', error);
-        }
-    }
-    
-    // ✅ 4. KËRKO NJOHURI - VERSIONI FINAL
-    async function searchUltimateKnowledge(message) {
-        // ✅ PASTOR PËR KËRKIM
-        const query = message.toLowerCase()
-            .replace(/\?/g, '')
-            .replace(/["']/g, '')
-            .trim();
-        
-        console.log('🔍 [ULTIMATE] Searching:', query);
-        
-        try {
-            const response = await fetch(
-                `/api/radical/radical-search/1/${encodeURIComponent(query)}`
-            );
-            
-            const data = await response.json();
-            
-            if (data.success && data.found && data.answer) {
-                console.log('✅✅✅ [ULTIMATE] FOUND:', data.answer);
-                showUltimateMessage(`💾 **Përgjigje e ruajtur:** ${data.answer}`, 'bot');
-                return true;
-            }
-        } catch (error) {
-            console.log('ℹ️ [ULTIMATE] No knowledge:', error.message);
-        }
-        
-        return false;
-    }
-    
-    // ✅ 5. DËRGO TE SISTEMI EKZISTUES
-    async function sendToExistingSystem(message) {
-        console.log('🔄 [ULTIMATE] Sending to existing system:', message.substring(0, 20));
-        
-        try {
-            // ✅ PËRDOR SENDMESSAGE NËSE EKZISTON
-            if (typeof window.sendMessage === 'function') {
-                // Krijo një input artificial
-                const tempInput = document.createElement('input');
-                tempInput.id = 'temp-input';
-                tempInput.value = message;
-                document.body.appendChild(tempInput);
-                
-                // Thirr sendMessage
-                await window.sendMessage();
-                
-                // Fshi input-in artificial
-                document.body.removeChild(tempInput);
-            } else {
-                // ✅ FALLBACK: DËRGO DIREKT
-                const activeEngine = window.aiEngineStatus?.openai ? 'openai' : 'gemini';
-                
-                const response = await fetch('/api/chat/message', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        message: message,
-                        engine: activeEngine
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success && data.response) {
-                    showUltimateMessage(data.response, 'bot');
-                } else {
-                    showUltimateMessage('❌ ' + (data.error || 'Gabim në server'), 'bot');
+            // ✅ /meso KOMANDA
+            if (text.startsWith('/meso')) {
+                const parts = text.substring(6).split('|');
+                if (parts.length === 2) {
+                    const question = parts[0].trim();
+                    const answer = parts[1].trim();
+                    
+                    if (question && answer) {
+                        // ✅ SHFAQ
+                        if (window.addMessage) {
+                            window.addMessage(`💾 "${question}" → "${answer}"`, 'bot');
+                        }
+                        
+                        // ✅ RUAJ
+                        try {
+                            await fetch('/api/radical/radical-learn', {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({
+                                    userId: 1,
+                                    question: question,
+                                    answer: answer
+                                })
+                            });
+                        } catch (error) {
+                            console.error('❌ Save error:', error);
+                        }
+                        
+                        return; // ✅ NDALO KËTU
+                    }
                 }
             }
-        } catch (error) {
-            console.error('❌ [ULTIMATE] System error:', error);
-            showUltimateMessage('❌ Gabim në lidhje me serverin', 'bot');
-        }
-    }
-    
-    // ✅ 6. SHFAQ MESAZH
-    function showUltimateMessage(text, sender) {
-        if (typeof window.addMessage === 'function') {
-            window.addMessage(text, sender);
-        }
-    }
-    
-    // ✅ 7. BLOKO SISTEMIN E VJETËR PLOTËSISHT
-    function blockOldSystemCompletely() {
-        console.log('🛑 Blocking old system completely...');
-        
-        // ✅ KRIJO NJË SCRIPT QË BLLOKON TË GJITHA
-        const blocker = document.createElement('script');
-        blocker.textContent = `
-            console.log('⚡ ULTIMATE BLOCKER activated');
             
-            // 🛑 BLOKO PROCESCOMMAND
-            if (typeof processCommand === 'function') {
-                const oldProcessCommand = processCommand;
-                processCommand = async function(text) {
-                    console.log('[BLOCKER] Command blocked:', text.substring(0, 20));
-                    return; // MOS BËJ ASGJË
-                };
+            // ✅ KËRKO NJOHURI PËR MESAZHE JO-KOMANDË
+            if (!text.startsWith('/')) {
+                try {
+                    const query = text.toLowerCase()
+                        .replace(/\?/g, '')
+                        .replace(/["']/g, '')
+                        .trim();
+                    
+                    if (query.length > 1) {
+                        const response = await fetch(
+                            `/api/radical/radical-search/1/${encodeURIComponent(query)}`
+                        );
+                        
+                        const data = await response.json();
+                        
+                        if (data.success && data.found && data.answer) {
+                            // ✅ SHFAQ VETËM PËRGJIGJEN
+                            if (window.addMessage) {
+                                window.addMessage(data.answer, 'bot');
+                            }
+                            return; // ✅ NDALO KËTU
+                        }
+                    }
+                } catch (error) {
+                    console.log('ℹ️ No knowledge found');
+                }
             }
             
-            // 🛑 BLOKO SENDMESSAGE
-            if (typeof window.sendMessage === 'function') {
-                const oldSendMessage = window.sendMessage;
-                window.sendMessage = async function() {
-                    console.log('[BLOCKER] sendMessage blocked');
-                    return; // MOS BËJ ASGJË
-                };
-            }
-            
-            console.log('✅ ULTIMATE BLOCKER: Old system completely disabled');
-        `;
+            // ✅ PËR TË GJITHA KOMANDAT E TJERA
+            return originalProcessCommand.call(this, text);
+        };
         
-        document.head.appendChild(blocker);
+        console.log('✅✅✅ FINAL CLEAN SYSTEM READY!');
+        
+        // ✅ SHFAQ NJOFTIM
+        if (window.addMessage) {
+            window.addMessage('✅ **Knowledge System** u aktivizua! /meso dhe kërkimi punojnë.', 'system');
+        }
     }
-    
-    // ✅ 8. INICIALIZO
-    setTimeout(() => {
-        console.log('🚀 Starting ultimate system...');
-        
-        // ✅ BLOKO SISTEMIN E VJETËR
-        blockOldSystemCompletely();
-        
-        // ✅ KONFIGURO SISTEMIN E RI
-        setTimeout(() => {
-            interceptAllMessages();
-            
-            console.log('✅✅✅ ULTIMATE SYSTEM READY!');
-            console.log('🎯 TANI sistemi është PLOTËSISHT i pavarur!');
-            
-            // ✅ SHFAQ NJOFTIM
-            showUltimateMessage('⚡ **Ultimate System** u aktivizua! Tani /meso dhe kërkimi i njohurive punojnë 100%!', 'system');
-            
-        }, 1000);
-        
-    }, 2000);
-    
-})();
+}, 3000);
