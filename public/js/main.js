@@ -1696,277 +1696,64 @@ async function updateOpenAIPanelEnhanced() {
     }
 }
 
-// ============================================= ⚛️ ATOMIC RRUFE-TESLA KNOWLEDGE SYSTEM =======================================
+// ============================================== 🎯 FINAL ATOMIC FIX - KËRKIM NJOHURISH ========================================
 
-console.log('⚛️ ATOMIC KNOWLEDGE SYSTEM - Loading...');
+console.log('🎯 FINAL ATOMIC FIX - Loading...');
 
-// ✅ 1. KRIJO NJË SISTEM TË RI KOMPLET
-(function() {
-    console.log('🔬 Creating atomic system...');
+// ✅ 1. MODIFIKO FUNKSIONIN atomicSearchKnowledge
+// Gjejë këtë funksion në kodin atomik dhe zëvendësoje:
+
+async function atomicSearchKnowledge(message) {
+    // ✅ PASTOR THONJËZAT
+    const query = message.toLowerCase().replace(/["']/g, '').trim();
     
-    // ✅ VARIABLA LOKALE - ASNJË KONFLIKT
-    let atomicProcessing = false;
-    let atomicStorage = {};
+    console.log('🔍 Atomic search for:', query);
     
-    // ✅ 2. KONFIGURO ABSOLUTISHT INPUT E RI
-    function setupAtomicInput() {
-        console.log('🎯 Setting up atomic input...');
-        
-        // ✅ GJENI INPUT & BUTON
-        const input = document.getElementById('user-input');
-        const button = document.getElementById('send-btn');
-        
-        if (!input || !button) {
-            setTimeout(setupAtomicInput, 500);
-            return;
-        }
-        
-        console.log('✅ Found input and button');
-        
-        // ✅ FSHI ABSOLUTISHT TË GJITHA EVENTET E VJETRA
-        const newInput = input.cloneNode(true);
-        const newButton = button.cloneNode(true);
-        
-        input.parentNode.replaceChild(newInput, input);
-        button.parentNode.replaceChild(newButton, button);
-        
-        // ✅ KONFIGURO EVENTET E REJA
-        newInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                atomicHandleSend();
-            }
-        });
-        
-        newButton.addEventListener('click', atomicHandleSend);
-        
-        console.log('✅ Atomic input configured');
+    // ✅ KËRKO NË MEMORI LOKALE
+    if (atomicStorage[query]) {
+        atomicShowMessage(`💾 **Përgjigje:** ${atomicStorage[query]}`, 'bot');
+        return true;
     }
     
-    // ✅ 3. FUNKSIONI KRYESOR ATOMIK
-    async function atomicHandleSend() {
-        if (atomicProcessing) {
-            console.log('⏸️ Atomic system busy');
-            return;
-        }
+    // ✅ KËRKO NË DATABASE
+    try {
+        const response = await fetch(
+            `/api/radical/radical-search/1/${encodeURIComponent(query)}`
+        );
         
-        atomicProcessing = true;
+        const data = await response.json();
+        console.log('🔍 Database result:', data);
         
-        const input = document.getElementById('user-input');
-        const message = input ? input.value.trim() : '';
-        
-        if (!message) {
-            atomicProcessing = false;
-            return;
-        }
-        
-        console.log('💬 Atomic processing:', message.substring(0, 30));
-        
-        // ✅ PASTRO INPUT MENJËHERË
-        input.value = '';
-        
-        // ✅ SHFAQ MESAZHIN E USER-IT
-        atomicShowMessage(message, 'user');
-        
-        // ✅ TRAJTO MESAZHIN
-        await atomicProcessMessage(message);
-        
-        atomicProcessing = false;
-    }
-    
-    // ✅ 4. PROCESO MESAZHIN
-    async function atomicProcessMessage(message) {
-        // ✅ KONTROLLO /meso
-        if (message.startsWith('/meso')) {
-            await atomicHandleMeso(message);
-            return;
-        }
-        
-        // ✅ KËRKO NJOHURI
-        const hasKnowledge = await atomicSearchKnowledge(message);
-        if (hasKnowledge) return;
-        
-        // ✅ DËRGO TE SISTEMI EKZISTUES
-        await atomicSendToExistingSystem(message);
-    }
-    
-    // ✅ 5. TRAJTO /meso - VERSION ATOMIK
-    async function atomicHandleMeso(message) {
-        console.log('💾 Atomic /meso:', message);
-        
-        const parts = message.substring(6).split('|');
-        
-        if (parts.length !== 2) {
-            atomicShowMessage('❌ Format: /meso pyetja|përgjigja', 'bot');
-            return;
-        }
-        
-        const question = parts[0].trim();
-        const answer = parts[1].trim();
-        
-        if (!question || !answer) {
-            atomicShowMessage('❌ Plotëso pyetjen dhe përgjigjen', 'bot');
-            return;
-        }
-        
-        // ✅ SHFAQ MESAZH
-        atomicShowMessage(`💾 **Ruajtur:** "${question}"`, 'bot');
-        
-        // ✅ RUAJ NË DATABASE
-        try {
-            const response = await fetch('/api/radical/radical-learn', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    userId: 1,
-                    question: question,
-                    answer: answer
-                })
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                // ✅ RUAJ NË MEMORI LOKALE
-                atomicStorage[question.toLowerCase()] = answer;
-                
-                // ✅ TREGO KONFIRMIM
-                setTimeout(() => {
-                    atomicShowMessage(`✅ **U ruajt:** "${question}" → "${answer}"`, 'bot');
-                }, 300);
-            }
-        } catch (error) {
-            console.error('❌ Atomic save error:', error);
-        }
-    }
-    
-    // ✅ 6. KËRKO NJOHURI - ATOMIK
-    async function atomicSearchKnowledge(message) {
-        const query = message.toLowerCase();
-        
-        // ✅ KËRKO NË MEMORI LOKALE
-        if (atomicStorage[query]) {
-            atomicShowMessage(`💾 **Përgjigje:** ${atomicStorage[query]}`, 'bot');
+        if (data.success && data.found && data.answer) {
+            atomicShowMessage(`💾 **Përgjigje:** ${data.answer}`, 'bot');
             return true;
         }
-        
-        // ✅ KËRKO NË DATABASE
-        try {
-            const response = await fetch(
-                `/api/radical/radical-search/1/${encodeURIComponent(query)}`
-            );
-            
-            const data = await response.json();
-            
-            if (data.success && data.found && data.answer) {
-                atomicShowMessage(`💾 **Përgjigje:** ${data.answer}`, 'bot');
-                return true;
-            }
-        } catch (error) {
-            console.log('ℹ️ Atomic: No knowledge found');
-        }
-        
-        return false;
+    } catch (error) {
+        console.log('ℹ️ Atomic: No knowledge found');
     }
     
-    // ✅ 7. DËRGO TE SISTEMI EKZISTUES
-    async function atomicSendToExistingSystem(message) {
-        console.log('🔄 Atomic: Sending to existing system:', message.substring(0, 30));
-        
-        try {
-            // ✅ PËRDOR GEMINI SI DEFAULT
-            const response = await fetch('/api/chat/message', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    message: message,
-                    engine: 'gemini'
-                })
-            });
-            
-            const data = await response.json();
-            
-            if (data.success && data.response) {
-                atomicShowMessage(data.response, 'bot');
-            } else {
-                atomicShowMessage('❌ Gabim në server', 'bot');
-            }
-        } catch (error) {
-            console.error('❌ Atomic send error:', error);
-            atomicShowMessage('❌ Gabim në lidhje', 'bot');
-        }
+    return false;
+}
+
+// ✅ 2. MODIFIKO FUNKSIONIN atomicProcessMessage
+// Shto këtë në fillim të atomicProcessMessage:
+
+async function atomicProcessMessage(message) {
+    // ✅ PASTOR MESAZHIN PARA PROCESIMIT
+    const cleanMessage = message.replace(/["']/g, '').trim();
+    
+    console.log('🔧 Processing clean message:', cleanMessage);
+    
+    // ✅ KONTROLLO /meso
+    if (cleanMessage.startsWith('/meso')) {
+        await atomicHandleMeso(cleanMessage);
+        return;
     }
     
-    // ✅ 8. SHFAQ MESAZH
-    function atomicShowMessage(text, sender) {
-        // ✅ GJITHMONË PËRDOR WINDOW.ADDMESSAGE
-        if (typeof window.addMessage === 'function') {
-            window.addMessage(text, sender);
-        } else {
-            // ✅ FALLBACK ABSOLUT
-            const chat = document.getElementById('chat');
-            if (chat) {
-                const div = document.createElement('div');
-                div.className = `message ${sender}`;
-                div.innerHTML = `<div class="message-text">${text}</div>`;
-                chat.appendChild(div);
-                chat.scrollTop = chat.scrollHeight;
-            }
-        }
-    }
+    // ✅ KËRKO NJOHURI (ME MESAZH TË PASTËRT)
+    const hasKnowledge = await atomicSearchKnowledge(cleanMessage);
+    if (hasKnowledge) return;
     
-    // ✅ 9. BLOKO SISTEMIN E VJETËR - METODË EKSTREME
-    function blockOldSystem() {
-        console.log('🛑 Blocking old system completely...');
-        
-        // ✅ KRIJO NJË SCRIPT QË BLLOKON PROCESCOMMAND
-        const blockScript = document.createElement('script');
-        blockScript.textContent = `
-            // ⚠️ ATOMIC BLOCK - MOS NDRYSHO
-            console.log('🛑 ATOMIC BLOCK: Disabling old /meso system...');
-            
-            // ✅ MBIVENDOS PROCESCOMMAND PLOTËSISHT
-            if (typeof processCommand === 'function') {
-                const oldProcessCommand = processCommand;
-                
-                processCommand = async function(text) {
-                    console.log('[ATOMIC-BLOCK] Command:', text.substring(0, 20));
-                    
-                    // 🛑 BLOKO ABSOLUTISHT /meso
-                    if (text.startsWith('/meso')) {
-                        console.log('[ATOMIC-BLOCK] /meso BLOCKED');
-                        return; // MOS BËJ ASGJË
-                    }
-                    
-                    // ✅ PËR TË GJITHA KOMANDAT E TJERA, PUNO NORMAL
-                    return oldProcessCommand.call(this, text);
-                };
-                
-                console.log('✅ ATOMIC BLOCK: Old /meso system disabled');
-            }
-        `;
-        
-        document.head.appendChild(blockScript);
-    }
-    
-    // ✅ 10. INICIALIZO
-    setTimeout(() => {
-        console.log('🚀 Starting atomic system...');
-        
-        // ✅ BLOKO SISTEMIN E VJETËR
-        blockOldSystem();
-        
-        // ✅ KONFIGURO SISTEMIN E RI
-        setTimeout(() => {
-            setupAtomicInput();
-            
-            console.log('✅✅✅ ATOMIC SYSTEM READY!');
-            
-            // ✅ SHFAQ NJOFTIM
-            atomicShowMessage('⚛️ **Atomic Knowledge System** u aktivizua! /meso tani punon 100%!', 'system');
-            
-        }, 1000);
-        
-    }, 2000);
-    
-})();
+    // ✅ DËRGO TE SISTEMI EKZISTUES (ME MESAZHIN ORIGJINAL)
+    await atomicSendToExistingSystem(message);
+}
