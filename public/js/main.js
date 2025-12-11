@@ -1795,20 +1795,31 @@ console.log('🧠 Duke inicializuar RRUFE-TESLA Knowledge System v3...');
             return;
         }
         
-        // ✅ KONFIGURO EVENTE
-        input.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                process();
-            }
-        });
+        // ✅ FSHI EVENTET E VJETRA
+        input.removeEventListener('keypress', handleEnter);
+        button.removeEventListener('click', handleClick);
         
-        button.addEventListener('click', process);
+        // ✅ KONFIGURO EVENTE TË REJA
+        input.addEventListener('keypress', handleEnter);
+        button.addEventListener('click', handleClick);
         
         console.log('✅ RRUFE-TESLA Knowledge - Handlers ready');
     }
     
-    // ✅ 2. PROCESO
+    // ✅ 2. HANDLE ENTER
+    function handleEnter(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            process();
+        }
+    }
+    
+    // ✅ 3. HANDLE BUTTON CLICK
+    function handleClick() {
+        process();
+    }
+    
+    // ✅ 4. PROCESO
     async function process() {
         const input = document.getElementById('user-input');
         const message = input ? input.value.trim() : '';
@@ -1842,7 +1853,7 @@ console.log('🧠 Duke inicializuar RRUFE-TESLA Knowledge System v3...');
         }, 300);
     }
     
-    // ✅ 3. /meso KOMANDA
+    // ✅ 5. /meso KOMANDA - VERSION I KORRIGJUAR
     async function handleMeso(message) {
         const parts = message.substring(6).split('|');
         
@@ -1859,12 +1870,12 @@ console.log('🧠 Duke inicializuar RRUFE-TESLA Knowledge System v3...');
             return;
         }
         
-        // ✅ SHFAQ
+        // ✅ SHFAQ VETËM NJË MESAZH
         showMsg(`💾 **U ruajt:** "${question}"`, 'bot');
         
-        // ✅ RUAJ
+        // ✅ RUAJ NË BACKGROUND
         try {
-            await fetch('/api/radical/radical-learn', {
+            const response = await fetch('/api/radical/radical-learn', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
@@ -1873,12 +1884,18 @@ console.log('🧠 Duke inicializuar RRUFE-TESLA Knowledge System v3...');
                     answer: answer
                 })
             });
+            
+            const data = await response.json();
+            console.log('💾 Save result:', data);
         } catch (error) {
             console.error('💾 Error:', error);
         }
+        
+        // ✅ KTHET TRUE PËR TË NDALUAR PROCESIMIN E TJETËR
+        return true;
     }
     
-    // ✅ 4. KËRKO NJOHURI
+    // ✅ 6. KËRKO NJOHURI
     async function handleKnowledge(message) {
         // ✅ KËRKO NË SISTEMIN RADIKAL
         try {
@@ -1887,13 +1904,14 @@ console.log('🧠 Duke inicializuar RRUFE-TESLA Knowledge System v3...');
             );
             
             const data = await response.json();
+            console.log('🔍 Knowledge search:', data);
             
             if (data.success && data.found && data.answer) {
                 showMsg(`💾 **Përgjigje:** ${data.answer}`, 'bot');
-                return true;
+                return true; // ✅ NDALO KËTU
             }
         } catch (error) {
-            console.log('ℹ️ No knowledge found');
+            console.log('ℹ️ No knowledge found:', error.message);
         }
         
         // ✅ DËRGO TE AI
@@ -1901,39 +1919,81 @@ console.log('🧠 Duke inicializuar RRUFE-TESLA Knowledge System v3...');
         return false;
     }
     
-    // ✅ 5. DËRGO TE AI
+    // ✅ 7. DËRGO TE AI
     async function sendToAI(message) {
         try {
+            // ✅ ZGJIDH MOTORIN AKTIV
+            const activeEngine = window.aiEngineStatus?.openai ? 'openai' : 'gemini';
+            
             const response = await fetch('/api/chat/message', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
                     message: message,
-                    engine: 'gemini'
+                    engine: activeEngine
                 })
             });
             
             const data = await response.json();
+            
             if (data.success && data.response) {
                 showMsg(data.response, 'bot');
+            } else {
+                showMsg('❌ Gabim: ' + (data.error || 'Gabim në server'), 'bot');
             }
         } catch (error) {
             console.error('❌ AI error:', error);
-            showMsg('❌ Gabim në server', 'bot');
+            showMsg('❌ Gabim në lidhje me serverin', 'bot');
         }
     }
     
-    // ✅ 6. SHFAQ MESAZH
+    // ✅ 8. SHFAQ MESAZH
     function showMsg(text, sender) {
         if (typeof window.addMessage === 'function') {
             window.addMessage(text, sender);
+        } else {
+            // ✅ FALLBACK
+            const chat = document.getElementById('chat');
+            if (chat) {
+                const div = document.createElement('div');
+                div.className = `message ${sender}`;
+                div.innerHTML = `<div class="message-text">${text}</div>`;
+                chat.appendChild(div);
+                chat.scrollTop = chat.scrollHeight;
+            }
         }
     }
     
-    // ✅ 7. START
+    // ✅ 9. PATCH PËR SISTEMIN E VJETËR
+    function patchOldSystem() {
+        console.log('🔧 Duke patch-uar sistemin e vjetër...');
+        
+        // ✅ DISABLE SISTEMIN E VJETËR PËR /meso
+        if (typeof processCommand === 'function') {
+            const originalProcessCommand = processCommand;
+            
+            window.processCommand = async function(text) {
+                console.log('🎯 [PATCH] Command:', text.substring(0, 30));
+                
+                if (text.startsWith('/meso')) {
+                    console.log('✅ [PATCH] Kapëm /meso - duke e lënë sistemin e ri');
+                    return; // Mos e përpunoj më
+                }
+                
+                // ✅ PËR KOMANDAT E TJERA, PËRDOR VERSIONIN ORIGJINAL
+                return originalProcessCommand.call(this, text);
+            };
+            
+            console.log('✅ Patch u aplikua për /meso');
+        }
+    }
+    
+    // ✅ 10. START
     setTimeout(() => {
         setup();
+        patchOldSystem();
         console.log('✅✅✅ RRUFE-TESLA KNOWLEDGE SYSTEM READY!');
+        console.log('🎯 Tani /meso dhe kërkimi i njohurive do të punojnë pa përsëritje!');
     }, 2000);
     
 })();
