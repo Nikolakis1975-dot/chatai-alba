@@ -1821,3 +1821,133 @@ async function updateOpenAIPanelEnhanced() {
         `;
     }
 }
+
+// ================================================ 🔧 MINIMAL /meso FIX ===============================================
+
+console.log('🔧 Minimal /meso Fix - Loading...');
+
+// ✅ 1. SHTO BUTON PËR NJOHURITË NË UI
+function addKnowledgeButton() {
+    console.log('🎯 Adding knowledge button to UI...');
+    
+    // ✅ GJENI KONTROLLET E MOTORËVE
+    const engineControls = document.querySelector('.engine-controls, .ai-controls');
+    
+    if (!engineControls) {
+        setTimeout(addKnowledgeButton, 1000);
+        return;
+    }
+    
+    // ✅ KRIJO BUTONIN E RI
+    const knowledgeBtn = document.createElement('button');
+    knowledgeBtn.id = 'knowledge-btn';
+    knowledgeBtn.innerHTML = '💾 /meso';
+    knowledgeBtn.title = 'Kliko për të shkruar komandën /meso';
+    knowledgeBtn.style.cssText = `
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin: 0 5px;
+        font-weight: bold;
+    `;
+    
+    // ✅ SHTO EVENT
+    knowledgeBtn.addEventListener('click', function() {
+        const input = document.getElementById('user-input');
+        if (input) {
+            input.value = '/meso ';
+            input.focus();
+        }
+    });
+    
+    // ✅ SHTO BUTONIN
+    engineControls.appendChild(knowledgeBtn);
+    
+    console.log('✅ Knowledge button added');
+}
+
+// ✅ 2. FUNKSION I THJESHTË PËR /meso
+async function handleSimpleMeso(message) {
+    console.log('💾 Simple /meso handler:', message);
+    
+    const parts = message.substring(6).split('|');
+    
+    if (parts.length !== 2) {
+        return false; // Mos e trajto
+    }
+    
+    const question = parts[0].trim();
+    const answer = parts[1].trim();
+    
+    if (!question || !answer) {
+        return false;
+    }
+    
+    // ✅ SHFAQ MESAZH
+    if (window.addMessage) {
+        window.addMessage(`💾 **Ruajtur:** "${question}"`, 'bot');
+    }
+    
+    // ✅ RUAJ NË DATABASE (SILENT)
+    try {
+        await fetch('/api/radical/radical-learn', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                userId: 1,
+                question: question,
+                answer: answer
+            })
+        });
+    } catch (error) {
+        console.error('💾 Silent save error:', error);
+    }
+    
+    return true;
+}
+
+// ✅ 3. MBIVENDOS VETËM PËR /meso NËSE ËSHTË E NEVOJSHME
+function setupMinimalOverride() {
+    console.log('🔧 Setting up minimal override...');
+    
+    // ✅ VETËM NËSE PROCESCOMMAND EKZISTON
+    if (typeof processCommand === 'function') {
+        const originalProcessCommand = processCommand;
+        
+        window.processCommand = async function(text) {
+            // ✅ VETËM PËR /meso
+            if (text.startsWith('/meso')) {
+                const handled = await handleSimpleMeso(text);
+                if (handled) {
+                    console.log('✅ /meso handled by minimal system');
+                    return; // Mos e lë sistemin e vjetër
+                }
+            }
+            
+            // ✅ PËR TË GJITHA KOMANDAT E TJERA
+            return originalProcessCommand.call(this, text);
+        };
+    }
+}
+
+// ✅ 4. INICIALIZO
+setTimeout(() => {
+    console.log('🚀 Starting minimal system...');
+    
+    // ✅ SHTO BUTONIN NË UI
+    addKnowledgeButton();
+    
+    // ✅ KONFIGURO OVERRIDE MINIMAL
+    setupMinimalOverride();
+    
+    console.log('✅✅✅ MINIMAL /meso SYSTEM READY!');
+    
+    // ✅ SHFAQ NJOFTIM
+    if (window.addMessage) {
+        window.addMessage('💾 **Minimal /meso System** u aktivizua! Përdorni butonin 💾 /meso.', 'system');
+    }
+    
+}, 3000);
